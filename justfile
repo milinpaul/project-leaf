@@ -65,9 +65,10 @@ run:
 bench:
     cargo bench --workspace
 
-# Install the dev tools once
+# Install the dev tools once. lefthook is a Go tool, not a crate: install it first with
+# `brew install lefthook` (macOS/Linux) or `scoop install lefthook` (Windows).
 setup:
-    cargo install --locked cargo-nextest cargo-llvm-cov cargo-deny cargo-machete typos-cli just lefthook
+    cargo install --locked cargo-nextest cargo-llvm-cov cargo-deny cargo-machete typos-cli just
     rustup target add wasm32-unknown-unknown
     rustup component add llvm-tools-preview
     lefthook install
