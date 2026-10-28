@@ -30,7 +30,7 @@ mod store;
 mod workspace;
 
 pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
-pub use docs::{DocKey, Document};
+pub use docs::{DocKey, Document, Recovered};
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;
 pub use store::Store;

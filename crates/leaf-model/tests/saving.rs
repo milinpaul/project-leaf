@@ -97,3 +97,33 @@ fn bytes_that_are_not_an_update_fail_to_load() {
     assert!(PageDoc::from_saved(&snapshot, &[vec![1, 2, 3]]).is_err());
     assert!(Workspace::from_saved(&snapshot, &[vec![9; 8]]).is_err());
 }
+
+#[test]
+fn recover_skips_damaged_updates_and_keeps_the_rest() {
+    let mut ws = Workspace::new();
+    let snapshot = ws.to_bytes().unwrap();
+    let mut updates = Vec::new();
+    for title in ["one", "two"] {
+        create(&mut ws, title);
+        updates.push(ws.unsaved_changes().unwrap().unwrap());
+        ws.mark_saved();
+    }
+    // A damaged update in the middle, as when new saves were appended after a bad one.
+    let mut damaged = updates[1].clone();
+    let last = damaged.len() - 1;
+    damaged[last] ^= 0xFF;
+    damaged.truncate(last / 2);
+    let updates = vec![updates[0].clone(), damaged, vec![], updates[1].clone()];
+
+    assert!(Workspace::from_saved(&snapshot, &updates).is_err());
+    let (recovered, skipped) = Workspace::recover(&snapshot, &updates).unwrap();
+    assert_eq!(skipped, vec![1, 2]);
+    assert_eq!(pages(&recovered), pages(&ws));
+
+    let (page, skipped) = PageDoc::recover(&PageDoc::new().to_bytes().unwrap(), &[]).unwrap();
+    assert_eq!((page.len(), skipped), (0, vec![]));
+    assert!(
+        PageDoc::recover(&[1, 2, 3], &[]).is_err(),
+        "a damaged snapshot can't be skipped"
+    );
+}

@@ -234,6 +234,9 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
   every commit since the previous save (`unsaved_changes` / `mark_saved` on `Workspace` and `PageDoc`). Nothing is
   written when nothing changed. Keys: `workspace` or the page's `PageId` (ADR 0010).
 - **Loading (`Store::load`):** snapshot + updates in `seq` order (`from_saved`).
+- **Recovery:** if loading fails, each update is imported on its own and damaged ones are skipped, with a warning
+  in the log (`Store::recover` reports their `seq`s). Skipped rows stay on disk. A damaged snapshot is still an
+  error (ADR 0012).
 - **Opening:** `Store::open` sets `journal_mode=WAL`, `synchronous=NORMAL` and `foreign_keys=ON`, then migrates.
 - **Migrations:** `meta.schema_version` (0 for an empty file). `leaf-store/src/migrations.rs` holds a forward-only,
   append-only list; each step runs in one transaction with its version bump. A file newer than the app is refused

@@ -35,3 +35,19 @@ pub(crate) fn import(doc: &LoroDoc, snapshot: &[u8], updates: &[Vec<u8>]) -> Res
     }
     Ok(())
 }
+
+/// Like [`import`], but imports each update on its own and skips the ones Loro rejects (damaged
+/// bytes), returning their positions in `updates`. Used only after a normal load failed.
+pub(crate) fn import_each(
+    doc: &LoroDoc,
+    snapshot: &[u8],
+    updates: &[Vec<u8>],
+) -> Result<Vec<usize>, ModelError> {
+    doc.import(snapshot)?;
+    Ok(updates
+        .iter()
+        .enumerate()
+        .filter(|(_, update)| doc.import(update).is_err())
+        .map(|(i, _)| i)
+        .collect())
+}

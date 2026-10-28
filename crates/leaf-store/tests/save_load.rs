@@ -9,7 +9,7 @@ use leaf_core::{BlockId, PageId};
 use leaf_model::{
     BlockKind, Mark, Outcome, PageCommand, PageDoc, PageOutcome, TextSpan, Workspace, WorkspaceCommand,
 };
-use leaf_store::{DocKey, StoreError, Workspace as Folder};
+use leaf_store::{DocKey, Workspace as Folder};
 use rusqlite::Connection;
 
 type Outline = Vec<(usize, BlockId, BlockKind, Option<Vec<TextSpan>>)>;
@@ -202,28 +202,6 @@ fn documents_are_kept_apart_and_unsaved_ones_load_as_none() {
             .is_none()
     );
     assert!(store.load::<Workspace>(DocKey::Workspace).unwrap().is_none());
-}
-
-#[test]
-fn an_unreadable_update_is_an_error() {
-    let dir = TempDir::new();
-    let path = dir.0.join("w.leaf");
-    let mut folder = Folder::create(&path).unwrap();
-    folder
-        .store_mut()
-        .save(DocKey::Workspace, &mut Workspace::new(), 1)
-        .unwrap();
-    Connection::open(path.join("workspace.sqlite"))
-        .unwrap()
-        .execute(
-            "INSERT INTO doc_updates (doc_id, data, created_at) VALUES ('workspace', x'0102', 2)",
-            [],
-        )
-        .unwrap();
-    assert!(matches!(
-        folder.store().load::<Workspace>(DocKey::Workspace),
-        Err(StoreError::Model(_))
-    ));
 }
 
 #[test]
