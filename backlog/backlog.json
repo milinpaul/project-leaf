@@ -484,7 +484,7 @@
       "id": "E00-S08",
       "title": "Run the three-OS test matrix on main only",
       "epic": "E00",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P2",
       "size": "S",
       "depends_on": [],
@@ -519,7 +519,12 @@
       ],
       "plan": "`ci.yml`: matrix chosen from `github.event_name`; add `workflow_dispatch`; `cancel-in-progress` only for PRs.\nDocs: CLAUDE.md definition of done, TECH_STACK.md CI section. Proof: this PR's CI shows one test job.",
       "path": "backlog/stories/E00-S08.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/5",
+          "number": 5
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
