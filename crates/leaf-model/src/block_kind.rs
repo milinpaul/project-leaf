@@ -5,7 +5,7 @@
 //! breaking older ones: anything unrecognised reads as [`BlockKind::Unknown`] and is left untouched.
 
 use leaf_core::AssetId;
-use loro::{Container, LoroMap, LoroValue, ValueOrContainer};
+use loro::{LoroMap, LoroValue};
 
 use crate::ModelError;
 use crate::page_meta::value;
@@ -54,7 +54,6 @@ pub(crate) const KNOWN_PROP_KEYS: [&str; 6] = [
 pub(crate) mod keys {
     pub const ID: &str = "id";
     pub const TYPE: &str = "type";
-    pub const PROPS: &str = "props";
     pub const TEXT: &str = "text";
     pub const LEVEL: &str = "level";
     pub const CHECKED: &str = "checked";
@@ -198,11 +197,8 @@ impl BlockKind {
             Some(_) => return Err((keys::TYPE, "is not text".into())),
             None => return Err((keys::TYPE, "is missing".into())),
         };
-        let props = match meta.get(keys::PROPS) {
-            Some(ValueOrContainer::Container(Container::Map(props))) => Some(props),
-            _ => None,
-        };
-        let prop = |key| props.as_ref().and_then(|p| value(p, key));
+        // Properties sit directly in the block's meta, next to `type` (ADR 0007).
+        let prop = |key| value(meta, key);
         Ok(match type_name.as_str() {
             "paragraph" => Self::Paragraph,
             "heading" => match prop(keys::LEVEL) {
@@ -254,23 +250,25 @@ impl BlockKind {
         })
     }
 
-    /// Writes `type` and `props` into a new block's meta. Never called for unknown kinds: the model
-    /// only creates kinds it knows.
+    /// Writes `type` and the kind's properties into a block's meta. Never called for unknown kinds:
+    /// the model only creates kinds it knows.
+    ///
+    /// Properties are plain values in the meta itself, not a nested map: a nested map created in a
+    /// later step than its block loses its values when undo re-creates the block and redo replays
+    /// the step (ADR 0007).
     pub(crate) fn write(&self, meta: &LoroMap) -> loro::LoroResult<()> {
         meta.insert(keys::TYPE, self.type_name())?;
-        let props = || meta.ensure_mergeable_map(keys::PROPS);
         match self {
-            Self::Heading { level } => props()?.insert(keys::LEVEL, i64::from(*level))?,
-            Self::Todo { checked } => props()?.insert(keys::CHECKED, *checked)?,
-            Self::Code { language } => props()?.insert(keys::LANGUAGE, language.as_str())?,
+            Self::Heading { level } => meta.insert(keys::LEVEL, i64::from(*level))?,
+            Self::Todo { checked } => meta.insert(keys::CHECKED, *checked)?,
+            Self::Code { language } => meta.insert(keys::LANGUAGE, language.as_str())?,
             Self::Image { asset, width, alt } => {
-                let props = props()?;
-                props.insert(keys::ASSET, asset.to_string())?;
+                meta.insert(keys::ASSET, asset.to_string())?;
                 match width {
-                    Some(width) => props.insert(keys::WIDTH, *width)?,
-                    None => props.delete(keys::WIDTH)?,
+                    Some(width) => meta.insert(keys::WIDTH, *width)?,
+                    None => meta.delete(keys::WIDTH)?,
                 }
-                props.insert(keys::ALT, alt.as_str())?;
+                meta.insert(keys::ALT, alt.as_str())?;
             }
             // No props to write. Unknown kinds are never created, so never written either.
             Self::Paragraph

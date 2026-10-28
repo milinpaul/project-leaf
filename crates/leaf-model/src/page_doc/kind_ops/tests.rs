@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use leaf_core::{AssetId, BlockId};
-use loro::{Container, LoroMap, ValueOrContainer};
+use loro::LoroMap;
 
 use crate::block_kind::keys;
 use crate::{BlockKind, BlockProp, Mark, ModelError, PageCommand, PageDoc, PageOutcome};
@@ -36,12 +36,9 @@ fn set_prop(page: &mut PageDoc, id: BlockId, prop: BlockProp) -> Result<PageOutc
     page.apply(PageCommand::SetProp { id, prop })
 }
 
+/// The block's meta, where its properties live (ADR 0007).
 fn props(page: &PageDoc, id: BlockId) -> LoroMap {
-    let meta = page.tree.get_meta(page.node(id).unwrap()).unwrap();
-    match meta.get(keys::PROPS) {
-        Some(ValueOrContainer::Container(Container::Map(props))) => props,
-        other => panic!("no props map: {other:?}"),
-    }
+    page.tree.get_meta(page.node(id).unwrap()).unwrap()
 }
 
 fn commit_counter(page: &PageDoc) -> (Arc<AtomicUsize>, loro::Subscription) {

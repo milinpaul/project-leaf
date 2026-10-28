@@ -180,7 +180,7 @@ fn unknown_block_types_are_read_and_preserved_untouched() {
     let block = BlockId::new();
     let page = load_raw(|tree| {
         let meta = raw_block(tree, block, "kanban");
-        meta.ensure_mergeable_map(keys::PROPS)
+        meta.ensure_mergeable_map("props") // a future version's own nested data
             .unwrap()
             .insert("columns", 3_i64)
             .unwrap();
@@ -202,8 +202,8 @@ fn unknown_block_types_are_read_and_preserved_untouched() {
         meta.get("from_the_future"),
         Some(ValueOrContainer::Value(LoroValue::Bool(true)))
     ));
-    let Some(ValueOrContainer::Container(loro::Container::Map(props))) = meta.get(keys::PROPS) else {
-        panic!("props must survive");
+    let Some(ValueOrContainer::Container(loro::Container::Map(props))) = meta.get("props") else {
+        panic!("a future version's nested data must survive");
     };
     assert!(matches!(
         props.get("columns"),
@@ -243,7 +243,7 @@ fn known_kinds_with_bad_data_are_errors_not_guesses() {
             if type_name != "type missing" {
                 meta.insert(keys::TYPE, type_name).unwrap();
             }
-            let props = meta.ensure_mergeable_map(keys::PROPS).unwrap();
+            let props = &meta; // properties sit directly in the block's meta (ADR 0007)
             if type_name == "image" && field != "asset" {
                 props.insert(keys::ASSET, AssetId::of(b"x").to_string()).unwrap();
             }

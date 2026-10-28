@@ -5,10 +5,12 @@
 //! can re-create nodes under new ones (ADR 0006).
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use leaf_core::BlockId;
 use loro::{
-    Container, ExportMode, LoroDoc, LoroText, LoroTree, LoroValue, TreeID, TreeParentId, ValueOrContainer,
+    Container, ExportMode, LoroDoc, LoroText, LoroTree, LoroValue, TreeID, TreeParentId, UndoManager,
+    ValueOrContainer,
 };
 
 use crate::block_kind::keys;
@@ -25,6 +27,8 @@ pub struct PageDoc {
     doc: LoroDoc,
     tree: LoroTree,
     index: BlockIndex,
+    undo: UndoManager,
+    carets: Arc<undo::CaretSlots>,
 }
 
 /// Two-way map between permanent `BlockId`s and Loro's current `TreeID`s, for O(1) lookups.
@@ -40,10 +44,14 @@ impl PageDoc {
     pub fn new() -> Self {
         let doc = new_doc();
         let tree = blocks_tree(&doc);
+        let carets = Arc::new(undo::CaretSlots::default());
+        let undo = undo::manager(&doc, &carets);
         Self {
             doc,
             tree,
             index: BlockIndex::default(),
+            undo,
+            carets,
         }
     }
 
@@ -56,7 +64,16 @@ impl PageDoc {
         doc.import(bytes)?;
         let tree = blocks_tree(&doc);
         let index = BlockIndex::build(&tree)?;
-        Ok(Self { doc, tree, index })
+        // Created after the import, so undo starts from the loaded state.
+        let carets = Arc::new(undo::CaretSlots::default());
+        let undo = undo::manager(&doc, &carets);
+        Ok(Self {
+            doc,
+            tree,
+            index,
+            undo,
+            carets,
+        })
     }
 
     /// The whole page as a self-contained snapshot, ready to save.
@@ -162,7 +179,7 @@ fn blocks_tree(doc: &LoroDoc) -> LoroTree {
 }
 
 impl BlockIndex {
-    /// Reads every live block node's `id`. Called on load (and after undo, from E02-S08).
+    /// Reads every live block node's `id`. Called on load and after undo and redo.
     fn build(tree: &LoroTree) -> Result<Self, ModelError> {
         let mut index = Self::default();
         for node in tree.get_nodes(false) {
@@ -214,11 +231,13 @@ mod apply;
 mod invariants;
 
 pub use invariants::InvariantViolation;
+pub use undo::{Caret, History};
 
 mod kind_ops;
 mod nesting;
 mod split_merge;
 mod text_ops;
+mod undo;
 
 #[cfg(test)]
 mod tests;

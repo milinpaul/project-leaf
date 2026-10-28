@@ -5,6 +5,7 @@
 //! rules here carry over to the real editor (E04), which adds a cursor model and splitting text.
 
 use leaf_core::BlockId;
+pub use leaf_model::Caret;
 use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOutcome};
 
 use crate::EditorError;
@@ -58,15 +59,6 @@ pub struct BlockRow {
     pub style: BlockStyle,
     /// Its plain text, or `None` for blocks without text.
     pub text: Option<String>,
-}
-
-/// Where the text cursor goes after an action: a block and a Unicode scalar position in its text.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Caret {
-    /// The block to focus.
-    pub block: BlockId,
-    /// Position in its text.
-    pub at: usize,
 }
 
 /// What Backspace at the start of a block did.
