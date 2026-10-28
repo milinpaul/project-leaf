@@ -18,8 +18,8 @@
       "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
       "path": "backlog/epics/E00.md",
       "story_count": 8,
-      "done_count": 2,
-      "progress": 0.25
+      "done_count": 3,
+      "progress": 0.38
     },
     {
       "id": "E01",
@@ -207,7 +207,7 @@
       "id": "E00-S02",
       "title": "CI pipeline green",
       "epic": "E00",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -258,7 +258,7 @@
       "id": "E00-S03",
       "title": "ARCHITECTURE.md and ADRs",
       "epic": "E00",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -267,13 +267,13 @@
       "labels": [
         "docs"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Create docs/architecture/ARCHITECTURE.md and fill docs/adr with the first decisions.",
       "acceptance": [
         {
           "text": "docs/architecture/ARCHITECTURE.md explains crates and data flow in plain English",
-          "done": false
+          "done": true
         },
         {
           "text": "ADR template in docs/adr/0000-template.md",
@@ -281,25 +281,30 @@
         },
         {
           "text": "ADRs written for: Loro, GPUI + gpui-component, SQLite storage, no markdown storage, pages-not-folders",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "Done together with E00-S04 on one branch at the owner's request, so the GPUI ADR can carry the spike findings.\n\n- `docs/architecture/ARCHITECTURE.md`: crates, their boundaries, and how a keystroke becomes a saved change.\n- ADRs 0001-0005 from `docs/adr/0000-template.md`: Loro, GPUI + gpui-component (with spike findings), SQLite,\n  markdown not storage (feature), pages not folders (feature). Index in `docs/adr/README.md`.\n- Link from `docs/README.md` and `TECH_STACK.md`. No code, so the test is `just check` (typos, backlog).",
       "path": "backlog/stories/E00-S03.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/4",
+          "number": 4
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.25
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E00-S04",
       "title": "Spike: GPUI window with gpui-component",
       "epic": "E00",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -309,13 +314,13 @@
         "spike",
         "leaf-app"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Prove the UI stack builds and runs on all three OSes before investing in UI work.",
       "acceptance": [
         {
           "text": "leaf-app opens a window with a sidebar and a text input from gpui-component",
-          "done": false
+          "done": true
         },
         {
           "text": "Builds in CI on all three OSes",
@@ -323,23 +328,28 @@
         },
         {
           "text": "Exact gpui and gpui-component versions pinned and recorded in an ADR",
-          "done": false
+          "done": true
         },
         {
           "text": "Findings (pain points, missing widgets) written in the ADR",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "Done together with E00-S03 on one branch at the owner's request.\n\n- Pin `gpui-component =0.8.1`, the gpui it pins (`gpui-pre =0.3.10`) and `gpui-pre-platform =0.3.10` in the workspace.\n- `leaf-ui`: `Shell` view (gpui-component `Sidebar` + `Input`), `init`, `window_root`; the app never imports\n  gpui-component. `leaf-app`: open one window, quit when it closes.\n- Tests: GPUI `TestAppContext` tests that the shell renders and typing reaches the focused input.\n- Record versions, features and findings in ADR 0002. Fix any `cargo deny` fallout in `deny.toml`.\n- Risks: Linux system packages in CI; GPUI build time.",
       "path": "backlog/stories/E00-S04.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/4",
+          "number": 4
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 0.8
     },
     {
       "id": "E00-S05",
@@ -566,10 +576,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S01.md",
       "prs": [],
-      "waiting_on": [
-        "E00-S02"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
