@@ -124,10 +124,27 @@ impl PageEditor {
         Ok(())
     }
 
-    /// Enter: adds a block right below `id`, at the same level, and returns it. Lists and to-dos
-    /// continue (an unticked to-do); anything else continues as a paragraph.
+    /// Enter: adds a block right below `id`, at the same level, and returns the block to focus. Lists
+    /// and to-dos continue (an unticked to-do); anything else continues as a paragraph.
+    ///
+    /// On an **empty** list item or to-do, Enter leaves the list instead (`PRODUCT_SPEC.md` "Editor
+    /// behaviour"): a nested item moves out one level, a top-level one becomes a paragraph, and no
+    /// new block is added. That is how a run of list items is ended.
     pub fn enter(&mut self, id: BlockId) -> Result<BlockId, EditorError> {
-        let kind = match self.doc.kind(id)? {
+        let kind = self.doc.kind(id)?;
+        let is_list = matches!(
+            kind,
+            BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. }
+        );
+        if is_list && self.doc.plain_text(id)?.is_some_and(|text| text.is_empty()) {
+            if self.doc.parent(id)?.is_some() {
+                self.outdent(id)?;
+            } else {
+                self.turn_into(id, BlockKind::Paragraph)?;
+            }
+            return Ok(id);
+        }
+        let kind = match kind {
             kind @ (BlockKind::BulletedList | BlockKind::NumberedList) => kind,
             BlockKind::Todo { .. } => BlockKind::Todo { checked: false },
             _ => BlockKind::Paragraph,

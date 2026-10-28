@@ -87,10 +87,12 @@ fn enter_adds_a_block_below_continuing_lists_and_todos() {
     editor.turn_into(first, BlockKind::Heading { level: 1 }).unwrap();
     let para = editor.enter(first).unwrap();
     editor.turn_into(para, BlockKind::BulletedList).unwrap();
+    editor.set_text(para, "bullet").unwrap();
     let bullet = editor.enter(para).unwrap();
     editor
         .turn_into(bullet, BlockKind::Todo { checked: true })
         .unwrap();
+    editor.set_text(bullet, "task").unwrap();
     let todo = editor.enter(bullet).unwrap();
 
     assert_eq!(editor.doc().root_blocks(), vec![first, para, bullet, todo]);
@@ -126,10 +128,15 @@ fn enter_in_a_nested_block_stays_at_its_level() {
 fn numbered_items_are_numbered_per_run_of_siblings() {
     let (mut editor, first) = editor();
     editor.turn_into(first, BlockKind::NumberedList).unwrap();
+    // Each item gets text before Enter: Enter on an empty item would end the list.
+    editor.set_text(first, "one").unwrap();
     let two = editor.enter(first).unwrap();
+    editor.set_text(two, "two").unwrap();
     let nested = editor.enter(two).unwrap();
     editor.indent(nested).unwrap();
+    editor.set_text(nested, "nested").unwrap();
     let three = editor.enter(two).unwrap();
+    editor.set_text(three, "three").unwrap();
     let break_ = editor.enter(three).unwrap();
     editor.turn_into(break_, BlockKind::Paragraph).unwrap();
     let restart = editor.enter(break_).unwrap();
@@ -167,6 +174,7 @@ fn every_kind_has_a_style() {
     ];
     let mut last = first;
     for kind in kinds {
+        editor.set_text(last, "x").unwrap(); // Enter on an empty to-do would end the list
         last = editor.enter(last).unwrap();
         editor.turn_into(last, kind).unwrap();
     }
@@ -283,4 +291,70 @@ fn previous_and_next_follow_reading_order() {
         None,
         "unknown blocks have no neighbours"
     );
+}
+
+#[test]
+fn enter_on_an_empty_list_item_leaves_the_list_instead_of_adding_one() {
+    for kind in [
+        BlockKind::BulletedList,
+        BlockKind::NumberedList,
+        BlockKind::Todo { checked: false },
+    ] {
+        let (mut editor, first) = editor();
+        editor.turn_into(first, kind.clone()).unwrap();
+        editor.set_text(first, "item").unwrap();
+        let empty = editor.enter(first).unwrap();
+        assert_eq!(
+            editor.doc().kind(empty).unwrap(),
+            kind,
+            "a filled item continues the list"
+        );
+
+        // Top level: the empty item becomes a paragraph, and no block is added.
+        assert_eq!(
+            editor.enter(empty).unwrap(),
+            empty,
+            "focus stays on the same block"
+        );
+        assert_eq!(
+            editor.doc().kind(empty).unwrap(),
+            BlockKind::Paragraph,
+            "{kind:?}"
+        );
+        assert_eq!(editor.doc().len(), 2);
+    }
+}
+
+#[test]
+fn enter_on_an_empty_nested_list_item_moves_it_out_one_level() {
+    let (mut editor, first) = editor();
+    editor.turn_into(first, BlockKind::BulletedList).unwrap();
+    editor.set_text(first, "parent").unwrap();
+    let child = editor.enter(first).unwrap();
+    editor.indent(child).unwrap();
+    editor.set_text(child, "child").unwrap();
+    let empty = editor.enter(child).unwrap();
+    assert_eq!(editor.doc().parent(empty).unwrap(), Some(first));
+
+    assert_eq!(editor.enter(empty).unwrap(), empty);
+    assert_eq!(
+        editor.doc().parent(empty).unwrap(),
+        None,
+        "out one level, still a list item"
+    );
+    assert_eq!(editor.doc().kind(empty).unwrap(), BlockKind::BulletedList);
+    assert_eq!(editor.enter(empty).unwrap(), empty);
+    assert_eq!(
+        editor.doc().kind(empty).unwrap(),
+        BlockKind::Paragraph,
+        "a second Enter at the top level ends the list"
+    );
+}
+
+#[test]
+fn enter_on_an_empty_paragraph_still_adds_a_block() {
+    let (mut editor, first) = editor();
+    let second = editor.enter(first).unwrap();
+    assert_ne!(second, first);
+    assert_eq!(editor.doc().len(), 2);
 }

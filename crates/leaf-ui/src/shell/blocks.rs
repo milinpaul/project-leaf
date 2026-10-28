@@ -9,7 +9,8 @@ use std::collections::HashMap;
 
 use gpui::{
     AnyElement, AppContext as _, ClickEvent, Context, ElementId, Entity, FontWeight, InteractiveElement as _,
-    IntoElement, ParentElement, SharedString, Styled, Subscription, Window, div, px, rems,
+    IntoElement, MouseButton, MouseDownEvent, ParentElement, SharedString, Styled, Subscription, Window, div,
+    px, rems,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::checkbox::Checkbox;
@@ -249,7 +250,7 @@ impl Shell {
             .collect();
 
         v_flex()
-            .gap_1()
+            .gap_0p5()
             .capture_action(cx.listener(Self::on_backspace))
             .capture_action(cx.listener(Self::on_indent))
             .capture_action(cx.listener(Self::on_outdent))
@@ -287,7 +288,12 @@ impl Shell {
                 input.set_value(text, window, cx);
             }
         });
-        let input = Input::new(&state).appearance(false).focus_bordered(false).px_0();
+        // Body rows are 28px: the input's default height is sized for form fields, which spaces blocks too far apart.
+        let input = Input::new(&state)
+            .appearance(false)
+            .focus_bordered(false)
+            .px_0()
+            .h_7();
         let muted = cx.theme().muted_foreground;
         let input = match &row.style {
             BlockStyle::Heading(level) => {
@@ -322,7 +328,30 @@ impl Shell {
             BlockStyle::Quote => Some(div().w(px(3.0)).h_6().bg(cx.theme().border).into_any_element()),
             _ => None,
         };
-        let line = line.children(prefix).child(div().flex_1().child(input));
+        // Inputs can't draw strikethrough, so a done to-do shows as struck-through text until it is
+        // clicked for editing.
+        let done_and_resting =
+            matches!(row.style, BlockStyle::Todo { checked: true }) && self.blocks.focused != Some(id);
+        let body = if done_and_resting {
+            div()
+                .flex_1()
+                .h_7()
+                .flex()
+                .items_center()
+                .text_color(muted)
+                .line_through()
+                .child(state.read(cx).value().to_string())
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(move |shell, _: &MouseDownEvent, window, cx| {
+                        shell.focus_block(id, window, cx);
+                    }),
+                )
+                .into_any_element()
+        } else {
+            div().flex_1().child(input).into_any_element()
+        };
+        let line = line.children(prefix).child(body);
         match row.style {
             BlockStyle::Code { .. } => line.bg(cx.theme().muted).rounded_md().px_2().into_any_element(),
             _ => line.into_any_element(),

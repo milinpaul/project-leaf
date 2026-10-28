@@ -290,4 +290,43 @@ mod tests {
             "a non-empty block gets an ordinary backspace"
         );
     }
+
+    #[gpui::test]
+    fn enter_on_an_empty_list_item_ends_the_list(cx: &mut TestAppContext) {
+        let (shell, cx) = open_shell(cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        cx.simulate_keystrokes("enter");
+        cx.update(|window, cx| {
+            shell.update(cx, |shell, cx| {
+                shell.turn_focused_into(leaf_model::BlockKind::BulletedList, window, cx);
+            });
+        });
+        cx.simulate_input("Item");
+        cx.simulate_keystrokes("enter enter");
+        cx.simulate_input("After");
+        assert_eq!(
+            blocks(&shell, cx),
+            vec![(0, "Item".into()), (0, "After".into())],
+            "no stray empty bullet"
+        );
+        let styles: Vec<leaf_editor::BlockStyle> = shell.read_with(cx, |shell, _| {
+            let page = shell.editor().selected().unwrap();
+            shell
+                .editor()
+                .page_editor(page)
+                .unwrap()
+                .rows()
+                .unwrap()
+                .into_iter()
+                .map(|row| row.style)
+                .collect()
+        });
+        assert_eq!(
+            styles,
+            vec![
+                leaf_editor::BlockStyle::Bulleted,
+                leaf_editor::BlockStyle::Paragraph
+            ]
+        );
+    }
 }

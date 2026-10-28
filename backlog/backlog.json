@@ -3070,6 +3070,14 @@
           "done": true
         },
         {
+          "text": "Enter on an empty list item or to-do ends the list (outdent; at the top level, paragraph) instead of adding another (owner review)",
+          "done": true
+        },
+        {
+          "text": "Ticked to-dos are struck through (owner review)",
+          "done": true
+        },
+        {
           "text": "Backspace in an empty block deletes it and focuses the block above (the last block stays)",
           "done": true
         },
