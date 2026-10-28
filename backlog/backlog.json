@@ -1837,7 +1837,7 @@
       "id": "E04-S02",
       "title": "Cursor model",
       "epic": "E04",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1869,7 +1869,12 @@
       ],
       "plan": "- **Motions (leaf-editor, `caret/motion.rs`):** pure functions on a block's text with Unicode scalar positions (what\n  the model uses): next/previous grapheme, word right/left (macOS style: skip spaces and punctuation, then to the end\n  or start of the word), Home/End (start/end of the hard line, so code blocks with newlines work). Graphemes and words\n  from `unicode-segmentation` (UAX #29; already in the lockfile through GPUI, pure Rust, wasm-ok).\n- **Across blocks (`PageEditor::move_caret`):** Left at a block's start goes to the end of the previous text block in\n  reading order; Right at the end goes to the start of the next. Blocks without text (divider, image) are skipped.\n  Home/End stay in the block. Up/Down are E04-S03.\n- **Surviving changes:** `leaf-model` gets `Anchor` (a Loro cursor plus the caret as a fallback) with\n  `PageDoc::anchor` and `PageDoc::resolve`, and `PageDoc::import_changes` to merge another copy's changes (only tests\n  use it in Phase 0). `PageEditor` keeps the caret as an anchor: `set_caret`, `caret()`, `move_caret`. If undo\n  re-created the block (new Loro container) the stored position is clamped; if the block is gone, the caret goes to\n  the nearest block above it in the last drawn order. Resolved positions are snapped to a grapheme boundary.\n- **Tests:** unit tests per motion with emoji, ZWJ families, flags, combining marks, Devanagari conjuncts; proptest\n  that every motion lands on a grapheme boundary and Left/Right round-trip; two-peer tests for remote insert/delete\n  before the caret; undo tests. Docs: BLOCK_MODEL, ARCHITECTURE, ADR 0015 (caret anchors).\n- **Risk:** Devanagari conjuncts need UAX #29 rule GB9c (Unicode 15.1); check the crate version supports it.",
       "path": "backlog/stories/E04-S02.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/30",
+          "number": 30
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
