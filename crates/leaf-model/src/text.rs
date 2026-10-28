@@ -84,3 +84,68 @@ pub(crate) fn spans(text: &LoroText) -> Vec<TextSpan> {
         })
         .collect()
 }
+
+/// An inline mark to apply to a range of text.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Mark {
+    /// Bold.
+    Bold,
+    /// Italic.
+    Italic,
+    /// Strikethrough.
+    Strike,
+    /// Inline code.
+    Code,
+    /// A link to this address; must not be empty.
+    Link(String),
+}
+
+/// Which mark to remove, regardless of its value (removing a link does not need its address).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MarkKind {
+    /// Bold.
+    Bold,
+    /// Italic.
+    Italic,
+    /// Strikethrough.
+    Strike,
+    /// Inline code.
+    Code,
+    /// Link.
+    Link,
+}
+
+impl Mark {
+    /// Which kind of mark this is.
+    #[must_use]
+    pub fn kind(&self) -> MarkKind {
+        match self {
+            Self::Bold => MarkKind::Bold,
+            Self::Italic => MarkKind::Italic,
+            Self::Strike => MarkKind::Strike,
+            Self::Code => MarkKind::Code,
+            Self::Link(_) => MarkKind::Link,
+        }
+    }
+
+    /// The value stored with the mark: `true`, or the link's address.
+    pub(crate) fn value(&self) -> LoroValue {
+        match self {
+            Self::Link(href) => LoroValue::String(href.as_str().into()),
+            Self::Bold | Self::Italic | Self::Strike | Self::Code => LoroValue::Bool(true),
+        }
+    }
+}
+
+impl MarkKind {
+    /// The key the mark is stored under.
+    pub(crate) fn key(self) -> &'static str {
+        match self {
+            Self::Bold => marks::BOLD,
+            Self::Italic => marks::ITALIC,
+            Self::Strike => marks::STRIKE,
+            Self::Code => marks::CODE,
+            Self::Link => marks::LINK,
+        }
+    }
+}

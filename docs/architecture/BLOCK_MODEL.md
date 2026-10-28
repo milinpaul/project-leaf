@@ -133,11 +133,16 @@ validate, write, commit once; `Unchanged` when nothing would change)
 - All: headings, code, dividers, images and unknown blocks can't contain blocks; no block moves into itself.
 - `SetBlockKind { id, kind }` — keeps text when the target type has text
 - `SetProp { id, key, value }`
-- `InsertText { id, pos, text }`, `DeleteText { id, range }`
-- `SetMark { id, range, mark }`, `RemoveMark { id, range, mark }`
+- `InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets, checked against the
+  text length; blocks without text (dividers, unknown kinds) are refused
+- `SetMark { id, range, mark: Mark }`, `RemoveMark { id, range, kind: MarkKind }`: `Mark` is bold, italic, strike,
+  code or `Link(href)` (href must not be empty); code blocks take no marks; expand behaviour follows the table above
 - `SplitBlock { id, pos }` — Enter
 - `MergeIntoPrevious { id }` — Backspace at start
-- `Indent { ids }`, `Outdent { ids }`
+- `Indent { ids }`: each block becomes the last child of the block above it (skipped if there is none, or it can't
+  hold children). `Outdent { ids }`: each block moves right after its parent and the blocks that followed it become
+  its last children (skipped at the top level, or for a block that can't hold children but has followers). Several
+  blocks are handled one at a time in reading order; if none can move, `Unchanged`.
 - `PasteBlocks { after, fragment }`
 
 Positions are Unicode scalar offsets as used by Loro; the editor converts to and from grapheme clusters for cursor movement.

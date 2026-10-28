@@ -27,6 +27,12 @@ impl PageDoc {
                 new_parent,
                 index,
             } => self.move_blocks(&ids, new_parent, index)?,
+            PageCommand::InsertText { id, pos, text } => self.insert_text(id, pos, &text)?,
+            PageCommand::DeleteText { id, range } => self.delete_text(id, range)?,
+            PageCommand::SetMark { id, range, mark } => self.set_mark(id, range, &mark)?,
+            PageCommand::RemoveMark { id, range, kind } => self.remove_mark(id, range, kind)?,
+            PageCommand::Indent { ids } => self.indent(&ids)?,
+            PageCommand::Outdent { ids } => self.outdent(&ids)?,
         };
         self.doc.commit();
         if outcome == PageOutcome::Changed && self.doc.oplog_vv() == before {
@@ -153,7 +159,7 @@ impl PageDoc {
 
     /// The node blocks would be placed in: `None` for the top level, or a block whose kind allows
     /// children.
-    fn container_node(&self, block: Option<BlockId>) -> Result<Option<TreeID>, ModelError> {
+    pub(super) fn container_node(&self, block: Option<BlockId>) -> Result<Option<TreeID>, ModelError> {
         let Some(block) = block else { return Ok(None) };
         let node = self.node(block)?;
         let kind = self.kind(block)?;
@@ -168,7 +174,7 @@ impl PageDoc {
 
     /// The listed blocks that are not inside another listed block, in document order. Fails if any
     /// block is unknown.
-    fn outermost(&self, ids: &[BlockId]) -> Result<Vec<TreeID>, ModelError> {
+    pub(super) fn outermost(&self, ids: &[BlockId]) -> Result<Vec<TreeID>, ModelError> {
         let listed: HashSet<TreeID> = ids.iter().map(|&b| self.node(b)).collect::<Result<_, _>>()?;
         let has_listed_ancestor = |node: TreeID| {
             let mut cursor = self.parent_node(node);
@@ -208,7 +214,7 @@ impl PageDoc {
         }
     }
 
-    fn parent_node(&self, node: TreeID) -> Option<TreeID> {
+    pub(super) fn parent_node(&self, node: TreeID) -> Option<TreeID> {
         match self.tree.parent(node) {
             Some(TreeParentId::Node(parent)) => Some(parent),
             _ => None,

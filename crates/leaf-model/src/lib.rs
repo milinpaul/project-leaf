@@ -23,5 +23,5 @@ pub use error::ModelError;
 pub use page_command::{PageCommand, PageOutcome};
 pub use page_doc::PageDoc;
 pub use page_meta::PageMeta;
-pub use text::{Marks, TextSpan};
+pub use text::{Mark, MarkKind, Marks, TextSpan};
 pub use workspace::{DEFAULT_UNDO_MERGE_MS, Workspace};
