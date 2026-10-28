@@ -986,7 +986,7 @@
       "id": "E02-S03",
       "title": "Text and mark commands",
       "epic": "E02",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1023,7 +1023,12 @@
       ],
       "plan": "Done with E02-S06 on one branch (owner request).\n- `PageCommand::InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets\n  (BLOCK_MODEL.md), checked against the text length; the editor converts to graphemes (E04). Empty insert or\n  empty range: `Unchanged`. Blocks without text (dividers, unknown) are rejected.\n- `SetMark { id, range, mark: Mark }` / `RemoveMark { id, range, kind: MarkKind }`: `Mark` = bold, italic,\n  strike, code, `Link(href)`; expand rules come from the configured table. Code blocks reject marks; empty\n  link href is rejected. New errors: `TextOutOfRange`, `MarksNotAllowed`, `EmptyLink`.\n- Tests: emoji with skin tone and Devanagari conjuncts at every offset; expand behaviour per mark; code block\n  rejection; link href read back. A proptest compares random inserts/deletes of mixed scripts against a\n  `Vec<char>` reference.",
       "path": "backlog/stories/E02-S03.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/16",
+          "number": 16
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
@@ -1129,7 +1134,7 @@
       "id": "E02-S06",
       "title": "Indent and outdent",
       "epic": "E02",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1166,7 +1171,12 @@
       ],
       "plan": "- `PageCommand::Indent { ids }` / `Outdent { ids }`, applied to the outermost listed blocks one by one in\n  reading order (gives Notion's result for consecutive selections).\n- Indent: block becomes the last child of its previous sibling. Skipped when there is no previous sibling or it\n  can't hold children (heading, code, divider, image, unknown).\n- Outdent: block moves right after its parent; its following siblings become its last children, in order.\n  Skipped at the top level, or when the block can't hold children but has following siblings (moving them\n  elsewhere would reorder the text).\n- A command where every block is skipped writes nothing and returns `Unchanged`.\n- Tests: each rule and skip; multi-block indent/outdent; no commit on no-ops. Extend the block-tree proptest\n  reference model with indent/outdent.",
       "path": "backlog/stories/E02-S06.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/16",
+          "number": 16
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
