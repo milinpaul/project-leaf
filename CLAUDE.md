@@ -58,7 +58,9 @@ The owner does not write Rust and relies on these docs to understand the system.
 
 ## Definition of done
 
-- `just check` passes locally; CI is green on all three OSes.
+- `just check` passes locally; PR CI is green (tests run on Linux only on PRs).
+- After merge, the `main` CI run is green on all three OSes. For platform-sensitive changes (UI, file system, paths),
+  run the full matrix before merging via Actions → CI → Run workflow on the PR branch.
 - Coverage gate passes.
 - Docs updated (`docs/architecture/ARCHITECTURE.md` / ADR / crate docs) if behaviour or structure changed.
 - PR description: what changed, why, how it was tested, plain-English summary for a non-Rust reader.
