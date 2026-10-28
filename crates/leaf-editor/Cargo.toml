@@ -1,0 +1,10 @@
+[package]
+name = "leaf-editor"
+description = "UI-free editor logic for Leaf: cursor, selection, key rules and view models"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

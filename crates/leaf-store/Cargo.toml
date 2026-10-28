@@ -1,0 +1,10 @@
+[package]
+name = "leaf-store"
+description = "SQLite persistence, autosave and crash recovery for Leaf"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true

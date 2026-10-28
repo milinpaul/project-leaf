@@ -1,0 +1,3 @@
+# Tests may panic on failure; CLAUDE.md only bans unwrap/expect outside tests.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

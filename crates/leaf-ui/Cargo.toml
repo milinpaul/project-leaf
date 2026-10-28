@@ -1,0 +1,10 @@
+[package]
+name = "leaf-ui"
+description = "GPUI components and theme that render Leaf view models"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
