@@ -27,3 +27,4 @@ Records cover two kinds of decision:
 | [0008](0008-schema-migrations.md) | Forward-only schema migrations and SQLite settings | Architecture | Accepted |
 | [0009](0009-workspace-lock.md) | One app per workspace via an OS file lock | Architecture | Accepted |
 | [0010](0010-saving-unsaved-changes.md) | Documents track their own unsaved changes | Architecture | Accepted |
+| [0011](0011-autosave-throttle.md) | Autosave throttles from the first change, with a clock-free policy | Architecture | Accepted |

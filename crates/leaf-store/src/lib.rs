@@ -22,12 +22,14 @@
 //! **Boundaries:** core crate, native only. No GPUI and no `leaf-ui`. Depends only on
 //! `leaf-core` and `leaf-model`.
 
+mod autosave;
 mod docs;
 mod error;
 pub mod migrations;
 mod store;
 mod workspace;
 
+pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
 pub use docs::{DocKey, Document};
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;
