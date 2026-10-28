@@ -51,8 +51,8 @@
       "goal": "SQLite storage of Loro docs, autosave, compaction, crash safety, assets.",
       "path": "backlog/epics/E03.md",
       "story_count": 8,
-      "done_count": 5,
-      "progress": 0.62
+      "done_count": 6,
+      "progress": 0.75
     },
     {
       "id": "E04",
@@ -83,9 +83,9 @@
       "status": "todo",
       "goal": "Theme, window, sidebar page tree, quick switcher, page header, trash.",
       "path": "backlog/epics/E06.md",
-      "story_count": 7,
+      "story_count": 9,
       "done_count": 1,
-      "progress": 0.14
+      "progress": 0.11
     },
     {
       "id": "E07",
@@ -1739,7 +1739,7 @@
       "id": "E03-S08",
       "title": "App opens a workspace folder and autosaves",
       "epic": "E03",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1791,7 +1791,7 @@
       "id": "E04-S01",
       "title": "Editor state and view model",
       "epic": "E04",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1800,33 +1800,38 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Flattened, render-ready view of a page: blocks with depth, list numbering, text runs with marks.",
       "acceptance": [
         {
           "text": "View model rebuilt incrementally from Loro change events",
-          "done": false
+          "done": true
         },
         {
           "text": "Numbered lists numbered at render time, restart rules tested",
-          "done": false
+          "done": true
         },
         {
           "text": "insta snapshot tests for representative pages",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **`leaf-model`:** `PageDoc` subscribes to Loro's change events and records which blocks each change touched,\n  and whether the outline changed (create, move, delete).\n  - `take_changes()` hands them over as `BlockId`s; no Loro types leave the model.\n- **`leaf-editor/src/view.rs`:** `PageView` is the flattened, render-ready page. Each `BlockRow` has its depth,\n  its style with the list number, its plain text and its text runs with marks.\n  - **`refresh(doc)`:**\n    - re-reads only the touched blocks;\n    - if the outline changed or a block changed kind, it re-walks the tree to get the order, depth and\n      numbering, reusing the cached text of untouched blocks;\n    - otherwise it patches rows in place.\n  - `PageEditor::view()` uses it; `rows()` stays as the full rebuild.\n- **Numbering** at render time: consecutive numbered siblings count 1, 2, 3. Any other sibling restarts the count.\n  Nested lists count on their own, and a numbered item's children don't break its parent's run.\n- **Tests:**\n  - **Property test:** random commands plus undo and redo; after each step the incremental view equals a fresh\n    rebuild, and only touched blocks were re-read.\n  - **Numbering:** a unit test per restart rule.\n  - **Snapshots:** `insta` for representative pages: nested numbered lists, to-dos, code, marks, an unknown block.\n- **The UI** draws from `view()`.",
       "path": "backlog/stories/E04-S01.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/29",
+          "number": 29
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E04-S02",
@@ -2764,6 +2769,117 @@
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
+    },
+    {
+      "id": "E06-S08",
+      "title": "Recent workspaces and last-opened memory",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E03-S08"
+      ],
+      "labels": [
+        "leaf-store",
+        "workspace"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "The spec's \"Create or open a workspace (a local directory)\" needs the app to remember workspaces. This is the\ntestable logic behind the welcome screen (E06-S09): a small settings file in the OS app-settings folder.",
+      "acceptance": [
+        {
+          "text": "Settings file (JSON) in the platform's app-config folder; unknown fields preserved",
+          "done": false
+        },
+        {
+          "text": "Remembers the last opened workspace and a recent list (most recent first, max 10, no duplicates)",
+          "done": false
+        },
+        {
+          "text": "Missing or moved workspaces are flagged, not silently dropped; \"Remove from list\" supported",
+          "done": false
+        },
+        {
+          "text": "Corrupt or unreadable settings file → start fresh with a logged warning, never a crash",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S08.md",
+      "prs": [],
+      "waiting_on": [],
+      "ready": true,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S09",
+      "title": "Welcome screen",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E06-S08"
+      ],
+      "labels": [
+        "leaf-ui",
+        "workspace",
+        "design"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "A polished start page that makes Leaf feel premium, like the start screens of Obsidian, Linear or Arc. It is\nwhere you create, open and switch workspaces. Spec: \"Create or open a workspace (a local directory)\".",
+      "acceptance": [
+        {
+          "text": "**When it shows:**",
+          "done": false
+        },
+        {
+          "text": "**Layout:**",
+          "done": false
+        },
+        {
+          "text": "**Create:** pick a name and location (default `~/Documents/Leaf`), then the workspace opens straight away.",
+          "done": false
+        },
+        {
+          "text": "**Open:** the native folder dialog. A folder that isn't a Leaf workspace gets a clear message, with an offer",
+          "done": false
+        },
+        {
+          "text": "**Recent:**",
+          "done": false
+        },
+        {
+          "text": "**Look and feel:**",
+          "done": false
+        },
+        {
+          "text": "**Menu:** \"New Workspace…\", \"Open Workspace…\", \"Open Recent\" and \"Switch Workspace…\" (Cmd/Ctrl shortcuts).",
+          "done": false
+        },
+        {
+          "text": "**Verified with screenshots** in light and dark, on the first launch, with recent workspaces, and in the",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S09.md",
+      "prs": [],
+      "waiting_on": [
+        "E06-S08"
+      ],
+      "ready": false,
+      "progress": 0.0
     },
     {
       "id": "E07-S01",

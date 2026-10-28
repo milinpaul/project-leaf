@@ -9,57 +9,7 @@ pub use leaf_model::Caret;
 use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOutcome};
 
 use crate::EditorError;
-
-/// How to draw a block. Mirrors `BlockKind`, but with what the screen needs: list numbers are worked
-/// out here, never stored.
-#[derive(Debug, Clone, PartialEq)]
-pub enum BlockStyle {
-    /// Plain text.
-    Paragraph,
-    /// Heading 1 to 3.
-    Heading(u8),
-    /// A bullet point.
-    Bulleted,
-    /// A numbered item, with its number among consecutive numbered siblings.
-    Numbered(usize),
-    /// A checkbox item.
-    Todo {
-        /// Whether it is ticked.
-        checked: bool,
-    },
-    /// A quotation.
-    Quote,
-    /// Code, shown in a monospace font.
-    Code {
-        /// Language label; may be empty.
-        language: String,
-    },
-    /// A horizontal line.
-    Divider,
-    /// A picture; drawn as a placeholder until images render (E07-S08).
-    Image {
-        /// Description for screen readers.
-        alt: String,
-    },
-    /// A kind from a newer version, drawn read-only.
-    Unknown {
-        /// The stored type name.
-        type_name: String,
-    },
-}
-
-/// One block, ready to draw.
-#[derive(Debug, Clone, PartialEq)]
-pub struct BlockRow {
-    /// The block.
-    pub id: BlockId,
-    /// Nesting depth: 0 for top-level blocks.
-    pub depth: usize,
-    /// How to draw it.
-    pub style: BlockStyle,
-    /// Its plain text, or `None` for blocks without text.
-    pub text: Option<String>,
-}
+use crate::view::{BlockRow, PageView};
 
 /// What Backspace at the start of a block did.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -75,13 +25,18 @@ pub enum Backspace {
 /// A page's blocks being edited.
 pub struct PageEditor {
     doc: PageDoc,
+    /// The rows as last drawn, refreshed from the page's changes.
+    view: PageView,
 }
 
 impl PageEditor {
     /// Starts editing `doc`.
     #[must_use]
     pub fn new(doc: PageDoc) -> Self {
-        Self { doc }
+        Self {
+            doc,
+            view: PageView::default(),
+        }
     }
 
     /// The page document, for read queries.
@@ -90,11 +45,17 @@ impl PageEditor {
         &self.doc
     }
 
-    /// Every block in reading order, with its depth and style.
+    /// Every block in reading order, with its depth and style, built from scratch. For drawing use
+    /// [`PageEditor::view`], which re-reads only what changed.
     pub fn rows(&self) -> Result<Vec<BlockRow>, EditorError> {
-        let mut rows = Vec::with_capacity(self.doc.len());
-        self.collect_rows(self.doc.root_blocks(), 0, &mut rows)?;
-        Ok(rows)
+        Ok(PageView::build(&self.doc)?.rows().to_vec())
+    }
+
+    /// Every block in reading order, ready to draw, updated with only the blocks that changed since
+    /// the last call.
+    pub fn view(&mut self) -> Result<&[BlockRow], EditorError> {
+        self.view.refresh(&self.doc)?;
+        Ok(self.view.rows())
     }
 
     /// The first block, creating an empty paragraph on an empty page so there is somewhere to type.
@@ -276,43 +237,6 @@ impl PageEditor {
             unreachable!("InsertBlock always reports the block it created");
         };
         Ok(id)
-    }
-
-    fn collect_rows(
-        &self,
-        blocks: Vec<BlockId>,
-        depth: usize,
-        rows: &mut Vec<BlockRow>,
-    ) -> Result<(), EditorError> {
-        let mut number = 0;
-        for id in blocks {
-            let kind = self.doc.kind(id)?;
-            number = if matches!(kind, BlockKind::NumberedList) {
-                number + 1
-            } else {
-                0
-            };
-            let style = match kind {
-                BlockKind::Paragraph => BlockStyle::Paragraph,
-                BlockKind::Heading { level } => BlockStyle::Heading(level),
-                BlockKind::BulletedList => BlockStyle::Bulleted,
-                BlockKind::NumberedList => BlockStyle::Numbered(number),
-                BlockKind::Todo { checked } => BlockStyle::Todo { checked },
-                BlockKind::Quote => BlockStyle::Quote,
-                BlockKind::Code { language } => BlockStyle::Code { language },
-                BlockKind::Divider => BlockStyle::Divider,
-                BlockKind::Image { alt, .. } => BlockStyle::Image { alt },
-                BlockKind::Unknown { type_name } => BlockStyle::Unknown { type_name },
-            };
-            rows.push(BlockRow {
-                id,
-                depth,
-                style,
-                text: self.doc.plain_text(id)?,
-            });
-            self.collect_rows(self.doc.children(id)?, depth + 1, rows)?;
-        }
-        Ok(())
     }
 }
 

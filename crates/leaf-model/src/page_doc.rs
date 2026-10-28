@@ -30,6 +30,8 @@ pub struct PageDoc {
     index: BlockIndex,
     undo: UndoManager,
     saved: SavedVersion,
+    pending: Arc<std::sync::Mutex<changes::Pending>>,
+    _events: loro::Subscription,
     carets: Arc<undo::CaretSlots>,
 }
 
@@ -49,12 +51,16 @@ impl PageDoc {
         let carets = Arc::new(undo::CaretSlots::default());
         let undo = undo::manager(&doc, &carets);
         let saved = SavedVersion::of(&doc);
+        let pending = Arc::default();
+        let events = changes::watch(&doc, &pending);
         Self {
             doc,
             tree,
             index: BlockIndex::default(),
             undo,
             saved,
+            pending,
+            _events: events,
             carets,
         }
     }
@@ -91,12 +97,17 @@ impl PageDoc {
         let carets = Arc::new(undo::CaretSlots::default());
         let undo = undo::manager(&doc, &carets);
         let saved = SavedVersion::of(&doc);
+        // Watching starts after the load, so loading itself isn't reported as a change.
+        let pending = Arc::default();
+        let events = changes::watch(&doc, &pending);
         Ok(Self {
             doc,
             tree,
             index,
             undo,
             saved,
+            pending,
+            _events: events,
             carets,
         })
     }
@@ -272,8 +283,10 @@ fn block_id_of(tree: &LoroTree, node: TreeID) -> Result<BlockId, ModelError> {
 }
 
 mod apply;
+mod changes;
 mod invariants;
 
+pub use changes::Changes;
 pub use invariants::InvariantViolation;
 pub use undo::{Caret, History};
 

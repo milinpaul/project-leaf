@@ -30,3 +30,4 @@ Records cover two kinds of decision:
 | [0011](0011-autosave-throttle.md) | Autosave throttles from the first change, with a clock-free policy | Architecture | Accepted |
 | [0012](0012-skip-damaged-updates.md) | Skip damaged saved updates instead of failing the load | Architecture | Accepted |
 | [0013](0013-app-workspace-and-autosave-wiring.md) | How the app opens its workspace and runs autosave | Feature | Accepted |
+| [0014](0014-incremental-page-view.md) | Incremental page view from Loro change events | Architecture | Accepted |

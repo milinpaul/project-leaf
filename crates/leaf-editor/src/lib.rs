@@ -9,7 +9,9 @@
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
 mod page_editor;
+mod view;
 mod workspace_editor;
 
-pub use page_editor::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
+pub use page_editor::{Backspace, Caret, PageEditor};
+pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};
