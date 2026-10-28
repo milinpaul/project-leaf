@@ -4,7 +4,7 @@
 
 | Area | Choice | Notes |
 |---|---|---|
-| Language | Rust, latest stable, edition 2024 | Pinned in `rust-toolchain.toml`. |
+| Language | Rust 1.99.1, edition 2024 | Pinned in `rust-toolchain.toml`; CI and dev machines use the same version. Bump deliberately in its own PR. |
 | UI | GPUI + `gpui-component` (Longbridge) | Use the gpui version gpui-component pins. All GPUI usage stays inside `leaf-ui` and `leaf-app`. |
 | Document model | `loro` 1.x | `LoroTree` for page and block hierarchy, `LoroText` for rich text, `UndoManager` for undo. |
 | Persistence | SQLite via `rusqlite` (`bundled`) | Stores Loro snapshots + incremental updates, plus index tables. |
