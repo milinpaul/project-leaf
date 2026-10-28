@@ -18,8 +18,8 @@
       "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
       "path": "backlog/epics/E00.md",
       "story_count": 9,
-      "done_count": 5,
-      "progress": 0.56
+      "done_count": 6,
+      "progress": 0.67
     },
     {
       "id": "E01",
@@ -39,7 +39,7 @@
       "status": "todo",
       "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
       "path": "backlog/epics/E02.md",
-      "story_count": 9,
+      "story_count": 10,
       "done_count": 0,
       "progress": 0.0
     },
@@ -355,7 +355,7 @@
       "id": "E00-S05",
       "title": "Spike: Loro tree, rich text and undo",
       "epic": "E00",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -365,41 +365,46 @@
         "spike",
         "leaf-model"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Throwaway-quality test file proving the Loro features docs/architecture/BLOCK_MODEL.md relies on.",
       "acceptance": [
         {
           "text": "Test shows LoroTree with fractional index ordering and node moves",
-          "done": false
+          "done": true
         },
         {
           "text": "Test shows LoroText marks with configured expand behaviour",
-          "done": false
+          "done": true
         },
         {
           "text": "Test shows UndoManager undo/redo across tree + text edits",
-          "done": false
+          "done": true
         },
         {
           "text": "Test shows two docs syncing via updates",
-          "done": false
+          "done": true
         },
         {
           "text": "Findings recorded in the Loro ADR",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- `crates/leaf-model/tests/loro_spike.rs`: one test per acceptance criterion against `loro` 1.17 (dev-dependency\n  only, so no production code depends on it yet). Throwaway quality, but it must pass `just check`.\n- Tree: create nodes with fractional-index ordering, reorder siblings, move a node to a new parent, check order.\n- Text: `config_text_style` with the BLOCK_MODEL.md expand table, then check marks grow or not when typing at edges.\n- Undo: one `UndoManager`, commits that edit tree and text, undo and redo back to the exact earlier state.\n- Sync: two docs with different peer ids exchange updates, both converge.\n- Record findings (API names, surprises, gaps) in ADR 0001.\n- Risk: the Loro API differs from BLOCK_MODEL.md's assumptions. Note any gaps rather than redesign here.",
       "path": "backlog/stories/E00-S05.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/7",
+          "number": 7
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E00-S06",
@@ -494,7 +499,7 @@
       "id": "E00-S08",
       "title": "Run the three-OS test matrix on main only",
       "epic": "E00",
-      "status": "review",
+      "status": "done",
       "priority": "P2",
       "size": "S",
       "depends_on": [],
@@ -864,7 +869,8 @@
       "size": "M",
       "depends_on": [
         "E01-S01",
-        "E00-S05"
+        "E00-S05",
+        "E02-S10"
       ],
       "labels": [
         "leaf-model"
@@ -899,7 +905,8 @@
       "prs": [],
       "waiting_on": [
         "E01-S01",
-        "E00-S05"
+        "E00-S05",
+        "E02-S10"
       ],
       "ready": false,
       "progress": 0.0
@@ -1277,6 +1284,46 @@
       "prs": [],
       "waiting_on": [
         "E02-S07"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S10",
+      "title": "Stable block IDs independent of Loro TreeIDs",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E00-S05"
+      ],
+      "labels": [
+        "leaf-model",
+        "decision"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "The E00-S05 spike found that Loro gives a block a new `TreeID` whenever undo or redo re-creates it (undo of a\ndelete, redo of a create). BLOCK_MODEL.md assumes `BlockId = TreeID` is stable, which cursor restore on undo and\nPhase 1 block links rely on. An ID stored in the block's meta survives every undo/redo cycle (see\n`crates/leaf-model/tests/loro_spike.rs`). Decide the block identity scheme before E02-S01 builds on it.",
+      "acceptance": [
+        {
+          "text": "ADR choosing the scheme (likely: a stable `BlockId` in each block's meta, `TreeID` as an internal handle;",
+          "done": false
+        },
+        {
+          "text": "docs/architecture/BLOCK_MODEL.md updated: IDs table, page doc meta, invariant 7 wording",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S10.md",
+      "prs": [],
+      "waiting_on": [
+        "E00-S05"
       ],
       "ready": false,
       "progress": 0.0
