@@ -8,6 +8,8 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
+mod page_editor;
 mod workspace_editor;
 
+pub use page_editor::{BlockRow, BlockStyle, PageEditor};
 pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};

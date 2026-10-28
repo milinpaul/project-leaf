@@ -54,6 +54,11 @@ framework swap stays inside one crate.
   builds embed assets with `rust-embed`.
 - **Pain points.** Documentation is thin: the README targets the `gpui_kit` umbrella crate, so APIs had to be
   read from source. gpui's platform layer is a separate crate (`gpui-pre-platform`), which is easy to miss.
+- **Icons need registering (found in E07-S10).** gpui-component draws icons such as the checkbox tick from
+  `gpui-kit-assets` (`=0.8.1`), which the app must register with `with_assets`; without it they render as blank
+  shapes. `leaf_ui::assets()` provides it, so `leaf-app` still never imports gpui-component.
+- **Keys inside inputs.** Inputs bind Tab, Backspace and the arrows to their own actions; a parent can catch
+  those actions in the capture phase (`capture_action`) and stop them, which is how the block editor takes Tab.
 - **Missing for Leaf.** No block-based rich-text editor. gpui-component's `Input`/`Editor` are single text
   areas, so the block editor (E07) needs our own text element. `Sidebar`, `Tree`, `Dialog`, menus and
   popovers cover the shell (E06).

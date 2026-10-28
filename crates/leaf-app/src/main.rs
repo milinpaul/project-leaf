@@ -9,6 +9,7 @@ use gpui::{App, Bounds, QuitMode, WindowBounds, WindowOptions, px, size};
 
 fn main() {
     gpui_platform::application()
+        .with_assets(leaf_ui::assets())
         .with_quit_mode(QuitMode::LastWindowClosed)
         .run(|cx: &mut App| {
             leaf_ui::init(cx);

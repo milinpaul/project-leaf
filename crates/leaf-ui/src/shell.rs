@@ -24,6 +24,8 @@ pub struct Shell {
     editor: WorkspaceEditor,
     /// Title field of the open page. Typing in it renames the page.
     title: Entity<InputState>,
+    /// The open page's block inputs (interim editor, E07-S10).
+    blocks: blocks::BlockInputs,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -36,6 +38,7 @@ impl Shell {
         Self {
             editor: WorkspaceEditor::new(Workspace::new()),
             title,
+            blocks: blocks::BlockInputs::default(),
             _subscriptions: subscriptions,
         }
     }
@@ -80,15 +83,20 @@ impl Shell {
         &mut self,
         input: &Entity<InputState>,
         event: &InputEvent,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let InputEvent::Change = event {
-            let text = input.read(cx).value().to_string();
-            if let Err(err) = self.editor.rename_selected(&text) {
-                report("could not rename the page", err);
+        match event {
+            InputEvent::Change => {
+                let text = input.read(cx).value().to_string();
+                if let Err(err) = self.editor.rename_selected(&text) {
+                    report("could not rename the page", err);
+                }
+                cx.notify();
             }
-            cx.notify();
+            // Enter in the title moves into the page's first block.
+            InputEvent::PressEnter { .. } => self.focus_first_block(window, cx),
+            _ => {}
         }
     }
 
@@ -109,7 +117,7 @@ impl Shell {
 }
 
 impl Render for Shell {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let items = self.editor.sidebar().unwrap_or_else(|err| {
             report("could not list pages", err);
             Vec::new()
@@ -140,6 +148,7 @@ impl Render for Shell {
                     .line_height(rems(2.25))
                     .px_0(),
             )
+            .child(self.render_blocks(window, cx))
         } else {
             page.child(
                 div()
@@ -156,6 +165,8 @@ impl Render for Shell {
             .child(page)
     }
 }
+
+mod blocks;
 
 /// Current time in Unix milliseconds. The UI owns the clock so the model never reads it.
 fn now_ms() -> i64 {
@@ -228,5 +239,55 @@ mod tests {
         let after = shell.read_with(cx, |shell, _| shell.editor().workspace().to_bytes().unwrap());
         assert_eq!(before, after, "opening a page records no change");
         assert_eq!(labels(&shell, cx), vec!["First", "Second"]);
+    }
+
+    /// The open page's blocks as (depth, text).
+    fn blocks(shell: &gpui::Entity<Shell>, cx: &mut VisualTestContext) -> Vec<(usize, String)> {
+        shell.read_with(cx, |shell, _| {
+            let page = shell.editor().selected().unwrap();
+            let rows = shell.editor().page_editor(page).unwrap().rows().unwrap();
+            rows.into_iter()
+                .map(|row| (row.depth, row.text.unwrap_or_default()))
+                .collect()
+        })
+    }
+
+    #[gpui::test]
+    fn typing_enter_and_tab_edit_the_page_blocks(cx: &mut TestAppContext) {
+        let (shell, cx) = open_shell(cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        cx.simulate_keystrokes("enter"); // from the title into the first block
+        cx.simulate_input("Hello");
+        cx.simulate_keystrokes("enter");
+        cx.simulate_input("World");
+        cx.simulate_keystrokes("tab");
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+        assert_eq!(blocks(&shell, cx), vec![(0, "Hello".into()), (1, "World".into())]);
+
+        cx.simulate_keystrokes("shift-tab");
+        assert_eq!(blocks(&shell, cx), vec![(0, "Hello".into()), (0, "World".into())]);
+    }
+
+    #[gpui::test]
+    fn backspace_in_an_empty_block_removes_it_and_focuses_the_one_above(cx: &mut TestAppContext) {
+        let (shell, cx) = open_shell(cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        cx.simulate_keystrokes("enter");
+        cx.simulate_input("Keep");
+        let first = shell.read_with(cx, |shell, _| shell.focused_block().unwrap());
+        cx.simulate_keystrokes("enter");
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+        assert_eq!(blocks(&shell, cx).len(), 2);
+
+        cx.simulate_keystrokes("backspace");
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+        assert_eq!(blocks(&shell, cx), vec![(0, "Keep".into())]);
+        assert_eq!(shell.read_with(cx, |shell, _| shell.focused_block()), Some(first));
+        cx.simulate_keystrokes("backspace");
+        assert_eq!(
+            blocks(&shell, cx),
+            vec![(0, "Kee".into())],
+            "a non-empty block gets an ordinary backspace"
+        );
     }
 }
