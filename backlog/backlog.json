@@ -686,7 +686,7 @@
       "id": "E01-S03",
       "title": "Page commands: create, rename, icon",
       "epic": "E01",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -723,7 +723,12 @@
       ],
       "plan": "- `leaf-model/src/command.rs`: `WorkspaceCommand` enum (`CreatePage`, `RenamePage`, `SetPageIcon`, more in\n  E01-S04/S05) and `Outcome` (`PageCreated(PageId)` or `Changed`). `Workspace::apply` is the only write path.\n- Each `apply` validates first, then writes, then calls `commit()` once, so a rejected command leaves no\n  half-written changes and every command is one undo step later (E01-S06).\n- `CreatePage { parent, index, title, created_at }`: the model mints the `PageId` and returns it. The caller\n  supplies `created_at` (Unix ms): reading the clock panics on wasm32, and tests stay deterministic.\n- `SetPageIcon { page, icon: Option<String> }`: `None` clears it. An empty string is rejected. Whether the text\n  is a single emoji is left to the emoji picker, since the spec says only \"optional emoji icon\".\n- New errors: index out of range, empty icon.\n- Tests: each command, each error, rejected commands write nothing, one commit per command (counted with\n  `subscribe_local_update`), reload after commands. Update BLOCK_MODEL.md's command list.",
       "path": "backlog/stories/E01-S03.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/11",
+          "number": 11
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
