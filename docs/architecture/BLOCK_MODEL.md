@@ -226,7 +226,9 @@ CREATE TABLE assets (
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version, etc.
 ```
 
-- **Autosave:** append Loro updates to `doc_updates` at most every 300 ms and on blur/quit (WAL mode).
+- **Autosave (`Autosave`):** each document is saved at most 300 ms after its *first* unsaved change (a throttle,
+  so steady typing can't postpone it), and everything pending is saved on blur/quit. The policy takes the time
+  as an argument and runs no timer itself; the app does (ADR 0011).
 - **Compaction:** when a doc has > 200 updates, write a fresh snapshot and delete them, in one transaction.
 - **Saving (`Store::save`):** a document's first save writes its snapshot; each later save appends one update with
   every commit since the previous save (`unsaved_changes` / `mark_saved` on `Workspace` and `PageDoc`). Nothing is
