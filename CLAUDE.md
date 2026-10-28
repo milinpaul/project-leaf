@@ -58,7 +58,7 @@ The owner does not write Rust and relies on these docs to understand the system.
 
 ## Definition of done
 
-- `just check` passes locally; PR CI is green (tests run on Linux only on PRs).
+- `just check` passes locally; PR CI is green (PRs skip the test job; core-crate tests run in the coverage job).
 - After merge, the `main` CI run is green on all three OSes. For platform-sensitive changes (UI, file system, paths),
   run the full matrix before merging via Actions → CI → Run workflow on the PR branch.
 - Coverage gate passes.
