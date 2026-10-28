@@ -8,7 +8,7 @@ use leaf_core::PageId;
 
 /// A change to the workspace doc: the page tree and each page's title, icon and trash state.
 ///
-/// Applied with [`Workspace::apply`](crate::Workspace::apply). Trash arrives in E01-S05.
+/// Applied with [`Workspace::apply`](crate::Workspace::apply); undone with [`Workspace::undo`](crate::Workspace::undo).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorkspaceCommand {
     /// Adds a page under `parent` (or at the top level when `None`) at position `index` among its
@@ -51,13 +51,38 @@ pub enum WorkspaceCommand {
         /// `0` makes it first and the sibling count makes it last, even within the same parent.
         index: usize,
     },
+    /// Moves a page, and everything inside it, to the trash. It stays where it is, hidden from
+    /// listings, so restoring puts it back in place.
+    TrashPage {
+        /// Page to trash. Cannot already be in the trash.
+        page: PageId,
+        /// When it was trashed, in Unix milliseconds, supplied by the caller.
+        at: i64,
+    },
+    /// Takes a page out of the trash. If the page it lived in is itself in the trash, it goes to the
+    /// end of the top level instead, so it doesn't stay hidden.
+    RestorePage {
+        /// A page that was trashed on its own (listed by `Workspace::trash`).
+        page: PageId,
+    },
+    /// Deletes a page in the trash, and everything inside it, for good. Reports every deleted page in
+    /// [`Outcome::PagesDeleted`] so storage can drop their documents.
+    DeletePagePermanently {
+        /// A page in the trash, directly or inside a trashed page.
+        page: PageId,
+    },
 }
 
 /// What applying a command produced.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Outcome {
     /// A page was created with this ID.
     PageCreated(PageId),
-    /// The document changed; nothing new to report.
+    /// The document changed, as exactly one undo step; nothing new to report.
     Changed,
+    /// The command was valid but would change nothing, so nothing was written and there is no undo
+    /// step: for example, renaming a page to its current title.
+    Unchanged,
+    /// These pages were deleted for good: the page asked for and everything inside it, parents first.
+    PagesDeleted(Vec<PageId>),
 }

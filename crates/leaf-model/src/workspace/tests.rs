@@ -33,7 +33,7 @@ fn a_new_workspace_is_empty() {
     for ws in [Workspace::new(), Workspace::default()] {
         assert!(ws.is_empty());
         assert_eq!(ws.len(), 0);
-        assert_eq!(ws.root_pages(), Vec::<PageId>::new());
+        assert_eq!(ws.root_pages().unwrap(), Vec::<PageId>::new());
     }
 }
 
@@ -50,7 +50,7 @@ fn lists_root_pages_and_children_in_order() {
     })
     .unwrap();
 
-    assert_eq!(ws.root_pages(), vec![c, a, b]);
+    assert_eq!(ws.root_pages().unwrap(), vec![c, a, b]);
     assert_eq!(ws.children(a).unwrap(), vec![a1, a2]);
     assert_eq!(ws.children(b).unwrap(), Vec::<PageId>::new());
     assert_eq!(ws.len(), 5);
@@ -95,7 +95,7 @@ fn reads_page_meta_with_and_without_optional_fields() {
 }
 
 #[test]
-fn trashed_pages_are_still_listed() {
+fn trashed_pages_are_hidden_from_listings_but_still_readable() {
     let (a, b) = (PageId::new(), PageId::new());
     let ws = load(|tree| {
         let node = raw_page(tree, None, a, "Gone");
@@ -106,8 +106,18 @@ fn trashed_pages_are_still_listed() {
         raw_page(tree, Some(node), b, "Inside");
     })
     .unwrap();
-    assert_eq!(ws.root_pages(), vec![a]);
-    assert_eq!(ws.children(a).unwrap(), vec![b]);
+    assert_eq!(
+        ws.root_pages().unwrap(),
+        Vec::<PageId>::new(),
+        "a trashed page is not listed"
+    );
+    assert_eq!(
+        ws.children(a).unwrap(),
+        vec![b],
+        "its contents can still be read, for the trash view"
+    );
+    assert!(ws.contains(a) && ws.contains(b));
+    assert_eq!(ws.trash().unwrap(), vec![a]);
 }
 
 #[test]
@@ -133,7 +143,7 @@ fn bytes_round_trip_keeps_pages_order_and_unknown_fields() {
     .unwrap();
 
     let again = Workspace::from_bytes(&ws.to_bytes().unwrap()).unwrap();
-    assert_eq!(again.root_pages(), vec![a]);
+    assert_eq!(again.root_pages().unwrap(), vec![a]);
     assert_eq!(again.children(a).unwrap(), vec![b]);
     assert_eq!(again.page(b).unwrap().title, "B");
     let meta = again.tree.get_meta(again.node(a).unwrap()).unwrap();

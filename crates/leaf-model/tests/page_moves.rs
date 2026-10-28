@@ -90,8 +90,8 @@ impl Reference {
     /// Checks every parent's children, in order, against the workspace.
     fn assert_matches(&self, ws: &Workspace) {
         assert_eq!(
-            ws.root_pages(),
-            self.children.get(&None).cloned().unwrap_or_default(),
+            ws.root_pages().ok(),
+            Some(self.children.get(&None).cloned().unwrap_or_default()),
             "top level"
         );
         for &page in self.parent.keys() {
@@ -105,7 +105,7 @@ impl Reference {
 fn verdict(result: Result<Outcome, ModelError>) -> (Verdict, Option<PageId>) {
     match result {
         Ok(Outcome::PageCreated(page)) => (Verdict::Ok, Some(page)),
-        Ok(Outcome::Changed) => (Verdict::Ok, None),
+        Ok(Outcome::Changed | Outcome::Unchanged | Outcome::PagesDeleted(_)) => (Verdict::Ok, None),
         Err(ModelError::IndexOutOfRange { .. }) => (Verdict::OutOfRange, None),
         Err(ModelError::MoveIntoOwnSubtree { .. }) => (Verdict::IntoOwnSubtree, None),
         Err(other) => panic!("unexpected error: {other}"),

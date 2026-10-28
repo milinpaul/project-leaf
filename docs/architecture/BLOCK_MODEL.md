@@ -109,7 +109,16 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
 - `RenamePage { page, title }`, `SetPageIcon { page, icon: Option<String> }` (`None` clears the icon)
 - `MovePage { page, new_parent, index }`: `index` is the page's final position among its new siblings, counted
   without the page itself; moving a page into itself or one of its descendants is rejected
-- `TrashPage`, `RestorePage`, `DeletePagePermanently`
+- `TrashPage { page, at }`: sets `trashed_at`; the page stays in place, hidden with everything inside it from
+  `root_pages`/`children` (listed by `trash()` instead). No creating or moving into the trash, and a page in the
+  trash can't be moved until restored.
+- `RestorePage { page }`: clears `trashed_at`; if the page it lived in is itself in the trash, the page moves to the
+  end of the top level so it doesn't stay hidden
+- `DeletePagePermanently { page }`: only for pages in the trash; deletes the subtree and returns every deleted
+  `PageId` (`Outcome::PagesDeleted`) so storage can drop their page docs
+- A command that would change nothing (same title, same icon, same position) writes nothing and returns
+  `Outcome::Unchanged`, so it leaves no empty undo step
+- Positions (`index`) count every child, including pages in the trash, while `root_pages`/`children` hide them
 
 **Block commands (page doc)**
 - `InsertBlock { parent: Option<BlockId>, index, kind, text }`
@@ -129,6 +138,8 @@ Positions are Unicode scalar offsets as used by Loro; the editor converts to and
 ## Undo / redo
 
 - One Loro `UndoManager` per open page doc, plus one for the workspace doc.
+- Workspace: `Workspace::undo`/`redo`. The manager is created after loading, so saved history is not undoable;
+  after each undo/redo the `PageId → TreeID` index is rebuilt (ADR 0006).
 - Each command commits once, so it is one undo step. Continuous typing is grouped with the manager's merge interval (~500 ms).
 - Cursor and selection are stored with each undo step and restored on undo/redo.
 

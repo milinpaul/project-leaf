@@ -29,8 +29,8 @@
       "goal": "leaf-core IDs and the Loro workspace doc: pages nested in pages, trash, undo.",
       "path": "backlog/epics/E01.md",
       "story_count": 6,
-      "done_count": 3,
-      "progress": 0.5
+      "done_count": 4,
+      "progress": 0.67
     },
     {
       "id": "E02",
@@ -737,7 +737,7 @@
       "id": "E01-S04",
       "title": "Page commands: move and reorder",
       "epic": "E01",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -788,7 +788,7 @@
       "id": "E01-S05",
       "title": "Trash, restore, permanent delete",
       "epic": "E01",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -798,43 +798,48 @@
         "leaf-model",
         "commands"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Soft delete via trashed_at; subtree hidden from normal queries.",
       "acceptance": [
         {
           "text": "TrashPage hides the subtree from list queries",
-          "done": false
+          "done": true
         },
         {
           "text": "Trash query lists trashed roots",
-          "done": false
+          "done": true
         },
         {
           "text": "RestorePage restores to the original parent or root if parent is gone",
-          "done": false
+          "done": true
         },
         {
           "text": "DeletePagePermanently removes subtree and reports page ids to delete from storage",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "Done with E01-S06 on one branch (owner request). New module `workspace/trash.rs`.\n- `TrashPage { page, at }` sets `trashed_at` (the caller supplies the time). The page stays in place, so its\n  original parent is remembered. \"In the trash\" means the page or any ancestor has `trashed_at`.\n- `root_pages` and `children` skip pages with `trashed_at`, so a trashed subtree disappears from listings.\n  New `trash()` lists every page trashed on its own, most recent first.\n- `RestorePage { page }` clears `trashed_at`. If an ancestor is still in the trash (the parent is \"gone\"), it\n  also moves the page to the end of the top level, so it doesn't stay invisible.\n- `DeletePagePermanently { page }` works only on pages in the trash. It deletes the subtree and returns\n  `Outcome::PagesDeleted(ids)` so storage can drop their page docs (E03).\n- Rules: no creating or moving into the trash, and a page in the trash can't be moved (restore it first).\n  New errors `PageInTrash` and `NotInTrash`. Rename and icon still work in the trash.\n- Tests: each command and rule, hidden subtrees, restore when the parent is gone, the deleted-ID list.",
       "path": "backlog/stories/E01-S05.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/14",
+          "number": 14
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E01-S06",
       "title": "Workspace undo/redo",
       "epic": "E01",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -845,32 +850,36 @@
         "leaf-model",
         "undo"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "UndoManager for the workspace doc.",
       "acceptance": [
         {
           "text": "Every page command undoes and redoes exactly",
-          "done": false
+          "done": true
         },
         {
           "text": "Property test: random page commands then full undo returns initial state",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- `Workspace` owns a Loro `UndoManager`, created after load so loaded history is not undoable.\n  `undo()` / `redo()` return whether anything changed. Commits within the merge interval form one step; the\n  default is 500 ms, as BLOCK_MODEL.md says (typing a title), and `set_undo_merge_interval` changes it (tests use 0).\n- After every undo or redo, rebuild the `PageId ↔ TreeID` index: Loro re-creates nodes under new TreeIDs (ADR 0006).\n- \"Exact\" is compared by `PageId`, order, and meta, ignoring TreeIDs (invariant 7 as reworded).\n- Tests: undo and redo of every command type. Property test: random page commands (create, move, rename, icon,\n  trash, restore, delete), recording the outline after each step; undo step by step must match each recorded\n  outline back to the start, and redo all the way must reach the final one.",
       "path": "backlog/stories/E01-S06.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/14",
+          "number": 14
+        }
+      ],
       "waiting_on": [
-        "E01-S04",
         "E01-S05"
       ],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E02-S01",
