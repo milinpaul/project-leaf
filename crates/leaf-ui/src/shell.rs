@@ -1,55 +1,155 @@
 //! The app shell: sidebar on the left, page area on the right.
 //!
-//! Spike version (E00-S04): proves gpui-component's sidebar and text input render and accept
-//! input. The real page tree (E06) and editor (E07) replace the placeholder content.
+//! Draws the sidebar view model from `leaf-editor` and forwards clicks and typing back to it. All
+//! decisions (what is listed, what "New page" does, when a rename is recorded) live in
+//! `WorkspaceEditor`, where they are tested without a window.
 
-use gpui::{App, AppContext as _, Context, Entity, IntoElement, ParentElement, Render, Styled, Window, div};
-use gpui_component::input::{Input, InputState};
+use std::fmt::Display;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use gpui::{
+    AppContext as _, ClickEvent, Context, Entity, FontWeight, IntoElement, ParentElement, Render, Styled,
+    Subscription, Window, div, rems,
+};
+use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::input::{Input, InputEvent, InputState};
 use gpui_component::sidebar::{Sidebar, SidebarGroup, SidebarMenu, SidebarMenuItem};
 use gpui_component::{ActiveTheme as _, h_flex, v_flex};
-
-/// Placeholder page titles shown in the spike sidebar.
-const SAMPLE_PAGES: [&str; 3] = ["Getting started", "Ideas", "Reading list"];
+use leaf_core::PageId;
+use leaf_editor::{SidebarItem, UNTITLED, WorkspaceEditor};
+use leaf_model::Workspace;
 
 /// Top-level view of a Leaf window.
-///
-/// Owns the state of the widgets it shows; later stories feed it view models from `leaf-editor`
-/// instead of holding data itself.
 pub struct Shell {
-    input: Entity<InputState>,
+    editor: WorkspaceEditor,
+    /// Title field of the open page. Typing in it renames the page.
+    title: Entity<InputState>,
+    _subscriptions: Vec<Subscription>,
 }
 
 impl Shell {
-    /// Builds the shell for a new window. Needs the window because text inputs own focus state.
+    /// Builds the shell for a new window around an empty, in-memory workspace. Saving to disk
+    /// arrives with the persistence epic (E03).
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let input = cx.new(|cx| InputState::new(window, cx).placeholder("Type something…"));
-        Self { input }
+        let title = cx.new(|cx| InputState::new(window, cx).placeholder(UNTITLED));
+        let subscriptions = vec![cx.subscribe_in(&title, window, Self::on_title_event)];
+        Self {
+            editor: WorkspaceEditor::new(Workspace::new()),
+            title,
+            _subscriptions: subscriptions,
+        }
     }
 
-    /// Puts the keyboard focus in the input, so the user can type as soon as the window opens.
-    pub fn focus_input(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.input.update(cx, |input, cx| input.focus(window, cx));
-    }
-
-    /// Current text of the spike's input, so tests can check typing reaches it.
+    /// The editor behind this window, for reading its state.
     #[must_use]
-    pub fn input_text(&self, cx: &App) -> String {
-        self.input.read(cx).value().to_string()
+    pub fn editor(&self) -> &WorkspaceEditor {
+        &self.editor
+    }
+
+    /// "New page": creates an untitled page, opens it, and puts the cursor in its title.
+    pub fn new_page(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        match self.editor.new_page(now_ms()) {
+            Ok(_) => self.show_selected(window, cx),
+            Err(err) => report("could not create a page", err),
+        }
+    }
+
+    /// Opens `page` from the sidebar.
+    pub fn open(&mut self, page: PageId, window: &mut Window, cx: &mut Context<Self>) {
+        match self.editor.select(page) {
+            Ok(()) => self.show_selected(window, cx),
+            Err(err) => report("could not open the page", err),
+        }
+    }
+
+    /// Loads the open page's title into the title field and focuses it. `set_value` does not emit
+    /// change events, so this never records a rename.
+    fn show_selected(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let title = match self.editor.selected_title() {
+            Ok(title) => title.unwrap_or_default(),
+            Err(err) => return report("could not read the page title", err),
+        };
+        self.title.update(cx, |input, cx| {
+            input.set_value(title, window, cx);
+            input.focus(window, cx);
+        });
+        cx.notify();
+    }
+
+    fn on_title_event(
+        &mut self,
+        input: &Entity<InputState>,
+        event: &InputEvent,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if let InputEvent::Change = event {
+            let text = input.read(cx).value().to_string();
+            if let Err(err) = self.editor.rename_selected(&text) {
+                report("could not rename the page", err);
+            }
+            cx.notify();
+        }
+    }
+
+    fn sidebar_row(item: SidebarItem, cx: &mut Context<Self>) -> SidebarMenuItem {
+        let label = match item.icon {
+            Some(icon) => format!("{icon} {}", item.label),
+            None => item.label,
+        };
+        let shell = cx.entity().downgrade();
+        let page = item.page;
+        SidebarMenuItem::new(label)
+            .active(item.selected)
+            .on_click(move |_, window, cx| {
+                // The shell outlives its own sidebar rows; if it is gone the window is closing anyway.
+                let _ = shell.update(cx, |shell, cx| shell.open(page, window, cx));
+            })
     }
 }
 
 impl Render for Shell {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let pages = SidebarMenu::new().children(SAMPLE_PAGES.map(SidebarMenuItem::new));
-        let sidebar = Sidebar::new("sidebar").child(SidebarGroup::new("Pages").child(pages));
-        let page = v_flex()
-            .flex_1()
-            .p_6()
-            .gap_3()
-            .child(div().text_xl().child("Leaf"))
-            .child(Input::new(&self.input));
+        let items = self.editor.sidebar().unwrap_or_else(|err| {
+            report("could not list pages", err);
+            Vec::new()
+        });
+        let rows: Vec<_> = items
+            .into_iter()
+            .map(|item| Self::sidebar_row(item, cx))
+            .collect();
+        let new_page = Button::new("new-page")
+            .label("New page")
+            .ghost()
+            .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.new_page(window, cx)));
+        let sidebar = Sidebar::new("sidebar")
+            .header(new_page)
+            .child(SidebarGroup::new("Pages").child(SidebarMenu::new().children(rows)));
+
+        let page = v_flex().flex_1().h_full().p_6().gap_3();
+        let page = if self.editor.selected().is_some() {
+            // The title reads as the page's heading 1, not a form field: no box, large and bold.
+            page.child(
+                Input::new(&self.title)
+                    .appearance(false)
+                    .focus_bordered(false)
+                    .text_3xl()
+                    .font_weight(FontWeight::BOLD)
+                    // The input's own height and line height fit body text; size them to the heading.
+                    .h_12()
+                    .line_height(rems(2.25))
+                    .px_0(),
+            )
+        } else {
+            page.child(
+                div()
+                    .text_color(cx.theme().muted_foreground)
+                    .child("Create a page with New page."),
+            )
+        };
         h_flex()
             .size_full()
+            .items_start()
             .bg(cx.theme().background)
             .text_color(cx.theme().foreground)
             .child(sidebar)
@@ -57,10 +157,24 @@ impl Render for Shell {
     }
 }
 
+/// Current time in Unix milliseconds. The UI owns the clock so the model never reads it.
+fn now_ms() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |since| i64::try_from(since.as_millis()).unwrap_or(i64::MAX))
+}
+
+/// UI actions have no caller to return errors to. They only fail on a corrupt workspace, so log
+/// and keep the window usable. A proper error surface arrives with notifications (E06).
+fn report(what: &str, err: impl Display) {
+    eprintln!("leaf: {what}: {err}");
+}
+
 #[cfg(test)]
 mod tests {
     use super::Shell;
     use gpui::{TestAppContext, VisualTestContext};
+    use leaf_editor::UNTITLED;
 
     fn open_shell(cx: &mut TestAppContext) -> (gpui::Entity<Shell>, &mut VisualTestContext) {
         cx.update(crate::init);
@@ -69,17 +183,50 @@ mod tests {
         (shell, cx)
     }
 
-    #[gpui::test]
-    fn shell_renders_with_an_empty_input(cx: &mut TestAppContext) {
-        let (shell, cx) = open_shell(cx);
-        assert_eq!(shell.read_with(cx, Shell::input_text), "");
+    fn labels(shell: &gpui::Entity<Shell>, cx: &mut VisualTestContext) -> Vec<String> {
+        shell.read_with(cx, |shell, _| {
+            shell
+                .editor()
+                .sidebar()
+                .unwrap()
+                .into_iter()
+                .map(|i| i.label)
+                .collect()
+        })
     }
 
     #[gpui::test]
-    fn typing_reaches_the_focused_input(cx: &mut TestAppContext) {
+    fn starts_with_no_pages(cx: &mut TestAppContext) {
         let (shell, cx) = open_shell(cx);
-        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.focus_input(window, cx)));
-        cx.simulate_input("Hello, Leaf");
-        assert_eq!(shell.read_with(cx, Shell::input_text), "Hello, Leaf");
+        assert_eq!(labels(&shell, cx), Vec::<String>::new());
+    }
+
+    #[gpui::test]
+    fn new_page_then_typing_names_it_in_the_sidebar(cx: &mut TestAppContext) {
+        let (shell, cx) = open_shell(cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        assert_eq!(labels(&shell, cx), vec![UNTITLED]);
+
+        cx.simulate_input("Ideas");
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+        assert_eq!(labels(&shell, cx), vec!["Ideas"]);
+    }
+
+    #[gpui::test]
+    fn opening_a_page_loads_its_title_without_renaming(cx: &mut TestAppContext) {
+        let (shell, cx) = open_shell(cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        cx.simulate_input("First");
+        let first = shell.read_with(cx, |shell, _| shell.editor().selected().unwrap());
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        cx.simulate_input("Second");
+
+        let before = shell.read_with(cx, |shell, _| shell.editor().workspace().to_bytes().unwrap());
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.open(first, window, cx)));
+        let title = shell.read_with(cx, |shell, cx| shell.title.read(cx).value().to_string());
+        assert_eq!(title, "First");
+        let after = shell.read_with(cx, |shell, _| shell.editor().workspace().to_bytes().unwrap());
+        assert_eq!(before, after, "opening a page records no change");
+        assert_eq!(labels(&shell, cx), vec!["First", "Second"]);
     }
 }
