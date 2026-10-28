@@ -18,8 +18,8 @@
       "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
       "path": "backlog/epics/E00.md",
       "story_count": 6,
-      "done_count": 1,
-      "progress": 0.17
+      "done_count": 2,
+      "progress": 0.33
     },
     {
       "id": "E01",
@@ -207,7 +207,7 @@
       "id": "E00-S02",
       "title": "CI pipeline green",
       "epic": "E00",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -217,7 +217,7 @@
         "repo",
         "ci"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Wire the provided ci.yml, justfile, lefthook, deny.toml. Add one placeholder test per core crate so the coverage gate is meaningful.",
       "acceptance": [
@@ -242,11 +242,11 @@
           "done": false
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "CI already ran green on `main` after E00-S01 (all 8 jobs, three OSes), so this story proves the gates bite and closes gaps.\n\n- **Coverage gate:** add an uncovered function to a core crate locally, confirm `just cov` fails below 90%, revert.\n- **Backlog job:** confirm `backlog.py --check` fails on a stale `backlog.json` and on an invalid story file.\n- **Toolchain pin:** pin `rust-toolchain.toml` to 1.99.1 (the version that first built green) so CI and dev machines\n  match; CI's setup action reads this file.\n- **Review `ci.yml`** against the justfile so CI runs the same checks as `just check`; fix any drift.\n- **Docs:** note the pin and how to bump it in `docs/architecture/TECH_STACK.md`.\n- **Risks:** none known; the PR's own CI run is the final proof on all three OSes.",
       "path": "backlog/stories/E00-S02.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
+      "ready": false,
       "progress": 0.0
     },
     {
@@ -390,7 +390,7 @@
       "id": "E00-S06",
       "title": "Link pull requests on story cards",
       "epic": "E00",
-      "status": "review",
+      "status": "done",
       "priority": "P2",
       "size": "S",
       "depends_on": [],
