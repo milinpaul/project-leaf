@@ -1791,7 +1791,7 @@
       "id": "E04-S01",
       "title": "Editor state and view model",
       "epic": "E04",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
