@@ -32,3 +32,4 @@ Records cover two kinds of decision:
 | [0013](0013-app-workspace-and-autosave-wiring.md) | How the app opens its workspace and runs autosave | Feature | Accepted |
 | [0014](0014-incremental-page-view.md) | Incremental page view from Loro change events | Architecture | Accepted |
 | [0015](0015-caret-anchors-and-grapheme-motion.md) | Carets anchored with Loro cursors, moved by grapheme | Architecture | Accepted |
+| [0016](0016-line-layout-trait.md) | Vertical caret movement through a layout trait | Architecture | Accepted |

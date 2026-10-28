@@ -62,8 +62,8 @@
       "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
       "path": "backlog/epics/E04.md",
       "story_count": 8,
-      "done_count": 1,
-      "progress": 0.12
+      "done_count": 2,
+      "progress": 0.25
     },
     {
       "id": "E05",
@@ -1837,7 +1837,7 @@
       "id": "E04-S02",
       "title": "Cursor model",
       "epic": "E04",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1883,7 +1883,7 @@
       "id": "E04-S03",
       "title": "Vertical navigation via layout trait",
       "epic": "E04",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1892,7 +1892,7 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Up/down across lines and blocks using a `LineLayout` trait the UI implements.",
       "acceptance": [
@@ -1913,12 +1913,10 @@
           "done": false
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **Trait (`leaf-editor/src/caret/vertical.rs`):** `LineLayout` with `line_count(block)`, `line_of(block, offset)`,\n  `offset_to_x(block, offset)` and `x_to_offset(block, line, x)`. Offsets are Unicode scalars like everywhere else;\n  x is in page coordinates (shared by all blocks), so nested blocks' indentation is accounted for. `leaf-ui` will\n  implement it from GPUI's text layout when the real text element lands (E07-S02).\n- **Motion:** `PageEditor::move_vertically(Vertical::Up | Down, &layout)`. Within a block, move to the line above or\n  below at the preferred x; at the first/last line, into the previous/next text block's last/first line (dividers and\n  images passed over, as with Left/Right). At the top of the page Up goes to the start; at the bottom Down goes to\n  the end. The preferred x is remembered across consecutive Up/Down and forgotten on any other caret move.\n- **Tests:** a fake monospace layout that wraps at a fixed width, honours newlines, indents by depth and counts a\n  grapheme as one column. Tests for wrapping, crossing blocks, keeping x through short lines, skipping dividers,\n  page edges, emoji, and resetting x after Left/Right. Docs: ADR 0016 (the layout boundary), ARCHITECTURE note.",
       "path": "backlog/stories/E04-S03.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S02"
-      ],
+      "waiting_on": [],
       "ready": false,
       "progress": 0.0
     },
@@ -1959,10 +1957,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S04.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S02"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
