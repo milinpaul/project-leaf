@@ -23,6 +23,30 @@ gives undo. Only `Command`s in `leaf-model` write to Loro. Details in
 - **Yjs (`yrs`):** mature, but its tree support is weaker; block moves would need hand-rolled ordering.
 - **Automerge:** good merge semantics, but slower for large texts and no native movable tree.
 
+## Spike findings (E00-S05, `loro` 1.17.1)
+
+Proved by `crates/leaf-model/tests/loro_spike.rs`:
+
+- **Tree:** with `enable_fractional_index`, `create_at`, `mov_after` and `mov_to` keep sibling order, and a
+  moved block keeps its meta and text. Fractional indexes sort in sibling order.
+- **Marks:** `config_text_style` with the BLOCK_MODEL.md table behaves as specified. Bold grows when typing
+  after it, inline code and links grow on neither side, and `unmark` clears part of a range.
+- **Undo:** one `UndoManager` undoes tree and text edits together, and each undo restores the exact earlier
+  state. Commits within the merge interval form one undo step, which is how typing will be grouped.
+- **Sync:** two peers exchanging `ExportMode::updates` converge to identical state. Concurrent moves that
+  would form a cycle (x under y on one peer, y under x on the other) resolve without one.
+- **⚠ Block identity:** when undo or redo re-creates a block (undo of a delete, redo of a create), Loro gives
+  it a **new `TreeID`**. Content, order and children come back, and so does anything in the block's meta.
+  So `BlockId = TreeID` (BLOCK_MODEL.md) is not stable across undo, and "undo restores the exact state" holds
+  only if TreeIDs are ignored. A stable ID stored in each block's meta survives every cycle. Decision
+  deferred to E02-S10, which E02-S01 now waits for.
+- **Mergeable child containers:** create a block's `text` with `LoroMap::ensure_mergeable_text`.
+  `get_or_create_container` is deprecated, because two peers creating the same key concurrently would each get
+  their own container, and one text would be lost.
+- **API notes:** export returns `LoroEncodeError`, a different error type from `LoroError`, so `leaf-model`
+  needs to map both into its own error type. Positions in `insert`/`mark` are Unicode scalar offsets, as
+  BLOCK_MODEL.md assumes.
+
 ## Consequences
 
 - Sync, merge and history come almost for free later; two-peer convergence is testable now with `proptest`.

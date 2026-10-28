@@ -50,6 +50,10 @@ Root nodes of the `"blocks"` tree are the page's top-level blocks, in order.
 | Block reference (Phase 1 links) | `(PageId, BlockId)` | |
 | Asset | `AssetId` = blake3 hash of bytes | Content-addressed, deduplicated. |
 
+> **Under review (E02-S10):** the E00-S05 spike found that Loro gives a block a new `TreeID` when undo or redo
+> re-creates it, so `BlockId = TreeID` is not stable across undo. Likely fix: a stable ID in each block's meta.
+> See [ADR 0001](../adr/0001-loro-document-model.md#spike-findings-e00-s05-loro-1171).
+
 ## Block types
 
 | `type` | `props` | `text` | Children allowed |
