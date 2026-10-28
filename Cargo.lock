@@ -3768,7 +3768,9 @@ version = "0.1.0"
 name = "leaf-model"
 version = "0.1.0"
 dependencies = [
+ "leaf-core",
  "loro",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
