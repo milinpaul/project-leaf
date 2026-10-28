@@ -159,7 +159,7 @@
       "id": "E00-S01",
       "title": "Scaffold the cargo workspace",
       "epic": "E00",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [],
