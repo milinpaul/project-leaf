@@ -5,13 +5,17 @@
 //! editor portable (they also run in WASM) and lets us swap or extend storage later, for
 //! example for cloud sync.
 //!
+//! The database schema lives in [`migrations`]: a numbered, forward-only list, so every file
+//! written by any version of Leaf can be brought up to date, and a file from a newer Leaf is
+//! refused instead of being damaged.
+//!
 //! **Boundaries:** core crate, native only. No GPUI and no `leaf-ui`. Depends only on
 //! `leaf-core` and `leaf-model`.
 
-#[cfg(test)]
-mod tests {
-    /// Placeholder so the coverage gate has something to measure while the crate is empty.
-    /// Delete it once the crate has real code and tests.
-    #[test]
-    fn crate_builds() {}
-}
+mod error;
+pub mod migrations;
+mod store;
+
+pub use error::StoreError;
+pub use migrations::SCHEMA_VERSION;
+pub use store::Store;

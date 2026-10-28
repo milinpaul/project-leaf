@@ -40,8 +40,8 @@
       "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
       "path": "backlog/epics/E02.md",
       "story_count": 10,
-      "done_count": 8,
-      "progress": 0.8
+      "done_count": 9,
+      "progress": 0.9
     },
     {
       "id": "E03",
@@ -1239,7 +1239,7 @@
       "id": "E02-S08",
       "title": "Page undo/redo with cursor metadata",
       "epic": "E02",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1372,7 +1372,7 @@
       "id": "E03-S01",
       "title": "SQLite schema and migrations",
       "epic": "E03",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1381,33 +1381,38 @@
       "labels": [
         "leaf-store"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Schema from docs/architecture/BLOCK_MODEL.md plus a forward-only migration runner.",
       "acceptance": [
         {
           "text": "WAL mode enabled",
-          "done": false
+          "done": true
         },
         {
           "text": "meta.schema_version tracked",
-          "done": false
+          "done": true
         },
         {
           "text": "Migration from empty DB tested",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **`leaf-store`:** `Store::open(path)` opens or creates the SQLite file and sets the pragmas: `journal_mode=WAL`,\n  `synchronous=NORMAL` (with WAL, a committed transaction survives an app crash; that is the 1 s guarantee in the\n  spec, and losing the last moments to a power cut is accepted), and `foreign_keys=ON`.\n- **`migrations.rs`:** a numbered, forward-only list of SQL migrations. Version 1 is the BLOCK_MODEL.md schema\n  (`docs`, `doc_updates` plus its index, `assets`, `meta`). Each pending migration runs in its own transaction\n  together with its `meta.schema_version` bump, so a failure leaves the file as it was. A file newer than this app\n  is refused with `SchemaTooNew` and left untouched.\n- `StoreError` (thiserror) wraps SQLite errors.\n- **Tests:**\n  - a new file gets version 1, all tables and the index;\n  - WAL mode is active;\n  - reopening doesn't re-run migrations;\n  - a newer file is refused and untouched;\n  - a failing migration rolls back.\n\n  A tiny temp-dir helper in tests avoids adding a dependency.\n- **Risk:** `rusqlite`'s bundled SQLite (C) adds build time; `leaf-store` is native-only, so WASM is unaffected.",
       "path": "backlog/stories/E03-S01.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/22",
+          "number": 22
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E03-S02",
@@ -2013,8 +2018,7 @@
       "path": "backlog/stories/E04-S08.md",
       "prs": [],
       "waiting_on": [
-        "E04-S06",
-        "E02-S08"
+        "E04-S06"
       ],
       "ready": false,
       "progress": 0.0

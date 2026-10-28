@@ -1,0 +1,31 @@
+//! Errors from the storage layer.
+
+use thiserror::Error;
+
+/// Everything that can go wrong opening or using a workspace database.
+#[derive(Debug, Error)]
+pub enum StoreError {
+    /// SQLite itself failed (file unreadable, disk full, corrupt database, ...).
+    #[error("database error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+
+    /// The file was written by a newer Leaf. It is left untouched rather than opened, because
+    /// this version doesn't know the newer schema and could damage it.
+    #[error("workspace schema version {found} is newer than this app supports ({supported})")]
+    SchemaTooNew {
+        /// The version recorded in the file.
+        found: u32,
+        /// The newest version this app knows.
+        supported: u32,
+    },
+
+    /// `meta.schema_version` holds something that isn't a version number, so it is unclear which
+    /// migrations have run. Opening stops rather than guessing.
+    #[error("workspace schema version {0:?} is not a number")]
+    BadSchemaVersion(String),
+
+    /// SQLite would not switch the file to write-ahead logging (for example an in-memory
+    /// database). Autosave relies on WAL for its crash-safety guarantee, so this is an error.
+    #[error("write-ahead logging is unavailable (journal mode is {0:?})")]
+    WalUnavailable(String),
+}
