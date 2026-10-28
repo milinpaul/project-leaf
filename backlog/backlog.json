@@ -168,7 +168,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Create the workspace and the 8 crates from TECH_STACK.md with empty libs, workspace lints and toolchain files.",
+      "context": "Create the workspace and the 8 crates from docs/architecture/TECH_STACK.md with empty libs, workspace lints and toolchain files.",
       "acceptance": [
         {
           "text": "All 8 crates exist under crates/ with `[lints] workspace = true`",
@@ -259,15 +259,15 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Create ARCHITECTURE.md and docs/adr with a template and the first decisions.",
+      "context": "Create docs/architecture/ARCHITECTURE.md and fill docs/adr with the first decisions.",
       "acceptance": [
         {
-          "text": "ARCHITECTURE.md explains crates and data flow in plain English",
+          "text": "docs/architecture/ARCHITECTURE.md explains crates and data flow in plain English",
           "done": false
         },
         {
           "text": "ADR template in docs/adr/0000-template.md",
-          "done": false
+          "done": true
         },
         {
           "text": "ADRs written for: Loro, GPUI + gpui-component, SQLite storage, no markdown storage, pages-not-folders",
@@ -284,7 +284,7 @@
         "E00-S01"
       ],
       "ready": false,
-      "progress": 0.0
+      "progress": 0.25
     },
     {
       "id": "E00-S04",
@@ -349,7 +349,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Throwaway-quality test file proving the Loro features BLOCK_MODEL.md relies on.",
+      "context": "Throwaway-quality test file proving the Loro features docs/architecture/BLOCK_MODEL.md relies on.",
       "acceptance": [
         {
           "text": "Test shows LoroTree with fractional index ordering and node moves",
@@ -675,7 +675,7 @@
       "context": "Page LoroDoc with 'blocks' tree, text style config and BlockKind enum read/write.",
       "acceptance": [
         {
-          "text": "BlockKind enum matches BLOCK_MODEL.md",
+          "text": "BlockKind enum matches docs/architecture/BLOCK_MODEL.md",
           "done": false
         },
         {
@@ -774,7 +774,7 @@
           "done": false
         },
         {
-          "text": "Marks follow the expand table in BLOCK_MODEL.md",
+          "text": "Marks follow the expand table in docs/architecture/BLOCK_MODEL.md",
           "done": false
         },
         {
@@ -958,7 +958,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Assert all invariants in BLOCK_MODEL.md after arbitrary command sequences.",
+      "context": "Assert all invariants in docs/architecture/BLOCK_MODEL.md after arbitrary command sequences.",
       "acceptance": [
         {
           "text": "`check_invariants()` covers all 7 invariants",
@@ -1088,7 +1088,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Schema from BLOCK_MODEL.md plus a forward-only migration runner.",
+      "context": "Schema from docs/architecture/BLOCK_MODEL.md plus a forward-only migration runner.",
       "acceptance": [
         {
           "text": "WAL mode enabled",
@@ -1558,7 +1558,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Implement every row of the Editor behaviour table in PRODUCT_SPEC.md.",
+      "context": "Implement every row of the Editor behaviour table in docs/product/PRODUCT_SPEC.md.",
       "acceptance": [
         {
           "text": "One test per table row",
@@ -2715,7 +2715,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "divan benches for the budgets in PRODUCT_SPEC.md.",
+      "context": "divan benches for the budgets in docs/product/PRODUCT_SPEC.md.",
       "acceptance": [
         {
           "text": "Benches for open page, apply keystroke, view model update, save",
@@ -2757,7 +2757,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Run the acceptance checklist in PRODUCT_SPEC.md and fix gaps.",
+      "context": "Run the acceptance checklist in docs/product/PRODUCT_SPEC.md and fix gaps.",
       "acceptance": [
         {
           "text": "Every checklist item verified and ticked",

@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 Leaf is a native, local-first Notion alternative written in Rust (GPUI UI, Loro CRDT model, SQLite storage).
-Read these before any work: `PRODUCT_SPEC.md` (what and why), `TECH_STACK.md` (stack and crate rules), `BLOCK_MODEL.md` (data model and commands).
+Read these before any work: `docs/product/PRODUCT_SPEC.md` (what and why), `docs/architecture/TECH_STACK.md` (stack and crate rules),
+`docs/architecture/BLOCK_MODEL.md` (data model and commands). `docs/README.md` maps the docs folder; `docs/adr/` holds past decisions.
 
 ## Current phase
 
@@ -43,7 +44,7 @@ just run        # launch the app
 ## Testing rules
 
 - Every bug fix starts with a failing test.
-- Every command and every editor rule in PRODUCT_SPEC.md "Editor behaviour" has a test.
+- Every command and every editor rule in `docs/product/PRODUCT_SPEC.md` "Editor behaviour" has a test.
 - Use `proptest` for command sequences, undo round-trips and two-peer convergence.
 - Use `insta` for view-model snapshots. Review snapshot diffs, never blindly accept.
 - Core crates must stay at ≥ 90% line coverage.
@@ -51,15 +52,15 @@ just run        # launch the app
 ## Documentation rules
 
 The owner does not write Rust and relies on these docs to understand the system. Keep them current in the same PR as the code:
-- `ARCHITECTURE.md`: crates, data flow, how a keystroke becomes a saved change. Update when structure changes.
-- `docs/adr/NNNN-title.md`: one short Architecture Decision Record per significant decision (context, decision, alternatives, consequences).
+- `docs/architecture/ARCHITECTURE.md`: crates, data flow, how a keystroke becomes a saved change. Update when structure changes.
+- `docs/adr/NNNN-title.md`: one short decision record per significant architecture or feature decision. Copy `docs/adr/0000-template.md` and add it to the index in `docs/adr/README.md`.
 - Each crate has a top-level `//!` doc explaining its role and boundaries.
 
 ## Definition of done
 
 - `just check` passes locally; CI is green on all three OSes.
 - Coverage gate passes.
-- Docs updated (ARCHITECTURE.md / ADR / crate docs) if behaviour or structure changed.
+- Docs updated (`docs/architecture/ARCHITECTURE.md` / ADR / crate docs) if behaviour or structure changed.
 - PR description: what changed, why, how it was tested, plain-English summary for a non-Rust reader.
 
 ## When unsure

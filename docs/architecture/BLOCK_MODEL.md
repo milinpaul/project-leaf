@@ -193,7 +193,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 
 ## Testing requirements
 
-- Unit test for every command and every editor rule in PRODUCT_SPEC.md.
+- Unit test for every command and every editor rule in [PRODUCT_SPEC.md](../product/PRODUCT_SPEC.md).
 - `proptest`: random sequences of commands keep all invariants.
 - `proptest`: two peers apply random commands, exchange updates, and converge to identical state.
 - Undo/redo round-trip property for every command.
