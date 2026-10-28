@@ -258,7 +258,7 @@
       "id": "E00-S03",
       "title": "ARCHITECTURE.md and ADRs",
       "epic": "E00",
-      "status": "planning",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -290,7 +290,12 @@
       ],
       "plan": "Done together with E00-S04 on one branch at the owner's request, so the GPUI ADR can carry the spike findings.\n\n- `docs/architecture/ARCHITECTURE.md`: crates, their boundaries, and how a keystroke becomes a saved change.\n- ADRs 0001-0005 from `docs/adr/0000-template.md`: Loro, GPUI + gpui-component (with spike findings), SQLite,\n  markdown not storage (feature), pages not folders (feature). Index in `docs/adr/README.md`.\n- Link from `docs/README.md` and `TECH_STACK.md`. No code, so the test is `just check` (typos, backlog).",
       "path": "backlog/stories/E00-S03.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/4",
+          "number": 4
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
@@ -299,7 +304,7 @@
       "id": "E00-S04",
       "title": "Spike: GPUI window with gpui-component",
       "epic": "E00",
-      "status": "planning",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -336,7 +341,12 @@
       ],
       "plan": "Done together with E00-S03 on one branch at the owner's request.\n\n- Pin `gpui-component =0.8.1`, the gpui it pins (`gpui-pre =0.3.10`) and `gpui-pre-platform =0.3.10` in the workspace.\n- `leaf-ui`: `Shell` view (gpui-component `Sidebar` + `Input`), `init`, `window_root`; the app never imports\n  gpui-component. `leaf-app`: open one window, quit when it closes.\n- Tests: GPUI `TestAppContext` tests that the shell renders and typing reaches the focused input.\n- Record versions, features and findings in ADR 0002. Fix any `cargo deny` fallout in `deny.toml`.\n- Risks: Linux system packages in CI; GPUI build time.",
       "path": "backlog/stories/E00-S04.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/4",
+          "number": 4
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 0.8
