@@ -57,7 +57,8 @@ answers "which pages, in what order, with what titles" (E01-S02), and the first 
 create, rename and set an icon (E01-S03), move or reorder pages (E01-S04), trash,
 restore and permanent delete (E01-S05), and undo/redo of all of them (E01-S06). Each page's own document, `PageDoc`, holds its blocks:
 the block schema and reading text with formatting (E02-S01), inserting, deleting and moving blocks (E02-S02),
-editing text and formatting (E02-S03), and indent/outdent (E02-S06). The window's sidebar now lists real pages from an in-memory workspace
+editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
+block's kind and properties (E02-S04). The window's sidebar now lists real pages from an in-memory workspace
 (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go through those commands (E06-S07).
 
 1. **You press a key.** GPUI delivers it to `leaf-ui`, which forwards it untouched to `leaf-editor`.

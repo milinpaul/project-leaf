@@ -31,6 +31,11 @@ impl PageDoc {
             PageCommand::DeleteText { id, range } => self.delete_text(id, range)?,
             PageCommand::SetMark { id, range, mark } => self.set_mark(id, range, &mark)?,
             PageCommand::RemoveMark { id, range, kind } => self.remove_mark(id, range, kind)?,
+            PageCommand::SetBlockKind { id, kind } => self.set_kind(id, &kind)?,
+            PageCommand::SetProp { id, prop } => {
+                let kind = self.kind(id)?.with_prop(prop)?;
+                self.set_kind(id, &kind)?
+            }
             PageCommand::Indent { ids } => self.indent(&ids)?,
             PageCommand::Outdent { ids } => self.outdent(&ids)?,
         };
@@ -48,19 +53,7 @@ impl PageDoc {
         kind: &BlockKind,
         text: &str,
     ) -> Result<PageOutcome, ModelError> {
-        match kind {
-            BlockKind::Unknown { type_name } => {
-                return Err(ModelError::InvalidKind(format!(
-                    "cannot create a block of unknown type {type_name:?}"
-                )));
-            }
-            BlockKind::Heading { level } if !(1..=3).contains(level) => {
-                return Err(ModelError::InvalidKind(format!(
-                    "heading level must be 1, 2 or 3, not {level}"
-                )));
-            }
-            _ => {}
-        }
+        kind.check_creatable()?;
         if !text.is_empty() && !kind.has_text() {
             return Err(ModelError::TextNotAllowed {
                 kind: kind.type_name().to_owned(),

@@ -15,7 +15,8 @@ pub(crate) mod marks {
     pub const LINK: &str = "link";
 }
 
-/// Applies the mark table: formatting grows when typing right after it; inline code and links don't.
+/// Applies the mark table: formatting grows when typing right after it; inline code, links and marks this
+/// version doesn't know don't.
 pub(crate) fn configure_marks(doc: &LoroDoc) {
     let mut styles = StyleConfigMap::new();
     for (key, expand) in [
@@ -28,6 +29,11 @@ pub(crate) fn configure_marks(doc: &LoroDoc) {
         styles.insert(key.into(), StyleConfig { expand });
     }
     doc.config_text_style(styles);
+    // Marks from a newer version: Loro refuses unconfigured keys, which would make such text impossible
+    // to edit or strip. Give them a safe default; they don't grow while typing.
+    doc.config_default_text_style(Some(StyleConfig {
+        expand: ExpandType::None,
+    }));
 }
 
 /// The inline formatting on a run of text.

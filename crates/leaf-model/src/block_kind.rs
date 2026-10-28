@@ -7,7 +7,48 @@
 use leaf_core::AssetId;
 use loro::{Container, LoroMap, LoroValue, ValueOrContainer};
 
+use crate::ModelError;
 use crate::page_meta::value;
+
+/// One property of a block, for [`PageCommand::SetProp`](crate::PageCommand::SetProp). Each belongs to
+/// one kind: setting it on another kind is an error rather than a silent no-op.
+#[derive(Debug, Clone, PartialEq)]
+pub enum BlockProp {
+    /// Ticks or unticks a to-do.
+    Checked(bool),
+    /// A heading's level, 1 to 3.
+    HeadingLevel(u8),
+    /// A code block's language label.
+    Language(String),
+    /// An image's display width in pixels, or `None` for its natural size.
+    ImageWidth(Option<f64>),
+    /// An image's description for screen readers.
+    ImageAlt(String),
+}
+
+impl BlockProp {
+    /// A short name for error messages.
+    #[must_use]
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Checked(_) => "checked",
+            Self::HeadingLevel(_) => "heading level",
+            Self::Language(_) => "language",
+            Self::ImageWidth(_) => "image width",
+            Self::ImageAlt(_) => "image alt text",
+        }
+    }
+}
+
+/// Every known prop key, for removing the ones a new kind no longer uses.
+pub(crate) const KNOWN_PROP_KEYS: [&str; 6] = [
+    keys::LEVEL,
+    keys::CHECKED,
+    keys::LANGUAGE,
+    keys::ASSET,
+    keys::WIDTH,
+    keys::ALT,
+];
 
 /// Meta and props key names.
 pub(crate) mod keys {
@@ -107,6 +148,49 @@ impl BlockKind {
         self.has_text() && !matches!(self, Self::Code { .. })
     }
 
+    /// Checks this kind can be written by a command: no unknown kinds (the model only creates what it
+    /// knows) and heading levels 1 to 3.
+    pub(crate) fn check_creatable(&self) -> Result<(), ModelError> {
+        match self {
+            Self::Unknown { type_name } => Err(ModelError::InvalidKind(format!(
+                "cannot create a block of unknown type {type_name:?}"
+            ))),
+            Self::Heading { level } if !(1..=3).contains(level) => Err(ModelError::InvalidKind(format!(
+                "heading level must be 1, 2 or 3, not {level}"
+            ))),
+            _ => Ok(()),
+        }
+    }
+
+    /// The prop keys this kind stores; any other known prop key is stale once a block becomes it.
+    pub(crate) fn prop_keys(&self) -> &'static [&'static str] {
+        match self {
+            Self::Heading { .. } => &[keys::LEVEL],
+            Self::Todo { .. } => &[keys::CHECKED],
+            Self::Code { .. } => &[keys::LANGUAGE],
+            Self::Image { .. } => &[keys::ASSET, keys::WIDTH, keys::ALT],
+            _ => &[],
+        }
+    }
+
+    /// The same kind with one property changed, or an error if the property doesn't belong to it.
+    pub(crate) fn with_prop(&self, prop: BlockProp) -> Result<Self, ModelError> {
+        let mismatch = |prop: &BlockProp| ModelError::PropNotForKind {
+            prop: prop.name(),
+            kind: self.type_name().to_owned(),
+        };
+        Ok(match (self.clone(), prop) {
+            (Self::Todo { .. }, BlockProp::Checked(checked)) => Self::Todo { checked },
+            (Self::Heading { .. }, BlockProp::HeadingLevel(level)) => Self::Heading { level },
+            (Self::Code { .. }, BlockProp::Language(language)) => Self::Code { language },
+            (Self::Image { asset, alt, .. }, BlockProp::ImageWidth(width)) => {
+                Self::Image { asset, width, alt }
+            }
+            (Self::Image { asset, width, .. }, BlockProp::ImageAlt(alt)) => Self::Image { asset, width, alt },
+            (_, prop) => return Err(mismatch(&prop)),
+        })
+    }
+
     /// Reads the kind from a block's meta. Errors name the problem; the caller adds which block.
     pub(crate) fn read(meta: &LoroMap) -> Result<Self, (&'static str, String)> {
         let type_name = match value(meta, keys::TYPE) {
@@ -182,8 +266,9 @@ impl BlockKind {
             Self::Image { asset, width, alt } => {
                 let props = props()?;
                 props.insert(keys::ASSET, asset.to_string())?;
-                if let Some(width) = width {
-                    props.insert(keys::WIDTH, *width)?;
+                match width {
+                    Some(width) => props.insert(keys::WIDTH, *width)?,
+                    None => props.delete(keys::WIDTH)?,
                 }
                 props.insert(keys::ALT, alt.as_str())?;
             }

@@ -147,6 +147,15 @@ pub enum ModelError {
     #[error("a link needs an address")]
     EmptyLink,
 
+    /// A property was set on a kind of block it doesn't belong to (a checkbox on a heading).
+    #[error("{kind} blocks have no {prop}")]
+    PropNotForKind {
+        /// The property's name.
+        prop: &'static str,
+        /// The block type.
+        kind: String,
+    },
+
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]
     Loro(#[from] loro::LoroError),

@@ -5,12 +5,11 @@ use std::ops::Range;
 
 use leaf_core::BlockId;
 
-use crate::{BlockKind, Mark, MarkKind};
+use crate::{BlockKind, BlockProp, Mark, MarkKind};
 
 /// A change to a page document.
 ///
-/// Applied with [`PageDoc::apply`](crate::PageDoc::apply). Kind changes and split/merge arrive in E02-S04
-/// and E02-S05.
+/// Applied with [`PageDoc::apply`](crate::PageDoc::apply). Split and merge arrive in E02-S05.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PageCommand {
     /// Adds a block under `parent` (or at the top level when `None`) at position `index`, and returns
@@ -77,6 +76,22 @@ pub enum PageCommand {
         range: Range<usize>,
         /// Which mark to remove.
         kind: MarkKind,
+    },
+    /// Turns a block into another kind ("Turn into"). Text is kept when the new kind has text; a
+    /// divider needs empty text, so no words are lost. Code drops all marks, and a kind that can't
+    /// hold children lets its children out to sit right after it. Unknown kinds can't be converted.
+    SetBlockKind {
+        /// Block to convert.
+        id: BlockId,
+        /// What it becomes, with its properties.
+        kind: BlockKind,
+    },
+    /// Changes one property of a block, such as ticking a to-do.
+    SetProp {
+        /// Block to change.
+        id: BlockId,
+        /// The property and its new value; it must belong to the block's kind.
+        prop: BlockProp,
     },
     /// Tab: each block becomes the last child of the block just above it. Blocks with nothing above
     /// them, or whose block above can't hold children, stay put.
