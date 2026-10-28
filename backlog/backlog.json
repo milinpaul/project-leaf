@@ -2505,6 +2505,10 @@
           "done": false
         },
         {
+          "text": "Title reads as the page's heading 1: inline, no box or border, large bold text, grey \"Untitled\" placeholder (Notion-like; quick version shipped in E06-S07)",
+          "done": false
+        },
+        {
           "text": "Enter in title moves cursor to first block",
           "done": false
         },
