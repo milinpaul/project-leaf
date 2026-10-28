@@ -26,6 +26,7 @@ depends_on: [E02-S04]
 labels: [leaf-model, commands]
 assignee:               # agent or human name while working
 updated: 2026-10-28
+pr: [https://github.com/owner/repo/pull/12]   # optional; added by `backlog.py pr`
 ---
 
 ## Context
@@ -63,7 +64,7 @@ Claude Code handles all of this itself:
 2. **Claim:** set `status: planning`, `assignee: <your name>`, `updated: <today>`; add a Log line. Commit this change alone.
 3. **Plan:** fill in `## Plan` (approach, files to touch, tests to write, risks). If the story is unclear or too big, set `status: blocked`, explain in Log, and stop.
 4. **Build:** set `status: in_progress`. Work on branch `story/<id>`. Tick acceptance boxes as they are met.
-5. **Review:** when every box is ticked and `just check` passes, open a PR titled `<id>: <title>`, set `status: review`, add the PR link to Log.
+5. **Review:** when every box is ticked and `just check` passes, open a PR titled `<id>: <title>`, link it with `python3 scripts/backlog.py pr <id> <url>` (fills `pr:`, shown on the board card), and set `status: review`.
 6. **Done:** only a human sets `status: done` after merging.
 7. Hooks regenerate `backlog.json` after edits; CI fails if it is out of sync.
 8. Found new work? Create a new story file in the same format with `status: backlog` and mention it in the Log. Do not expand the current story's scope.

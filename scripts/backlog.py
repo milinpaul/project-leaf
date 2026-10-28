@@ -13,6 +13,7 @@ Usage:
   python3 scripts/backlog.py serve [port] [--open]   # live board at http://127.0.0.1:4317
   python3 scripts/backlog.py claim <id> <assignee>
   python3 scripts/backlog.py move <id> <status> [note]
+  python3 scripts/backlog.py pr <id> <url>          # link a pull request to a story
 
 No third-party dependencies (standard library only).
 """
@@ -34,6 +35,14 @@ SIZES = ["S", "M", "L"]
 STORY_REQUIRED = ["id", "title", "epic", "status", "priority", "size", "depends_on", "labels", "assignee", "updated"]
 EPIC_REQUIRED = ["id", "title", "phase", "status"]
 CHECKBOX = re.compile(r"^\s*- \[( |x|X)\] (.+)$")
+PR_URL = re.compile(r"^https://github\.com/[\w.-]+/[\w.-]+/pull/(\d+)$")
+
+
+def pr_list(value) -> list[str]:
+    """Optional `pr:` field: one URL or a [list], since a story can need several PRs."""
+    if not value:
+        return []
+    return value if isinstance(value, list) else [value]
 
 
 class BacklogError(Exception):
@@ -124,12 +133,15 @@ def load() -> dict:
                 criteria.append({"text": m.group(2).strip(), "done": m.group(1).lower() == "x"})
         if not criteria:
             errors.append(f"{sid}: no acceptance criteria checkboxes")
+        prs = pr_list(meta.get("pr"))
+        errors += [f"{sid}: bad pr URL {url!r}" for url in prs if not PR_URL.match(url)]
         stories.append({
             "id": sid, "title": meta["title"], "epic": meta["epic"], "status": meta["status"],
             "priority": meta["priority"], "size": meta["size"], "depends_on": meta["depends_on"],
             "labels": meta["labels"], "assignee": meta["assignee"] or None, "updated": meta["updated"],
             "context": sec.get("context", ""), "acceptance": criteria,
             "plan": sec.get("plan", ""), "path": f"backlog/stories/{path.name}",
+            "prs": [{"url": url, "number": int(m.group(1))} for url in prs if (m := PR_URL.match(url))],
         })
 
     by_id = {s["id"]: s for s in stories}
@@ -333,11 +345,20 @@ def main(argv: list[str]) -> int:
                 raise BacklogError(f"bad status {argv[2]}; use one of {STATUSES}")
             note = " ".join(argv[3:]) or f"moved to {argv[2]}"
             set_fields(argv[1], {"status": argv[2]}, note)
+        elif argv[:1] == ["pr"] and len(argv) >= 3:
+            if not PR_URL.match(argv[2]):
+                raise BacklogError(f"not a GitHub pull request URL: {argv[2]}")
+            path = ROOT / "stories" / f"{argv[1]}.md"
+            if not path.exists():
+                raise BacklogError(f"no story {argv[1]}")
+            prs = pr_list(parse_file(path)[0].get("pr"))
+            if argv[2] not in prs:
+                set_fields(argv[1], {"pr": "[" + ", ".join(prs + [argv[2]]) + "]"}, f"PR {argv[2]}")
         data = load()
     except BacklogError as exc:
         print(exc, file=sys.stderr)
         return 1
-    if argv[:1] in (["claim"], ["move"]):
+    if argv[:1] in (["claim"], ["move"], ["pr"]):
         write_all(data)
         print(f"{argv[1]} updated; backlog.json and board.html regenerated")
         return 0

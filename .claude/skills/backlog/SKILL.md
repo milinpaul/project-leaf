@@ -18,6 +18,7 @@ Hooks already do two things automatically:
 python3 scripts/backlog.py next                       # next ready story
 python3 scripts/backlog.py claim <id> <your-name>     # todo → planning, sets assignee
 python3 scripts/backlog.py move <id> <status> "note"  # change status + dated Log line
+python3 scripts/backlog.py pr <id> <url>              # link a PR (fills `pr:`, shown on the card)
 python3 scripts/backlog.py summary                    # counts per status
 python3 scripts/backlog.py serve --open               # live board (run in background)
 ```
@@ -29,7 +30,7 @@ Use `claude` as your name unless the owner gives you another one. Prefer these c
 1. **Before any coding**, check the session summary. If a story is already `planning` or `in_progress` with your name, continue it. Otherwise run `next` and `claim` it. Never work on code that is not tied to a story.
 2. **Plan.** Fill in `## Plan` in the story file: approach, files to touch, tests, risks. Keep it short. If the story is unclear, too large or conflicts with the specs: `move <id> blocked "reason"`, tell the owner, and stop.
 3. **Build.** `move <id> in_progress "started on branch story/<id>"`. Work on branch `story/<id>`. Tick acceptance checkboxes (`- [x]`) in the story file as each one is genuinely met.
-4. **Finish.** When every box is ticked and `just check` passes: commit, open a PR titled `<id>: <title>` (use `gh pr create` if available), then `move <id> review "PR <url>"`.
+4. **Finish.** When every box is ticked and `just check` passes: commit, open a PR titled `<id>: <title>` (use `gh pr create` if available), then `pr <id> <url>` and `move <id> review "PR opened"`. Every PR for a story gets linked this way, including follow-up fix PRs.
 5. **Merged.** When the owner says the PR is merged, or `gh pr view` shows it merged: `move <id> done "merged"`. Never mark `done` otherwise.
 6. **Next.** Tell the owner in one or two lines what finished and what is next. Start the next story only if the owner asked you to keep going.
 

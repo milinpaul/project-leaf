@@ -85,6 +85,8 @@ header.top h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
 .tag.ready { background: var(--leaf-soft); color: var(--leaf); }
 .tag.wait { background: transparent; border: 1px dashed var(--line); }
 .tag.who { background: var(--blue-soft); color: var(--blue); }
+.tag.pr { border: 1px solid var(--line); background: transparent; }
+.prs a { color: var(--blue); }
 
 dialog { border: 0; padding: 0; margin: 0 0 0 auto; height: 100%; max-height: 100%; width: min(560px, 100%); background: var(--surface); color: var(--ink); }
 dialog::backdrop { background: rgb(0 0 0 / 0.35); }
@@ -234,6 +236,8 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
     if (s.ready) tags.append(el("span", "tag ready", "Ready"));
     else if (s.status === "todo" && s.waiting_on.length) tags.append(el("span", "tag wait", `Waiting on ${s.waiting_on.length}`));
     if (s.assignee) tags.append(el("span", "tag who", s.assignee));
+    // The card is a button, so PRs show as tags here and as real links in the drawer.
+    (s.prs || []).forEach(p => tags.append(el("span", "tag pr", `PR #${p.number}`)));
     b.append(id, el("div", "t", s.title), tags);
     if (s.progress > 0) { const bar = el("div", "bar"); const f = el("i"); f.style.width = `${Math.round(s.progress * 100)}%`; bar.append(f); b.append(bar); }
     b.onclick = () => openStory(s.id);
@@ -282,6 +286,11 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
     sec(`Acceptance criteria (${s.acceptance.filter(a => a.done).length}/${s.acceptance.length})`, ul);
     const plan = (s.plan || "").replace(/^_.*_$/, "").trim();
     sec("Plan", el("div", "text", plan || "Not planned yet."));
+    if ((s.prs || []).length) {
+      const u = el("ul", "prs");
+      s.prs.forEach(p => { const a = el("a", null, `PR #${p.number}`); a.href = p.url; a.target = "_blank"; a.rel = "noopener"; const li = el("li"); li.append(a); u.append(li); });
+      sec("Pull requests", u);
+    }
     if (s.depends_on.length) { const u = el("ul"); s.depends_on.forEach(d => u.append(storyLink(d))); sec("Depends on", u); }
     const deps = dependents(s.id);
     if (deps.length) { const u = el("ul"); deps.forEach(d => u.append(storyLink(d.id))); sec("Unlocks", u); }
