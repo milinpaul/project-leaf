@@ -47,6 +47,16 @@ pub enum ModelError {
         len: usize,
     },
 
+    /// A page cannot be moved into itself or into a page nested inside it: that would cut the
+    /// branch it sits on off from the tree.
+    #[error("cannot move page {page} into {new_parent}, which is the page itself or inside it")]
+    MoveIntoOwnSubtree {
+        /// The page being moved.
+        page: PageId,
+        /// The parent that was asked for.
+        new_parent: PageId,
+    },
+
     /// An icon was set to empty text; clearing an icon uses `None`.
     #[error("page {0}: icon cannot be empty (use None to clear it)")]
     EmptyIcon(PageId),

@@ -225,3 +225,132 @@ fn new_errors_explain_themselves() {
         format!("page {page}: icon cannot be empty (use None to clear it)")
     );
 }
+
+fn mv(page: PageId, new_parent: Option<PageId>, index: usize) -> WorkspaceCommand {
+    WorkspaceCommand::MovePage {
+        page,
+        new_parent,
+        index,
+    }
+}
+
+/// Three top-level pages, `a`, `b`, `c`, in that order.
+fn abc() -> (Workspace, PageId, PageId, PageId) {
+    let mut ws = Workspace::new();
+    let a = create(&mut ws, None, 0, "A");
+    let b = create(&mut ws, None, 1, "B");
+    let c = create(&mut ws, None, 2, "C");
+    (ws, a, b, c)
+}
+
+#[test]
+fn move_page_reorders_siblings_by_final_position() {
+    let (mut ws, a, b, c) = abc();
+    assert_eq!(ws.apply(mv(c, None, 0)).unwrap(), Outcome::Changed);
+    assert_eq!(ws.root_pages(), vec![c, a, b], "index 0 makes it first");
+    ws.apply(mv(c, None, 2)).unwrap();
+    assert_eq!(
+        ws.root_pages(),
+        vec![a, b, c],
+        "the sibling count (without the page) makes it last"
+    );
+    ws.apply(mv(a, None, 1)).unwrap();
+    assert_eq!(
+        ws.root_pages(),
+        vec![b, a, c],
+        "moving forward by one within the same parent"
+    );
+    ws.apply(mv(a, None, 1)).unwrap();
+    assert_eq!(
+        ws.root_pages(),
+        vec![b, a, c],
+        "moving to where it already is changes nothing"
+    );
+}
+
+#[test]
+fn move_page_nests_and_unnests_with_its_subtree() {
+    let (mut ws, a, b, c) = abc();
+    let inside_b = create(&mut ws, Some(b), 0, "Inside B");
+
+    ws.apply(mv(b, Some(a), 0)).unwrap();
+    assert_eq!(ws.root_pages(), vec![a, c]);
+    assert_eq!(ws.children(a).unwrap(), vec![b]);
+    assert_eq!(
+        ws.children(b).unwrap(),
+        vec![inside_b],
+        "children travel with their page"
+    );
+
+    ws.apply(mv(inside_b, None, 1)).unwrap();
+    assert_eq!(
+        ws.root_pages(),
+        vec![a, inside_b, c],
+        "a nested page can move to the top level"
+    );
+    assert_eq!(ws.children(b).unwrap(), Vec::<PageId>::new());
+}
+
+#[test]
+fn move_page_rejects_moving_into_itself_or_its_descendants() {
+    let (mut ws, a, b, _) = abc();
+    let child = create(&mut ws, Some(a), 0, "Child");
+    let grandchild = create(&mut ws, Some(child), 0, "Grandchild");
+    let (commits, _sub) = commit_counter(&ws);
+
+    for target in [a, child, grandchild] {
+        let err = ws.apply(mv(a, Some(target), 0)).unwrap_err();
+        assert!(
+            matches!(err, ModelError::MoveIntoOwnSubtree { page, new_parent } if page == a && new_parent == target),
+            "moving A into {target}: {err}"
+        );
+    }
+    ws.apply(mv(grandchild, Some(b), 0)).unwrap();
+    assert_eq!(commits.load(Ordering::SeqCst), 1, "only the valid move committed");
+    assert_eq!(ws.children(child).unwrap(), Vec::<PageId>::new());
+}
+
+#[test]
+fn move_page_rejects_unknown_pages_and_bad_indexes() {
+    let (mut ws, a, b, _) = abc();
+    let (commits, _sub) = commit_counter(&ws);
+    let ghost = PageId::new();
+
+    assert!(matches!(ws.apply(mv(ghost, None, 0)), Err(ModelError::PageNotFound(p)) if p == ghost));
+    assert!(matches!(ws.apply(mv(a, Some(ghost), 0)), Err(ModelError::PageNotFound(p)) if p == ghost));
+    assert!(
+        matches!(
+            ws.apply(mv(a, None, 3)),
+            Err(ModelError::IndexOutOfRange { index: 3, len: 2 })
+        ),
+        "within the same parent the page itself is not counted"
+    );
+    assert!(matches!(
+        ws.apply(mv(a, Some(b), 1)),
+        Err(ModelError::IndexOutOfRange { index: 1, len: 0 })
+    ));
+
+    assert_eq!(commits.load(Ordering::SeqCst), 0);
+    assert_eq!(ws.root_pages().len(), 3);
+}
+
+#[test]
+fn moved_order_survives_save_and_load() {
+    let (mut ws, a, b, c) = abc();
+    ws.apply(mv(c, None, 0)).unwrap();
+    ws.apply(mv(a, Some(c), 0)).unwrap();
+    ws.apply(mv(b, Some(c), 0)).unwrap();
+
+    let loaded = Workspace::from_bytes(&ws.to_bytes().unwrap()).unwrap();
+    assert_eq!(loaded.root_pages(), vec![c]);
+    assert_eq!(loaded.children(c).unwrap(), vec![b, a]);
+}
+
+#[test]
+fn move_error_explains_itself() {
+    let (page, new_parent) = (PageId::new(), PageId::new());
+    assert_eq!(
+        ModelError::MoveIntoOwnSubtree { page, new_parent }.to_string(),
+        format!("cannot move page {page} into {new_parent}, which is the page itself or inside it")
+    );
+}

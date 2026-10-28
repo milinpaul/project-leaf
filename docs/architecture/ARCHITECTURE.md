@@ -54,7 +54,7 @@ The first six are **core crates**. They never depend on GPUI or `leaf-ui`; a tes
 This is the target design; each step lands with its epic. Built so far: the window shell (E00-S04), the
 IDs in `leaf-core` (E01-S01), and `leaf-model`'s `Workspace`, which loads and saves the page tree and
 answers "which pages, in what order, with what titles" (E01-S02), and the first commands that change it:
-create, rename and set an icon (E01-S03). The window's sidebar now lists real pages from an in-memory workspace
+create, rename and set an icon (E01-S03), and move or reorder pages (E01-S04). The window's sidebar now lists real pages from an in-memory workspace
 (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go through those commands (E06-S07).
 
 1. **You press a key.** GPUI delivers it to `leaf-ui`, which forwards it untouched to `leaf-editor`.

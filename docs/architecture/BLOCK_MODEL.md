@@ -107,7 +107,8 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
 - `CreatePage { parent: Option<PageId>, index, title, created_at }`: the model mints and returns the `PageId`;
   the caller supplies `created_at` (Unix ms) because the model never reads the clock (it must run in WebAssembly)
 - `RenamePage { page, title }`, `SetPageIcon { page, icon: Option<String> }` (`None` clears the icon)
-- `MovePage { page, new_parent, index }`
+- `MovePage { page, new_parent, index }`: `index` is the page's final position among its new siblings, counted
+  without the page itself; moving a page into itself or one of its descendants is rejected
 - `TrashPage`, `RestorePage`, `DeletePagePermanently`
 
 **Block commands (page doc)**
