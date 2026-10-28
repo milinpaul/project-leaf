@@ -84,8 +84,8 @@
       "goal": "Theme, window, sidebar page tree, quick switcher, page header, trash.",
       "path": "backlog/epics/E06.md",
       "story_count": 7,
-      "done_count": 0,
-      "progress": 0.0
+      "done_count": 1,
+      "progress": 0.14
     },
     {
       "id": "E07",
@@ -737,7 +737,7 @@
       "id": "E01-S04",
       "title": "Page commands: move and reorder",
       "epic": "E01",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -747,37 +747,42 @@
         "leaf-model",
         "commands"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Move pages within and across parents.",
       "acceptance": [
         {
           "text": "MovePage to new parent and index",
-          "done": false
+          "done": true
         },
         {
           "text": "Moving a page into its own descendant returns an error",
-          "done": false
+          "done": true
         },
         {
           "text": "Order preserved after reload",
-          "done": false
+          "done": true
         },
         {
           "text": "Unit + property tests",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- `WorkspaceCommand::MovePage { page, new_parent: Option<PageId>, index }`: one commit, validate first.\n- Index meaning: the page's **final position** among the new parent's children, counted without the page\n  itself. So \"move to 0\" always makes it first, and moving within the same parent works as drag-and-drop expects.\n  Valid range is `0..=len`, where `len` excludes the page.\n- Errors: unknown page or parent; `new_parent` is the page itself or one of its descendants (found by walking up\n  from `new_parent`; new `MoveIntoOwnSubtree` error); index out of range. Moving to the same place is allowed.\n- Tests: unit tests for each case, and order after save and load. A `proptest` property runs random create/move\n  sequences, valid and invalid, against a simple reference model: same accept/reject decisions, same order\n  under every parent after each step, and the same order again after reload. This also pins down Loro's index\n  behaviour.\n- `proptest` (already in TECH_STACK.md) added as a dev-dependency of `leaf-model`.",
       "path": "backlog/stories/E01-S04.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/13",
+          "number": 13
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E01-S05",
@@ -2573,7 +2578,7 @@
       "id": "E06-S07",
       "title": "Sidebar shows live pages from an in-memory workspace",
       "epic": "E06",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [

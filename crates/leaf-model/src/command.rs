@@ -8,7 +8,7 @@ use leaf_core::PageId;
 
 /// A change to the workspace doc: the page tree and each page's title, icon and trash state.
 ///
-/// Applied with [`Workspace::apply`](crate::Workspace::apply). Moves and trash arrive in E01-S04/S05.
+/// Applied with [`Workspace::apply`](crate::Workspace::apply). Trash arrives in E01-S05.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorkspaceCommand {
     /// Adds a page under `parent` (or at the top level when `None`) at position `index` among its
@@ -38,6 +38,18 @@ pub enum WorkspaceCommand {
         /// The new icon (a single emoji, chosen by the emoji picker), or `None` to remove it.
         /// An empty string is rejected: use `None` to clear.
         icon: Option<String>,
+    },
+    /// Moves a page, with everything inside it, under `new_parent` (or to the top level when
+    /// `None`) at position `index`.
+    MovePage {
+        /// Page to move.
+        page: PageId,
+        /// Page to move it into, or `None` for the top level. Cannot be the page itself or a page
+        /// inside it.
+        new_parent: Option<PageId>,
+        /// The page's final position among its new siblings, counted without the page itself:
+        /// `0` makes it first and the sibling count makes it last, even within the same parent.
+        index: usize,
     },
 }
 

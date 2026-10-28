@@ -5,7 +5,7 @@
 //! which would otherwise be swept into the next command's commit.
 
 use leaf_core::PageId;
-use loro::LoroValue;
+use loro::{LoroValue, TreeParentId};
 
 use super::Workspace;
 use crate::page_meta::keys;
@@ -37,6 +37,11 @@ impl Workspace {
                 }
                 Outcome::Changed
             }
+            WorkspaceCommand::MovePage {
+                page,
+                new_parent,
+                index,
+            } => self.move_page(page, new_parent, index)?,
         };
         self.doc.commit();
         Ok(outcome)
@@ -62,6 +67,35 @@ impl Workspace {
         meta.insert(keys::CREATED_AT, LoroValue::I64(created_at))?;
         self.index.insert(page, node);
         Ok(Outcome::PageCreated(page))
+    }
+
+    fn move_page(
+        &mut self,
+        page: PageId,
+        new_parent: Option<PageId>,
+        index: usize,
+    ) -> Result<Outcome, ModelError> {
+        let node = self.node(page)?;
+        let parent_node = new_parent.map(|p| self.node(p)).transpose()?;
+        // Walk up from the destination: meeting the page on the way means it would move into itself.
+        let mut cursor = parent_node;
+        while let Some(current) = cursor {
+            if current == node {
+                let new_parent = new_parent.unwrap_or(page);
+                return Err(ModelError::MoveIntoOwnSubtree { page, new_parent });
+            }
+            cursor = match self.tree.parent(current) {
+                Some(TreeParentId::Node(up)) => Some(up),
+                _ => None,
+            };
+        }
+        let siblings = self.tree.children(parent_node).unwrap_or_default();
+        let len = siblings.iter().filter(|&&sibling| sibling != node).count();
+        if index > len {
+            return Err(ModelError::IndexOutOfRange { index, len });
+        }
+        self.tree.mov_to(node, parent_node, index)?;
+        Ok(Outcome::Changed)
     }
 }
 
