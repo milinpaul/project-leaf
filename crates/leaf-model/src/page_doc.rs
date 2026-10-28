@@ -211,6 +211,10 @@ fn block_id_of(tree: &LoroTree, node: TreeID) -> Result<BlockId, ModelError> {
 }
 
 mod apply;
+mod invariants;
+
+pub use invariants::InvariantViolation;
+
 mod kind_ops;
 mod nesting;
 mod split_merge;

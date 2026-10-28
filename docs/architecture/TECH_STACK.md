@@ -101,7 +101,7 @@ Each crate adds `[lints] workspace = true`. Versions above are starting points: 
 |---|---|
 | `cargo-nextest` | Test runner. |
 | `insta` | Snapshot tests (view models, export output). |
-| `proptest` | Property tests: random command sequences, merge convergence, undo round-trips. |
+| `proptest` | Property tests: random command sequences, merge convergence, undo round-trips. 256 cases by default; `PROPTEST_CASES=10000` in CI's test job on `main`. |
 | GPUI `TestAppContext` | The few UI-level tests. |
 | `cargo-llvm-cov` | Coverage, **≥ 90% lines on core crates** (CI gate). |
 | `clippy` (pedantic) | Lints; warnings fail CI. |
