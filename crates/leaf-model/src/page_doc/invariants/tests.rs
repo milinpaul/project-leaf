@@ -2,7 +2,6 @@
 //! way a bug would) is reported under the right number.
 
 use leaf_core::{AssetId, BlockId};
-use loro::{Container, ValueOrContainer};
 
 use crate::block_kind::keys;
 use crate::{BlockKind, InvariantViolation, PageCommand, PageDoc, PageOutcome};
@@ -103,10 +102,7 @@ fn children_under_a_heading_break_invariant_3() {
 fn a_bad_heading_level_breaks_invariant_4() {
     let mut page = PageDoc::new();
     let id = add(&mut page, None, BlockKind::Heading { level: 2 }, "H");
-    let Some(ValueOrContainer::Container(Container::Map(props))) = meta(&page, id).get(keys::PROPS) else {
-        panic!("heading has props");
-    };
-    props.insert(keys::LEVEL, 9_i64).unwrap();
+    meta(&page, id).insert(keys::LEVEL, 9_i64).unwrap();
     assert_eq!(broken(&page), vec![4]);
 }
 

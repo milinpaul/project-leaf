@@ -6,7 +6,9 @@
 //! long run; CI does that on `main`.
 
 use leaf_core::{AssetId, BlockId};
-use leaf_model::{BlockKind, BlockProp, Mark, MarkKind, PageCommand, PageDoc, TextSpan};
+use leaf_model::{
+    BlockKind, BlockProp, History, Mark, MarkKind, PageCommand, PageDoc, PageOutcome, TextSpan,
+};
 use proptest::prelude::*;
 
 fn kinds() -> [BlockKind; 12] {
@@ -343,5 +345,39 @@ proptest! {
         let reloaded = PageDoc::from_bytes(&page.to_bytes().unwrap()).unwrap();
         prop_assert_eq!(reloaded.check_invariants(), Ok(()));
         prop_assert_eq!(outline(&reloaded), outline(&page));
+    }
+}
+
+proptest! {
+    /// BLOCK_MODEL invariant 7 (E02-S08): undo of command N restores the state before N, compared by
+    /// `BlockId`, and redo replays it; the other invariants hold after every undo and redo.
+    #[test]
+    fn undo_retraces_every_command_and_redo_replays_it(steps in proptest::collection::vec(step(), 1..30)) {
+        let mut page = PageDoc::new();
+        page.set_undo_merge_interval(0);
+        let mut history = vec![outline(&page)];
+        for step in steps {
+            let Some(command) = command(step, &page) else { continue };
+            match page.apply(command) {
+                Ok(PageOutcome::Unchanged) | Err(_) => {} // no change, no undo step
+                Ok(_) => history.push(outline(&page)),
+            }
+        }
+
+        let last = history.len() - 1;
+        for expected in history[..last].iter().rev() {
+            let undone = matches!(page.undo().unwrap(), History::Done { .. });
+            prop_assert!(undone);
+            prop_assert_eq!(&outline(&page), expected);
+            prop_assert_eq!(page.check_invariants(), Ok(()));
+        }
+        prop_assert_eq!(page.undo().unwrap(), History::Nothing);
+        for expected in &history[1..] {
+            let redone = matches!(page.redo().unwrap(), History::Done { .. });
+            prop_assert!(redone);
+            prop_assert_eq!(&outline(&page), expected);
+            prop_assert_eq!(page.check_invariants(), Ok(()));
+        }
+        prop_assert_eq!(page.redo().unwrap(), History::Nothing);
     }
 }

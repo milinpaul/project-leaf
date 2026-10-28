@@ -36,7 +36,7 @@ LoroDoc (page, keyed by PageId)
         meta: LoroMap
           "id":    String      # BlockId (uuid v7), stable forever; see ADR 0006
           "type":  String      # see Block types
-          "props": LoroMap     # type-specific properties
+          level, checked, language, asset, width, alt   # type-specific properties, directly in meta (ADR 0007)
           "text":  LoroText    # present for text-bearing types; create with ensure_mergeable_text
 ```
 
@@ -159,6 +159,9 @@ Positions are Unicode scalar offsets as used by Loro; the editor converts to and
 ## Undo / redo
 
 - One Loro `UndoManager` per open page doc, plus one for the workspace doc.
+- Page: `PageDoc::undo`/`redo` return `History::Done { caret }`. The editor calls `set_caret` before each command,
+  undo and redo; each step stores that caret (as `BlockId` + position, not a Loro cursor, since `TreeID`s change on
+  undo) and gives it back when popped. Merged steps keep the first step's caret.
 - Workspace: `Workspace::undo`/`redo`. The manager is created after loading, so saved history is not undoable;
   after each undo/redo the `PageId → TreeID` index is rebuilt (ADR 0006).
 - Each command commits once, so it is one undo step. Continuous typing is grouped with the manager's merge interval (~500 ms).

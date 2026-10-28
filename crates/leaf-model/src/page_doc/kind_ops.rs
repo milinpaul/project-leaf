@@ -4,7 +4,7 @@
 //! block exactly as it was.
 
 use leaf_core::BlockId;
-use loro::{Container, TextDelta, ValueOrContainer};
+use loro::TextDelta;
 
 use super::PageDoc;
 use crate::block_kind::{KNOWN_PROP_KEYS, keys};
@@ -32,14 +32,12 @@ impl PageDoc {
 
         let meta = self.tree.get_meta(node)?;
         kind.write(&meta)?;
-        if let Some(ValueOrContainer::Container(Container::Map(props))) = meta.get(keys::PROPS) {
-            for key in KNOWN_PROP_KEYS
-                .iter()
-                .filter(|key| !kind.prop_keys().contains(key))
-            {
-                if props.get(key).is_some() {
-                    props.delete(key)?;
-                }
+        for key in KNOWN_PROP_KEYS
+            .iter()
+            .filter(|key| !kind.prop_keys().contains(key))
+        {
+            if meta.get(key).is_some() {
+                meta.delete(key)?;
             }
         }
         match (&text, kind.has_text()) {

@@ -23,3 +23,4 @@ Records cover two kinds of decision:
 | [0004](0004-markdown-is-not-storage.md) | Markdown is for import and export, not storage | Feature | Accepted |
 | [0005](0005-pages-not-folders.md) | Pages all the way down, no folders | Feature | Accepted |
 | [0006](0006-stable-block-ids.md) | Stable block IDs stored in block meta | Architecture | Accepted |
+| [0007](0007-block-props-in-meta.md) | Block properties stored directly in block meta | Architecture | Accepted |
