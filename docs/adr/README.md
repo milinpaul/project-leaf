@@ -24,3 +24,4 @@ Records cover two kinds of decision:
 | [0005](0005-pages-not-folders.md) | Pages all the way down, no folders | Feature | Accepted |
 | [0006](0006-stable-block-ids.md) | Stable block IDs stored in block meta | Architecture | Accepted |
 | [0007](0007-block-props-in-meta.md) | Block properties stored directly in block meta | Architecture | Accepted |
+| [0008](0008-schema-migrations.md) | Forward-only schema migrations and SQLite settings | Architecture | Accepted |
