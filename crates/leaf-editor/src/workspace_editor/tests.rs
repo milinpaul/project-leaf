@@ -181,3 +181,42 @@ fn each_page_gets_its_own_blocks_kept_between_opens() {
     assert!(editor.page_editor(second).is_some());
     assert!(editor.page_editor(PageId::new()).is_none(), "never opened");
 }
+
+#[test]
+fn pages_loaded_from_disk_are_used_and_listed_for_saving() {
+    use leaf_model::{BlockKind, PageCommand, PageDoc};
+
+    let mut editor = WorkspaceEditor::new(Workspace::new());
+    let page = editor.new_page(1).unwrap();
+    let mut saved = PageDoc::new();
+    saved
+        .apply(PageCommand::InsertBlock {
+            parent: None,
+            index: 0,
+            kind: BlockKind::Quote,
+            text: "from disk".into(),
+        })
+        .unwrap();
+    editor.insert_page(page, saved).unwrap();
+    let rows = editor.open_page().unwrap().unwrap().rows().unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].text.as_deref(), Some("from disk"));
+
+    // A second hand-over doesn't replace the live copy.
+    editor.insert_page(page, PageDoc::new()).unwrap();
+    assert_eq!(editor.page_editor(page).unwrap().doc().len(), 1);
+    // An empty page from disk gets a paragraph to type in.
+    let other = editor.new_page(2).unwrap();
+    editor.insert_page(other, PageDoc::new()).unwrap();
+    assert_eq!(editor.page_editor(other).unwrap().doc().len(), 1);
+
+    let mut listed: Vec<PageId> = editor.loaded_pages().map(|(id, _)| id).collect();
+    listed.sort();
+    let mut expected = vec![page, other];
+    expected.sort();
+    assert_eq!(listed, expected);
+    assert!(matches!(
+        editor.insert_page(PageId::new(), PageDoc::new()),
+        Err(EditorError::Model(ModelError::PageNotFound(_)))
+    ));
+}

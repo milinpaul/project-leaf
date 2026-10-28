@@ -10,7 +10,7 @@
 
 use std::collections::HashMap;
 
-use crate::{DocKey, Document, Store, StoreError};
+use crate::{DocKey, Savable, Store, StoreError};
 
 /// How long, in milliseconds, a change may wait before it is saved (`BLOCK_MODEL.md`).
 pub const DEFAULT_AUTOSAVE_MS: i64 = 300;
@@ -73,15 +73,68 @@ impl Autosave {
 
     /// Saves `doc` under `key` now, due or not, and forgets it once the write succeeded.
     /// Returns whether anything was written. On error the document stays pending, so it is retried.
-    pub fn save<D: Document>(
+    pub fn save<D: Savable + ?Sized>(
         &mut self,
         store: &mut Store,
         key: DocKey,
-        doc: &mut D,
+        doc: &D,
         now: i64,
     ) -> Result<bool, StoreError> {
         let wrote = store.save(key, doc, now)?;
         self.dirty.remove(&key);
+        Ok(wrote)
+    }
+
+    /// One beat of the app's timer: notices which of `docs` have unsaved changes (so a change can't
+    /// be missed even if nobody called [`Autosave::changed`]) and saves those that are due.
+    /// Returns how many documents were written.
+    pub fn tick(
+        &mut self,
+        store: &mut Store,
+        docs: &[(DocKey, &dyn Savable)],
+        now: i64,
+    ) -> Result<usize, StoreError> {
+        self.notice(docs, now);
+        let due = self.due(now);
+        self.save_listed(store, docs, &due, now)
+    }
+
+    /// Saves every document with unsaved changes right away: on window blur and on quit.
+    pub fn flush(
+        &mut self,
+        store: &mut Store,
+        docs: &[(DocKey, &dyn Savable)],
+        now: i64,
+    ) -> Result<usize, StoreError> {
+        self.notice(docs, now);
+        let pending = self.pending();
+        self.save_listed(store, docs, &pending, now)
+    }
+
+    fn notice(&mut self, docs: &[(DocKey, &dyn Savable)], now: i64) {
+        for (key, doc) in docs {
+            if doc.has_unsaved_changes() {
+                self.changed(*key, now);
+            }
+        }
+    }
+
+    /// Saves `keys`, stopping at the first failure (the rest stay pending). A pending key with no
+    /// document any more is forgotten.
+    fn save_listed(
+        &mut self,
+        store: &mut Store,
+        docs: &[(DocKey, &dyn Savable)],
+        keys: &[DocKey],
+        now: i64,
+    ) -> Result<usize, StoreError> {
+        let mut wrote = 0;
+        for key in keys {
+            match docs.iter().find(|(k, _)| k == key) {
+                Some((_, doc)) => wrote += usize::from(self.save(store, *key, *doc, now)?),
+                None => self.forget(*key),
+            }
+        }
         Ok(wrote)
     }
 

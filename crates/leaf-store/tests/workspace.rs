@@ -122,3 +122,30 @@ fn errors_name_the_folder() {
         "/tmp/x.leaf already exists and is not an empty folder"
     );
 }
+
+#[test]
+fn open_or_create_makes_a_missing_workspace_and_reopens_an_existing_one() {
+    let dir = TempDir::new();
+    let path = dir.0.join("Leaf").join("My Workspace.leaf");
+    drop(Workspace::open_or_create(&path).unwrap());
+    assert!(path.join("workspace.sqlite").is_file(), "created, parents too");
+    drop(Workspace::open_or_create(&path).unwrap());
+
+    let empty = dir.0.join("empty");
+    fs::create_dir(&empty).unwrap();
+    drop(Workspace::open_or_create(&empty).unwrap());
+
+    let busy = dir.0.join("busy");
+    fs::create_dir(&busy).unwrap();
+    fs::write(busy.join("notes.txt"), "mine").unwrap();
+    assert!(matches!(
+        Workspace::open_or_create(&busy),
+        Err(StoreError::AlreadyExists(_))
+    ));
+    let first = Workspace::open_or_create(&path).unwrap();
+    assert!(matches!(
+        Workspace::open_or_create(&path),
+        Err(StoreError::AlreadyOpen(_))
+    ));
+    drop(first);
+}

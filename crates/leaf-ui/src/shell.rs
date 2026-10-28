@@ -26,20 +26,45 @@ pub struct Shell {
     title: Entity<InputState>,
     /// The open page's block inputs (interim editor, E07-S10).
     blocks: blocks::BlockInputs,
-    _subscriptions: Vec<Subscription>,
+    /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
+    storage: Option<Storage>,
+    subscriptions: Vec<Subscription>,
 }
 
 impl Shell {
-    /// Builds the shell for a new window around an empty, in-memory workspace. Saving to disk
-    /// arrives with the persistence epic (E03).
+    /// Builds the shell for a new window around an empty, in-memory workspace that is never
+    /// saved. Used by tests; the app uses [`Shell::with_folder`].
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        Self::build(Workspace::new(), None, window, cx)
+    }
+
+    /// Builds the shell for a workspace opened from disk with [`Storage::open`], saving every
+    /// change back (autosave, plus a full save on blur, quit and window close).
+    pub fn with_storage(
+        storage: Storage,
+        workspace: Workspace,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        let mut shell = Self::build(workspace, Some(storage), window, cx);
+        shell.start_autosave(window, cx);
+        shell
+    }
+
+    fn build(
+        workspace: Workspace,
+        storage: Option<Storage>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let title = cx.new(|cx| InputState::new(window, cx).placeholder(UNTITLED));
         let subscriptions = vec![cx.subscribe_in(&title, window, Self::on_title_event)];
         Self {
-            editor: WorkspaceEditor::new(Workspace::new()),
+            editor: WorkspaceEditor::new(workspace),
             title,
             blocks: blocks::BlockInputs::default(),
-            _subscriptions: subscriptions,
+            storage,
+            subscriptions,
         }
     }
 
@@ -60,7 +85,10 @@ impl Shell {
     /// Opens `page` from the sidebar.
     pub fn open(&mut self, page: PageId, window: &mut Window, cx: &mut Context<Self>) {
         match self.editor.select(page) {
-            Ok(()) => self.show_selected(window, cx),
+            Ok(()) => {
+                self.load_selected_page();
+                self.show_selected(window, cx);
+            }
             Err(err) => report("could not open the page", err),
         }
     }
@@ -167,6 +195,16 @@ impl Render for Shell {
 }
 
 mod blocks;
+mod storage;
+
+pub use storage::Storage;
+
+impl Drop for Shell {
+    /// Closing the window saves everything, even if the app keeps running.
+    fn drop(&mut self) {
+        self.save(true);
+    }
+}
 
 /// Current time in Unix milliseconds. The UI owns the clock so the model never reads it.
 fn now_ms() -> i64 {

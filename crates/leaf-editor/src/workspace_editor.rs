@@ -37,7 +37,7 @@ pub struct SidebarItem {
 pub struct WorkspaceEditor {
     workspace: Workspace,
     selected: Option<PageId>,
-    /// Each opened page's blocks, kept in memory until saving arrives (E03).
+    /// The blocks of each page opened so far (loaded from disk, or new).
     pages: HashMap<PageId, PageEditor>,
 }
 
@@ -121,6 +121,26 @@ impl WorkspaceEditor {
             }
         };
         Ok(Some(editor))
+    }
+
+    /// Hands over `page`'s blocks as loaded from disk, before the page is first opened. A page that
+    /// is already in memory keeps its live copy (it may have newer edits). An empty page gets one
+    /// paragraph to type in, as a new page does.
+    pub fn insert_page(&mut self, page: PageId, doc: PageDoc) -> Result<(), EditorError> {
+        if !self.workspace.contains(page) {
+            return Err(ModelError::PageNotFound(page).into());
+        }
+        if let std::collections::hash_map::Entry::Vacant(entry) = self.pages.entry(page) {
+            let mut editor = PageEditor::new(doc);
+            editor.ensure_block()?;
+            entry.insert(editor);
+        }
+        Ok(())
+    }
+
+    /// Every page document in memory, for saving.
+    pub fn loaded_pages(&self) -> impl Iterator<Item = (PageId, &PageDoc)> {
+        self.pages.iter().map(|(page, editor)| (*page, editor.doc()))
     }
 
     /// A page's blocks, if it has been opened before; read-only.

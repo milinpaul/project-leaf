@@ -54,6 +54,20 @@ impl Workspace {
         Self::open_folder(path)
     }
 
+    /// Opens the workspace at `path`, or creates it there if nothing exists yet: what the app does
+    /// at launch. Anything else at `path` (a file, a folder of other things) is an error, not
+    /// overwritten.
+    pub fn open_or_create(path: &Path) -> Result<Self, StoreError> {
+        if path.exists() {
+            match Self::open(path) {
+                Err(StoreError::NotAWorkspace(_)) => Self::create(path),
+                other => other,
+            }
+        } else {
+            Self::create(path)
+        }
+    }
+
     /// The workspace folder.
     pub fn root(&self) -> &Path {
         &self.root

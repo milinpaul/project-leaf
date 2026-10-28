@@ -51,8 +51,8 @@
       "goal": "SQLite storage of Loro docs, autosave, compaction, crash safety, assets.",
       "path": "backlog/epics/E03.md",
       "story_count": 8,
-      "done_count": 4,
-      "progress": 0.5
+      "done_count": 5,
+      "progress": 0.62
     },
     {
       "id": "E04",
@@ -1650,7 +1650,7 @@
       "id": "E03-S06",
       "title": "Crash recovery test",
       "epic": "E03",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1739,7 +1739,7 @@
       "id": "E03-S08",
       "title": "App opens a workspace folder and autosaves",
       "epic": "E03",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1750,37 +1750,37 @@
         "leaf-app",
         "leaf-store"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "The app still edits an in-memory workspace. Open (or create) a workspace folder at launch, load the workspace and\npages from it, run the `Autosave` timer, and flush everything on window blur and quit. Found while planning E03-S04.",
       "acceptance": [
         {
           "text": "Launch opens the last (or a default) workspace folder, creating it if missing",
-          "done": false
+          "done": true
         },
         {
           "text": "Edits are saved by the autosave timer; blur and quit flush everything",
-          "done": false
+          "done": true
         },
         {
           "text": "Relaunching shows the same pages and text (verified with screenshots)",
-          "done": false
+          "done": true
         },
         {
           "text": "A second app instance shows a clear \"already open\" message",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **`leaf-model`:**\n  - `has_unsaved_changes()` is a cheap version check.\n  - `mark_saved` takes `&self`: saving changes no content, so it doesn't need write access.\n- **`leaf-store`:**\n  - An object-safe `Savable` trait; `Document: Savable` adds the loading constructors.\n  - `Autosave::tick(store, docs, now)` notices unsaved documents and saves the due ones.\n  - `Autosave::flush(store, docs, now)` saves everything pending, for blur and quit.\n  - Polling the documents means a change can never be missed. A forgotten `changed()` call can't happen.\n  - `Workspace::open_or_create(path)`.\n- **`leaf-editor`:**\n  - `WorkspaceEditor::insert_page(page, doc)` hands over a page loaded from disk.\n  - `loaded_pages()` lists the documents to save.\n- **`leaf-ui`:**\n  - **`Shell` gets optional storage:** the opened folder plus `Autosave`, with no storage in tests.\n  - It loads a page from disk the first time it is opened.\n  - **Saving:** a 100 ms timer calls `tick`; window deactivation and app quit call `flush`.\n  - `error_root(message)` shows a window with a message when the workspace can't be opened (already open,\n    damaged, ...).\n- **`leaf-app`:** opens the workspace given as the first argument, or else `~/Documents/Leaf/My Workspace.leaf`,\n  creating it if missing.\n- **Tests:**\n  - tick and flush policy with a real store;\n  - `has_unsaved_changes`;\n  - the editor's `insert_page`;\n  - a shell test: type, flush, open the folder again, and the title and text are back.\n- **Screenshots:** type, quit, relaunch, and the page is still there; a second instance shows \"already open\".",
       "path": "backlog/stories/E03-S08.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E04-S01",
