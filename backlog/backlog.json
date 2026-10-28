@@ -40,8 +40,8 @@
       "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
       "path": "backlog/epics/E02.md",
       "story_count": 10,
-      "done_count": 6,
-      "progress": 0.6
+      "done_count": 7,
+      "progress": 0.7
     },
     {
       "id": "E03",
@@ -1089,7 +1089,7 @@
       "id": "E02-S05",
       "title": "Split and merge blocks",
       "epic": "E02",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1191,7 +1191,7 @@
       "id": "E02-S07",
       "title": "Invariant checker and command property tests",
       "epic": "E02",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1202,17 +1202,17 @@
         "leaf-model",
         "testing"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Assert all invariants in docs/architecture/BLOCK_MODEL.md after arbitrary command sequences.",
       "acceptance": [
         {
-          "text": "`check_invariants()` covers all 7 invariants",
-          "done": false
+          "text": "`check_invariants()` covers every state invariant in BLOCK_MODEL.md (1–6 and 8); invariant 7 (undo) is a history property, asserted by E02-S08's undo round-trip test",
+          "done": true
         },
         {
           "text": "proptest strategy generating valid random commands",
-          "done": false
+          "done": true
         },
         {
           "text": "10k-case run passes in CI time budget",
@@ -1220,17 +1220,20 @@
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **`page_doc/invariants.rs`:** `PageDoc::check_invariants() -> Result<(), Vec<InvariantViolation>>`. It reads the\n  raw Loro tree, not the index or read API, so it would catch bugs those layers hide. Checks:\n  - 1 every node has a text `type`;\n  - 2 a `text` container exactly for text-bearing kinds;\n  - 3 no children under kinds that disallow them;\n  - 4 heading level 1–3 (and every known kind's props readable);\n  - 5 code text carries no marks;\n  - 6 no cycles: each node's parent chain reaches the root;\n  - 8 every node has a valid, unique `id`, matching the index.\n\n  Unknown kinds (from newer versions) are exempt from 2 and 3, because their rules are unknown.\n- **Invariant 7** is about history, not state: it needs page undo (E02-S08), whose criteria already include the\n  undo round-trip test. E02-S08 gets a note to assert it.\n- **`tests/page_invariants.rs`:** a proptest strategy that picks **every** page command with real block ids from the\n  page: insert (all kinds), delete, move, indent, outdent, text insert/delete, set/remove mark, set kind, set prop,\n  split, merge. After each step: `check_invariants()`. At the end, a reload must give the same outline.\n- **10k cases:** measure in a debug build; if too slow for CI, run 10k on `main` (the test job) and fewer on PRs.\n- **Proof:** plant real bugs (skip stripping marks on code, skip moving children out of a heading) and confirm\n  the test finds them.",
       "path": "backlog/stories/E02-S07.md",
-      "prs": [],
-      "waiting_on": [
-        "E02-S05"
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/20",
+          "number": 20
+        }
       ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 0.75
     },
     {
       "id": "E02-S08",
@@ -1877,8 +1880,7 @@
       "path": "backlog/stories/E04-S05.md",
       "prs": [],
       "waiting_on": [
-        "E04-S04",
-        "E02-S05"
+        "E04-S04"
       ],
       "ready": false,
       "progress": 0.0

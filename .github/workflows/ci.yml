@@ -57,6 +57,9 @@ jobs:
     # pre-push hook runs everything locally. Pushes to main and manual runs test on all three OSes.
     if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
+    env:
+      # The long property-test run (E02-S07): 10,000 random command sequences per property instead of 256.
+      PROPTEST_CASES: "10000"
     strategy:
       fail-fast: false
       matrix:

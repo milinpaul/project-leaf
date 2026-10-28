@@ -166,6 +166,11 @@ Positions are Unicode scalar offsets as used by Loro; the editor converts to and
 
 ## Invariants (checked in tests after every command)
 
+`PageDoc::check_invariants()` checks 1–6 and 8 on the raw Loro tree (unknown kinds are exempt from 2 and 3); the
+property test `crates/leaf-model/tests/page_invariants.rs` runs random sequences of every page command and calls it
+after each step (256 cases locally and on PRs, 10,000 in CI on `main`). Invariant 7 is checked by the page undo
+property test (E02-S08).
+
 1. Every tree node has a `type` in its meta.
 2. `text` exists exactly for text-bearing types.
 3. Types that disallow children have no children.

@@ -21,7 +21,7 @@ pub use block_kind::{BlockKind, BlockProp};
 pub use command::{Outcome, WorkspaceCommand};
 pub use error::ModelError;
 pub use page_command::{PageCommand, PageOutcome};
-pub use page_doc::PageDoc;
+pub use page_doc::{InvariantViolation, PageDoc};
 pub use page_meta::PageMeta;
 pub use text::{Mark, MarkKind, Marks, TextSpan};
 pub use workspace::{DEFAULT_UNDO_MERGE_MS, Workspace};
