@@ -192,7 +192,11 @@ MyWorkspace.leaf/
   workspace.sqlite
   assets/<blake3-hash>       # image files
   search/                    # tantivy index (Phase 1, disposable)
+  leaf.lock                  # OS file lock held by the app that has it open (ADR 0009)
 ```
+
+`Workspace::create` makes this layout, in a new path or an empty folder only. `Workspace::open` needs
+`workspace.sqlite` to be present, recreates missing subfolders, and refuses a workspace another Leaf has open.
 
 SQLite schema:
 

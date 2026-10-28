@@ -25,3 +25,4 @@ Records cover two kinds of decision:
 | [0006](0006-stable-block-ids.md) | Stable block IDs stored in block meta | Architecture | Accepted |
 | [0007](0007-block-props-in-meta.md) | Block properties stored directly in block meta | Architecture | Accepted |
 | [0008](0008-schema-migrations.md) | Forward-only schema migrations and SQLite settings | Architecture | Accepted |
+| [0009](0009-workspace-lock.md) | One app per workspace via an OS file lock | Architecture | Accepted |
