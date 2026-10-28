@@ -390,7 +390,7 @@
       "id": "E00-S06",
       "title": "Link pull requests on story cards",
       "epic": "E00",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P2",
       "size": "S",
       "depends_on": [],
@@ -429,7 +429,12 @@
       ],
       "plan": "Extend `scripts/backlog.py` (parse, validate, `prs` in JSON, `pr` command) and `scripts/board_template.html`\n(tag on card, links in drawer). Checked by hand: valid and invalid URLs, duplicate add, board render.",
       "path": "backlog/stories/E00-S06.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/2",
+          "number": 2
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
