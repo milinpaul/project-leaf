@@ -18,8 +18,8 @@
       "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
       "path": "backlog/epics/E00.md",
       "story_count": 9,
-      "done_count": 6,
-      "progress": 0.67
+      "done_count": 7,
+      "progress": 0.78
     },
     {
       "id": "E01",
@@ -355,7 +355,7 @@
       "id": "E00-S05",
       "title": "Spike: Loro tree, rich text and undo",
       "epic": "E00",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -592,14 +592,15 @@
       "priority": "P0",
       "size": "S",
       "depends_on": [
-        "E00-S02"
+        "E00-S02",
+        "E02-S10"
       ],
       "labels": [
         "leaf-core"
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "PageId (uuid v7), BlockId (wraps Loro TreeID), AssetId (blake3 hex), plus base error enum.",
+      "context": "PageId (uuid v7), BlockId (uuid v7, stored in block meta per ADR 0006; no Loro dependency), AssetId (blake3 hex), plus base error enum.",
       "acceptance": [
         {
           "text": "Newtypes with Display, FromStr, serde",
@@ -621,8 +622,10 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S01.md",
       "prs": [],
-      "waiting_on": [],
-      "ready": true,
+      "waiting_on": [
+        "E02-S10"
+      ],
+      "ready": false,
       "progress": 0.0
     },
     {
@@ -668,8 +671,7 @@
       "path": "backlog/stories/E01-S02.md",
       "prs": [],
       "waiting_on": [
-        "E01-S01",
-        "E00-S05"
+        "E01-S01"
       ],
       "ready": false,
       "progress": 0.0
@@ -905,7 +907,6 @@
       "prs": [],
       "waiting_on": [
         "E01-S01",
-        "E00-S05",
         "E02-S10"
       ],
       "ready": false,
@@ -1292,7 +1293,7 @@
       "id": "E02-S10",
       "title": "Stable block IDs independent of Loro TreeIDs",
       "epic": "E02",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1302,31 +1303,29 @@
         "leaf-model",
         "decision"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "The E00-S05 spike found that Loro gives a block a new `TreeID` whenever undo or redo re-creates it (undo of a\ndelete, redo of a create). BLOCK_MODEL.md assumes `BlockId = TreeID` is stable, which cursor restore on undo and\nPhase 1 block links rely on. An ID stored in the block's meta survives every undo/redo cycle (see\n`crates/leaf-model/tests/loro_spike.rs`). Decide the block identity scheme before E02-S01 builds on it.",
       "acceptance": [
         {
           "text": "ADR choosing the scheme (likely: a stable `BlockId` in each block's meta, `TreeID` as an internal handle;",
-          "done": false
+          "done": true
         },
         {
           "text": "docs/architecture/BLOCK_MODEL.md updated: IDs table, page doc meta, invariant 7 wording",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "Decision only, no model code (E02-S01 builds on it).\n\n- Scheme: each block's meta holds a permanent `id` (UUID v7 string), the same pattern pages already use.\n  `BlockId` becomes a UUID newtype in `leaf-core`; `TreeID` stays an internal handle inside `leaf-model`,\n  which keeps a `BlockId → TreeID` index and rebuilds it after undo, redo and import.\n- ADR 0006 with alternatives (soft delete, remapping on undo, our own undo).\n- BLOCK_MODEL.md: diagram, IDs table, page doc meta, commands note, invariants (new 8: unique ids; 7 reworded).\n- E01-S01 context updated to the new `BlockId`. Proof: the E00-S05 spike tests already show a meta `id`\n  survives every undo/redo cycle; `just check` covers the docs.",
       "path": "backlog/stories/E02-S10.md",
       "prs": [],
-      "waiting_on": [
-        "E00-S05"
-      ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E03-S01",
