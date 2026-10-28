@@ -360,3 +360,69 @@ fn text_errors_explain_themselves() {
     );
     assert_eq!(ModelError::EmptyLink.to_string(), "a link needs an address");
 }
+
+#[test]
+fn mark_commands_that_change_nothing_write_nothing() {
+    // Regression (E02-S11, found by the 10,000-case undo property test): Loro writes an op for
+    // these even though the text looks the same, but records no undo step for it.
+    let mut page = PageDoc::new();
+    let id = block(&mut page, BlockKind::Paragraph, "leaf");
+    page.apply(PageCommand::SetMark {
+        id,
+        range: 0..2,
+        mark: Mark::Italic,
+    })
+    .unwrap();
+    let unchanged = [
+        PageCommand::RemoveMark {
+            id,
+            range: 2..3,
+            kind: MarkKind::Italic,
+        },
+        PageCommand::SetMark {
+            id,
+            range: 0..1,
+            mark: Mark::Italic,
+        },
+    ];
+    for command in unchanged {
+        let before = page.to_bytes().unwrap();
+        assert_eq!(
+            page.apply(command.clone()).unwrap(),
+            PageOutcome::Unchanged,
+            "{command:?}"
+        );
+        assert_eq!(page.to_bytes().unwrap(), before, "{command:?} wrote something");
+    }
+
+    // A different link target is a real change, and so is a range only partly marked.
+    page.apply(PageCommand::SetMark {
+        id,
+        range: 0..4,
+        mark: Mark::Link("https://a.example".into()),
+    })
+    .unwrap();
+    for command in [
+        PageCommand::SetMark {
+            id,
+            range: 0..4,
+            mark: Mark::Link("https://b.example".into()),
+        },
+        PageCommand::SetMark {
+            id,
+            range: 1..3,
+            mark: Mark::Italic,
+        },
+        PageCommand::RemoveMark {
+            id,
+            range: 1..2,
+            kind: MarkKind::Italic,
+        },
+    ] {
+        assert_eq!(
+            page.apply(command.clone()).unwrap(),
+            PageOutcome::Changed,
+            "{command:?}"
+        );
+    }
+}

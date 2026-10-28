@@ -7,7 +7,7 @@
 use std::ops::Range;
 
 use leaf_core::BlockId;
-use loro::LoroText;
+use loro::{LoroText, LoroValue, TextDelta, cursor::PosType};
 
 use super::PageDoc;
 use crate::{Mark, MarkKind, ModelError, PageOutcome};
@@ -57,9 +57,16 @@ impl PageDoc {
             return Err(ModelError::EmptyLink);
         }
         check_range(&container, range.clone())?;
-        if !range.is_empty() {
-            container.mark(range, mark.kind().key(), mark.value())?;
+        let value = mark.value();
+        let key = mark.kind().key();
+        if range.is_empty()
+            || mark_values(&container, &range, key)?
+                .iter()
+                .all(|v| v.as_ref() == Some(&value))
+        {
+            return Ok(PageOutcome::Unchanged);
         }
+        container.mark(range, key, value)?;
         Ok(PageOutcome::Changed)
     }
 
@@ -71,9 +78,14 @@ impl PageDoc {
     ) -> Result<PageOutcome, ModelError> {
         let container = self.editable_text(id)?;
         check_range(&container, range.clone())?;
-        if !range.is_empty() {
-            container.unmark(range, kind.key())?;
+        if range.is_empty()
+            || mark_values(&container, &range, kind.key())?
+                .iter()
+                .all(Option::is_none)
+        {
+            return Ok(PageOutcome::Unchanged);
         }
+        container.unmark(range, kind.key())?;
         Ok(PageOutcome::Changed)
     }
 
@@ -88,6 +100,29 @@ impl PageDoc {
             }),
         }
     }
+}
+
+/// The value of mark `key` on each run of text in `range` (`None` where it is absent).
+///
+/// Mark commands that would change nothing must write nothing: Loro records an op for them but
+/// no undo step, so the editor would wait for an undo that never comes (E02-S11).
+fn mark_values(
+    text: &LoroText,
+    range: &Range<usize>,
+    key: &str,
+) -> Result<Vec<Option<LoroValue>>, ModelError> {
+    Ok(text
+        .slice_delta(range.start, range.end, PosType::Unicode)?
+        .into_iter()
+        .filter_map(|delta| match delta {
+            TextDelta::Insert { attributes, .. } => Some(
+                attributes
+                    .and_then(|mut attrs| attrs.remove(key))
+                    .filter(|v| !matches!(v, LoroValue::Null)),
+            ),
+            _ => None,
+        })
+        .collect())
 }
 
 /// Fails unless `range` is well-formed and within the text.
