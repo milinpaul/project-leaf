@@ -2,13 +2,14 @@
 //! toolbar do. Turns those actions into `PageCommand`s; never touches Loro itself.
 //!
 //! The interim block editor (E07-S10) draws one plain text input per block from [`BlockRow`]s. The
-//! rules here carry over to the real editor (E04), which adds a cursor model and splitting text.
+//! rules here carry over to the real editor (E04). The caret and its movement live in `caret`.
 
 use leaf_core::BlockId;
 pub use leaf_model::Caret;
 use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOutcome};
 
 use crate::EditorError;
+use crate::caret::Tracked;
 use crate::view::{BlockRow, PageView};
 
 /// What Backspace at the start of a block did.
@@ -24,9 +25,11 @@ pub enum Backspace {
 
 /// A page's blocks being edited.
 pub struct PageEditor {
-    doc: PageDoc,
+    pub(crate) doc: PageDoc,
     /// The rows as last drawn, refreshed from the page's changes.
     view: PageView,
+    /// Where the caret is, if it has been placed.
+    pub(crate) caret: Option<Tracked>,
 }
 
 impl PageEditor {
@@ -36,6 +39,7 @@ impl PageEditor {
         Self {
             doc,
             view: PageView::default(),
+            caret: None,
         }
     }
 

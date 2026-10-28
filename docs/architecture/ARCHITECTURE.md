@@ -63,7 +63,9 @@ block's kind and properties (E02-S04). The window can edit a page's blocks with 
 Tab and Shift+Tab caught before the input sees them. The rich text element (E07-S02) replaces the inputs later;
 `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
-the editor wires Cmd+Z to it in E04-S08. The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+the editor wires Cmd+Z to it in E04-S08. The editor's caret (E04-S02) moves by
+whole characters as a reader sees them (an emoji, a Hindi syllable), jumps by word, and goes to line start and end; it
+is anchored to the text, so edits before it, undo and other devices' changes carry it along (ADR 0015). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
 through those commands (E06-S07).
 
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or

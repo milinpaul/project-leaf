@@ -155,7 +155,11 @@ validate, write, commit once; `Unchanged` when nothing would change)
   blocks are handled one at a time in reading order; if none can move, `Unchanged`.
 - `PasteBlocks { after, fragment }`
 
-Positions are Unicode scalar offsets as used by Loro; the editor converts to and from grapheme clusters for cursor movement.
+Positions are Unicode scalar offsets as used by Loro; the editor moves the caret between grapheme cluster
+boundaries so it never stops inside an emoji or a conjunct. A caret that must follow edits is an `Anchor`
+(`PageDoc::anchor` / `PageDoc::resolve`): a Loro cursor plus the original position, used (clamped) when undo re-created
+the block under a new container (ADR 0015). `PageDoc::import_changes` merges another copy's changes (tests only in
+Phase 0).
 
 ## Undo / redo
 
