@@ -16,6 +16,13 @@ leaf-store = { path = "crates/leaf-store" }
 leaf-export = { path = "crates/leaf-export" }
 leaf-search = { path = "crates/leaf-search" }
 leaf-ui = { path = "crates/leaf-ui" }
+# UI: gpui-component pins gpui exactly (published as `gpui-pre`), so we pin both to the same pair.
+# Upgrade them together, deliberately. See docs/adr for the spike findings.
+# gpui-platform features: runtime_shaders (no Xcode Metal Toolchain needed), font-kit (without it macOS draws
+# no text), x11 + wayland (Linux windowing backends are opt-in).
+gpui = { package = "gpui-pre", version = "=0.3.10" }
+gpui-component = "=0.8.1"
+gpui-platform = { package = "gpui-pre-platform", version = "=0.3.10", features = ["runtime_shaders", "font-kit", "x11", "wayland"] }
 loro = "1"
 rusqlite = { version = "0.37", features = ["bundled"] }
 uuid = { version = "1", features = ["v7", "serde"] }

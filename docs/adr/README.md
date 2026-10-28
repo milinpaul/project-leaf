@@ -17,4 +17,8 @@ Records cover two kinds of decision:
 
 | # | Title | Type | Status |
 |---|---|---|---|
-| — | _No records yet_ | | |
+| [0001](0001-loro-document-model.md) | Loro CRDT as the document model | Architecture | Accepted |
+| [0002](0002-gpui-and-gpui-component.md) | GPUI with gpui-component for the UI (with spike findings) | Architecture | Accepted |
+| [0003](0003-sqlite-storage.md) | SQLite file for workspace storage | Architecture | Accepted |
+| [0004](0004-markdown-is-not-storage.md) | Markdown is for import and export, not storage | Feature | Accepted |
+| [0005](0005-pages-not-folders.md) | Pages all the way down, no folders | Feature | Accepted |
