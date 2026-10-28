@@ -3824,6 +3824,8 @@ version = "0.1.0"
 name = "leaf-store"
 version = "0.1.0"
 dependencies = [
+ "leaf-core",
+ "leaf-model",
  "rusqlite",
  "thiserror 2.0.21",
 ]

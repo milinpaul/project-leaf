@@ -73,8 +73,9 @@ the editor wires Cmd+Z to it in E04-S08. The window's sidebar now lists real pag
    the document's rules still hold, and records one undo step.
 4. **The screen updates.** The editor builds a fresh view model (blocks, text, cursor) and `leaf-ui` draws it.
    The goal is under 16 ms from key press to pixels.
-5. **The change is saved.** Loro hands `leaf-store` a small update describing the change. Within 300 ms it is
-   appended to the SQLite file, so a crash loses at most about a second of typing.
+5. **The change is saved.** The document hands `leaf-store` one small update with everything changed since the last
+   save (`unsaved_changes`), which is appended to the SQLite file; then the document is marked saved. Autosave does
+   this within 300 ms, so a crash loses at most about a second of typing.
 
 Undo runs the same path backwards: the model reverses the last step and the editor redraws.
 

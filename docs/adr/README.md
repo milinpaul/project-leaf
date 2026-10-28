@@ -26,3 +26,4 @@ Records cover two kinds of decision:
 | [0007](0007-block-props-in-meta.md) | Block properties stored directly in block meta | Architecture | Accepted |
 | [0008](0008-schema-migrations.md) | Forward-only schema migrations and SQLite settings | Architecture | Accepted |
 | [0009](0009-workspace-lock.md) | One app per workspace via an OS file lock | Architecture | Accepted |
+| [0010](0010-saving-unsaved-changes.md) | Documents track their own unsaved changes | Architecture | Accepted |

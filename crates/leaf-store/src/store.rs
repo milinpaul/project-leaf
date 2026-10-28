@@ -16,7 +16,7 @@ use crate::{StoreError, migrations};
 ///   document that doesn't exist.
 #[derive(Debug)]
 pub struct Store {
-    conn: Connection,
+    pub(crate) conn: Connection,
 }
 
 impl Store {

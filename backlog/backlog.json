@@ -51,8 +51,8 @@
       "goal": "SQLite storage of Loro docs, autosave, compaction, crash safety, assets.",
       "path": "backlog/epics/E03.md",
       "story_count": 7,
-      "done_count": 1,
-      "progress": 0.14
+      "done_count": 2,
+      "progress": 0.29
     },
     {
       "id": "E04",
@@ -1418,7 +1418,7 @@
       "id": "E03-S02",
       "title": "Workspace directory layout",
       "epic": "E03",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1464,7 +1464,7 @@
       "id": "E03-S03",
       "title": "Save and load docs",
       "epic": "E03",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1475,35 +1475,38 @@
       "labels": [
         "leaf-store"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Persist Loro snapshots and incremental updates.",
       "acceptance": [
         {
           "text": "Append update per commit batch",
-          "done": false
+          "done": true
         },
         {
           "text": "Load = snapshot + updates in seq order",
-          "done": false
+          "done": true
         },
         {
           "text": "save→load equality test for workspace and page docs",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **`leaf-model`:** `Workspace` and `PageDoc` remember the version they were last saved at.\n  - `from_saved(snapshot, updates)` loads a document.\n  - `unsaved_changes()` returns one Loro update covering every commit since the last save, or `None` if nothing\n    changed.\n  - `mark_saved()` is called after a successful write.\n  - This keeps Loro types out of the store.\n- **`leaf-store`:**\n  - **`DocKey`:** `Workspace`, or `Page(PageId)`; the `doc_id` text is `workspace` or the page's ID.\n  - **`Document` trait:** implemented for both model types.\n  - **`Store::save(key, doc, now_ms)`:**\n    - when the document has no row yet, it writes a snapshot;\n    - otherwise it appends the unsaved changes as one row in `doc_updates` (one row per batch of commits);\n    - it writes nothing when nothing changed.\n  - **`Store::load(key)`:** the snapshot, then the updates in `seq` order; `None` if the document was never saved.\n  - The caller passes the time, so autosave (E03-S04) can test with a fake clock.\n- **Tests:**\n  - save→load equality for the workspace and for pages over several save rounds, including undo, after reopening\n    the folder;\n  - no write when nothing changed;\n  - one update row per save;\n  - updates read in `seq` order;\n  - docs kept apart.\n- **Out of scope:** compaction (E03-S05), the autosave timer (E03-S04), and wiring into the UI.",
       "path": "backlog/stories/E03-S03.md",
-      "prs": [],
-      "waiting_on": [
-        "E03-S02"
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/24",
+          "number": 24
+        }
       ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E03-S04",
@@ -1673,10 +1676,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S07.md",
       "prs": [],
-      "waiting_on": [
-        "E03-S02"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2417,8 +2418,7 @@
       "path": "backlog/stories/E06-S02.md",
       "prs": [],
       "waiting_on": [
-        "E06-S01",
-        "E03-S02"
+        "E06-S01"
       ],
       "ready": false,
       "progress": 0.0

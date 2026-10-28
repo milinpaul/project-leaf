@@ -14,6 +14,7 @@ mod error;
 mod page_command;
 mod page_doc;
 mod page_meta;
+mod saved;
 mod text;
 mod workspace;
 
