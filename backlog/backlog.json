@@ -29,8 +29,8 @@
       "goal": "leaf-core IDs and the Loro workspace doc: pages nested in pages, trash, undo.",
       "path": "backlog/epics/E01.md",
       "story_count": 6,
-      "done_count": 4,
-      "progress": 0.67
+      "done_count": 6,
+      "progress": 1.0
     },
     {
       "id": "E02",
@@ -788,7 +788,7 @@
       "id": "E01-S05",
       "title": "Trash, restore, permanent delete",
       "epic": "E01",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -839,7 +839,7 @@
       "id": "E01-S06",
       "title": "Workspace undo/redo",
       "epic": "E01",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -875,9 +875,7 @@
           "number": 14
         }
       ],
-      "waiting_on": [
-        "E01-S05"
-      ],
+      "waiting_on": [],
       "ready": false,
       "progress": 1.0
     },
@@ -885,7 +883,7 @@
       "id": "E02-S01",
       "title": "Page doc wrapper and block schema",
       "epic": "E02",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -896,43 +894,43 @@
       "labels": [
         "leaf-model"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Page LoroDoc with 'blocks' tree, text style config and BlockKind enum read/write.",
       "acceptance": [
         {
           "text": "BlockKind enum matches docs/architecture/BLOCK_MODEL.md",
-          "done": false
+          "done": true
         },
         {
           "text": "Text styles configured on doc creation and load",
-          "done": false
+          "done": true
         },
         {
           "text": "Read API: root blocks, children, block kind, text with marks",
-          "done": false
+          "done": true
         },
         {
           "text": "Unknown types surface as BlockKind::Unknown and are preserved",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "Done with E02-S02 on one branch (owner request).\n- `leaf-model/src/block_kind.rs`: `BlockKind` exactly as BLOCK_MODEL.md, plus `Unknown { type_name }`. Read from a\n  block's `type` plus `props`; known types with bad props (heading level 7) are an error, never guessed.\n  `allows_children()` and `has_text()` encode the table.\n- `leaf-model/src/text.rs`: the mark table as `config_text_style`, applied on create and on load; `TextSpan\n  { text, marks }` with `Marks { bold, italic, strike, code, link }` read from Loro's delta.\n- `leaf-model/src/page_doc.rs`: `PageDoc` owns a page's `LoroDoc` and `\"blocks\"` tree, and a `BlockId ↔ TreeID`\n  index (ADR 0006 pattern). `new`, `from_bytes` (strict about block ids), `to_bytes`, `root_blocks`,\n  `children`, `kind`, `text`.\n- Unknown types: read as `Unknown`, their meta is never rewritten. They can't take new children.\n- Tests: every kind round-trips through save/load, bad props, unknown types preserved byte for byte, marks read\n  back with the configured expand behaviour, bad block ids rejected on load.",
       "path": "backlog/stories/E02-S01.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E02-S02",
       "title": "Insert, delete and move blocks",
       "epic": "E02",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -942,39 +940,39 @@
         "leaf-model",
         "commands"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Structural block commands.",
       "acceptance": [
         {
           "text": "InsertBlock at parent+index with kind and initial text",
-          "done": false
+          "done": true
         },
         {
           "text": "DeleteBlocks removes whole subtrees",
-          "done": false
+          "done": true
         },
         {
           "text": "MoveBlocks keeps relative order of the moved set",
-          "done": false
+          "done": true
         },
         {
           "text": "Children rules enforced (e.g. no children under heading)",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- `PageCommand` (`InsertBlock`, `DeleteBlocks`, `MoveBlocks`) applied with `PageDoc::apply`, the same pattern as\n  the workspace: validate everything first, write, commit once; `Unchanged` when nothing was recorded.\n- `InsertBlock { parent, index, kind, text }` mints and returns the `BlockId`. The text container is created\n  with `ensure_mergeable_text`, only for kinds that have text; text on a divider is an error.\n- `DeleteBlocks { ids }` removes whole subtrees and returns every deleted `BlockId` (parents first). Ids already\n  inside another deleted block are fine. An empty list is `Unchanged`.\n- `MoveBlocks { ids, new_parent, index }`: the moved set keeps **document order**; blocks inside another moved\n  block travel with it. `index` counts the destination's children without the moved blocks. Placed as: first\n  block before the sibling at `index` (or after the last), the rest each after the previous one.\n- Children rules: no inserting or moving under heading, code, divider, image or unknown blocks; no moving a\n  block into itself or its own descendants.\n- Tests: each command and rule. A proptest runs random insert/delete/move sequences against a reference model:\n  same accept/reject, same structure after every step and after reload.",
       "path": "backlog/stories/E02-S02.md",
       "prs": [],
       "waiting_on": [
         "E02-S01"
       ],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E02-S03",
@@ -2448,7 +2446,6 @@
       "prs": [],
       "waiting_on": [
         "E06-S02",
-        "E01-S06",
         "E03-S03"
       ],
       "ready": false,
