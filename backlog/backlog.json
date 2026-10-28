@@ -17,9 +17,9 @@
       "status": "todo",
       "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
       "path": "backlog/epics/E00.md",
-      "story_count": 5,
-      "done_count": 0,
-      "progress": 0.0
+      "story_count": 6,
+      "done_count": 1,
+      "progress": 0.17
     },
     {
       "id": "E01",
@@ -159,7 +159,7 @@
       "id": "E00-S01",
       "title": "Scaffold the cargo workspace",
       "epic": "E00",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [],
@@ -193,6 +193,12 @@
       ],
       "plan": "- **Workspace:** root `Cargo.toml` from TECH_STACK.md (resolver 3, edition 2024, workspace lints, profiles).\n  Third-party versions sit in `[workspace.dependencies]` but no crate uses them yet, so `Cargo.lock` stays tiny.\n- **Crates:** `leaf-core`, `leaf-model`, `leaf-editor`, `leaf-store`, `leaf-export`, `leaf-search`, `leaf-ui` (libs)\n  and `leaf-app` (binary). Each has `[lints] workspace = true` and a `//!` doc stating role, boundaries and phase.\n  No inter-crate dependencies yet: adding unused ones would fail `cargo machete`. Each story wires what it needs.\n- **clippy.toml:** allow `unwrap`/`expect` in tests, matching CLAUDE.md.\n- **Test:** `crates/leaf-app/tests/architecture.rs` reads each core crate's `Cargo.toml` and fails if it mentions\n  `gpui` or `leaf-ui`, so architecture rule 1 is enforced from day one. Std only, no new deps.\n- **Docs:** `docs/README.md` gains a pointer to `crates/`. ARCHITECTURE.md itself is E00-S03.\n- **Risks:** Rust is not yet installed on the dev machine, so build, `Cargo.lock` and `just check` wait for it.\n  Coverage of empty crates and CI wiring are E00-S02; the toolchain pin waits until the first green build.",
       "path": "backlog/stories/E00-S01.md",
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/1",
+          "number": 1
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
@@ -238,10 +244,9 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E00-S02.md",
-      "waiting_on": [
-        "E00-S01"
-      ],
-      "ready": false,
+      "prs": [],
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -280,10 +285,9 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E00-S03.md",
-      "waiting_on": [
-        "E00-S01"
-      ],
-      "ready": false,
+      "prs": [],
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.25
     },
     {
@@ -327,10 +331,9 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E00-S04.md",
-      "waiting_on": [
-        "E00-S01"
-      ],
-      "ready": false,
+      "prs": [],
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -378,11 +381,63 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E00-S05.md",
-      "waiting_on": [
-        "E00-S01"
-      ],
-      "ready": false,
+      "prs": [],
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
+    },
+    {
+      "id": "E00-S06",
+      "title": "Link pull requests on story cards",
+      "epic": "E00",
+      "status": "review",
+      "priority": "P2",
+      "size": "S",
+      "depends_on": [],
+      "labels": [
+        "backlog",
+        "tooling"
+      ],
+      "assignee": "claude",
+      "updated": "2026-10-28",
+      "context": "Owner request: show each story's pull requests on the board so stories and PRs cross-reference each other.",
+      "acceptance": [
+        {
+          "text": "Optional `pr:` frontmatter field (one URL or a list), validated as GitHub PR URLs",
+          "done": true
+        },
+        {
+          "text": "`backlog.py pr <id> <url>` adds a PR to a story and logs it",
+          "done": true
+        },
+        {
+          "text": "Board cards show a `PR #n` tag; the story drawer links to each PR",
+          "done": true
+        },
+        {
+          "text": "Backlog README and skill describe the field and use it in the PR step",
+          "done": true
+        },
+        {
+          "text": "E00-S01 linked to its PR and marked done",
+          "done": true
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": true
+        }
+      ],
+      "plan": "Extend `scripts/backlog.py` (parse, validate, `prs` in JSON, `pr` command) and `scripts/board_template.html`\n(tag on card, links in drawer). Checked by hand: valid and invalid URLs, duplicate add, board render.",
+      "path": "backlog/stories/E00-S06.md",
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/2",
+          "number": 2
+        }
+      ],
+      "waiting_on": [],
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E01-S01",
@@ -420,6 +475,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S01.md",
+      "prs": [],
       "waiting_on": [
         "E00-S02"
       ],
@@ -467,6 +523,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S02.md",
+      "prs": [],
       "waiting_on": [
         "E01-S01",
         "E00-S05"
@@ -515,6 +572,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S03.md",
+      "prs": [],
       "waiting_on": [
         "E01-S02"
       ],
@@ -562,6 +620,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S04.md",
+      "prs": [],
       "waiting_on": [
         "E01-S03"
       ],
@@ -609,6 +668,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S05.md",
+      "prs": [],
       "waiting_on": [
         "E01-S03"
       ],
@@ -649,6 +709,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E01-S06.md",
+      "prs": [],
       "waiting_on": [
         "E01-S04",
         "E01-S05"
@@ -697,6 +758,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S01.md",
+      "prs": [],
       "waiting_on": [
         "E01-S01",
         "E00-S05"
@@ -745,6 +807,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S02.md",
+      "prs": [],
       "waiting_on": [
         "E02-S01"
       ],
@@ -792,6 +855,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S03.md",
+      "prs": [],
       "waiting_on": [
         "E02-S01"
       ],
@@ -840,6 +904,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S04.md",
+      "prs": [],
       "waiting_on": [
         "E02-S02",
         "E02-S03"
@@ -888,6 +953,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S05.md",
+      "prs": [],
       "waiting_on": [
         "E02-S04"
       ],
@@ -935,6 +1001,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S06.md",
+      "prs": [],
       "waiting_on": [
         "E02-S02"
       ],
@@ -979,6 +1046,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S07.md",
+      "prs": [],
       "waiting_on": [
         "E02-S05",
         "E02-S06"
@@ -1027,6 +1095,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S08.md",
+      "prs": [],
       "waiting_on": [
         "E02-S07"
       ],
@@ -1067,6 +1136,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S09.md",
+      "prs": [],
       "waiting_on": [
         "E02-S07"
       ],
@@ -1109,6 +1179,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S01.md",
+      "prs": [],
       "waiting_on": [
         "E01-S01"
       ],
@@ -1151,6 +1222,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S02.md",
+      "prs": [],
       "waiting_on": [
         "E03-S01"
       ],
@@ -1195,6 +1267,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S03.md",
+      "prs": [],
       "waiting_on": [
         "E03-S02",
         "E01-S02",
@@ -1239,6 +1312,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S04.md",
+      "prs": [],
       "waiting_on": [
         "E03-S03"
       ],
@@ -1281,6 +1355,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S05.md",
+      "prs": [],
       "waiting_on": [
         "E03-S03"
       ],
@@ -1324,6 +1399,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S06.md",
+      "prs": [],
       "waiting_on": [
         "E03-S04"
       ],
@@ -1367,6 +1443,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S07.md",
+      "prs": [],
       "waiting_on": [
         "E03-S02"
       ],
@@ -1409,6 +1486,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S01.md",
+      "prs": [],
       "waiting_on": [
         "E02-S04"
       ],
@@ -1451,6 +1529,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S02.md",
+      "prs": [],
       "waiting_on": [
         "E04-S01"
       ],
@@ -1493,6 +1572,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S03.md",
+      "prs": [],
       "waiting_on": [
         "E04-S02"
       ],
@@ -1535,6 +1615,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S04.md",
+      "prs": [],
       "waiting_on": [
         "E04-S02"
       ],
@@ -1579,6 +1660,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S05.md",
+      "prs": [],
       "waiting_on": [
         "E04-S04",
         "E02-S05",
@@ -1623,6 +1705,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S06.md",
+      "prs": [],
       "waiting_on": [
         "E04-S03"
       ],
@@ -1666,6 +1749,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S07.md",
+      "prs": [],
       "waiting_on": [
         "E04-S06",
         "E02-S03"
@@ -1711,6 +1795,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S08.md",
+      "prs": [],
       "waiting_on": [
         "E04-S06",
         "E02-S08"
@@ -1754,6 +1839,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S01.md",
+      "prs": [],
       "waiting_on": [
         "E04-S05"
       ],
@@ -1800,6 +1886,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S02.md",
+      "prs": [],
       "waiting_on": [
         "E04-S05"
       ],
@@ -1842,6 +1929,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S03.md",
+      "prs": [],
       "waiting_on": [
         "E04-S06"
       ],
@@ -1884,6 +1972,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S04.md",
+      "prs": [],
       "waiting_on": [
         "E04-S06"
       ],
@@ -1927,6 +2016,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S05.md",
+      "prs": [],
       "waiting_on": [
         "E04-S06"
       ],
@@ -1970,6 +2060,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S06.md",
+      "prs": [],
       "waiting_on": [
         "E05-S05"
       ],
@@ -2014,6 +2105,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S07.md",
+      "prs": [],
       "waiting_on": [
         "E03-S07",
         "E02-S04"
@@ -2058,6 +2150,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E06-S01.md",
+      "prs": [],
       "waiting_on": [
         "E00-S04"
       ],
@@ -2101,6 +2194,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E06-S02.md",
+      "prs": [],
       "waiting_on": [
         "E06-S01"
       ],
@@ -2149,6 +2243,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E06-S03.md",
+      "prs": [],
       "waiting_on": [
         "E06-S02",
         "E01-S06",
@@ -2193,6 +2288,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E06-S04.md",
+      "prs": [],
       "waiting_on": [
         "E06-S03"
       ],
@@ -2235,6 +2331,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E06-S05.md",
+      "prs": [],
       "waiting_on": [
         "E06-S03"
       ],
@@ -2273,6 +2370,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E06-S06.md",
+      "prs": [],
       "waiting_on": [
         "E06-S03"
       ],
@@ -2317,6 +2415,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S01.md",
+      "prs": [],
       "waiting_on": [
         "E04-S01",
         "E06-S02"
@@ -2362,6 +2461,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S02.md",
+      "prs": [],
       "waiting_on": [
         "E07-S01",
         "E04-S03"
@@ -2407,6 +2507,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S03.md",
+      "prs": [],
       "waiting_on": [
         "E07-S02",
         "E04-S04"
@@ -2448,6 +2549,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S04.md",
+      "prs": [],
       "waiting_on": [
         "E07-S01",
         "E05-S03"
@@ -2489,6 +2591,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S05.md",
+      "prs": [],
       "waiting_on": [
         "E07-S04",
         "E05-S04"
@@ -2530,6 +2633,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S06.md",
+      "prs": [],
       "waiting_on": [
         "E07-S02",
         "E05-S02"
@@ -2571,6 +2675,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S07.md",
+      "prs": [],
       "waiting_on": [
         "E07-S02",
         "E04-S07"
@@ -2613,6 +2718,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S08.md",
+      "prs": [],
       "waiting_on": [
         "E07-S01",
         "E05-S07"
@@ -2653,6 +2759,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E07-S09.md",
+      "prs": [],
       "waiting_on": [
         "E07-S02"
       ],
@@ -2691,6 +2798,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E08-S01.md",
+      "prs": [],
       "waiting_on": [
         "E02-S07"
       ],
@@ -2732,6 +2840,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E08-S02.md",
+      "prs": [],
       "waiting_on": [
         "E08-S01",
         "E04-S01",
@@ -2774,6 +2883,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E08-S03.md",
+      "prs": [],
       "waiting_on": [
         "E07-S03",
         "E06-S05",
@@ -2814,6 +2924,7 @@
       ],
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E08-S04.md",
+      "prs": [],
       "waiting_on": [
         "E08-S03"
       ],
