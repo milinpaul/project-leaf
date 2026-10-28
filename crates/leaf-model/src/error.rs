@@ -38,6 +38,19 @@ pub enum ModelError {
         reason: String,
     },
 
+    /// A position is past the end of a list of siblings.
+    #[error("index {index} is past the end ({len} items)")]
+    IndexOutOfRange {
+        /// The position asked for.
+        index: usize,
+        /// How many items there are; `index` may be at most this.
+        len: usize,
+    },
+
+    /// An icon was set to empty text; clearing an icon uses `None`.
+    #[error("page {0}: icon cannot be empty (use None to clear it)")]
+    EmptyIcon(PageId),
+
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]
     Loro(#[from] loro::LoroError),
