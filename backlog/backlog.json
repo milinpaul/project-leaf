@@ -39,9 +39,9 @@
       "status": "todo",
       "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
       "path": "backlog/epics/E02.md",
-      "story_count": 10,
+      "story_count": 11,
       "done_count": 9,
-      "progress": 0.9
+      "progress": 0.82
     },
     {
       "id": "E03",
@@ -1362,6 +1362,57 @@
         {
           "url": "https://github.com/milinpaul/project-leaf/pull/8",
           "number": 8
+        }
+      ],
+      "waiting_on": [],
+      "ready": false,
+      "progress": 1.0
+    },
+    {
+      "id": "E02-S11",
+      "title": "Fix: mark commands that change nothing must write nothing",
+      "epic": "E02",
+      "status": "review",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E02-S08"
+      ],
+      "labels": [
+        "leaf-model",
+        "bug"
+      ],
+      "assignee": "claude",
+      "updated": "2026-10-28",
+      "context": "The 10,000-case undo property test on `main` (E02-S08) fails on all three OSes. `RemoveMark` on text that doesn't\ncarry the mark (and `SetMark` on text that already carries it) still writes a Loro op, so it reports `Changed`, but\nLoro records no undo step for it. The editor would then expect an undo that never comes. Shrunk case: insert\n\"leaf\", italic 0..2, remove italic 2..3.",
+      "acceptance": [
+        {
+          "text": "Failing regression test first",
+          "done": true
+        },
+        {
+          "text": "`RemoveMark` where the range has no such mark → `Unchanged`, no commit",
+          "done": true
+        },
+        {
+          "text": "`SetMark` where the whole range already has that exact mark → `Unchanged`, no commit",
+          "done": true
+        },
+        {
+          "text": "Undo property test passes at `PROPTEST_CASES=10000`",
+          "done": true
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": true
+        }
+      ],
+      "plan": "- **`text_ops.rs`:** before writing, read the mark's value on each run of text in the range (`slice_delta`).\n  - **`SetMark`:** `Unchanged` when every run already has that exact value. A different link target is still a\n    change.\n  - **`RemoveMark`:** `Unchanged` when no run has the mark.\n- **Regression test:** the shrunk case plus partial and different-value cases. Then run the property tests at\n  10,000 cases locally.",
+      "path": "backlog/stories/E02-S11.md",
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/25",
+          "number": 25
         }
       ],
       "waiting_on": [],
