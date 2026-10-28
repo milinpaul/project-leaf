@@ -1,5 +1,7 @@
 //! Errors from the storage layer.
 
+use std::path::PathBuf;
+
 use thiserror::Error;
 
 /// Everything that can go wrong opening or using a workspace database.
@@ -28,4 +30,22 @@ pub enum StoreError {
     /// database). Autosave relies on WAL for its crash-safety guarantee, so this is an error.
     #[error("write-ahead logging is unavailable (journal mode is {0:?})")]
     WalUnavailable(String),
+
+    /// Reading or writing the workspace folder failed (permissions, disk full, ...).
+    #[error("file system error: {0}")]
+    Io(#[from] std::io::Error),
+
+    /// A new workspace was asked for where something already exists. Creating refuses rather
+    /// than mixing a workspace into someone's files.
+    #[error("{} already exists and is not an empty folder", .0.display())]
+    AlreadyExists(PathBuf),
+
+    /// The path isn't a Leaf workspace folder (missing, not a folder, or no `workspace.sqlite`).
+    #[error("{} is not a Leaf workspace", .0.display())]
+    NotAWorkspace(PathBuf),
+
+    /// Another Leaf window or process already has this workspace open. Two writers would
+    /// each autosave over the other's edits, so the second is refused.
+    #[error("{} is already open in another Leaf window", .0.display())]
+    AlreadyOpen(PathBuf),
 }

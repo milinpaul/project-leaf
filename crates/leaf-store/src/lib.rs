@@ -9,13 +9,25 @@
 //! written by any version of Leaf can be brought up to date, and a file from a newer Leaf is
 //! refused instead of being damaged.
 //!
+//! A workspace on disk is a folder ([`Workspace`]):
+//!
+//! ```text
+//! MyWorkspace.leaf/
+//!   workspace.sqlite   all documents (plus -wal/-shm files while open)
+//!   assets/            images, named by content hash
+//!   search/            the search index, rebuildable from the documents
+//!   leaf.lock          locked by the app that has the workspace open (ADR 0009)
+//! ```
+//!
 //! **Boundaries:** core crate, native only. No GPUI and no `leaf-ui`. Depends only on
 //! `leaf-core` and `leaf-model`.
 
 mod error;
 pub mod migrations;
 mod store;
+mod workspace;
 
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;
 pub use store::Store;
+pub use workspace::Workspace;
