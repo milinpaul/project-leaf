@@ -8,10 +8,6 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
-#[cfg(test)]
-mod tests {
-    /// Placeholder so the coverage gate has something to measure while the crate is empty.
-    /// Delete it once the crate has real code and tests.
-    #[test]
-    fn crate_builds() {}
-}
+mod workspace_editor;
+
+pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};

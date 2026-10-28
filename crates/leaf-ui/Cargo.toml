@@ -9,6 +9,9 @@ publish.workspace = true
 [dependencies]
 gpui.workspace = true
 gpui-component.workspace = true
+leaf-core.workspace = true
+leaf-editor.workspace = true
+leaf-model.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }

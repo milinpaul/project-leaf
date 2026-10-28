@@ -3759,6 +3759,12 @@ dependencies = [
 [[package]]
 name = "leaf-editor"
 version = "0.1.0"
+dependencies = [
+ "leaf-core",
+ "leaf-model",
+ "loro",
+ "thiserror 2.0.21",
+]
 
 [[package]]
 name = "leaf-export"
@@ -3787,6 +3793,9 @@ version = "0.1.0"
 dependencies = [
  "gpui-component",
  "gpui-pre",
+ "leaf-core",
+ "leaf-editor",
+ "leaf-model",
 ]
 
 [[package]]

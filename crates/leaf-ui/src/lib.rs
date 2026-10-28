@@ -24,6 +24,5 @@ pub fn init(cx: &mut App) {
 /// touches gpui-component itself.
 pub fn window_root(window: &mut Window, cx: &mut App) -> Entity<Root> {
     let shell = cx.new(|cx| Shell::new(window, cx));
-    shell.update(cx, |shell, cx| shell.focus_input(window, cx));
     cx.new(|cx| Root::new(shell, window, cx))
 }
