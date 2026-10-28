@@ -29,8 +29,8 @@
       "goal": "leaf-core IDs and the Loro workspace doc: pages nested in pages, trash, undo.",
       "path": "backlog/epics/E01.md",
       "story_count": 6,
-      "done_count": 0,
-      "progress": 0.0
+      "done_count": 1,
+      "progress": 0.17
     },
     {
       "id": "E02",
@@ -83,7 +83,7 @@
       "status": "todo",
       "goal": "Theme, window, sidebar page tree, quick switcher, page header, trash.",
       "path": "backlog/epics/E06.md",
-      "story_count": 6,
+      "story_count": 7,
       "done_count": 0,
       "progress": 0.0
     },
@@ -588,7 +588,7 @@
       "id": "E01-S01",
       "title": "Core IDs and error types",
       "epic": "E01",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -635,7 +635,7 @@
       "id": "E01-S02",
       "title": "Workspace doc wrapper and read API",
       "epic": "E01",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -645,39 +645,37 @@
       "labels": [
         "leaf-model"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Type that owns the workspace LoroDoc and exposes read queries over the page tree.",
       "acceptance": [
         {
           "text": "Create new / load from bytes / export bytes",
-          "done": false
+          "done": true
         },
         {
           "text": "List root pages and children of a page in order",
-          "done": false
+          "done": true
         },
         {
           "text": "Get page meta (title, icon, created_at, trashed_at)",
-          "done": false
+          "done": true
         },
         {
           "text": "Find page by PageId in O(1) via an index map",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- `leaf-model/src/workspace.rs`: `Workspace` owns the workspace `LoroDoc` and its `\"pages\"` tree (fractional\n  index on). `new`, `from_bytes` (import a snapshot), `to_bytes` (export a snapshot).\n- Read API: `root_pages`, `children(PageId)`, `page(PageId) -> PageMeta`, `contains`. All by `PageId`; Loro\n  `TreeID`s stay private (ADR 0006 pattern). Trashed pages are listed too, with `trashed_at` set: hiding them\n  is the trash story's job (E01-S05).\n- `PageId → TreeID` index (`HashMap`), rebuilt on load. Undo will rebuild it too (E01-S06).\n- `page_meta.rs`: `PageMeta` and the meta key names. `error.rs`: `ModelError` (unknown page, invalid page data,\n  Loro errors).\n- Loading is strict: a page without a valid `id` fails to load with a clear error, rather than being hidden.\n- Tests build workspaces through raw Loro writes in test code, since the page commands arrive in E01-S03.\n- Risk: none known. Loro builds for wasm32 as-is (checked).",
       "path": "backlog/stories/E01-S02.md",
       "prs": [],
-      "waiting_on": [
-        "E01-S01"
-      ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E01-S03",
@@ -908,10 +906,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S01.md",
       "prs": [],
-      "waiting_on": [
-        "E01-S01"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -1371,10 +1367,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E03-S01.md",
       "prs": [],
-      "waiting_on": [
-        "E01-S01"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2354,7 +2348,8 @@
       "priority": "P0",
       "size": "S",
       "depends_on": [
-        "E06-S01"
+        "E06-S01",
+        "E03-S02"
       ],
       "labels": [
         "leaf-app",
@@ -2385,7 +2380,8 @@
       "path": "backlog/stories/E06-S02.md",
       "prs": [],
       "waiting_on": [
-        "E06-S01"
+        "E06-S01",
+        "E03-S02"
       ],
       "ready": false,
       "progress": 0.0
@@ -2562,6 +2558,60 @@
       "prs": [],
       "waiting_on": [
         "E06-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S07",
+      "title": "Sidebar shows live pages from an in-memory workspace",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E01-S03",
+        "E00-S04"
+      ],
+      "labels": [
+        "leaf-ui",
+        "leaf-editor",
+        "vertical-slice"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Owner request: see the model working in the real window early, long before the full sidebar (E06-S03) which\nwaits for undo and saving. Replace the spike's three placeholder pages with the pages of a real in-memory\n`Workspace`: list them, add one, rename one. Nothing is saved yet; that arrives with E03.",
+      "acceptance": [
+        {
+          "text": "Sidebar lists the workspace's root pages from the model, in order (no hard-coded titles)",
+          "done": false
+        },
+        {
+          "text": "A \"New page\" action creates a page through the page commands and it appears in the sidebar",
+          "done": false
+        },
+        {
+          "text": "Renaming a page through the page commands updates the sidebar",
+          "done": false
+        },
+        {
+          "text": "UI only renders and forwards: page list logic lives in a testable crate, not `leaf-ui`",
+          "done": false
+        },
+        {
+          "text": "Screenshot of the running app attached to the PR",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S07.md",
+      "prs": [],
+      "waiting_on": [
+        "E01-S03"
       ],
       "ready": false,
       "progress": 0.0

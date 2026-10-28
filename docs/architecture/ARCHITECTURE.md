@@ -51,7 +51,9 @@ The first six are **core crates**. They never depend on GPUI or `leaf-ui`; a tes
 
 ## How a keystroke becomes a saved change
 
-This is the target design. Today only the window shell exists (E00-S04); each step lands with its epic.
+This is the target design; each step lands with its epic. Built so far: the window shell (E00-S04), the
+IDs in `leaf-core` (E01-S01), and `leaf-model`'s `Workspace`, which loads and saves the page tree and
+answers "which pages, in what order, with what titles" (E01-S02). Commands that change it come next (E01-S03).
 
 1. **You press a key.** GPUI delivers it to `leaf-ui`, which forwards it untouched to `leaf-editor`.
 2. **The editor decides what it means.** For example, Enter in the middle of a paragraph means "split this
