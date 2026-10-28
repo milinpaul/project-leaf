@@ -113,9 +113,16 @@ impl PageDoc {
     }
 
     /// Records that the page as it is now is on disk. Call only after the write succeeded, so a
-    /// failed save is retried with the same changes next time.
-    pub fn mark_saved(&mut self) {
-        self.saved = SavedVersion::of(&self.doc);
+    /// failed save is retried with the same changes next time. Needs only shared access: it changes
+    /// no content.
+    pub fn mark_saved(&self) {
+        self.saved.update(&self.doc);
+    }
+
+    /// Whether anything changed since the last save (or load). Cheap enough to poll from a timer.
+    #[must_use]
+    pub fn has_unsaved_changes(&self) -> bool {
+        self.saved.is_behind(&self.doc)
     }
 
     /// Top-level blocks, in order.

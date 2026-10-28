@@ -81,7 +81,7 @@ proptest! {
         let mut page = PageDoc::new();
         let mut autosave = Autosave::default();
         // The page exists on disk from the start, as when the app creates it.
-        autosave.save(folder.store_mut(), key, &mut page, 0).map_err(|e| TestCaseError::fail(e.to_string()))?;
+        autosave.save(folder.store_mut(), key, &page, 0).map_err(|e| TestCaseError::fail(e.to_string()))?;
 
         let mut now = 0;
         let mut edits = Vec::new();
@@ -126,7 +126,7 @@ fn the_files_a_killed_app_leaves_behind_open_and_load() {
         created_at: 1,
     })
     .unwrap();
-    folder.store_mut().save(DocKey::Workspace, &mut ws, 1).unwrap();
+    folder.store_mut().save(DocKey::Workspace, &ws, 1).unwrap();
     ws.apply(WorkspaceCommand::CreatePage {
         parent: None,
         index: 1,
@@ -163,10 +163,10 @@ fn page_with_updates(dir: &TempDir, count: usize) -> Fallible<(PathBuf, DocKey)>
     let mut folder = Folder::create(&path)?;
     let key = DocKey::Page(PageId::new());
     let mut page = PageDoc::new();
-    folder.store_mut().save(key, &mut page, 0)?;
+    folder.store_mut().save(key, &page, 0)?;
     for i in 0..count {
         append(&mut page, format!("edit {i}")).map_err(|e| e.to_string())?;
-        folder.store_mut().save(key, &mut page, 1)?;
+        folder.store_mut().save(key, &page, 1)?;
     }
     Ok((path, key))
 }
@@ -218,7 +218,7 @@ fn saving_after_a_skipped_update_still_loads() {
     let mut folder = Folder::open(&path).unwrap();
     let mut page: PageDoc = folder.store().load(key).unwrap().unwrap();
     append(&mut page, "after".into()).unwrap();
-    folder.store_mut().save(key, &mut page, 5).unwrap();
+    folder.store_mut().save(key, &page, 5).unwrap();
     drop(folder);
 
     // The bad row is no longer last, and the page still opens with everything else.

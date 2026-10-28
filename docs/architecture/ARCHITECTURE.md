@@ -63,8 +63,15 @@ block's kind and properties (E02-S04). The window can edit a page's blocks with 
 Tab and Shift+Tab caught before the input sees them. The rich text element (E07-S02) replaces the inputs later;
 `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
-the editor wires Cmd+Z to it in E04-S08. The window's sidebar now lists real pages from an in-memory workspace
-(`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go through those commands (E06-S07).
+the editor wires Cmd+Z to it in E04-S08. The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+through those commands (E06-S07).
+
+**Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
+`~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace
+document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls
+`Autosave::tick` from `leaf-store`, which polls every open document for unsaved changes and saves those that are
+due. Window blur, quit (Cmd+Q / Ctrl+Q, or the app menu) and window close save everything at once. If the folder
+can't be opened (another Leaf has it open, it is damaged), the window shows why instead of the editor.
 
 1. **You press a key.** GPUI delivers it to `leaf-ui`, which forwards it untouched to `leaf-editor`.
 2. **The editor decides what it means.** For example, Enter in the middle of a paragraph means "split this

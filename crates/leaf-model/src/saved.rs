@@ -5,25 +5,46 @@
 //! and writes nothing at all when nothing changed. Loro types stay inside the model; the store only
 //! ever sees bytes.
 
+use std::sync::Mutex;
+
 use loro::{ExportMode, LoroDoc, VersionVector};
 
 use crate::ModelError;
 
 /// The version of a document that is safely saved.
-pub(crate) struct SavedVersion(VersionVector);
+///
+/// Behind a lock so saving needs only shared access: recording "this is on disk" changes no content,
+/// and the app can save from a timer while only reading the document.
+pub(crate) struct SavedVersion(Mutex<VersionVector>);
 
 impl SavedVersion {
     /// Everything in `doc` as it is now counts as saved.
     pub(crate) fn of(doc: &LoroDoc) -> Self {
-        Self(doc.oplog_vv())
+        Self(Mutex::new(doc.oplog_vv()))
+    }
+
+    /// Whether `doc` has changes since the saved version. Cheap: compares versions, exports nothing.
+    pub(crate) fn is_behind(&self, doc: &LoroDoc) -> bool {
+        self.0.lock().map_or(true, |saved| doc.oplog_vv() != *saved)
     }
 
     /// One Loro update with every change since the saved version, or `None` if there is none.
     pub(crate) fn changes(&self, doc: &LoroDoc) -> Result<Option<Vec<u8>>, ModelError> {
-        if doc.oplog_vv() == self.0 {
+        let Ok(saved) = self.0.lock() else {
+            // A panic while holding the lock: be safe and save everything.
+            return Ok(Some(doc.export(ExportMode::Snapshot)?));
+        };
+        if doc.oplog_vv() == *saved {
             return Ok(None);
         }
-        Ok(Some(doc.export(ExportMode::updates(&self.0))?))
+        Ok(Some(doc.export(ExportMode::updates(&saved))?))
+    }
+
+    /// Everything in `doc` as it is now is on disk.
+    pub(crate) fn update(&self, doc: &LoroDoc) {
+        if let Ok(mut saved) = self.0.lock() {
+            *saved = doc.oplog_vv();
+        }
     }
 }
 

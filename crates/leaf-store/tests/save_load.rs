@@ -92,7 +92,7 @@ fn the_workspace_survives_save_and_reopen() {
 
     let notes = new_page(&mut ws, None, "Notes");
     assert!(
-        store.save(DocKey::Workspace, &mut ws, 1).unwrap(),
+        store.save(DocKey::Workspace, &ws, 1).unwrap(),
         "first save: snapshot"
     );
     new_page(&mut ws, Some(notes), "Inside");
@@ -101,10 +101,10 @@ fn the_workspace_survives_save_and_reopen() {
         icon: Some("🌿".into()),
     })
     .unwrap();
-    assert!(store.save(DocKey::Workspace, &mut ws, 2).unwrap());
+    assert!(store.save(DocKey::Workspace, &ws, 2).unwrap());
     new_page(&mut ws, None, "Gone again");
     assert!(ws.undo().unwrap());
-    assert!(store.save(DocKey::Workspace, &mut ws, 3).unwrap());
+    assert!(store.save(DocKey::Workspace, &ws, 3).unwrap());
     let expected = sidebar(&ws);
     drop(folder);
 
@@ -128,7 +128,7 @@ fn pages_survive_save_and_reopen_through_many_rounds() {
     let mut page = PageDoc::new();
     page.set_undo_merge_interval(0);
 
-    folder.store_mut().save(key, &mut page, 0).unwrap();
+    folder.store_mut().save(key, &page, 0).unwrap();
     let list = insert(&mut page, None, BlockKind::BulletedList, "list");
     let child = insert(
         &mut page,
@@ -136,7 +136,7 @@ fn pages_survive_save_and_reopen_through_many_rounds() {
         BlockKind::Todo { checked: true },
         "child 👋🏽",
     );
-    folder.store_mut().save(key, &mut page, 1).unwrap();
+    folder.store_mut().save(key, &page, 1).unwrap();
     page.apply(PageCommand::SetMark {
         id: child,
         range: 0..5,
@@ -144,9 +144,9 @@ fn pages_survive_save_and_reopen_through_many_rounds() {
     })
     .unwrap();
     page.apply(PageCommand::SplitBlock { id: list, pos: 2 }).unwrap();
-    folder.store_mut().save(key, &mut page, 2).unwrap();
+    folder.store_mut().save(key, &page, 2).unwrap();
     page.undo().unwrap();
-    folder.store_mut().save(key, &mut page, 3).unwrap();
+    folder.store_mut().save(key, &page, 3).unwrap();
     let expected = outline(&page);
     drop(folder);
 
@@ -163,18 +163,18 @@ fn saving_with_nothing_changed_writes_nothing() {
     let path = dir.0.join("w.leaf");
     let mut folder = Folder::create(&path).unwrap();
     let mut ws = Workspace::new();
-    assert!(folder.store_mut().save(DocKey::Workspace, &mut ws, 1).unwrap());
-    assert!(!folder.store_mut().save(DocKey::Workspace, &mut ws, 2).unwrap());
+    assert!(folder.store_mut().save(DocKey::Workspace, &ws, 1).unwrap());
+    assert!(!folder.store_mut().save(DocKey::Workspace, &ws, 2).unwrap());
 
     // A command that changes nothing doesn't count either.
     let page = new_page(&mut ws, None, "same");
-    folder.store_mut().save(DocKey::Workspace, &mut ws, 3).unwrap();
+    folder.store_mut().save(DocKey::Workspace, &ws, 3).unwrap();
     ws.apply(WorkspaceCommand::RenamePage {
         page,
         title: "same".into(),
     })
     .unwrap();
-    assert!(!folder.store_mut().save(DocKey::Workspace, &mut ws, 4).unwrap());
+    assert!(!folder.store_mut().save(DocKey::Workspace, &ws, 4).unwrap());
     assert_eq!(update_rows(&path, "workspace"), 1);
 }
 
@@ -188,8 +188,8 @@ fn documents_are_kept_apart_and_unsaved_ones_load_as_none() {
     let mut second = PageDoc::new();
     insert(&mut second, None, BlockKind::Quote, "b");
     let store = folder.store_mut();
-    store.save(a, &mut first, 1).unwrap();
-    store.save(b, &mut second, 1).unwrap();
+    store.save(a, &first, 1).unwrap();
+    store.save(b, &second, 1).unwrap();
 
     let loaded: PageDoc = store.load(a).unwrap().unwrap();
     assert_eq!(outline(&loaded), outline(&first));

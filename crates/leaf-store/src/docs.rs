@@ -31,19 +31,27 @@ impl fmt::Display for DocKey {
     }
 }
 
-/// A model document the store can save and load. Implemented for [`Workspace`] and [`PageDoc`],
-/// whose methods of the same names explain the details; the store only ever handles bytes.
-pub trait Document: Sized {
-    /// Rebuilds the document from its snapshot and later updates, in saved order.
-    fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError>;
+/// A document the store can save: what saving needs, and nothing about how it was built.
+///
+/// Object-safe, so autosave can handle the workspace and its pages in one list. Implemented for
+/// [`Workspace`] and [`PageDoc`], whose methods of the same names explain the details.
+pub trait Savable {
     /// The whole document.
     fn to_bytes(&self) -> Result<Vec<u8>, ModelError>;
-    /// Like `from_saved`, but skips damaged updates; returns their positions in `updates`.
-    fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError>;
     /// Changes not yet on disk, as one update, or `None`.
     fn unsaved_changes(&self) -> Result<Option<Vec<u8>>, ModelError>;
+    /// Whether there are changes not yet on disk (cheap).
+    fn has_unsaved_changes(&self) -> bool;
     /// Everything is on disk now.
-    fn mark_saved(&mut self);
+    fn mark_saved(&self);
+}
+
+/// A [`Savable`] document the store can also load; the store only ever handles bytes.
+pub trait Document: Savable + Sized {
+    /// Rebuilds the document from its snapshot and later updates, in saved order.
+    fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError>;
+    /// Like `from_saved`, but skips damaged updates; returns their positions in `updates`.
+    fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError>;
 }
 
 /// A document as stored: its snapshot and the updates saved after it, oldest first.
@@ -68,21 +76,27 @@ pub struct Recovered<D> {
 
 macro_rules! document {
     ($ty:ty) => {
-        impl Document for $ty {
-            fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError> {
-                <$ty>::from_saved(snapshot, updates)
-            }
-            fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError> {
-                <$ty>::recover(snapshot, updates)
-            }
+        impl Savable for $ty {
             fn to_bytes(&self) -> Result<Vec<u8>, ModelError> {
                 <$ty>::to_bytes(self)
             }
             fn unsaved_changes(&self) -> Result<Option<Vec<u8>>, ModelError> {
                 <$ty>::unsaved_changes(self)
             }
-            fn mark_saved(&mut self) {
+            fn has_unsaved_changes(&self) -> bool {
+                <$ty>::has_unsaved_changes(self)
+            }
+            fn mark_saved(&self) {
                 <$ty>::mark_saved(self);
+            }
+        }
+
+        impl Document for $ty {
+            fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError> {
+                <$ty>::from_saved(snapshot, updates)
+            }
+            fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError> {
+                <$ty>::recover(snapshot, updates)
             }
         }
     };
@@ -98,7 +112,7 @@ impl Store {
     /// A document never saved before gets a snapshot; after that each save appends one update. When
     /// nothing changed, nothing is written. The document is marked saved only once the write
     /// succeeded, so a failed save is retried in full next time.
-    pub fn save<D: Document>(&mut self, key: DocKey, doc: &mut D, now: i64) -> Result<bool, StoreError> {
+    pub fn save<D: Savable + ?Sized>(&mut self, key: DocKey, doc: &D, now: i64) -> Result<bool, StoreError> {
         let id = key.to_string();
         if !self.has_doc(&id)? {
             self.conn.execute(

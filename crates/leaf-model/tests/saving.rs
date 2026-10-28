@@ -127,3 +127,28 @@ fn recover_skips_damaged_updates_and_keeps_the_rest() {
         "a damaged snapshot can't be skipped"
     );
 }
+
+#[test]
+fn has_unsaved_changes_follows_edits_saves_and_undo() {
+    let mut ws = Workspace::new();
+    assert!(!ws.has_unsaved_changes());
+    create(&mut ws, "a");
+    assert!(ws.has_unsaved_changes());
+    ws.mark_saved();
+    assert!(!ws.has_unsaved_changes());
+    ws.set_undo_merge_interval(0);
+    assert!(ws.undo().unwrap());
+    assert!(ws.has_unsaved_changes(), "undo is a change to save");
+
+    let mut page = PageDoc::new();
+    page.apply(PageCommand::InsertBlock {
+        parent: None,
+        index: 0,
+        kind: BlockKind::Paragraph,
+        text: "x".into(),
+    })
+    .unwrap();
+    assert!(page.has_unsaved_changes());
+    page.mark_saved();
+    assert!(!page.has_unsaved_changes());
+}
