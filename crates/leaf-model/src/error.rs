@@ -1,6 +1,6 @@
 //! Errors from the document model.
 
-use leaf_core::PageId;
+use leaf_core::{BlockId, PageId};
 use thiserror::Error;
 
 /// Everything that can go wrong reading or changing Leaf documents.
@@ -69,6 +69,63 @@ pub enum ModelError {
     /// An icon was set to empty text; clearing an icon uses `None`.
     #[error("page {0}: icon cannot be empty (use None to clear it)")]
     EmptyIcon(PageId),
+
+    /// The block is not on this page (never existed, or deleted).
+    #[error("block {0} not found")]
+    BlockNotFound(BlockId),
+
+    /// A block node in the saved page has no usable identity. Loading fails rather than hiding it.
+    #[error("invalid block node {node}: {reason}")]
+    InvalidBlock {
+        /// Loro's internal node ID, for debugging only.
+        node: String,
+        /// What was wrong with it.
+        reason: String,
+    },
+
+    /// Two block nodes claim the same `BlockId`.
+    #[error("block {0} appears twice on the page")]
+    DuplicateBlock(BlockId),
+
+    /// A block's type or properties are missing or have the wrong type.
+    #[error("block {block}: {field:?} {reason}")]
+    InvalidBlockData {
+        /// The block whose data is wrong.
+        block: BlockId,
+        /// The meta or props key, for example `"level"`.
+        field: &'static str,
+        /// What was wrong with it.
+        reason: String,
+    },
+
+    /// The block kind can't be created as given (unknown type, or a heading level outside 1 to 3).
+    #[error("invalid block kind: {0}")]
+    InvalidKind(String),
+
+    /// This kind of block has no text (dividers), so it can't be given any.
+    #[error("{kind} blocks have no text")]
+    TextNotAllowed {
+        /// The block type.
+        kind: String,
+    },
+
+    /// This kind of block can't contain other blocks (headings, code, dividers, images, unknown).
+    #[error("block {parent} is a {kind}, which can't contain other blocks")]
+    ChildrenNotAllowed {
+        /// The block asked to be the parent.
+        parent: BlockId,
+        /// Its type.
+        kind: String,
+    },
+
+    /// A block can't be moved into itself or into a block nested inside it.
+    #[error("cannot move block {block} into {new_parent}, which is the block itself or inside it")]
+    BlockMoveIntoOwnSubtree {
+        /// The moved block whose subtree contains the destination.
+        block: BlockId,
+        /// The parent that was asked for.
+        new_parent: BlockId,
+    },
 
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]

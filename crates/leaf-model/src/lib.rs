@@ -8,12 +8,20 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends only on `leaf-core`. Unknown data from newer app versions is preserved, never dropped.
 
+mod block_kind;
 mod command;
 mod error;
+mod page_command;
+mod page_doc;
 mod page_meta;
+mod text;
 mod workspace;
 
+pub use block_kind::BlockKind;
 pub use command::{Outcome, WorkspaceCommand};
 pub use error::ModelError;
+pub use page_command::{PageCommand, PageOutcome};
+pub use page_doc::PageDoc;
 pub use page_meta::PageMeta;
+pub use text::{Marks, TextSpan};
 pub use workspace::{DEFAULT_UNDO_MERGE_MS, Workspace};

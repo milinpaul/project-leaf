@@ -67,7 +67,7 @@ and rebuilds that index after undo, redo and import.
 | `quote` | — | yes | yes |
 | `code` | `language`: String | yes (plain, no marks) | no |
 | `divider` | — | no | no |
-| `image` | `asset`: AssetId, `width`: f32?, `alt`: String | caption | no |
+| `image` | `asset`: AssetId (hex), `width`: f64?, `alt`: String | caption | no |
 
 Rust view of the schema (in `leaf-model`):
 
@@ -81,7 +81,8 @@ pub enum BlockKind {
     Quote,
     Code { language: String },
     Divider,
-    Image { asset: AssetId, width: Option<f32>, alt: String },
+    Image { asset: AssetId, width: Option<f64>, alt: String }, // f64: Loro stores numbers as 64-bit
+    Unknown { type_name: String },  // from a newer version: read-only, never rewritten
 }
 ```
 
@@ -120,10 +121,16 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
   `Outcome::Unchanged`, so it leaves no empty undo step
 - Positions (`index`) count every child, including pages in the trash, while `root_pages`/`children` hide them
 
-**Block commands (page doc)**
-- `InsertBlock { parent: Option<BlockId>, index, kind, text }`
-- `DeleteBlocks { ids }` — deletes subtrees
-- `MoveBlocks { ids, new_parent, index }`
+**Block commands (page doc)**: `PageCommand`, applied with `PageDoc::apply` (same rules as workspace commands:
+validate, write, commit once; `Unchanged` when nothing would change)
+- `InsertBlock { parent: Option<BlockId>, index, kind, text }`: mints and returns the `BlockId`. Kinds that have
+  text get a mergeable `text` container; text on a divider, unknown kinds and heading levels outside 1–3 are rejected.
+- `DeleteBlocks { ids }`: deletes subtrees and returns every deleted `BlockId` in reading order. Ids inside another
+  listed block are fine.
+- `MoveBlocks { ids, new_parent, index }`: the moved blocks keep their reading order whatever order they're listed in,
+  and stay together; listed blocks inside another listed block travel with it. `index` counts the destination's
+  children without the moved blocks.
+- All: headings, code, dividers, images and unknown blocks can't contain blocks; no block moves into itself.
 - `SetBlockKind { id, kind }` — keeps text when the target type has text
 - `SetProp { id, key, value }`
 - `InsertText { id, pos, text }`, `DeleteText { id, range }`
