@@ -48,4 +48,8 @@ pub enum StoreError {
     /// each autosave over the other's edits, so the second is refused.
     #[error("{} is already open in another Leaf window", .0.display())]
     AlreadyOpen(PathBuf),
+
+    /// Saved bytes couldn't be turned back into a document (or a document into bytes).
+    #[error("document error: {0}")]
+    Model(#[from] leaf_model::ModelError),
 }

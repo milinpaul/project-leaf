@@ -15,6 +15,7 @@ use loro::{
 
 use crate::block_kind::keys;
 use crate::page_meta::value;
+use crate::saved::{self, SavedVersion};
 use crate::text::{configure_marks, spans};
 use crate::{BlockKind, ModelError, TextSpan};
 
@@ -28,6 +29,7 @@ pub struct PageDoc {
     tree: LoroTree,
     index: BlockIndex,
     undo: UndoManager,
+    saved: SavedVersion,
     carets: Arc<undo::CaretSlots>,
 }
 
@@ -46,11 +48,13 @@ impl PageDoc {
         let tree = blocks_tree(&doc);
         let carets = Arc::new(undo::CaretSlots::default());
         let undo = undo::manager(&doc, &carets);
+        let saved = SavedVersion::of(&doc);
         Self {
             doc,
             tree,
             index: BlockIndex::default(),
             undo,
+            saved,
             carets,
         }
     }
@@ -60,18 +64,26 @@ impl PageDoc {
     /// Fails if any block lacks a valid, unique `id`, rather than hiding it. Block kinds are read when
     /// asked for, so one malformed block does not stop the rest of the page from opening.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, ModelError> {
+        Self::from_saved(bytes, &[])
+    }
+
+    /// Loads a page the way the store keeps it: a snapshot plus the updates saved after it, in
+    /// order. The loaded state counts as saved.
+    pub fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError> {
         let doc = new_doc();
-        doc.import(bytes)?;
+        saved::import(&doc, snapshot, updates)?;
         let tree = blocks_tree(&doc);
         let index = BlockIndex::build(&tree)?;
         // Created after the import, so undo starts from the loaded state.
         let carets = Arc::new(undo::CaretSlots::default());
         let undo = undo::manager(&doc, &carets);
+        let saved = SavedVersion::of(&doc);
         Ok(Self {
             doc,
             tree,
             index,
             undo,
+            saved,
             carets,
         })
     }
@@ -79,6 +91,18 @@ impl PageDoc {
     /// The whole page as a self-contained snapshot, ready to save.
     pub fn to_bytes(&self) -> Result<Vec<u8>, ModelError> {
         Ok(self.doc.export(ExportMode::Snapshot)?)
+    }
+
+    /// Every change since the last [`PageDoc::mark_saved`] (or load) as one update to append to
+    /// the saved page, or `None` when nothing changed. Undo and redo count as changes.
+    pub fn unsaved_changes(&self) -> Result<Option<Vec<u8>>, ModelError> {
+        self.saved.changes(&self.doc)
+    }
+
+    /// Records that the page as it is now is on disk. Call only after the write succeeded, so a
+    /// failed save is retried with the same changes next time.
+    pub fn mark_saved(&mut self) {
+        self.saved = SavedVersion::of(&self.doc);
     }
 
     /// Top-level blocks, in order.

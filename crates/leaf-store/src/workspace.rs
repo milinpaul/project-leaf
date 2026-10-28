@@ -64,6 +64,11 @@ impl Workspace {
         &self.store
     }
 
+    /// The workspace's database, for saving.
+    pub fn store_mut(&mut self) -> &mut Store {
+        &mut self.store
+    }
+
     /// Takes the lock first, so a second app can't touch the database at all, then makes sure the
     /// subfolders exist (a user may have deleted an empty one) and opens the database.
     fn open_folder(path: &Path) -> Result<Self, StoreError> {

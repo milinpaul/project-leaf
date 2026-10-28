@@ -10,6 +10,7 @@ use leaf_core::PageId;
 use loro::{ExportMode, LoroDoc, LoroTree, LoroValue, TreeID, UndoManager};
 
 use crate::page_meta::{keys, value};
+use crate::saved::{self, SavedVersion};
 use crate::{ModelError, PageMeta};
 
 /// Name of the Loro tree that holds the page hierarchy.
@@ -23,6 +24,7 @@ pub struct Workspace {
     tree: LoroTree,
     index: PageIndex,
     undo: UndoManager,
+    saved: SavedVersion,
 }
 
 /// Two-way map between permanent `PageId`s and Loro's current `TreeID`s, for O(1) lookups.
@@ -39,11 +41,13 @@ impl Workspace {
         let doc = LoroDoc::new();
         let tree = pages_tree(&doc);
         let undo = undo::manager(&doc);
+        let saved = SavedVersion::of(&doc);
         Self {
             doc,
             tree,
             index: PageIndex::default(),
             undo,
+            saved,
         }
     }
 
@@ -51,23 +55,43 @@ impl Workspace {
     ///
     /// Fails if any page lacks a valid, unique `id`, rather than hiding that page.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, ModelError> {
+        Self::from_saved(bytes, &[])
+    }
+
+    /// Loads a workspace the way the store keeps it: a snapshot plus the updates saved after it, in
+    /// order. The loaded state counts as saved.
+    pub fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError> {
         let doc = LoroDoc::new();
-        doc.import(bytes)?;
+        saved::import(&doc, snapshot, updates)?;
         let tree = pages_tree(&doc);
         let index = PageIndex::build(&tree)?;
         // Created after the import, so undo starts from the loaded state.
         let undo = undo::manager(&doc);
+        let saved = SavedVersion::of(&doc);
         Ok(Self {
             doc,
             tree,
             index,
             undo,
+            saved,
         })
     }
 
     /// The whole workspace as a self-contained snapshot, ready to save.
     pub fn to_bytes(&self) -> Result<Vec<u8>, ModelError> {
         Ok(self.doc.export(ExportMode::Snapshot)?)
+    }
+
+    /// Every change since the last [`Workspace::mark_saved`] (or load) as one update to append to
+    /// the saved workspace, or `None` when nothing changed. Undo and redo count as changes.
+    pub fn unsaved_changes(&self) -> Result<Option<Vec<u8>>, ModelError> {
+        self.saved.changes(&self.doc)
+    }
+
+    /// Records that the workspace as it is now is on disk. Call only after the write succeeded,
+    /// so a failed save is retried with the same changes next time.
+    pub fn mark_saved(&mut self) {
+        self.saved = SavedVersion::of(&self.doc);
     }
 
     /// Top-level pages, in sidebar order. Pages in the trash are left out, and with them everything

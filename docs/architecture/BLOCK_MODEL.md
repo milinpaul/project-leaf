@@ -227,7 +227,10 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 
 - **Autosave:** append Loro updates to `doc_updates` at most every 300 ms and on blur/quit (WAL mode).
 - **Compaction:** when a doc has > 200 updates, write a fresh snapshot and delete them, in one transaction.
-- **Loading:** snapshot + updates in `seq` order.
+- **Saving (`Store::save`):** a document's first save writes its snapshot; each later save appends one update with
+  every commit since the previous save (`unsaved_changes` / `mark_saved` on `Workspace` and `PageDoc`). Nothing is
+  written when nothing changed. Keys: `workspace` or the page's `PageId` (ADR 0010).
+- **Loading (`Store::load`):** snapshot + updates in `seq` order (`from_saved`).
 - **Opening:** `Store::open` sets `journal_mode=WAL`, `synchronous=NORMAL` and `foreign_keys=ON`, then migrates.
 - **Migrations:** `meta.schema_version` (0 for an empty file). `leaf-store/src/migrations.rs` holds a forward-only,
   append-only list; each step runs in one transaction with its version bump. A file newer than the app is refused
