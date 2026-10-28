@@ -282,10 +282,12 @@ fn block_id_of(tree: &LoroTree, node: TreeID) -> Result<BlockId, ModelError> {
     }
 }
 
+mod anchor;
 mod apply;
 mod changes;
 mod invariants;
 
+pub use anchor::Anchor;
 pub use changes::Changes;
 pub use invariants::InvariantViolation;
 pub use undo::{Caret, History};

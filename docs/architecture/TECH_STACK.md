@@ -12,6 +12,7 @@
 | Markdown (Phase 1) | `comrak` | Import/export only. |
 | IDs | `uuid` v7 for pages and blocks (`PageId`, `BlockId`); BLAKE3 hash for assets (`AssetId`) | In `leaf-core`; see [BLOCK_MODEL.md](BLOCK_MODEL.md) and [ADR 0006](../adr/0006-stable-block-ids.md). On `wasm32-unknown-unknown`, `uuid`'s `js` feature supplies the clock and randomness. |
 | Hashing | `blake3` | Content-addressed image assets. |
+| Text segmentation | `unicode-segmentation` | Grapheme and word boundaries (UAX #29) for caret movement in `leaf-editor`; see [ADR 0015](../adr/0015-caret-anchors-and-grapheme-motion.md). |
 | Errors | `thiserror` (libraries), `anyhow` (app binary only) | |
 | Logging | `tracing`, `tracing-subscriber` | |
 | Serialization | `serde`, `serde_json` | |
