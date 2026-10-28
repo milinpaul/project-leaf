@@ -1126,7 +1126,12 @@
       ],
       "plan": "New module `page_doc/split_merge.rs`.\n- **`SplitBlock { id, pos }`** (Enter mid-text) returns `BlockCreated(new)`. The text after `pos` moves to the\n  new block **with its marks** (`slice_delta` then `apply_delta`, so marks from newer versions survive too).\n  - New kind per the spec: lists and to-dos continue (an unticked to-do); everything else becomes a paragraph.\n  - Placement: right after the block, or as its **first child** if it has children, so reading order never changes.\n  - Blocks without text are refused.\n- **`MergeIntoPrevious { id }`** (Backspace at start) appends the block's text, with marks, to the previous\n  block **in reading order**, then deletes it. It returns `BlockMerged { into, at }` so the editor can put the\n  cursor at the join.\n  - Children move to the previous block: at the block's old position if the previous block is its parent,\n    otherwise at the end. If the previous block can't hold children (heading, code), they move up to the\n    block's own position instead.\n  - Merging into code strips marks (invariant 5). With no previous block: `Unchanged`.\n- **Refused:** merging into a divider, image or unknown block gives a typed `MergeTargetNotText { target }`, so\n  the editor can select that block instead (spec).\n- **Interim editor:** Enter splits at the input's cursor; Backspace at the start of a non-paragraph turns it into\n  a paragraph; at the start of a paragraph it merges into the block above, landing the cursor at the join.\n- **Tests:** each rule plus mark preservation on both sides; extend the block-text proptest with split/merge\n  against a reference.",
       "path": "backlog/stories/E02-S05.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/19",
+          "number": 19
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
