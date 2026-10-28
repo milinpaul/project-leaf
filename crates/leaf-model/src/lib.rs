@@ -7,3 +7,11 @@
 //!
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends only on `leaf-core`. Unknown data from newer app versions is preserved, never dropped.
+
+#[cfg(test)]
+mod tests {
+    /// Placeholder so the coverage gate has something to measure while the crate is empty.
+    /// Delete it once the crate has real code and tests.
+    #[test]
+    fn crate_builds() {}
+}

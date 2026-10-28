@@ -176,7 +176,7 @@
         },
         {
           "text": "`cargo build --workspace` succeeds on the dev machine",
-          "done": false
+          "done": true
         },
         {
           "text": "Each crate has a `//!` doc stating its role and boundaries",
@@ -184,18 +184,18 @@
         },
         {
           "text": "Cargo.lock committed",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
       "plan": "- **Workspace:** root `Cargo.toml` from TECH_STACK.md (resolver 3, edition 2024, workspace lints, profiles).\n  Third-party versions sit in `[workspace.dependencies]` but no crate uses them yet, so `Cargo.lock` stays tiny.\n- **Crates:** `leaf-core`, `leaf-model`, `leaf-editor`, `leaf-store`, `leaf-export`, `leaf-search`, `leaf-ui` (libs)\n  and `leaf-app` (binary). Each has `[lints] workspace = true` and a `//!` doc stating role, boundaries and phase.\n  No inter-crate dependencies yet: adding unused ones would fail `cargo machete`. Each story wires what it needs.\n- **clippy.toml:** allow `unwrap`/`expect` in tests, matching CLAUDE.md.\n- **Test:** `crates/leaf-app/tests/architecture.rs` reads each core crate's `Cargo.toml` and fails if it mentions\n  `gpui` or `leaf-ui`, so architecture rule 1 is enforced from day one. Std only, no new deps.\n- **Docs:** `docs/README.md` gains a pointer to `crates/`. ARCHITECTURE.md itself is E00-S03.\n- **Risks:** Rust is not yet installed on the dev machine, so build, `Cargo.lock` and `just check` wait for it.\n  Coverage of empty crates and CI wiring are E00-S02; the toolchain pin waits until the first green build.",
       "path": "backlog/stories/E00-S01.md",
       "waiting_on": [],
       "ready": false,
-      "progress": 0.4
+      "progress": 1.0
     },
     {
       "id": "E00-S02",
