@@ -2569,7 +2569,7 @@
       "id": "E06-S07",
       "title": "Sidebar shows live pages from an in-memory workspace",
       "epic": "E06",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -2612,7 +2612,12 @@
       ],
       "plan": "- **`leaf-editor/src/workspace_editor.rs`:** `WorkspaceEditor` owns a `Workspace` plus the selected page.\n  - `sidebar()` returns view-model items for the top-level pages, with trashed pages hidden and \"Untitled\"\n    shown for empty titles.\n  - `new_page(now_ms)` appends a page at the end and selects it.\n  - `select(page)`, and `rename_selected(title)`, which does nothing if the title is unchanged.\n  - All logic is here, unit-tested and inside the coverage gate.\n- **`leaf-ui` `Shell`:** holds a `WorkspaceEditor`. The sidebar lists `sidebar()` items, with the active one\n  highlighted, and has a \"New page\" button. The page area shows the selected page's title in the input:\n  typing renames, and the sidebar updates on the next frame. The app supplies the clock, so the model never\n  reads it. Also fixes the spike's vertically centred page area.\n- **Tests:** editor unit tests, plus GPUI tests for new page → type → renamed, and selecting a page loads its title.\n- **Visual check:** run the app, create pages, rename one, and take a screenshot into `docs/screenshots/`.\n- **Scope:** top-level pages only, matching the acceptance criteria. Nesting, move and trash in the sidebar\n  stay with E06-S03.",
       "path": "backlog/stories/E06-S07.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/12",
+          "number": 12
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
