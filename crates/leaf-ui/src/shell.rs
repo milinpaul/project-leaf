@@ -8,8 +8,8 @@ use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use gpui::{
-    AppContext as _, ClickEvent, Context, Entity, IntoElement, ParentElement, Render, Styled, Subscription,
-    Window, div,
+    AppContext as _, ClickEvent, Context, Entity, FontWeight, IntoElement, ParentElement, Render, Styled,
+    Subscription, Window, div, rems,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputEvent, InputState};
@@ -128,7 +128,18 @@ impl Render for Shell {
 
         let page = v_flex().flex_1().h_full().p_6().gap_3();
         let page = if self.editor.selected().is_some() {
-            page.child(Input::new(&self.title))
+            // The title reads as the page's heading 1, not a form field: no box, large and bold.
+            page.child(
+                Input::new(&self.title)
+                    .appearance(false)
+                    .focus_bordered(false)
+                    .text_3xl()
+                    .font_weight(FontWeight::BOLD)
+                    // The input's own height and line height fit body text; size them to the heading.
+                    .h_12()
+                    .line_height(rems(2.25))
+                    .px_0(),
+            )
         } else {
             page.child(
                 div()
