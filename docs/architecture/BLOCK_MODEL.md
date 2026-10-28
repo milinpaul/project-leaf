@@ -103,9 +103,10 @@ Configure once per doc with `config_text_style` before any edit. `code` blocks n
 
 Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key presses and mouse actions into commands; nothing else writes to Loro.
 
-**Page commands (workspace doc)**
-- `CreatePage { parent: Option<PageId>, index, title }`
-- `RenamePage`, `SetPageIcon`
+**Page commands (workspace doc)**: `WorkspaceCommand`, applied with `Workspace::apply`
+- `CreatePage { parent: Option<PageId>, index, title, created_at }`: the model mints and returns the `PageId`;
+  the caller supplies `created_at` (Unix ms) because the model never reads the clock (it must run in WebAssembly)
+- `RenamePage { page, title }`, `SetPageIcon { page, icon: Option<String> }` (`None` clears the icon)
 - `MovePage { page, new_parent, index }`
 - `TrashPage`, `RestorePage`, `DeletePagePermanently`
 

@@ -17,7 +17,7 @@ const PAGES: &str = "pages";
 
 /// A workspace's page tree and the metadata of every page in it.
 ///
-/// Read-only for now: the page commands (E01-S03 onwards) are the only code allowed to change it.
+/// Changed only through [`Workspace::apply`] and its [`WorkspaceCommand`](crate::WorkspaceCommand)s.
 pub struct Workspace {
     doc: LoroDoc,
     tree: LoroTree,
@@ -133,6 +133,12 @@ impl PageIndex {
         Ok(index)
     }
 
+    /// Records a page just created by a command.
+    fn insert(&mut self, page: PageId, node: TreeID) {
+        self.by_page.insert(page, node);
+        self.by_node.insert(node, page);
+    }
+
     /// Translates Loro nodes to pages, keeping order. Every live node is indexed on load, so a
     /// miss would mean the doc changed outside the model; such nodes are skipped, not invented.
     fn pages_for(&self, nodes: Vec<TreeID>) -> Vec<PageId> {
@@ -156,6 +162,8 @@ fn page_id_of(tree: &LoroTree, node: TreeID) -> Result<PageId, ModelError> {
         None => Err(invalid("id is missing".to_owned())),
     }
 }
+
+mod apply;
 
 #[cfg(test)]
 mod tests;

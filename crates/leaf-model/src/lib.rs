@@ -8,10 +8,12 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends only on `leaf-core`. Unknown data from newer app versions is preserved, never dropped.
 
+mod command;
 mod error;
 mod page_meta;
 mod workspace;
 
+pub use command::{Outcome, WorkspaceCommand};
 pub use error::ModelError;
 pub use page_meta::PageMeta;
 pub use workspace::Workspace;
