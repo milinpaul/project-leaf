@@ -40,8 +40,8 @@
       "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
       "path": "backlog/epics/E02.md",
       "story_count": 10,
-      "done_count": 5,
-      "progress": 0.5
+      "done_count": 6,
+      "progress": 0.6
     },
     {
       "id": "E03",
@@ -94,7 +94,7 @@
       "status": "todo",
       "goal": "GPUI rendering of the editor view model: text, cursor, selection, menus, blocks.",
       "path": "backlog/epics/E07.md",
-      "story_count": 9,
+      "story_count": 10,
       "done_count": 0,
       "progress": 0.0
     },
@@ -1037,7 +1037,7 @@
       "id": "E02-S04",
       "title": "Change block kind and props",
       "epic": "E02",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1127,10 +1127,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E02-S05.md",
       "prs": [],
-      "waiting_on": [
-        "E02-S04"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -1701,10 +1699,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S01.md",
       "prs": [],
-      "waiting_on": [
-        "E02-S04"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2319,8 +2315,7 @@
       "path": "backlog/stories/E05-S07.md",
       "prs": [],
       "waiting_on": [
-        "E03-S07",
-        "E02-S04"
+        "E03-S07"
       ],
       "ready": false,
       "progress": 0.0
@@ -3037,6 +3032,91 @@
       ],
       "ready": false,
       "progress": 0.0
+    },
+    {
+      "id": "E07-S10",
+      "title": "Interim block editor with one text input per block",
+      "epic": "E07",
+      "status": "review",
+      "priority": "P1",
+      "size": "M",
+      "depends_on": [
+        "E02-S04",
+        "E06-S07"
+      ],
+      "labels": [
+        "leaf-ui",
+        "leaf-editor",
+        "vertical-slice"
+      ],
+      "assignee": "claude",
+      "updated": "2026-10-28",
+      "context": "Owner request: see the block model (E02) working in the real window before the full editor (E04 cursor model,\nE07-S02 rich text element) exists. Each page gets an in-memory `PageDoc`; its blocks render as a list with one plain\ntext input per block. **Interim**: replaced by the rich text element in E07-S02, so keep the UI thin and put the\nlogic in `leaf-editor`, where it carries over. Nothing is saved yet (E03).",
+      "acceptance": [
+        {
+          "text": "Opening a page shows its blocks in reading order, indented by nesting, styled by kind (heading sizes, bullet, number, checkbox, quote bar, code font)",
+          "done": true
+        },
+        {
+          "text": "An empty page starts with one empty paragraph to type in",
+          "done": true
+        },
+        {
+          "text": "Typing edits the block's text through the text commands",
+          "done": true
+        },
+        {
+          "text": "Enter adds a block below (lists and to-dos keep their kind, others become paragraphs) and focuses it",
+          "done": true
+        },
+        {
+          "text": "Enter on an empty list item or to-do ends the list (outdent; at the top level, paragraph) instead of adding another (owner review)",
+          "done": true
+        },
+        {
+          "text": "Ticked to-dos are struck through (owner review)",
+          "done": true
+        },
+        {
+          "text": "Backspace in an empty block deletes it and focuses the block above (the last block stays)",
+          "done": true
+        },
+        {
+          "text": "Tab / Shift+Tab indent and outdent the focused block",
+          "done": true
+        },
+        {
+          "text": "A toolbar turns the focused block into paragraph, heading 1–3, bulleted, numbered, to-do, quote or code",
+          "done": true
+        },
+        {
+          "text": "Clicking a to-do's checkbox ticks it",
+          "done": true
+        },
+        {
+          "text": "Logic lives in `leaf-editor` with unit tests; `leaf-ui` only renders and forwards",
+          "done": true
+        },
+        {
+          "text": "Screenshots of the running app in the PR",
+          "done": true
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": true
+        }
+      ],
+      "plan": "- **`leaf-editor/src/page_editor.rs`:** `PageEditor` wraps a `PageDoc`.\n  - `rows()` is the view model: blocks in reading order with depth, a `BlockStyle` (numbered items get their\n    number here, never stored), and plain text.\n  - Actions: `ensure_block` (empty page → one paragraph), `set_text` (diffs old and new text into minimal\n    Delete/InsertText at Unicode positions), `enter`, `backspace_empty`, `indent`, `outdent`, `turn_into`,\n    `toggle_checked`, `previous`/`next`. Unit tests for each.\n- **`WorkspaceEditor`:** keeps one `PageEditor` per page, created when the page is first opened.\n- **`leaf-ui` (`shell/blocks.rs`):**\n  - One borderless `InputState` per block, kept in a map and refreshed from the model each frame. Typing →\n    `set_text`.\n  - Keys are intercepted in the capture phase on the page area: `Enter`, `Backspace` (only when empty),\n    `IndentInline`/`OutdentInline` (Tab/Shift+Tab), and `MoveUp`/`MoveDown` between blocks, then stopped so the\n    input doesn't also handle them.\n  - Per-kind styling: heading sizes, `•` and `N.`, a `Checkbox` for to-dos, a quote bar, a monospace font for code,\n    a line for dividers, placeholders for image and unknown blocks. A turn-into toolbar acts on the focused block.\n- **Interim limits:** Enter always adds a block below (splitting text is E02-S05/E04-S05). Backspace only deletes\n  empty, childless blocks. No inline formatting editing. The rich text element (E07-S02) replaces the inputs.\n- **Checks:** GPUI tests for typing, Enter and Tab through the shell; run the app and screenshot several kinds.",
+      "path": "backlog/stories/E07-S10.md",
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/18",
+          "number": 18
+        }
+      ],
+      "waiting_on": [],
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E08-S01",

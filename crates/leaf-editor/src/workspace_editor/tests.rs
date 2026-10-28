@@ -149,3 +149,35 @@ fn sidebar_shows_icons_and_hides_trashed_pages() {
     assert_eq!(items.len(), 1, "trashed pages are not listed");
     assert_eq!((items[0].page, items[0].icon.as_deref()), (kept, Some("🌱")));
 }
+
+#[test]
+fn each_page_gets_its_own_blocks_kept_between_opens() {
+    let mut editor = WorkspaceEditor::new(Workspace::new());
+    assert!(editor.open_page().unwrap().is_none(), "no page open yet");
+
+    let first = editor.new_page(NOW).unwrap();
+    let block = {
+        let page = editor.open_page().unwrap().unwrap();
+        let rows = page.rows().unwrap();
+        assert_eq!(rows.len(), 1, "a new page starts with one empty paragraph");
+        page.set_text(rows[0].id, "first page").unwrap();
+        rows[0].id
+    };
+    let second = editor.new_page(NOW).unwrap();
+    assert_eq!(
+        editor.open_page().unwrap().unwrap().rows().unwrap()[0]
+            .text
+            .as_deref(),
+        Some("")
+    );
+
+    editor.select(first).unwrap();
+    let page = editor.open_page().unwrap().unwrap();
+    assert_eq!(
+        page.doc().plain_text(block).unwrap().as_deref(),
+        Some("first page"),
+        "kept between opens"
+    );
+    assert!(editor.page_editor(second).is_some());
+    assert!(editor.page_editor(PageId::new()).is_none(), "never opened");
+}

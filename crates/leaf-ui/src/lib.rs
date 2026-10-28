@@ -14,6 +14,13 @@ use gpui_component::Root;
 
 pub use shell::Shell;
 
+/// The icons gpui-component's widgets draw (a checkbox's tick, for example). Register it with
+/// `Application::with_assets` at startup, or those icons render as blank shapes.
+#[must_use]
+pub fn assets() -> impl gpui::AssetSource {
+    gpui_kit_assets::Assets
+}
+
 /// Sets up themes and widgets. Call once at startup, before opening any window.
 pub fn init(cx: &mut App) {
     gpui_component::init(cx);

@@ -1,8 +1,12 @@
 //! Editing the workspace: which page is selected, what the sidebar shows, and the page actions the
 //! sidebar offers. Turns those actions into `WorkspaceCommand`s; never touches Loro itself.
 
+use std::collections::HashMap;
+
 use leaf_core::PageId;
-use leaf_model::{ModelError, Outcome, Workspace, WorkspaceCommand};
+use leaf_model::{ModelError, Outcome, PageDoc, Workspace, WorkspaceCommand};
+
+use crate::PageEditor;
 use thiserror::Error;
 
 /// What the sidebar shows for an empty title, so a new page is never an invisible row.
@@ -33,6 +37,8 @@ pub struct SidebarItem {
 pub struct WorkspaceEditor {
     workspace: Workspace,
     selected: Option<PageId>,
+    /// Each opened page's blocks, kept in memory until saving arrives (E03).
+    pages: HashMap<PageId, PageEditor>,
 }
 
 impl WorkspaceEditor {
@@ -42,6 +48,7 @@ impl WorkspaceEditor {
         Self {
             workspace,
             selected: None,
+            pages: HashMap::new(),
         }
     }
 
@@ -97,6 +104,29 @@ impl WorkspaceEditor {
         }
         self.selected = Some(page);
         Ok(())
+    }
+
+    /// The open page's blocks, creating its document (with one empty paragraph to type in) the first
+    /// time the page is opened. `None` when no page is open.
+    pub fn open_page(&mut self) -> Result<Option<&mut PageEditor>, EditorError> {
+        let Some(page) = self.selected else {
+            return Ok(None);
+        };
+        let editor = match self.pages.entry(page) {
+            std::collections::hash_map::Entry::Occupied(entry) => entry.into_mut(),
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                let mut editor = PageEditor::new(PageDoc::new());
+                editor.ensure_block()?;
+                entry.insert(editor)
+            }
+        };
+        Ok(Some(editor))
+    }
+
+    /// A page's blocks, if it has been opened before; read-only.
+    #[must_use]
+    pub fn page_editor(&self, page: PageId) -> Option<&PageEditor> {
+        self.pages.get(&page)
     }
 
     /// The page currently open, if any.
