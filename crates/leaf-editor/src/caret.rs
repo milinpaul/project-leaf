@@ -41,6 +41,9 @@ pub(crate) struct Tracked {
     /// The x position Up and Down aim for, kept while they repeat so short lines don't pull the
     /// caret sideways for good.
     goal_x: Option<f32>,
+    /// The other end of a text selection in the same block, if there is one; the caret is the end
+    /// that moves. Any caret move drops it.
+    pub(crate) tail: Option<Anchor>,
 }
 
 impl PageEditor {
@@ -62,7 +65,12 @@ impl PageEditor {
             .iter()
             .position(|row| row.id == caret.block)
             .unwrap_or(0);
-        self.caret = Some(Tracked { anchor, row, goal_x });
+        self.caret = Some(Tracked {
+            anchor,
+            row,
+            goal_x,
+            tail: None,
+        });
         Ok(caret)
     }
 
@@ -72,14 +80,18 @@ impl PageEditor {
         let Some(tracked) = &self.caret else {
             return Ok(None);
         };
-        let (row, goal_x) = (tracked.row, tracked.goal_x);
+        let (row, goal_x, tail) = (tracked.row, tracked.goal_x, tracked.tail.clone());
         let found = match self.doc.resolve(&tracked.anchor)? {
             Some(caret) => Some(caret),
             None => nearest_above(self.view()?, row),
         };
         // Re-anchoring keeps following edits even after undo re-created the block.
         if let Some(caret) = found {
-            return self.place(caret, goal_x).map(Some);
+            let caret = self.place(caret, goal_x)?;
+            if let Some(tracked) = &mut self.caret {
+                tracked.tail = tail;
+            }
+            return Ok(Some(caret));
         }
         self.caret = None;
         Ok(None)

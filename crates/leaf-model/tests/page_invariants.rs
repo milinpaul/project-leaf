@@ -98,6 +98,12 @@ enum Step {
         start: usize,
         len: usize,
     },
+    Replace {
+        block: usize,
+        start: usize,
+        len: usize,
+        text: String,
+    },
     SetMark {
         block: usize,
         start: usize,
@@ -147,6 +153,7 @@ fn step() -> impl Strategy<Value = Step> {
         1 => some().prop_map(|blocks| Step::Outdent { blocks }),
         3 => (n(), n(), text()).prop_map(|(block, pos, text)| Step::Type { block, pos, text }),
         1 => (n(), n(), 0..4_usize).prop_map(|(block, start, len)| Step::Erase { block, start, len }),
+        1 => (n(), n(), 0..4_usize, text()).prop_map(|(block, start, len, text)| Step::Replace { block, start, len, text }),
         2 => (n(), n(), 0..5_usize, n()).prop_map(|(block, start, len, mark)| Step::SetMark { block, start, len, mark }),
         1 => (n(), n(), 0..5_usize, n()).prop_map(|(block, start, len, kind)| Step::RemoveMark { block, start, len, kind }),
         2 => (n(), n()).prop_map(|(block, kind)| Step::SetKind { block, kind }),
@@ -290,6 +297,19 @@ fn text_command(step: Step, p: &Picker<'_>) -> Option<PageCommand> {
             PageCommand::DeleteText {
                 id,
                 range: p.range(id, start, len),
+            }
+        }
+        Step::Replace {
+            block,
+            start,
+            len,
+            text,
+        } => {
+            let id = p.block(block)?;
+            PageCommand::ReplaceText {
+                id,
+                range: p.range(id, start, len),
+                text,
             }
         }
         Step::SetMark {

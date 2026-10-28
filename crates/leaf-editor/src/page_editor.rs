@@ -10,6 +10,7 @@ use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOut
 
 use crate::EditorError;
 use crate::caret::Tracked;
+use crate::input::Composing;
 use crate::view::{BlockRow, PageView};
 
 /// What Backspace at the start of a block did.
@@ -30,6 +31,8 @@ pub struct PageEditor {
     view: PageView,
     /// Where the caret is, if it has been placed.
     pub(crate) caret: Option<Tracked>,
+    /// The input method's draft while a composition is going on.
+    pub(crate) composing: Option<Composing>,
 }
 
 impl PageEditor {
@@ -40,6 +43,7 @@ impl PageEditor {
             doc,
             view: PageView::default(),
             caret: None,
+            composing: None,
         }
     }
 

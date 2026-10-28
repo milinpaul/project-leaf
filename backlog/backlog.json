@@ -1929,7 +1929,7 @@
       "id": "E04-S04",
       "title": "Text input and IME composition",
       "epic": "E04",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1938,7 +1938,7 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Model for typed text, composition (preedit) and commit.",
       "acceptance": [
@@ -1959,11 +1959,11 @@
           "done": false
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **Model:** new `PageCommand::ReplaceText { id, range, text }`, one commit, so typing over a selection or committing\n  a composition is one undo step. The new text takes the formatting of the first replaced character (typing over a\n  bold word stays bold, over link text keeps the link). Added to the invariants/undo proptest.\n- **Editor (`leaf-editor/src/input.rs`):** a minimal one-block selection (`select`, `selection`, kept as a second\n  anchor so it follows edits; any caret move drops it; E04-S06 grows it across blocks); `insert_text` replaces the\n  selection or inserts at the caret; preedit (`set_preedit`, `commit_preedit`, `cancel_preedit`, `preedit()` for\n  drawing) kept only in the editor, never written to the page, so it makes no undo steps or saves. An empty preedit\n  ends the composition and leaves the selection alone.\n- **Tests:** model replace tests (positions, one undo step, formatting, errors); editor tests for typing, replacing,\n  selections following edits, compositions writing nothing, empty compositions, and a draft following remote edits.\n  Docs: ADR 0017, BLOCK_MODEL command list, ARCHITECTURE.",
       "path": "backlog/stories/E04-S04.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
+      "ready": false,
       "progress": 0.0
     },
     {
