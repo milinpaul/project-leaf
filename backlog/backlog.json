@@ -635,7 +635,7 @@
       "id": "E01-S02",
       "title": "Workspace doc wrapper and read API",
       "epic": "E01",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -672,7 +672,12 @@
       ],
       "plan": "- `leaf-model/src/workspace.rs`: `Workspace` owns the workspace `LoroDoc` and its `\"pages\"` tree (fractional\n  index on). `new`, `from_bytes` (import a snapshot), `to_bytes` (export a snapshot).\n- Read API: `root_pages`, `children(PageId)`, `page(PageId) -> PageMeta`, `contains`. All by `PageId`; Loro\n  `TreeID`s stay private (ADR 0006 pattern). Trashed pages are listed too, with `trashed_at` set: hiding them\n  is the trash story's job (E01-S05).\n- `PageId → TreeID` index (`HashMap`), rebuilt on load. Undo will rebuild it too (E01-S06).\n- `page_meta.rs`: `PageMeta` and the meta key names. `error.rs`: `ModelError` (unknown page, invalid page data,\n  Loro errors).\n- Loading is strict: a page without a valid `id` fails to load with a clear error, rather than being hidden.\n- Tests build workspaces through raw Loro writes in test code, since the page commands arrive in E01-S03.\n- Risk: none known. Loro builds for wasm32 as-is (checked).",
       "path": "backlog/stories/E01-S02.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/10",
+          "number": 10
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
