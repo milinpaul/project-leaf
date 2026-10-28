@@ -3037,7 +3037,7 @@
       "id": "E07-S10",
       "title": "Interim block editor with one text input per block",
       "epic": "E07",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P1",
       "size": "M",
       "depends_on": [
@@ -3100,7 +3100,12 @@
       ],
       "plan": "- **`leaf-editor/src/page_editor.rs`:** `PageEditor` wraps a `PageDoc`.\n  - `rows()` is the view model: blocks in reading order with depth, a `BlockStyle` (numbered items get their\n    number here, never stored), and plain text.\n  - Actions: `ensure_block` (empty page → one paragraph), `set_text` (diffs old and new text into minimal\n    Delete/InsertText at Unicode positions), `enter`, `backspace_empty`, `indent`, `outdent`, `turn_into`,\n    `toggle_checked`, `previous`/`next`. Unit tests for each.\n- **`WorkspaceEditor`:** keeps one `PageEditor` per page, created when the page is first opened.\n- **`leaf-ui` (`shell/blocks.rs`):**\n  - One borderless `InputState` per block, kept in a map and refreshed from the model each frame. Typing →\n    `set_text`.\n  - Keys are intercepted in the capture phase on the page area: `Enter`, `Backspace` (only when empty),\n    `IndentInline`/`OutdentInline` (Tab/Shift+Tab), and `MoveUp`/`MoveDown` between blocks, then stopped so the\n    input doesn't also handle them.\n  - Per-kind styling: heading sizes, `•` and `N.`, a `Checkbox` for to-dos, a quote bar, a monospace font for code,\n    a line for dividers, placeholders for image and unknown blocks. A turn-into toolbar acts on the focused block.\n- **Interim limits:** Enter always adds a block below (splitting text is E02-S05/E04-S05). Backspace only deletes\n  empty, childless blocks. No inline formatting editing. The rich text element (E07-S02) replaces the inputs.\n- **Checks:** GPUI tests for typing, Enter and Tab through the shell; run the app and screenshot several kinds.",
       "path": "backlog/stories/E07-S10.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/18",
+          "number": 18
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
