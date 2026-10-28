@@ -1650,7 +1650,7 @@
       "id": "E03-S06",
       "title": "Crash recovery test",
       "epic": "E03",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1683,7 +1683,12 @@
       ],
       "plan": "- **Crash simulation:** copy `workspace.sqlite` and its `-wal` file while the app still has them open. That is\n  exactly what a killed process leaves on disk. Then open the copy and load.\n- **Property test (fake clock):**\n  - random edit times, with the autosave timer firing at each deadline;\n  - a crash at a random moment;\n  - every edit made at least 300 ms before the crash must be in the reloaded page.\n- **Corrupt updates:**\n  - Loading tries the normal way first.\n  - If that fails, `PageDoc::recover` / `Workspace::recover` import the snapshot and then each update on its\n    own, skipping the ones Loro rejects.\n  - `Store::load` logs a `tracing` warning per skipped update.\n  - `Store::recover` returns the skipped `seq`s, so the app can tell the user.\n  - The bad row is kept on disk (never drop data).\n  - If nothing could be skipped, the original error stands (for example a corrupt snapshot).\n- **Why not only the last update:** skipping any rejected update matters because new saves are appended *after*\n  a bad one, so it doesn't stay trailing.\n- **New dependencies** (already workspace dependencies): `tracing` for the warning, `proptest` for the test.",
       "path": "backlog/stories/E03-S06.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/27",
+          "number": 27
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
