@@ -17,9 +17,9 @@
       "status": "todo",
       "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
       "path": "backlog/epics/E00.md",
-      "story_count": 6,
-      "done_count": 1,
-      "progress": 0.17
+      "story_count": 7,
+      "done_count": 2,
+      "progress": 0.29
     },
     {
       "id": "E01",
@@ -207,7 +207,7 @@
       "id": "E00-S02",
       "title": "CI pipeline green",
       "epic": "E00",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -217,37 +217,42 @@
         "repo",
         "ci"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Wire the provided ci.yml, justfile, lefthook, deny.toml. Add one placeholder test per core crate so the coverage gate is meaningful.",
       "acceptance": [
         {
           "text": "CI passes on macOS, Windows, Linux",
-          "done": false
+          "done": true
         },
         {
           "text": "Coverage job enforces 90% on core crates",
-          "done": false
+          "done": true
         },
         {
           "text": "`just check` passes locally",
-          "done": false
+          "done": true
         },
         {
           "text": "Backlog check job validates backlog files",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "CI already ran green on `main` after E00-S01 (all 8 jobs, three OSes), so this story proves the gates bite and closes gaps.\n\n- **Coverage gate:** add an uncovered function to a core crate locally, confirm `just cov` fails below 90%, revert.\n- **Backlog job:** confirm `backlog.py --check` fails on a stale `backlog.json` and on an invalid story file.\n- **Toolchain pin:** pin `rust-toolchain.toml` to 1.99.1 (the version that first built green) so CI and dev machines\n  match; CI's setup action reads this file.\n- **Review `ci.yml`** against the justfile so CI runs the same checks as `just check`; fix any drift.\n- **Docs:** note the pin and how to bump it in `docs/architecture/TECH_STACK.md`.\n- **Risks:** none known; the PR's own CI run is the final proof on all three OSes.",
       "path": "backlog/stories/E00-S02.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/3",
+          "number": 3
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E00-S03",
@@ -390,7 +395,7 @@
       "id": "E00-S06",
       "title": "Link pull requests on story cards",
       "epic": "E00",
-      "status": "review",
+      "status": "done",
       "priority": "P2",
       "size": "S",
       "depends_on": [],
@@ -438,6 +443,42 @@
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
+    },
+    {
+      "id": "E00-S07",
+      "title": "Live board server leaves backlog.json dirty after branch switches",
+      "epic": "E00",
+      "status": "backlog",
+      "priority": "P2",
+      "size": "S",
+      "depends_on": [],
+      "labels": [
+        "backlog",
+        "tooling"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "`backlog.py serve` regenerates `backlog/backlog.json` whenever story files change, using the Python code it loaded\nat start-up. Switching git branches changes story files, so the server rewrites the tracked JSON with whatever\ncode it is running, leaving a dirty working tree that blocks `git pull`. Found during E00-S02.",
+      "acceptance": [
+        {
+          "text": "Running the live board never modifies tracked files (for example, it only writes the gitignored `board.html` and serves JSON from memory)",
+          "done": false
+        },
+        {
+          "text": "`just backlog` and the hooks still regenerate `backlog.json`",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E00-S07.md",
+      "prs": [],
+      "waiting_on": [],
+      "ready": false,
+      "progress": 0.0
     },
     {
       "id": "E01-S01",

@@ -22,7 +22,7 @@ test:
 
 # Coverage with the 90% gate on core crates
 cov:
-    cargo llvm-cov nextest --workspace {{ui_crates}} --fail-under-lines 90
+    cargo llvm-cov nextest --workspace {{ui_crates}} --locked --fail-under-lines 90
 
 # Coverage report in the browser
 cov-html:
@@ -35,7 +35,7 @@ deny:
 
 # Core crates must compile to WASM
 wasm:
-    cargo check --target wasm32-unknown-unknown -p leaf-core -p leaf-model -p leaf-editor
+    cargo check --locked --target wasm32-unknown-unknown -p leaf-core -p leaf-model -p leaf-editor
 
 # Validate backlog and regenerate backlog.json
 backlog:
