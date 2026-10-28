@@ -15,11 +15,11 @@ use gpui::{
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::checkbox::Checkbox;
 use gpui_component::input::{
-    Backspace, IndentInline, Input, InputEvent, InputState, MoveDown, MoveUp, OutdentInline,
+    Backspace as BackspaceKey, IndentInline, Input, InputEvent, InputState, MoveDown, MoveUp, OutdentInline,
 };
 use gpui_component::{ActiveTheme as _, h_flex, v_flex};
 use leaf_core::BlockId;
-use leaf_editor::{BlockRow, BlockStyle, PageEditor};
+use leaf_editor::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
 use leaf_model::BlockKind;
 
 use super::{Shell, report};
@@ -106,6 +106,32 @@ impl Shell {
         cx.notify();
     }
 
+    /// Sets a block's input to the model's text without emitting change events.
+    fn sync_input(&mut self, id: BlockId, window: &mut Window, cx: &mut Context<Self>) {
+        let text = self
+            .page()
+            .and_then(|page| page.doc().plain_text(id).ok().flatten())
+            .unwrap_or_default();
+        if let Some(input) = self.blocks.inputs.get(&id) {
+            input.update(cx, |input, cx| {
+                if input.value() != text {
+                    input.set_value(text, window, cx);
+                }
+            });
+        }
+    }
+
+    /// Focuses a block and puts the text cursor at `caret.at` (a Unicode scalar position).
+    fn focus_caret(&mut self, caret: Caret, window: &mut Window, cx: &mut Context<Self>) {
+        self.focus_block(caret.block, window, cx);
+        if let Some(input) = self.blocks.inputs.get(&caret.block) {
+            input.update(cx, |input, cx| {
+                let byte = byte_offset(&input.value(), caret.at);
+                input.set_selected_range(byte..byte, cx);
+            });
+        }
+    }
+
     /// Focuses the open page's first block, so a freshly opened page is ready for typing.
     pub(super) fn focus_first_block(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let first = self.page().and_then(|page| page.ensure_block().ok());
@@ -130,28 +156,47 @@ impl Shell {
                 }
                 cx.notify();
             }
-            InputEvent::PressEnter { .. } => match self.page().map(|page| page.enter(id)) {
-                Some(Ok(new)) => self.focus_block(new, window, cx),
-                Some(Err(err)) => report("could not add a block", err),
-                None => {}
-            },
+            InputEvent::PressEnter { .. } => {
+                let at = {
+                    let input = input.read(cx);
+                    char_offset(&input.value(), input.cursor())
+                };
+                match self.page().map(|page| page.enter_at(id, at)) {
+                    Some(Ok(caret)) => {
+                        // The split shortened this block. Refresh its input now: it may still report a
+                        // late change with its old text, which would otherwise undo the split.
+                        self.sync_input(id, window, cx);
+                        self.focus_caret(caret, window, cx);
+                    }
+                    Some(Err(err)) => report("could not split the block", err),
+                    None => {}
+                }
+            }
             InputEvent::Focus => self.blocks.focused = Some(id),
             InputEvent::Blur => {}
         }
     }
 
-    fn on_backspace(&mut self, _: &Backspace, window: &mut Window, cx: &mut Context<Self>) {
+    /// Backspace with the cursor at the very start of a block (and nothing selected) is a block
+    /// action; anywhere else it is an ordinary backspace for the input.
+    fn on_backspace(&mut self, _: &BackspaceKey, window: &mut Window, cx: &mut Context<Self>) {
         let Some(id) = self.blocks.focused else { return };
-        match self.page().map(|page| page.backspace_empty(id)) {
-            Some(Ok(Some(target))) => {
-                // Handled: the empty block is gone, so the input must not also see the key.
+        let at_start = self.blocks.inputs.get(&id).is_some_and(|input| {
+            let input = input.read(cx);
+            input.cursor() == 0 && input.selected_range().is_empty()
+        });
+        if !at_start {
+            return;
+        }
+        match self.page().map(|page| page.backspace_at_start(id)) {
+            Some(Ok(Backspace::Moved(caret))) => {
                 cx.stop_propagation();
-                self.blocks.inputs.remove(&id);
-                self.blocks.subscriptions.remove(&id);
-                self.focus_block(target, window, cx);
+                self.focus_caret(caret, window, cx);
             }
-            Some(Err(err)) => report("could not delete the block", err),
-            _ => {} // not empty: an ordinary backspace for the input
+            // Selecting a divider or image arrives with block selection (E04-S06); for now, do nothing.
+            Some(Ok(Backspace::Select(_))) => cx.stop_propagation(),
+            Some(Ok(Backspace::Nothing)) | None => {}
+            Some(Err(err)) => report("could not merge the block", err),
         }
     }
 
@@ -357,4 +402,17 @@ impl Shell {
             _ => line.into_any_element(),
         }
     }
+}
+
+/// Converts a Unicode scalar position to a UTF-8 byte offset in `text` (inputs count bytes).
+fn byte_offset(text: &str, chars: usize) -> usize {
+    text.char_indices()
+        .nth(chars)
+        .map_or(text.len(), |(byte, _)| byte)
+}
+
+/// Converts a UTF-8 byte offset from an input to a Unicode scalar position (the model counts characters).
+fn char_offset(text: &str, byte: usize) -> usize {
+    text.get(..byte)
+        .map_or_else(|| text.chars().count(), |head| head.chars().count())
 }

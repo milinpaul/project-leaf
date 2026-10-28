@@ -156,6 +156,14 @@ pub enum ModelError {
         kind: String,
     },
 
+    /// Backspace at the start of a block can't merge into the block above because it has no text
+    /// (a divider, image or unknown block). The editor selects that block instead.
+    #[error("block {target} has no text to merge into")]
+    MergeTargetNotText {
+        /// The block above, which the editor should select.
+        target: BlockId,
+    },
+
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]
     Loro(#[from] loro::LoroError),

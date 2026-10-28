@@ -9,7 +9,7 @@ use crate::{BlockKind, BlockProp, Mark, MarkKind};
 
 /// A change to a page document.
 ///
-/// Applied with [`PageDoc::apply`](crate::PageDoc::apply). Split and merge arrive in E02-S05.
+/// Applied with [`PageDoc::apply`](crate::PageDoc::apply).
 #[derive(Debug, Clone, PartialEq)]
 pub enum PageCommand {
     /// Adds a block under `parent` (or at the top level when `None`) at position `index`, and returns
@@ -106,6 +106,23 @@ pub enum PageCommand {
         /// Blocks to outdent; handled one by one in reading order, nested ones travel with their parent.
         ids: Vec<BlockId>,
     },
+    /// Enter in the middle of text: the text after `pos` moves, with its formatting, into a new block
+    /// right after this one (or its first child, if it has children). Lists and to-dos continue in
+    /// the new block; anything else continues as a paragraph. Returns the new block.
+    SplitBlock {
+        /// Block to split; it must have text.
+        id: BlockId,
+        /// Unicode scalar position to split at, at most the text length.
+        pos: usize,
+    },
+    /// Backspace at the start of a block: its text, with formatting, is appended to the block just
+    /// above it in reading order, its children move there too, and the block is removed. Reports
+    /// where the two texts joined in [`PageOutcome::BlockMerged`]. The block above must have text:
+    /// a divider or image is refused with `MergeTargetNotText`, so the editor can select it instead.
+    MergeIntoPrevious {
+        /// Block to merge away.
+        id: BlockId,
+    },
 }
 
 /// What applying a page command produced.
@@ -115,6 +132,14 @@ pub enum PageOutcome {
     BlockCreated(BlockId),
     /// These blocks were deleted: each listed block and everything inside it, in document order.
     BlocksDeleted(Vec<BlockId>),
+    /// A block was merged into `into`; its text starts at position `at` there, which is where the
+    /// cursor belongs.
+    BlockMerged {
+        /// The block the text was appended to.
+        into: BlockId,
+        /// Unicode scalar position of the join.
+        at: usize,
+    },
     /// The page changed, as exactly one undo step.
     Changed,
     /// The command was valid but changed nothing, so nothing was written.

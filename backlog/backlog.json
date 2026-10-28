@@ -95,8 +95,8 @@
       "goal": "GPUI rendering of the editor view model: text, cursor, selection, menus, blocks.",
       "path": "backlog/epics/E07.md",
       "story_count": 10,
-      "done_count": 0,
-      "progress": 0.0
+      "done_count": 1,
+      "progress": 0.1
     },
     {
       "id": "E08",
@@ -1089,7 +1089,7 @@
       "id": "E02-S05",
       "title": "Split and merge blocks",
       "epic": "E02",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1099,37 +1099,37 @@
         "leaf-model",
         "commands"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "SplitBlock (Enter) and MergeIntoPrevious (Backspace) model semantics.",
       "acceptance": [
         {
           "text": "Split keeps marks on both halves",
-          "done": false
+          "done": true
         },
         {
           "text": "Split type rules per PRODUCT_SPEC Editor behaviour",
-          "done": false
+          "done": true
         },
         {
           "text": "Merge appends text and moves children to the previous block",
-          "done": false
+          "done": true
         },
         {
           "text": "Merge onto divider/image is rejected with a typed error the editor can handle",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "New module `page_doc/split_merge.rs`.\n- **`SplitBlock { id, pos }`** (Enter mid-text) returns `BlockCreated(new)`. The text after `pos` moves to the\n  new block **with its marks** (`slice_delta` then `apply_delta`, so marks from newer versions survive too).\n  - New kind per the spec: lists and to-dos continue (an unticked to-do); everything else becomes a paragraph.\n  - Placement: right after the block, or as its **first child** if it has children, so reading order never changes.\n  - Blocks without text are refused.\n- **`MergeIntoPrevious { id }`** (Backspace at start) appends the block's text, with marks, to the previous\n  block **in reading order**, then deletes it. It returns `BlockMerged { into, at }` so the editor can put the\n  cursor at the join.\n  - Children move to the previous block: at the block's old position if the previous block is its parent,\n    otherwise at the end. If the previous block can't hold children (heading, code), they move up to the\n    block's own position instead.\n  - Merging into code strips marks (invariant 5). With no previous block: `Unchanged`.\n- **Refused:** merging into a divider, image or unknown block gives a typed `MergeTargetNotText { target }`, so\n  the editor can select that block instead (spec).\n- **Interim editor:** Enter splits at the input's cursor; Backspace at the start of a non-paragraph turns it into\n  a paragraph; at the start of a paragraph it merges into the block above, landing the cursor at the join.\n- **Tests:** each rule plus mark preservation on both sides; extend the block-text proptest with split/merge\n  against a reference.",
       "path": "backlog/stories/E02-S05.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E02-S06",
@@ -3037,7 +3037,7 @@
       "id": "E07-S10",
       "title": "Interim block editor with one text input per block",
       "epic": "E07",
-      "status": "review",
+      "status": "done",
       "priority": "P1",
       "size": "M",
       "depends_on": [

@@ -11,5 +11,5 @@
 mod page_editor;
 mod workspace_editor;
 
-pub use page_editor::{BlockRow, BlockStyle, PageEditor};
+pub use page_editor::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
 pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};

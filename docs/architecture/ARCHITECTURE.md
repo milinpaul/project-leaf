@@ -61,7 +61,8 @@ editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
 block's kind and properties (E02-S04). The window can edit a page's blocks with an **interim block editor**
 (E07-S10): one plain text input per block, drawn from `PageEditor`'s rows in `leaf-editor`, with Enter, Backspace,
 Tab and Shift+Tab caught before the input sees them. The rich text element (E07-S02) replaces the inputs later;
-`PageEditor`'s rules stay. The window's sidebar now lists real pages from an in-memory workspace
+`PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
+above (E02-S05), keeping formatting on both sides. The window's sidebar now lists real pages from an in-memory workspace
 (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go through those commands (E06-S07).
 
 1. **You press a key.** GPUI delivers it to `leaf-ui`, which forwards it untouched to `leaf-editor`.
