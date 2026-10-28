@@ -72,6 +72,19 @@ impl PageDoc {
     pub fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError> {
         let doc = new_doc();
         saved::import(&doc, snapshot, updates)?;
+        Self::from_doc(doc)
+    }
+
+    /// Loads what can be loaded after [`PageDoc::from_saved`] failed: the snapshot plus every
+    /// update that isn't damaged. Returns the page and the positions in `updates` that were skipped,
+    /// so the caller can warn. A damaged snapshot is still an error.
+    pub fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError> {
+        let doc = new_doc();
+        let skipped = saved::import_each(&doc, snapshot, updates)?;
+        Ok((Self::from_doc(doc)?, skipped))
+    }
+
+    fn from_doc(doc: LoroDoc) -> Result<Self, ModelError> {
         let tree = blocks_tree(&doc);
         let index = BlockIndex::build(&tree)?;
         // Created after the import, so undo starts from the loaded state.

@@ -11,6 +11,10 @@ leaf-core.workspace = true
 leaf-model.workspace = true
 rusqlite.workspace = true
 thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
 
 [lints]
 workspace = true

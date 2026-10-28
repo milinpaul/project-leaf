@@ -38,6 +38,8 @@ pub trait Document: Sized {
     fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError>;
     /// The whole document.
     fn to_bytes(&self) -> Result<Vec<u8>, ModelError>;
+    /// Like `from_saved`, but skips damaged updates; returns their positions in `updates`.
+    fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError>;
     /// Changes not yet on disk, as one update, or `None`.
     fn unsaved_changes(&self) -> Result<Option<Vec<u8>>, ModelError>;
     /// Everything is on disk now.
@@ -49,6 +51,19 @@ pub trait Document: Sized {
 pub(crate) struct Saved {
     pub(crate) snapshot: Vec<u8>,
     pub(crate) updates: Vec<Vec<u8>>,
+    /// Each update's `seq`, to name a damaged one.
+    pub(crate) seqs: Vec<i64>,
+}
+
+/// A document loaded despite damaged updates, and which `doc_updates` rows (by `seq`) were skipped.
+///
+/// The skipped rows stay on disk untouched: Leaf never deletes data it can't read.
+#[derive(Debug)]
+pub struct Recovered<D> {
+    /// The document, with every readable update applied.
+    pub doc: D,
+    /// The `seq` of each update that couldn't be read; empty when nothing was damaged.
+    pub skipped: Vec<i64>,
 }
 
 macro_rules! document {
@@ -56,6 +71,9 @@ macro_rules! document {
         impl Document for $ty {
             fn from_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Self, ModelError> {
                 <$ty>::from_saved(snapshot, updates)
+            }
+            fn recover(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(Self, Vec<usize>), ModelError> {
+                <$ty>::recover(snapshot, updates)
             }
             fn to_bytes(&self) -> Result<Vec<u8>, ModelError> {
                 <$ty>::to_bytes(self)
@@ -100,11 +118,43 @@ impl Store {
     }
 
     /// Loads the document saved under `key`, or `None` if it was never saved.
+    ///
+    /// A damaged update (a crash mid-write, a bad disk sector) doesn't stop the document from
+    /// opening: it is skipped with a warning in the log, losing only the edits it held. Use
+    /// [`Store::recover`] to learn what was skipped.
     pub fn load<D: Document>(&self, key: DocKey) -> Result<Option<D>, StoreError> {
+        Ok(self.recover(key)?.map(|recovered| {
+            for seq in &recovered.skipped {
+                tracing::warn!(doc = %key, seq, "skipped a damaged saved update");
+            }
+            recovered.doc
+        }))
+    }
+
+    /// Loads the document saved under `key` like [`Store::load`], also reporting any damaged updates
+    /// that were skipped. Fails if the snapshot itself is damaged.
+    pub fn recover<D: Document>(&self, key: DocKey) -> Result<Option<Recovered<D>>, StoreError> {
         let Some(saved) = self.read(&key.to_string())? else {
             return Ok(None);
         };
-        Ok(Some(D::from_saved(&saved.snapshot, &saved.updates)?))
+        let failed = match D::from_saved(&saved.snapshot, &saved.updates) {
+            Ok(doc) => {
+                return Ok(Some(Recovered {
+                    doc,
+                    skipped: Vec::new(),
+                }));
+            }
+            Err(err) => err,
+        };
+        let (doc, skipped) = D::recover(&saved.snapshot, &saved.updates)?;
+        if skipped.is_empty() {
+            return Err(failed.into()); // the updates were fine; the problem is elsewhere
+        }
+        let skipped = skipped
+            .into_iter()
+            .filter_map(|i| saved.seqs.get(i).copied())
+            .collect();
+        Ok(Some(Recovered { doc, skipped }))
     }
 
     fn has_doc(&self, id: &str) -> Result<bool, StoreError> {
@@ -128,11 +178,16 @@ impl Store {
         };
         let mut stmt = self
             .conn
-            .prepare_cached("SELECT data FROM doc_updates WHERE doc_id = ?1 ORDER BY seq")?;
-        let updates = stmt
-            .query_map([id], |row| row.get(0))?
+            .prepare_cached("SELECT seq, data FROM doc_updates WHERE doc_id = ?1 ORDER BY seq")?;
+        let rows: Vec<(i64, Vec<u8>)> = stmt
+            .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))?
             .collect::<Result<_, _>>()?;
-        Ok(Some(Saved { snapshot, updates }))
+        let (seqs, updates) = rows.into_iter().unzip();
+        Ok(Some(Saved {
+            snapshot,
+            updates,
+            seqs,
+        }))
     }
 }
 
