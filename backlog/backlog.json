@@ -1563,7 +1563,7 @@
       "id": "E03-S04",
       "title": "Autosave",
       "epic": "E03",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1595,7 +1595,12 @@
       ],
       "plan": "- **`leaf-store/src/autosave.rs`:** `Autosave`, a small, clock-free policy object. Times are passed in (Unix ms),\n  so tests use a fake clock.\n  - **`changed(key, now)`:** call after each command; remembers when each document first became unsaved.\n  - **`next_deadline()`:** when the app's timer should next fire.\n  - **`due(now)`:** the documents unsaved for at least 300 ms.\n  - **`save(store, key, doc, now)`:** saves one document through `Store::save` and clears it.\n  - **`pending()`:** every unsaved document, for flushing on blur and quit.\n- **Throttle, not debounce:** the deadline is set by the *first* unsaved change, so steady typing can't put a save\n  off past 300 ms (the spec's 1 s durability).\n- **No write when nothing changed:** clean documents are never due, and `Store::save` writes nothing for a\n  document without unsaved changes.\n- **Out of scope:** opening a folder and running the timer in the app is new story E03-S08.",
       "path": "backlog/stories/E03-S04.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/26",
+          "number": 26
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
