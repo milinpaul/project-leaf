@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 
 use leaf_core::PageId;
-use loro::{ExportMode, LoroDoc, LoroTree, LoroValue, TreeID};
+use loro::{ExportMode, LoroDoc, LoroTree, LoroValue, TreeID, UndoManager};
 
 use crate::page_meta::{keys, value};
 use crate::{ModelError, PageMeta};
@@ -22,6 +22,7 @@ pub struct Workspace {
     doc: LoroDoc,
     tree: LoroTree,
     index: PageIndex,
+    undo: UndoManager,
 }
 
 /// Two-way map between permanent `PageId`s and Loro's current `TreeID`s, for O(1) lookups.
@@ -37,10 +38,12 @@ impl Workspace {
     pub fn new() -> Self {
         let doc = LoroDoc::new();
         let tree = pages_tree(&doc);
+        let undo = undo::manager(&doc);
         Self {
             doc,
             tree,
             index: PageIndex::default(),
+            undo,
         }
     }
 
@@ -52,7 +55,14 @@ impl Workspace {
         doc.import(bytes)?;
         let tree = pages_tree(&doc);
         let index = PageIndex::build(&tree)?;
-        Ok(Self { doc, tree, index })
+        // Created after the import, so undo starts from the loaded state.
+        let undo = undo::manager(&doc);
+        Ok(Self {
+            doc,
+            tree,
+            index,
+            undo,
+        })
     }
 
     /// The whole workspace as a self-contained snapshot, ready to save.
@@ -60,16 +70,16 @@ impl Workspace {
         Ok(self.doc.export(ExportMode::Snapshot)?)
     }
 
-    /// Top-level pages, in sidebar order. Includes trashed pages (check [`PageMeta::trashed_at`]).
-    #[must_use]
-    pub fn root_pages(&self) -> Vec<PageId> {
-        self.index.pages_for(self.tree.roots())
+    /// Top-level pages, in sidebar order. Pages in the trash are left out, and with them everything
+    /// inside them; [`Workspace::trash`] lists those.
+    pub fn root_pages(&self) -> Result<Vec<PageId>, ModelError> {
+        self.visible(self.tree.roots())
     }
 
-    /// Child pages of `page`, in order. Includes trashed pages.
+    /// Child pages of `page`, in order, leaving out pages in the trash.
     pub fn children(&self, page: PageId) -> Result<Vec<PageId>, ModelError> {
         let node = self.node(page)?;
-        Ok(self.index.pages_for(self.tree.children(node).unwrap_or_default()))
+        self.visible(self.tree.children(node).unwrap_or_default())
     }
 
     /// Title, icon and dates of `page`.
@@ -78,7 +88,7 @@ impl Workspace {
         PageMeta::read(page, &meta)
     }
 
-    /// Whether `page` exists in this workspace (trashed pages included).
+    /// Whether `page` exists in this workspace (pages in the trash included).
     #[must_use]
     pub fn contains(&self, page: PageId) -> bool {
         self.index.by_page.contains_key(&page)
@@ -94,6 +104,17 @@ impl Workspace {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.index.by_page.is_empty()
+    }
+
+    /// Siblings as pages, without those that were trashed themselves.
+    fn visible(&self, nodes: Vec<TreeID>) -> Result<Vec<PageId>, ModelError> {
+        let mut pages = Vec::with_capacity(nodes.len());
+        for node in nodes {
+            if !self.is_trashed(node)? {
+                pages.extend(self.index.by_node.get(&node).copied());
+            }
+        }
+        Ok(pages)
     }
 
     fn node(&self, page: PageId) -> Result<TreeID, ModelError> {
@@ -120,7 +141,8 @@ fn pages_tree(doc: &LoroDoc) -> LoroTree {
 }
 
 impl PageIndex {
-    /// Reads every live page node's `id`. Called on load; undo will call it too (E01-S06).
+    /// Reads every live page node's `id`. Called on load, and after undo and redo, which can
+    /// re-create nodes under new `TreeID`s (ADR 0006).
     fn build(tree: &LoroTree) -> Result<Self, ModelError> {
         let mut index = Self::default();
         for node in tree.get_nodes(false) {
@@ -139,13 +161,11 @@ impl PageIndex {
         self.by_node.insert(node, page);
     }
 
-    /// Translates Loro nodes to pages, keeping order. Every live node is indexed on load, so a
-    /// miss would mean the doc changed outside the model; such nodes are skipped, not invented.
-    fn pages_for(&self, nodes: Vec<TreeID>) -> Vec<PageId> {
-        nodes
-            .into_iter()
-            .filter_map(|node| self.by_node.get(&node).copied())
-            .collect()
+    /// Forgets a page removed by a command.
+    fn remove(&mut self, page: PageId) {
+        if let Some(node) = self.by_page.remove(&page) {
+            self.by_node.remove(&node);
+        }
     }
 }
 
@@ -164,6 +184,10 @@ fn page_id_of(tree: &LoroTree, node: TreeID) -> Result<PageId, ModelError> {
 }
 
 mod apply;
+mod trash;
+mod undo;
+
+pub use undo::DEFAULT_UNDO_MERGE_MS;
 
 #[cfg(test)]
 mod tests;

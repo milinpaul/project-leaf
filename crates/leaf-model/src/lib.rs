@@ -16,4 +16,4 @@ mod workspace;
 pub use command::{Outcome, WorkspaceCommand};
 pub use error::ModelError;
 pub use page_meta::PageMeta;
-pub use workspace::Workspace;
+pub use workspace::{DEFAULT_UNDO_MERGE_MS, Workspace};

@@ -18,7 +18,7 @@ fn create(ws: &mut Workspace, parent: Option<PageId>, index: usize, title: &str)
     };
     match ws.apply(command).unwrap() {
         Outcome::PageCreated(page) => page,
-        Outcome::Changed => panic!("CreatePage must report the new page"),
+        other => panic!("CreatePage must report the new page, got {other:?}"),
     }
 }
 
@@ -53,7 +53,7 @@ fn create_page_places_new_pages_at_the_given_index() {
     let a = create(&mut ws, None, 0, "A");
     let b = create(&mut ws, None, 1, "B");
     let c = create(&mut ws, None, 0, "C");
-    assert_eq!(ws.root_pages(), vec![c, a, b]);
+    assert_eq!(ws.root_pages().unwrap(), vec![c, a, b]);
 
     let child = create(&mut ws, Some(a), 0, "Child");
     let last = create(&mut ws, Some(a), 1, "Appended");
@@ -207,7 +207,7 @@ fn command_results_survive_save_and_load() {
     ws.apply(icon(child, Some("🌿"))).unwrap();
 
     let loaded = Workspace::from_bytes(&ws.to_bytes().unwrap()).unwrap();
-    assert_eq!(loaded.root_pages(), vec![b, a]);
+    assert_eq!(loaded.root_pages().unwrap(), vec![b, a]);
     assert_eq!(loaded.children(a).unwrap(), vec![child]);
     assert_eq!(loaded.page(a).unwrap().title, "Alpha");
     assert_eq!(loaded.page(child).unwrap().icon.as_deref(), Some("🌿"));
@@ -247,22 +247,22 @@ fn abc() -> (Workspace, PageId, PageId, PageId) {
 fn move_page_reorders_siblings_by_final_position() {
     let (mut ws, a, b, c) = abc();
     assert_eq!(ws.apply(mv(c, None, 0)).unwrap(), Outcome::Changed);
-    assert_eq!(ws.root_pages(), vec![c, a, b], "index 0 makes it first");
+    assert_eq!(ws.root_pages().unwrap(), vec![c, a, b], "index 0 makes it first");
     ws.apply(mv(c, None, 2)).unwrap();
     assert_eq!(
-        ws.root_pages(),
+        ws.root_pages().unwrap(),
         vec![a, b, c],
         "the sibling count (without the page) makes it last"
     );
     ws.apply(mv(a, None, 1)).unwrap();
     assert_eq!(
-        ws.root_pages(),
+        ws.root_pages().unwrap(),
         vec![b, a, c],
         "moving forward by one within the same parent"
     );
     ws.apply(mv(a, None, 1)).unwrap();
     assert_eq!(
-        ws.root_pages(),
+        ws.root_pages().unwrap(),
         vec![b, a, c],
         "moving to where it already is changes nothing"
     );
@@ -274,7 +274,7 @@ fn move_page_nests_and_unnests_with_its_subtree() {
     let inside_b = create(&mut ws, Some(b), 0, "Inside B");
 
     ws.apply(mv(b, Some(a), 0)).unwrap();
-    assert_eq!(ws.root_pages(), vec![a, c]);
+    assert_eq!(ws.root_pages().unwrap(), vec![a, c]);
     assert_eq!(ws.children(a).unwrap(), vec![b]);
     assert_eq!(
         ws.children(b).unwrap(),
@@ -284,7 +284,7 @@ fn move_page_nests_and_unnests_with_its_subtree() {
 
     ws.apply(mv(inside_b, None, 1)).unwrap();
     assert_eq!(
-        ws.root_pages(),
+        ws.root_pages().unwrap(),
         vec![a, inside_b, c],
         "a nested page can move to the top level"
     );
@@ -331,7 +331,7 @@ fn move_page_rejects_unknown_pages_and_bad_indexes() {
     ));
 
     assert_eq!(commits.load(Ordering::SeqCst), 0);
-    assert_eq!(ws.root_pages().len(), 3);
+    assert_eq!(ws.root_pages().unwrap().len(), 3);
 }
 
 #[test]
@@ -342,7 +342,7 @@ fn moved_order_survives_save_and_load() {
     ws.apply(mv(b, Some(c), 0)).unwrap();
 
     let loaded = Workspace::from_bytes(&ws.to_bytes().unwrap()).unwrap();
-    assert_eq!(loaded.root_pages(), vec![c]);
+    assert_eq!(loaded.root_pages().unwrap(), vec![c]);
     assert_eq!(loaded.children(c).unwrap(), vec![b, a]);
 }
 
@@ -353,4 +353,36 @@ fn move_error_explains_itself() {
         ModelError::MoveIntoOwnSubtree { page, new_parent }.to_string(),
         format!("cannot move page {page} into {new_parent}, which is the page itself or inside it")
     );
+}
+
+#[test]
+fn commands_that_change_nothing_report_unchanged_and_write_nothing() {
+    let (mut ws, a, b, _) = abc();
+    ws.apply(icon(a, Some("🌱"))).unwrap();
+    let (commits, _sub) = commit_counter(&ws);
+
+    for command in [
+        rename(a, "A"),
+        icon(a, Some("🌱")),
+        icon(b, None),
+        mv(b, None, 1),
+        WorkspaceCommand::MovePage {
+            page: a,
+            new_parent: None,
+            index: 0,
+        },
+    ] {
+        assert_eq!(
+            ws.apply(command.clone()).unwrap(),
+            Outcome::Unchanged,
+            "{command:?}"
+        );
+    }
+    assert_eq!(
+        commits.load(Ordering::SeqCst),
+        0,
+        "no-ops record nothing, so they leave no undo step"
+    );
+    assert_eq!(ws.apply(rename(a, "Alpha")).unwrap(), Outcome::Changed);
+    assert_eq!(commits.load(Ordering::SeqCst), 1);
 }

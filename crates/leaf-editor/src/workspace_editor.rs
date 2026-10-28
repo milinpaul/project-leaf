@@ -51,16 +51,13 @@ impl WorkspaceEditor {
         &self.workspace
     }
 
-    /// Top-level pages in order, as sidebar rows. Trashed pages are hidden.
+    /// Top-level pages in order, as sidebar rows. Pages in the trash are hidden by the model.
     ///
     /// Nested pages arrive with the full page tree (E06-S03).
     pub fn sidebar(&self) -> Result<Vec<SidebarItem>, EditorError> {
         let mut items = Vec::new();
-        for page in self.workspace.root_pages() {
+        for page in self.workspace.root_pages()? {
             let meta = self.workspace.page(page)?;
-            if meta.trashed_at.is_some() {
-                continue;
-            }
             let label = if meta.title.is_empty() {
                 UNTITLED.to_owned()
             } else {
@@ -79,7 +76,7 @@ impl WorkspaceEditor {
     /// Adds an untitled page at the end of the top level and selects it, so the user can type its
     /// title straight away. `now_ms` is the current time in Unix milliseconds, from the app.
     pub fn new_page(&mut self, now_ms: i64) -> Result<PageId, EditorError> {
-        let index = self.workspace.root_pages().len();
+        let index = self.workspace.root_pages()?.len();
         let command = WorkspaceCommand::CreatePage {
             parent: None,
             index,

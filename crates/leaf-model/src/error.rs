@@ -57,6 +57,15 @@ pub enum ModelError {
         new_parent: PageId,
     },
 
+    /// The page is in the trash (or inside a trashed page), so it can't be trashed again, moved,
+    /// or given new pages. Restore it first.
+    #[error("page {0} is in the trash")]
+    PageInTrash(PageId),
+
+    /// Restore and permanent delete only apply to pages in the trash.
+    #[error("page {0} is not in the trash")]
+    NotInTrash(PageId),
+
     /// An icon was set to empty text; clearing an icon uses `None`.
     #[error("page {0}: icon cannot be empty (use None to clear it)")]
     EmptyIcon(PageId),
