@@ -40,8 +40,8 @@
       "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
       "path": "backlog/epics/E02.md",
       "story_count": 10,
-      "done_count": 1,
-      "progress": 0.1
+      "done_count": 3,
+      "progress": 0.3
     },
     {
       "id": "E03",
@@ -883,7 +883,7 @@
       "id": "E02-S01",
       "title": "Page doc wrapper and block schema",
       "epic": "E02",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -935,7 +935,7 @@
       "id": "E02-S02",
       "title": "Insert, delete and move blocks",
       "epic": "E02",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -978,9 +978,7 @@
           "number": 15
         }
       ],
-      "waiting_on": [
-        "E02-S01"
-      ],
+      "waiting_on": [],
       "ready": false,
       "progress": 1.0
     },
@@ -988,7 +986,7 @@
       "id": "E02-S03",
       "title": "Text and mark commands",
       "epic": "E02",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -998,39 +996,37 @@
         "leaf-model",
         "commands"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "InsertText, DeleteText, SetMark, RemoveMark.",
       "acceptance": [
         {
           "text": "Unicode-safe offsets (tests with emoji and Indic scripts)",
-          "done": false
+          "done": true
         },
         {
           "text": "Marks follow the expand table in docs/architecture/BLOCK_MODEL.md",
-          "done": false
+          "done": true
         },
         {
           "text": "Code blocks reject marks",
-          "done": false
+          "done": true
         },
         {
           "text": "Link mark stores href",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "Done with E02-S06 on one branch (owner request).\n- `PageCommand::InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets\n  (BLOCK_MODEL.md), checked against the text length; the editor converts to graphemes (E04). Empty insert or\n  empty range: `Unchanged`. Blocks without text (dividers, unknown) are rejected.\n- `SetMark { id, range, mark: Mark }` / `RemoveMark { id, range, kind: MarkKind }`: `Mark` = bold, italic,\n  strike, code, `Link(href)`; expand rules come from the configured table. Code blocks reject marks; empty\n  link href is rejected. New errors: `TextOutOfRange`, `MarksNotAllowed`, `EmptyLink`.\n- Tests: emoji with skin tone and Devanagari conjuncts at every offset; expand behaviour per mark; code block\n  rejection; link href read back. A proptest compares random inserts/deletes of mixed scripts against a\n  `Vec<char>` reference.",
       "path": "backlog/stories/E02-S03.md",
       "prs": [],
-      "waiting_on": [
-        "E02-S01"
-      ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E02-S04",
@@ -1076,7 +1072,6 @@
       "path": "backlog/stories/E02-S04.md",
       "prs": [],
       "waiting_on": [
-        "E02-S02",
         "E02-S03"
       ],
       "ready": false,
@@ -1134,7 +1129,7 @@
       "id": "E02-S06",
       "title": "Indent and outdent",
       "epic": "E02",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -1144,39 +1139,37 @@
         "leaf-model",
         "commands"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-28",
       "context": "Tab and Shift+Tab structural moves.",
       "acceptance": [
         {
           "text": "Indent makes block the last child of previous sibling",
-          "done": false
+          "done": true
         },
         {
           "text": "Outdent moves block after its parent, following siblings become its children (Notion behaviour)",
-          "done": false
+          "done": true
         },
         {
           "text": "No-op cases return Ok without a commit",
-          "done": false
+          "done": true
         },
         {
           "text": "Works for multi-block selections",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- `PageCommand::Indent { ids }` / `Outdent { ids }`, applied to the outermost listed blocks one by one in\n  reading order (gives Notion's result for consecutive selections).\n- Indent: block becomes the last child of its previous sibling. Skipped when there is no previous sibling or it\n  can't hold children (heading, code, divider, image, unknown).\n- Outdent: block moves right after its parent; its following siblings become its last children, in order.\n  Skipped at the top level, or when the block can't hold children but has following siblings (moving them\n  elsewhere would reorder the text).\n- A command where every block is skipped writes nothing and returns `Unchanged`.\n- Tests: each rule and skip; multi-block indent/outdent; no commit on no-ops. Extend the block-tree proptest\n  reference model with indent/outdent.",
       "path": "backlog/stories/E02-S06.md",
       "prs": [],
-      "waiting_on": [
-        "E02-S02"
-      ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E02-S07",
@@ -1480,8 +1473,7 @@
       "path": "backlog/stories/E03-S03.md",
       "prs": [],
       "waiting_on": [
-        "E03-S02",
-        "E02-S01"
+        "E03-S02"
       ],
       "ready": false,
       "progress": 0.0

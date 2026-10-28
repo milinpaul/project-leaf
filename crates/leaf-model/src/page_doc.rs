@@ -124,14 +124,14 @@ impl PageDoc {
         self.index.by_block.is_empty()
     }
 
-    fn text_container(&self, block: BlockId) -> Result<Option<LoroText>, ModelError> {
+    pub(super) fn text_container(&self, block: BlockId) -> Result<Option<LoroText>, ModelError> {
         Ok(match self.tree.get_meta(self.node(block)?)?.get(keys::TEXT) {
             Some(ValueOrContainer::Container(Container::Text(text))) => Some(text),
             _ => None,
         })
     }
 
-    fn node(&self, block: BlockId) -> Result<TreeID, ModelError> {
+    pub(super) fn node(&self, block: BlockId) -> Result<TreeID, ModelError> {
         self.index
             .by_block
             .get(&block)
@@ -211,6 +211,8 @@ fn block_id_of(tree: &LoroTree, node: TreeID) -> Result<BlockId, ModelError> {
 }
 
 mod apply;
+mod nesting;
+mod text_ops;
 
 #[cfg(test)]
 mod tests;

@@ -127,6 +127,26 @@ pub enum ModelError {
         new_parent: BlockId,
     },
 
+    /// A text position or range reaches past the end of the block's text.
+    #[error("text position {end} is past the end of the text ({len} characters)")]
+    TextOutOfRange {
+        /// The furthest position asked for.
+        end: usize,
+        /// The text's length in Unicode scalar values.
+        len: usize,
+    },
+
+    /// This kind of block's text takes no marks (code blocks).
+    #[error("{kind} blocks take no formatting")]
+    MarksNotAllowed {
+        /// The block type.
+        kind: String,
+    },
+
+    /// A link needs an address.
+    #[error("a link needs an address")]
+    EmptyLink,
+
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]
     Loro(#[from] loro::LoroError),

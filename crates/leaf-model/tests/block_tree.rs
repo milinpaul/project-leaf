@@ -1,6 +1,6 @@
-//! Property test for the structural block commands (E02-S02).
+//! Property test for the structural block commands (E02-S02) and indent/outdent (E02-S06).
 //!
-//! Random inserts, deletes and multi-block moves, valid and invalid, run against both `PageDoc` and
+//! Random inserts, deletes, multi-block moves, indents and outdents, valid and invalid, run against both `PageDoc` and
 //! a small reference model. After every step both must agree on which commands are rejected and on
 //! every block's children in order; a save and load at the end must change nothing.
 
@@ -26,6 +26,12 @@ enum Step {
         parent: Option<usize>,
         index: usize,
     },
+    Indent {
+        blocks: Vec<usize>,
+    },
+    Outdent {
+        blocks: Vec<usize>,
+    },
 }
 
 fn step() -> impl Strategy<Value = Step> {
@@ -36,6 +42,8 @@ fn step() -> impl Strategy<Value = Step> {
         1 => some().prop_map(|blocks| Step::Delete { blocks }),
         3 => (some(), proptest::option::of(0..16_usize), 0..4_usize)
             .prop_map(|(blocks, parent, index)| Step::Move { blocks, parent, index }),
+        2 => some().prop_map(|blocks| Step::Indent { blocks }),
+        2 => some().prop_map(|blocks| Step::Outdent { blocks }),
     ]
 }
 
@@ -180,6 +188,62 @@ impl Reference {
         Verdict::Ok
     }
 
+    fn indent(&mut self, ids: &[BlockId]) -> Verdict {
+        let roots = match self.outermost(ids) {
+            Ok(roots) => roots,
+            Err(v) => return v,
+        };
+        for root in roots {
+            let parent = self.parent[&root];
+            let siblings = self.kids(parent);
+            let Some(position) = siblings.iter().position(|b| *b == root) else {
+                unreachable!("a block is always among its parent's children");
+            };
+            if position == 0 || self.leaf_only.contains(&siblings[position - 1]) {
+                continue;
+            }
+            let above = siblings[position - 1];
+            self.children.entry(parent).or_default().retain(|b| *b != root);
+            self.children.entry(Some(above)).or_default().push(root);
+            self.parent.insert(root, Some(above));
+        }
+        Verdict::Ok
+    }
+
+    fn outdent(&mut self, ids: &[BlockId]) -> Verdict {
+        let roots = match self.outermost(ids) {
+            Ok(roots) => roots,
+            Err(v) => return v,
+        };
+        for root in roots {
+            let Some(parent) = self.parent[&root] else {
+                continue;
+            };
+            let siblings = self.kids(Some(parent));
+            let Some(position) = siblings.iter().position(|b| *b == root) else {
+                unreachable!("a block is always among its parent's children");
+            };
+            let followers = siblings[position + 1..].to_vec();
+            if !followers.is_empty() && self.leaf_only.contains(&root) {
+                continue;
+            }
+            let grand = self.parent[&parent];
+            self.children.insert(Some(parent), siblings[..position].to_vec());
+            let level = self.children.entry(grand).or_default();
+            let Some(at) = level.iter().position(|b| *b == parent) else {
+                unreachable!("the parent is among its own parent's children");
+            };
+            let at = at + 1;
+            level.insert(at, root);
+            self.parent.insert(root, grand);
+            for follower in followers {
+                self.children.entry(Some(root)).or_default().push(follower);
+                self.parent.insert(follower, Some(root));
+            }
+        }
+        Verdict::Ok
+    }
+
     fn assert_matches(&self, page: &PageDoc) {
         assert_eq!(page.root_blocks(), self.kids(None), "top level");
         for &block in self.parent.keys() {
@@ -235,6 +299,16 @@ proptest! {
                     let new_parent = parent.and_then(|n| pick(&created, n));
                     let result = page.apply(PageCommand::MoveBlocks { ids: ids.clone(), new_parent, index });
                     prop_assert_eq!(verdict(&result), reference.move_blocks(&ids, new_parent, index));
+                }
+                Step::Indent { blocks } => {
+                    let ids: Vec<BlockId> = blocks.iter().filter_map(|&n| pick(&created, n)).collect();
+                    let result = page.apply(PageCommand::Indent { ids: ids.clone() });
+                    prop_assert_eq!(verdict(&result), reference.indent(&ids));
+                }
+                Step::Outdent { blocks } => {
+                    let ids: Vec<BlockId> = blocks.iter().filter_map(|&n| pick(&created, n)).collect();
+                    let result = page.apply(PageCommand::Outdent { ids: ids.clone() });
+                    prop_assert_eq!(verdict(&result), reference.outdent(&ids));
                 }
             }
             reference.assert_matches(&page);
