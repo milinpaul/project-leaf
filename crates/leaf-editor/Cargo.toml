@@ -12,7 +12,9 @@ leaf-model.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+insta.workspace = true
 loro.workspace = true
+proptest.workspace = true
 
 [lints]
 workspace = true

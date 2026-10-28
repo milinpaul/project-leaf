@@ -78,8 +78,10 @@ can't be opened (another Leaf has it open, it is damaged), the window shows why 
    block here". It produces a `Command` such as `SplitBlock { id, pos }`.
 3. **The model applies the command.** `leaf-model` changes the Loro document in one step (one commit), checks
    the document's rules still hold, and records one undo step.
-4. **The screen updates.** The editor builds a fresh view model (blocks, text, cursor) and `leaf-ui` draws it.
-   The goal is under 16 ms from key press to pixels.
+4. **The screen updates.** The page reports which blocks the change touched (`PageDoc::take_changes`, from Loro's
+   change events). The editor's `PageView` re-reads only those blocks and re-walks the outline only when blocks
+   moved or changed kind, then `leaf-ui` draws the rows. Typing therefore costs one block's read however long
+   the page is; the goal is under 16 ms from key press to pixels (ADR 0014).
 5. **The change is saved.** The document hands `leaf-store` one small update with everything changed since the last
    save (`unsaved_changes`), which is appended to the SQLite file; then the document is marked saved. `Autosave`
    decides when: at most 300 ms after the first unsaved change, and at once on blur or quit, so a crash loses at

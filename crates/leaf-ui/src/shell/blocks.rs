@@ -266,7 +266,9 @@ impl Shell {
 
     /// The toolbar and the open page's blocks.
     pub(super) fn render_blocks(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        let rows = match self.page().map(|page| page.rows()) {
+        // Only blocks that changed since the last frame are re-read (E04-S01); the copy lets the
+        // rows outlive the borrow of the editor while inputs are updated below.
+        let rows = match self.page().map(|page| page.view().map(<[_]>::to_vec)) {
             Some(Ok(rows)) => rows,
             Some(Err(err)) => {
                 report("could not read the page's blocks", err);

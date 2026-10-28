@@ -3,7 +3,8 @@
 use leaf_core::BlockId;
 use leaf_model::{BlockKind, Mark, PageCommand, PageDoc};
 
-use super::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
+use super::{Backspace, Caret, PageEditor};
+use crate::{BlockRow, BlockStyle};
 
 fn editor() -> (PageEditor, BlockId) {
     let mut editor = PageEditor::new(PageDoc::new());
@@ -33,7 +34,8 @@ fn an_empty_page_gets_one_paragraph_and_keeps_it() {
             id: first,
             depth: 0,
             style: BlockStyle::Paragraph,
-            text: Some(String::new())
+            text: Some(String::new()),
+            spans: Some(Vec::new()),
         }]
     );
     assert_eq!(

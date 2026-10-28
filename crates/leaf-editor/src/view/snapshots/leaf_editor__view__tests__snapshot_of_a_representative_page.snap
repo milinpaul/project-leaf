@@ -1,0 +1,16 @@
+---
+source: crates/leaf-editor/src/view/tests.rs
+expression: "render(PageView::build(&page).unwrap().rows())"
+---
+Heading(1) "Trip plans"
+Paragraph "Pack light"<b> " and " "book"<link=https://trains.example> " early."
+1. "Book the train"
+  1. "Seat by the window"
+  2. "Bring snacks"
+2. "Pack"
+[x] "Charge phone"
+[ ] "Print tickets"
+Quote "Travel far, travel light."
+Divider 
+Code { language: "rust" } "fn main() {}"
+Image { alt: "Route map" }
