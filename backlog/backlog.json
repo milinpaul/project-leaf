@@ -494,7 +494,7 @@
       "id": "E00-S08",
       "title": "Run the three-OS test matrix on main only",
       "epic": "E00",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P2",
       "size": "S",
       "depends_on": [],
@@ -533,6 +533,10 @@
         {
           "url": "https://github.com/milinpaul/project-leaf/pull/5",
           "number": 5
+        },
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/6",
+          "number": 6
         }
       ],
       "waiting_on": [],
