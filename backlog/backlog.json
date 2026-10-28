@@ -507,7 +507,7 @@
       "context": "Owner request: pull requests should not run the test job on macOS and Windows; run the full matrix on `main` only.",
       "acceptance": [
         {
-          "text": "PRs run the test job on Linux only; pushes to main run it on macOS, Windows and Linux",
+          "text": "PRs skip the test job (owner follow-up); pushes to main run it on macOS, Windows and Linux",
           "done": true
         },
         {
@@ -533,6 +533,10 @@
         {
           "url": "https://github.com/milinpaul/project-leaf/pull/5",
           "number": 5
+        },
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/6",
+          "number": 6
         }
       ],
       "waiting_on": [],

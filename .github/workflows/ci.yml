@@ -53,13 +53,14 @@ jobs:
 
   test:
     name: Test (${{ matrix.os }})
+    # Not on pull requests, to keep them fast: core-crate tests still run there inside the coverage job, and the
+    # pre-push hook runs everything locally. Pushes to main and manual runs test on all three OSes.
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # Pull requests test on Linux only, to keep them fast. Pushes to main (and manual runs) test on all
-        # three OSes, so a Windows or macOS break shows up on main right after merge.
-        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest"]' || '["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1

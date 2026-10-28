@@ -123,7 +123,8 @@ Each crate adds `[lints] workspace = true`. Versions above are starting points: 
 
 `fmt` → `clippy` → `typos` → `cargo-deny` + `cargo-machete` → `nextest` → WASM check of wasm-ok crates → coverage gate. See `.github/workflows/ci.yml`.
 
-`nextest` runs on Linux only for pull requests, and on macOS, Windows and Linux for pushes to `main` and manual runs
+The `nextest` job is skipped on pull requests (core-crate tests still run there inside the coverage job, and
+the lefthook pre-push hook runs every test locally). It runs on macOS, Windows and Linux for pushes to `main` and manual runs
 (Actions → CI → Run workflow). Runs on `main` are never cancelled, so every merge gets its three-OS result.
 
 ## GPUI notes
