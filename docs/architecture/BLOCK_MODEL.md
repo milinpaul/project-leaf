@@ -98,7 +98,9 @@ Unknown `type` values (from a newer app version) are preserved and rendered as a
 | `code` | `true` | none |
 | `link` | `href: String` | none |
 
-Configure once per doc with `config_text_style` before any edit. `code` blocks never carry marks.
+Configure once per doc with `config_text_style` before any edit (on create and on every load). Marks this version
+doesn't know (from a newer version) get a default style that doesn't expand, so their text stays editable.
+`code` blocks never carry marks.
 
 ## Commands
 
@@ -131,8 +133,12 @@ validate, write, commit once; `Unchanged` when nothing would change)
   and stay together; listed blocks inside another listed block travel with it. `index` counts the destination's
   children without the moved blocks.
 - All: headings, code, dividers, images and unknown blocks can't contain blocks; no block moves into itself.
-- `SetBlockKind { id, kind }` — keeps text when the target type has text
-- `SetProp { id, key, value }`
+- `SetBlockKind { id, kind }`: keeps text when the target type has text; a divider needs empty text (otherwise
+  refused, so no words are lost) and its text container is removed; code strips every mark; a kind that can't hold
+  children lets them out right after the block, in order; known props the new kind doesn't use are removed, props
+  from newer versions kept; unknown kinds can't be converted
+- `SetProp { id, prop: BlockProp }`: typed (`Checked`, `HeadingLevel`, `Language`, `ImageWidth`, `ImageAlt`), and
+  must belong to the block's kind
 - `InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets, checked against the
   text length; blocks without text (dividers, unknown kinds) are refused
 - `SetMark { id, range, mark: Mark }`, `RemoveMark { id, range, kind: MarkKind }`: `Mark` is bold, italic, strike,

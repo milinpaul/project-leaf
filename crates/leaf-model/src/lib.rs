@@ -17,7 +17,7 @@ mod page_meta;
 mod text;
 mod workspace;
 
-pub use block_kind::BlockKind;
+pub use block_kind::{BlockKind, BlockProp};
 pub use command::{Outcome, WorkspaceCommand};
 pub use error::ModelError;
 pub use page_command::{PageCommand, PageOutcome};
