@@ -1,0 +1,14 @@
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      run: cargo fmt --all --check
+    typos:
+      run: typos
+
+pre-push:
+  commands:
+    clippy:
+      run: cargo clippy --workspace --all-targets --locked -- -D warnings
+    test:
+      run: cargo nextest run --workspace --locked

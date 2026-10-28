@@ -1,0 +1,2824 @@
+{
+  "schema_version": 1,
+  "statuses": [
+    "backlog",
+    "todo",
+    "planning",
+    "in_progress",
+    "review",
+    "done",
+    "blocked"
+  ],
+  "epics": [
+    {
+      "id": "E00",
+      "title": "Foundation",
+      "phase": 0,
+      "status": "todo",
+      "goal": "Repo, CI, docs and spikes that de-risk GPUI and Loro before real work.",
+      "path": "backlog/epics/E00.md",
+      "story_count": 5,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E01",
+      "title": "Workspace & page tree model",
+      "phase": 0,
+      "status": "todo",
+      "goal": "leaf-core IDs and the Loro workspace doc: pages nested in pages, trash, undo.",
+      "path": "backlog/epics/E01.md",
+      "story_count": 6,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E02",
+      "title": "Block model & commands",
+      "phase": 0,
+      "status": "todo",
+      "goal": "Loro page doc, block schema, every block command, invariants and property tests.",
+      "path": "backlog/epics/E02.md",
+      "story_count": 9,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E03",
+      "title": "Persistence",
+      "phase": 0,
+      "status": "todo",
+      "goal": "SQLite storage of Loro docs, autosave, compaction, crash safety, assets.",
+      "path": "backlog/epics/E03.md",
+      "story_count": 7,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E04",
+      "title": "Editor core logic",
+      "phase": 0,
+      "status": "todo",
+      "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
+      "path": "backlog/epics/E04.md",
+      "story_count": 8,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E05",
+      "title": "Editor features",
+      "phase": 0,
+      "status": "todo",
+      "goal": "Markdown shortcuts, slash menu, block actions, drag and drop, clipboard, images.",
+      "path": "backlog/epics/E05.md",
+      "story_count": 7,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E06",
+      "title": "App shell UI",
+      "phase": 0,
+      "status": "todo",
+      "goal": "Theme, window, sidebar page tree, quick switcher, page header, trash.",
+      "path": "backlog/epics/E06.md",
+      "story_count": 6,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E07",
+      "title": "Editor UI",
+      "phase": 0,
+      "status": "todo",
+      "goal": "GPUI rendering of the editor view model: text, cursor, selection, menus, blocks.",
+      "path": "backlog/epics/E07.md",
+      "story_count": 9,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E08",
+      "title": "Quality & release",
+      "phase": 0,
+      "status": "todo",
+      "goal": "Benchmarks, large fixtures, Phase 0 acceptance and release builds.",
+      "path": "backlog/epics/E08.md",
+      "story_count": 4,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E09",
+      "title": "Database: table view",
+      "phase": 1,
+      "status": "backlog",
+      "goal": "Phase 1. Single database type with table view, typed properties, sort and filter.",
+      "path": "backlog/epics/E09.md",
+      "story_count": 0,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E10",
+      "title": "Links & backlinks",
+      "phase": 1,
+      "status": "backlog",
+      "goal": "Phase 1. [[page links]] with autocomplete and a backlinks panel.",
+      "path": "backlog/epics/E10.md",
+      "story_count": 0,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E11",
+      "title": "Search",
+      "phase": 1,
+      "status": "backlog",
+      "goal": "Phase 1. Full-text search across pages with tantivy.",
+      "path": "backlog/epics/E11.md",
+      "story_count": 0,
+      "done_count": 0,
+      "progress": 0.0
+    },
+    {
+      "id": "E12",
+      "title": "Markdown import/export",
+      "phase": 1,
+      "status": "backlog",
+      "goal": "Phase 1. Page and workspace export, markdown import.",
+      "path": "backlog/epics/E12.md",
+      "story_count": 0,
+      "done_count": 0,
+      "progress": 0.0
+    }
+  ],
+  "stories": [
+    {
+      "id": "E00-S01",
+      "title": "Scaffold the cargo workspace",
+      "epic": "E00",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [],
+      "labels": [
+        "repo"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Create the workspace and the 8 crates from TECH_STACK.md with empty libs, workspace lints and toolchain files.",
+      "acceptance": [
+        {
+          "text": "All 8 crates exist under crates/ with `[lints] workspace = true`",
+          "done": false
+        },
+        {
+          "text": "`cargo build --workspace` succeeds on the dev machine",
+          "done": false
+        },
+        {
+          "text": "Each crate has a `//!` doc stating its role and boundaries",
+          "done": false
+        },
+        {
+          "text": "Cargo.lock committed",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E00-S01.md",
+      "waiting_on": [],
+      "ready": true,
+      "progress": 0.0
+    },
+    {
+      "id": "E00-S02",
+      "title": "CI pipeline green",
+      "epic": "E00",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E00-S01"
+      ],
+      "labels": [
+        "repo",
+        "ci"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Wire the provided ci.yml, justfile, lefthook, deny.toml. Add one placeholder test per core crate so the coverage gate is meaningful.",
+      "acceptance": [
+        {
+          "text": "CI passes on macOS, Windows, Linux",
+          "done": false
+        },
+        {
+          "text": "Coverage job enforces 90% on core crates",
+          "done": false
+        },
+        {
+          "text": "`just check` passes locally",
+          "done": false
+        },
+        {
+          "text": "Backlog check job validates backlog files",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E00-S02.md",
+      "waiting_on": [
+        "E00-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E00-S03",
+      "title": "ARCHITECTURE.md and ADRs",
+      "epic": "E00",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E00-S01"
+      ],
+      "labels": [
+        "docs"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Create ARCHITECTURE.md and docs/adr with a template and the first decisions.",
+      "acceptance": [
+        {
+          "text": "ARCHITECTURE.md explains crates and data flow in plain English",
+          "done": false
+        },
+        {
+          "text": "ADR template in docs/adr/0000-template.md",
+          "done": false
+        },
+        {
+          "text": "ADRs written for: Loro, GPUI + gpui-component, SQLite storage, no markdown storage, pages-not-folders",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E00-S03.md",
+      "waiting_on": [
+        "E00-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E00-S04",
+      "title": "Spike: GPUI window with gpui-component",
+      "epic": "E00",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E00-S01"
+      ],
+      "labels": [
+        "spike",
+        "leaf-app"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Prove the UI stack builds and runs on all three OSes before investing in UI work.",
+      "acceptance": [
+        {
+          "text": "leaf-app opens a window with a sidebar and a text input from gpui-component",
+          "done": false
+        },
+        {
+          "text": "Builds in CI on all three OSes",
+          "done": false
+        },
+        {
+          "text": "Exact gpui and gpui-component versions pinned and recorded in an ADR",
+          "done": false
+        },
+        {
+          "text": "Findings (pain points, missing widgets) written in the ADR",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E00-S04.md",
+      "waiting_on": [
+        "E00-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E00-S05",
+      "title": "Spike: Loro tree, rich text and undo",
+      "epic": "E00",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E00-S01"
+      ],
+      "labels": [
+        "spike",
+        "leaf-model"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Throwaway-quality test file proving the Loro features BLOCK_MODEL.md relies on.",
+      "acceptance": [
+        {
+          "text": "Test shows LoroTree with fractional index ordering and node moves",
+          "done": false
+        },
+        {
+          "text": "Test shows LoroText marks with configured expand behaviour",
+          "done": false
+        },
+        {
+          "text": "Test shows UndoManager undo/redo across tree + text edits",
+          "done": false
+        },
+        {
+          "text": "Test shows two docs syncing via updates",
+          "done": false
+        },
+        {
+          "text": "Findings recorded in the Loro ADR",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E00-S05.md",
+      "waiting_on": [
+        "E00-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E01-S01",
+      "title": "Core IDs and error types",
+      "epic": "E01",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E00-S02"
+      ],
+      "labels": [
+        "leaf-core"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "PageId (uuid v7), BlockId (wraps Loro TreeID), AssetId (blake3 hex), plus base error enum.",
+      "acceptance": [
+        {
+          "text": "Newtypes with Display, FromStr, serde",
+          "done": false
+        },
+        {
+          "text": "Round-trip tests for parsing and serde",
+          "done": false
+        },
+        {
+          "text": "Compiles for wasm32",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E01-S01.md",
+      "waiting_on": [
+        "E00-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E01-S02",
+      "title": "Workspace doc wrapper and read API",
+      "epic": "E01",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E01-S01",
+        "E00-S05"
+      ],
+      "labels": [
+        "leaf-model"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Type that owns the workspace LoroDoc and exposes read queries over the page tree.",
+      "acceptance": [
+        {
+          "text": "Create new / load from bytes / export bytes",
+          "done": false
+        },
+        {
+          "text": "List root pages and children of a page in order",
+          "done": false
+        },
+        {
+          "text": "Get page meta (title, icon, created_at, trashed_at)",
+          "done": false
+        },
+        {
+          "text": "Find page by PageId in O(1) via an index map",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E01-S02.md",
+      "waiting_on": [
+        "E01-S01",
+        "E00-S05"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E01-S03",
+      "title": "Page commands: create, rename, icon",
+      "epic": "E01",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E01-S02"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "First page commands through the Command enum, each one commit.",
+      "acceptance": [
+        {
+          "text": "CreatePage at parent+index returns PageId",
+          "done": false
+        },
+        {
+          "text": "RenamePage and SetPageIcon",
+          "done": false
+        },
+        {
+          "text": "Each command is exactly one Loro commit",
+          "done": false
+        },
+        {
+          "text": "Unit tests for each command",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E01-S03.md",
+      "waiting_on": [
+        "E01-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E01-S04",
+      "title": "Page commands: move and reorder",
+      "epic": "E01",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E01-S03"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Move pages within and across parents.",
+      "acceptance": [
+        {
+          "text": "MovePage to new parent and index",
+          "done": false
+        },
+        {
+          "text": "Moving a page into its own descendant returns an error",
+          "done": false
+        },
+        {
+          "text": "Order preserved after reload",
+          "done": false
+        },
+        {
+          "text": "Unit + property tests",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E01-S04.md",
+      "waiting_on": [
+        "E01-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E01-S05",
+      "title": "Trash, restore, permanent delete",
+      "epic": "E01",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E01-S03"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Soft delete via trashed_at; subtree hidden from normal queries.",
+      "acceptance": [
+        {
+          "text": "TrashPage hides the subtree from list queries",
+          "done": false
+        },
+        {
+          "text": "Trash query lists trashed roots",
+          "done": false
+        },
+        {
+          "text": "RestorePage restores to the original parent or root if parent is gone",
+          "done": false
+        },
+        {
+          "text": "DeletePagePermanently removes subtree and reports page ids to delete from storage",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E01-S05.md",
+      "waiting_on": [
+        "E01-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E01-S06",
+      "title": "Workspace undo/redo",
+      "epic": "E01",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E01-S04",
+        "E01-S05"
+      ],
+      "labels": [
+        "leaf-model",
+        "undo"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "UndoManager for the workspace doc.",
+      "acceptance": [
+        {
+          "text": "Every page command undoes and redoes exactly",
+          "done": false
+        },
+        {
+          "text": "Property test: random page commands then full undo returns initial state",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E01-S06.md",
+      "waiting_on": [
+        "E01-S04",
+        "E01-S05"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S01",
+      "title": "Page doc wrapper and block schema",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E01-S01",
+        "E00-S05"
+      ],
+      "labels": [
+        "leaf-model"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Page LoroDoc with 'blocks' tree, text style config and BlockKind enum read/write.",
+      "acceptance": [
+        {
+          "text": "BlockKind enum matches BLOCK_MODEL.md",
+          "done": false
+        },
+        {
+          "text": "Text styles configured on doc creation and load",
+          "done": false
+        },
+        {
+          "text": "Read API: root blocks, children, block kind, text with marks",
+          "done": false
+        },
+        {
+          "text": "Unknown types surface as BlockKind::Unknown and are preserved",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S01.md",
+      "waiting_on": [
+        "E01-S01",
+        "E00-S05"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S02",
+      "title": "Insert, delete and move blocks",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E02-S01"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Structural block commands.",
+      "acceptance": [
+        {
+          "text": "InsertBlock at parent+index with kind and initial text",
+          "done": false
+        },
+        {
+          "text": "DeleteBlocks removes whole subtrees",
+          "done": false
+        },
+        {
+          "text": "MoveBlocks keeps relative order of the moved set",
+          "done": false
+        },
+        {
+          "text": "Children rules enforced (e.g. no children under heading)",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S02.md",
+      "waiting_on": [
+        "E02-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S03",
+      "title": "Text and mark commands",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E02-S01"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "InsertText, DeleteText, SetMark, RemoveMark.",
+      "acceptance": [
+        {
+          "text": "Unicode-safe offsets (tests with emoji and Indic scripts)",
+          "done": false
+        },
+        {
+          "text": "Marks follow the expand table in BLOCK_MODEL.md",
+          "done": false
+        },
+        {
+          "text": "Code blocks reject marks",
+          "done": false
+        },
+        {
+          "text": "Link mark stores href",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S03.md",
+      "waiting_on": [
+        "E02-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S04",
+      "title": "Change block kind and props",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E02-S02",
+        "E02-S03"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "SetBlockKind and SetProp honouring schema rules.",
+      "acceptance": [
+        {
+          "text": "Text kept when the target type has text",
+          "done": false
+        },
+        {
+          "text": "Converting to a type without children moves children out to siblings",
+          "done": false
+        },
+        {
+          "text": "Converting to code strips marks",
+          "done": false
+        },
+        {
+          "text": "heading level validated 1..=3",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S04.md",
+      "waiting_on": [
+        "E02-S02",
+        "E02-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S05",
+      "title": "Split and merge blocks",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E02-S04"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "SplitBlock (Enter) and MergeIntoPrevious (Backspace) model semantics.",
+      "acceptance": [
+        {
+          "text": "Split keeps marks on both halves",
+          "done": false
+        },
+        {
+          "text": "Split type rules per PRODUCT_SPEC Editor behaviour",
+          "done": false
+        },
+        {
+          "text": "Merge appends text and moves children to the previous block",
+          "done": false
+        },
+        {
+          "text": "Merge onto divider/image is rejected with a typed error the editor can handle",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S05.md",
+      "waiting_on": [
+        "E02-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S06",
+      "title": "Indent and outdent",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E02-S02"
+      ],
+      "labels": [
+        "leaf-model",
+        "commands"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Tab and Shift+Tab structural moves.",
+      "acceptance": [
+        {
+          "text": "Indent makes block the last child of previous sibling",
+          "done": false
+        },
+        {
+          "text": "Outdent moves block after its parent, following siblings become its children (Notion behaviour)",
+          "done": false
+        },
+        {
+          "text": "No-op cases return Ok without a commit",
+          "done": false
+        },
+        {
+          "text": "Works for multi-block selections",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S06.md",
+      "waiting_on": [
+        "E02-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S07",
+      "title": "Invariant checker and command property tests",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E02-S05",
+        "E02-S06"
+      ],
+      "labels": [
+        "leaf-model",
+        "testing"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Assert all invariants in BLOCK_MODEL.md after arbitrary command sequences.",
+      "acceptance": [
+        {
+          "text": "`check_invariants()` covers all 7 invariants",
+          "done": false
+        },
+        {
+          "text": "proptest strategy generating valid random commands",
+          "done": false
+        },
+        {
+          "text": "10k-case run passes in CI time budget",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S07.md",
+      "waiting_on": [
+        "E02-S05",
+        "E02-S06"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S08",
+      "title": "Page undo/redo with cursor metadata",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E02-S07"
+      ],
+      "labels": [
+        "leaf-model",
+        "undo"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "UndoManager per page doc; each step carries cursor/selection for the editor.",
+      "acceptance": [
+        {
+          "text": "Every block command undoes and redoes exactly",
+          "done": false
+        },
+        {
+          "text": "Typing merges into one step within the merge interval",
+          "done": false
+        },
+        {
+          "text": "Cursor metadata attached and returned on undo/redo",
+          "done": false
+        },
+        {
+          "text": "Undo round-trip property test",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S08.md",
+      "waiting_on": [
+        "E02-S07"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E02-S09",
+      "title": "Two-peer convergence tests",
+      "epic": "E02",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E02-S07"
+      ],
+      "labels": [
+        "leaf-model",
+        "testing",
+        "collab-ready"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Guarantee the model stays collaboration-ready.",
+      "acceptance": [
+        {
+          "text": "Two docs apply random commands concurrently, exchange updates, end identical",
+          "done": false
+        },
+        {
+          "text": "Invariants hold after merge",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E02-S09.md",
+      "waiting_on": [
+        "E02-S07"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S01",
+      "title": "SQLite schema and migrations",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E01-S01"
+      ],
+      "labels": [
+        "leaf-store"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Schema from BLOCK_MODEL.md plus a forward-only migration runner.",
+      "acceptance": [
+        {
+          "text": "WAL mode enabled",
+          "done": false
+        },
+        {
+          "text": "meta.schema_version tracked",
+          "done": false
+        },
+        {
+          "text": "Migration from empty DB tested",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S01.md",
+      "waiting_on": [
+        "E01-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S02",
+      "title": "Workspace directory layout",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E03-S01"
+      ],
+      "labels": [
+        "leaf-store"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Create/open MyWorkspace.leaf/ with sqlite, assets/, search/.",
+      "acceptance": [
+        {
+          "text": "Create new workspace at a path",
+          "done": false
+        },
+        {
+          "text": "Open existing workspace, error on invalid one",
+          "done": false
+        },
+        {
+          "text": "Lock file prevents two app instances opening the same workspace",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S02.md",
+      "waiting_on": [
+        "E03-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S03",
+      "title": "Save and load docs",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E03-S02",
+        "E01-S02",
+        "E02-S01"
+      ],
+      "labels": [
+        "leaf-store"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Persist Loro snapshots and incremental updates.",
+      "acceptance": [
+        {
+          "text": "Append update per commit batch",
+          "done": false
+        },
+        {
+          "text": "Load = snapshot + updates in seq order",
+          "done": false
+        },
+        {
+          "text": "save→load equality test for workspace and page docs",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S03.md",
+      "waiting_on": [
+        "E03-S02",
+        "E01-S02",
+        "E02-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S04",
+      "title": "Autosave",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E03-S03"
+      ],
+      "labels": [
+        "leaf-store"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Debounced flush every 300 ms max, plus flush on blur and quit.",
+      "acceptance": [
+        {
+          "text": "Flush policy unit-tested with a fake clock",
+          "done": false
+        },
+        {
+          "text": "No write when nothing changed",
+          "done": false
+        },
+        {
+          "text": "Explicit flush API for app shutdown",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S04.md",
+      "waiting_on": [
+        "E03-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S05",
+      "title": "Compaction",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E03-S03"
+      ],
+      "labels": [
+        "leaf-store"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Snapshot and prune when a doc has > 200 updates.",
+      "acceptance": [
+        {
+          "text": "Compaction is one transaction",
+          "done": false
+        },
+        {
+          "text": "Doc state identical before and after",
+          "done": false
+        },
+        {
+          "text": "Test with interrupted compaction (rollback) keeps data",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S05.md",
+      "waiting_on": [
+        "E03-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S06",
+      "title": "Crash recovery test",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E03-S04"
+      ],
+      "labels": [
+        "leaf-store",
+        "testing"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Prove the ≤ 1 s data loss guarantee.",
+      "acceptance": [
+        {
+          "text": "Test drops the store without flush and reloads",
+          "done": false
+        },
+        {
+          "text": "Loses nothing older than the flush interval",
+          "done": false
+        },
+        {
+          "text": "Corrupt trailing update is skipped with a warning, not a failed load",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S06.md",
+      "waiting_on": [
+        "E03-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E03-S07",
+      "title": "Asset store",
+      "epic": "E03",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E03-S02"
+      ],
+      "labels": [
+        "leaf-store",
+        "images"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Content-addressed image files under assets/.",
+      "acceptance": [
+        {
+          "text": "Import file → AssetId (blake3)",
+          "done": false
+        },
+        {
+          "text": "Duplicate import stored once",
+          "done": false
+        },
+        {
+          "text": "Assets table records mime and size",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E03-S07.md",
+      "waiting_on": [
+        "E03-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S01",
+      "title": "Editor state and view model",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E02-S04"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Flattened, render-ready view of a page: blocks with depth, list numbering, text runs with marks.",
+      "acceptance": [
+        {
+          "text": "View model rebuilt incrementally from Loro change events",
+          "done": false
+        },
+        {
+          "text": "Numbered lists numbered at render time, restart rules tested",
+          "done": false
+        },
+        {
+          "text": "insta snapshot tests for representative pages",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S01.md",
+      "waiting_on": [
+        "E02-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S02",
+      "title": "Cursor model",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S01"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Grapheme-aware cursor positions and horizontal movement.",
+      "acceptance": [
+        {
+          "text": "Left/right by grapheme, word jumps, home/end",
+          "done": false
+        },
+        {
+          "text": "Correct with emoji, ZWJ sequences, Devanagari",
+          "done": false
+        },
+        {
+          "text": "Cursor survives remote/undo changes via Loro cursors",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S02.md",
+      "waiting_on": [
+        "E04-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S03",
+      "title": "Vertical navigation via layout trait",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S02"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Up/down across lines and blocks using a `LineLayout` trait the UI implements.",
+      "acceptance": [
+        {
+          "text": "Trait defines line count, x-to-offset, offset-to-x",
+          "done": false
+        },
+        {
+          "text": "Fake layout used in tests",
+          "done": false
+        },
+        {
+          "text": "Moving across blocks keeps preferred x",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S03.md",
+      "waiting_on": [
+        "E04-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S04",
+      "title": "Text input and IME composition",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S02"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Model for typed text, composition (preedit) and commit.",
+      "acceptance": [
+        {
+          "text": "Insert replaces selection",
+          "done": false
+        },
+        {
+          "text": "Preedit does not create undo steps until committed",
+          "done": false
+        },
+        {
+          "text": "Empty preedit never deletes selection",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S04.md",
+      "waiting_on": [
+        "E04-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S05",
+      "title": "Enter, Backspace, Delete, Tab rules",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S04",
+        "E02-S05",
+        "E02-S06"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Implement every row of the Editor behaviour table in PRODUCT_SPEC.md.",
+      "acceptance": [
+        {
+          "text": "One test per table row",
+          "done": false
+        },
+        {
+          "text": "Code block Enter behaviour",
+          "done": false
+        },
+        {
+          "text": "Behaviour on divider and image blocks",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S05.md",
+      "waiting_on": [
+        "E04-S04",
+        "E02-S05",
+        "E02-S06"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S06",
+      "title": "Selection model",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S03"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "In-block and cross-block selection, Cmd/Ctrl+A escalation, block selection mode.",
+      "acceptance": [
+        {
+          "text": "Shift+arrows extend across blocks",
+          "done": false
+        },
+        {
+          "text": "Cmd/Ctrl+A first selects block text, second selects all blocks",
+          "done": false
+        },
+        {
+          "text": "Typing over a cross-block selection deletes then inserts as one undo step",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S06.md",
+      "waiting_on": [
+        "E04-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S07",
+      "title": "Inline mark toggles and links",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E04-S06",
+        "E02-S03"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Cmd+B/I/E, Shift+S, Cmd+K behaviour.",
+      "acceptance": [
+        {
+          "text": "Toggle applies or removes based on whole selection state",
+          "done": false
+        },
+        {
+          "text": "Cursor-only toggle affects next typed text",
+          "done": false
+        },
+        {
+          "text": "Link create, edit, remove",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S07.md",
+      "waiting_on": [
+        "E04-S06",
+        "E02-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E04-S08",
+      "title": "Undo/redo integration",
+      "epic": "E04",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E04-S06",
+        "E02-S08"
+      ],
+      "labels": [
+        "leaf-editor",
+        "undo"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Restore cursor/selection on undo and redo.",
+      "acceptance": [
+        {
+          "text": "Undo restores exact selection",
+          "done": false
+        },
+        {
+          "text": "Redo restores post-edit selection",
+          "done": false
+        },
+        {
+          "text": "Tests across structural and text edits",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E04-S08.md",
+      "waiting_on": [
+        "E04-S06",
+        "E02-S08"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S01",
+      "title": "Markdown shortcuts",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E04-S05"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Typing `# `, `- `, `1. `, `[] `, `> `, ``` and `---` converts the block.",
+      "acceptance": [
+        {
+          "text": "Each shortcut tested",
+          "done": false
+        },
+        {
+          "text": "Undo right after conversion restores the typed characters",
+          "done": false
+        },
+        {
+          "text": "Only triggers at block start",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S01.md",
+      "waiting_on": [
+        "E04-S05"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S02",
+      "title": "Slash menu model",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S05"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "State machine for `/` menu: query, fuzzy filter, keyboard nav, apply.",
+      "acceptance": [
+        {
+          "text": "Opens on `/` at word start, closes on Esc or space-with-no-match",
+          "done": false
+        },
+        {
+          "text": "Fuzzy filter with ranking tests",
+          "done": false
+        },
+        {
+          "text": "Apply converts empty block or inserts below",
+          "done": false
+        },
+        {
+          "text": "Query text removed on apply",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S02.md",
+      "waiting_on": [
+        "E04-S05"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S03",
+      "title": "Block actions",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E04-S06"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Turn into, duplicate, delete from the block handle menu.",
+      "acceptance": [
+        {
+          "text": "Actions work on single and multi-block selection",
+          "done": false
+        },
+        {
+          "text": "Duplicate deep-copies subtree with new ids",
+          "done": false
+        },
+        {
+          "text": "Each action is one undo step",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S03.md",
+      "waiting_on": [
+        "E04-S06"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S04",
+      "title": "Drag and drop model",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P1",
+      "size": "M",
+      "depends_on": [
+        "E04-S06"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Compute drop targets (before/after/nest) from pointer position over the view model.",
+      "acceptance": [
+        {
+          "text": "Drop target computation unit-tested with a fake layout",
+          "done": false
+        },
+        {
+          "text": "Cannot drop a block into its own subtree",
+          "done": false
+        },
+        {
+          "text": "Multi-block drag preserves order",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S04.md",
+      "waiting_on": [
+        "E04-S06"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S05",
+      "title": "Internal clipboard",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S06"
+      ],
+      "labels": [
+        "leaf-editor",
+        "clipboard"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Copy/cut/paste rich block fragments within the app.",
+      "acceptance": [
+        {
+          "text": "Fragment format is versioned JSON",
+          "done": false
+        },
+        {
+          "text": "Paste mid-text splits block correctly",
+          "done": false
+        },
+        {
+          "text": "Round-trip copy→paste equals original subtree",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S05.md",
+      "waiting_on": [
+        "E04-S06"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S06",
+      "title": "Paste plain text and markdown",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E05-S05"
+      ],
+      "labels": [
+        "leaf-editor",
+        "clipboard"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Convert external clipboard text into blocks.",
+      "acceptance": [
+        {
+          "text": "Multi-line text → paragraphs",
+          "done": false
+        },
+        {
+          "text": "Markdown headings, lists, todos, quotes, code, links converted",
+          "done": false
+        },
+        {
+          "text": "Clipboard also gets plain text + markdown on copy",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S06.md",
+      "waiting_on": [
+        "E05-S05"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E05-S07",
+      "title": "Image block insertion",
+      "epic": "E05",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E03-S07",
+        "E02-S04"
+      ],
+      "labels": [
+        "leaf-editor",
+        "images"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Insert image from file or paste; caption editing.",
+      "acceptance": [
+        {
+          "text": "Insert via slash menu and paste of image data",
+          "done": false
+        },
+        {
+          "text": "Asset stored via asset store",
+          "done": false
+        },
+        {
+          "text": "Caption editable as text",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E05-S07.md",
+      "waiting_on": [
+        "E03-S07",
+        "E02-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S01",
+      "title": "Theme and design tokens",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E00-S04"
+      ],
+      "labels": [
+        "leaf-ui",
+        "design"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Leaf's own visual identity: colors, type scale, spacing, radii, light/dark.",
+      "acceptance": [
+        {
+          "text": "Tokens defined in one module",
+          "done": false
+        },
+        {
+          "text": "Follows system light/dark",
+          "done": false
+        },
+        {
+          "text": "Not a pixel copy of Notion — documented in an ADR with screenshots",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S01.md",
+      "waiting_on": [
+        "E00-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S02",
+      "title": "App window and layout",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E06-S01"
+      ],
+      "labels": [
+        "leaf-app",
+        "leaf-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Main window with resizable sidebar and page area.",
+      "acceptance": [
+        {
+          "text": "Sidebar width and window size persisted",
+          "done": false
+        },
+        {
+          "text": "Open/create workspace dialog on first launch",
+          "done": false
+        },
+        {
+          "text": "Menus with standard shortcuts per OS",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S02.md",
+      "waiting_on": [
+        "E06-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S03",
+      "title": "Sidebar page tree",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E06-S02",
+        "E01-S06",
+        "E03-S03"
+      ],
+      "labels": [
+        "leaf-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Render and edit the page tree.",
+      "acceptance": [
+        {
+          "text": "Expand/collapse persisted",
+          "done": false
+        },
+        {
+          "text": "Create, rename inline, delete to trash via context menu",
+          "done": false
+        },
+        {
+          "text": "Drag to move and reorder",
+          "done": false
+        },
+        {
+          "text": "Smooth with 500 pages, 6 levels deep",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S03.md",
+      "waiting_on": [
+        "E06-S02",
+        "E01-S06",
+        "E03-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S04",
+      "title": "Quick switcher",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E06-S03"
+      ],
+      "labels": [
+        "leaf-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Cmd/Ctrl+P fuzzy page search by title.",
+      "acceptance": [
+        {
+          "text": "Fuzzy match with path breadcrumbs",
+          "done": false
+        },
+        {
+          "text": "Keyboard only usable",
+          "done": false
+        },
+        {
+          "text": "Opens in < 50 ms with 5k pages",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S04.md",
+      "waiting_on": [
+        "E06-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S05",
+      "title": "Page header",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E06-S03"
+      ],
+      "labels": [
+        "leaf-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Editable title and emoji icon picker.",
+      "acceptance": [
+        {
+          "text": "Title edits sync to sidebar live",
+          "done": false
+        },
+        {
+          "text": "Enter in title moves cursor to first block",
+          "done": false
+        },
+        {
+          "text": "Emoji picker with search",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S05.md",
+      "waiting_on": [
+        "E06-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E06-S06",
+      "title": "Trash view",
+      "epic": "E06",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E06-S03"
+      ],
+      "labels": [
+        "leaf-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "List trashed pages with restore and permanent delete.",
+      "acceptance": [
+        {
+          "text": "Restore and delete work",
+          "done": false
+        },
+        {
+          "text": "Permanent delete asks for confirmation",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E06-S06.md",
+      "waiting_on": [
+        "E06-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S01",
+      "title": "Render block list",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E04-S01",
+        "E06-S02"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Virtualized list rendering of the view model.",
+      "acceptance": [
+        {
+          "text": "Only visible blocks laid out",
+          "done": false
+        },
+        {
+          "text": "Correct indentation, bullets, numbers, checkboxes",
+          "done": false
+        },
+        {
+          "text": "10k-block page scrolls smoothly",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S01.md",
+      "waiting_on": [
+        "E04-S01",
+        "E06-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S02",
+      "title": "Rich text element with cursor and selection",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P0",
+      "size": "L",
+      "depends_on": [
+        "E07-S01",
+        "E04-S03"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Custom GPUI element painting text runs with marks, caret and selection; implements LineLayout.",
+      "acceptance": [
+        {
+          "text": "Marks rendered (bold, italic, strike, code, link)",
+          "done": false
+        },
+        {
+          "text": "Caret blink and selection highlight across blocks",
+          "done": false
+        },
+        {
+          "text": "LineLayout implementation matches painted text",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S02.md",
+      "waiting_on": [
+        "E07-S01",
+        "E04-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S03",
+      "title": "Input bridge",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E07-S02",
+        "E04-S04"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Forward keys, IME and mouse events to leaf-editor.",
+      "acceptance": [
+        {
+          "text": "IME works for at least Hindi, Japanese and emoji picker",
+          "done": false
+        },
+        {
+          "text": "Click places caret, drag selects, double/triple click word/block",
+          "done": false
+        },
+        {
+          "text": "Keystroke→paint under 16 ms on large page",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S03.md",
+      "waiting_on": [
+        "E07-S02",
+        "E04-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S04",
+      "title": "Block handle and menu",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E07-S01",
+        "E05-S03"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Hover ⋮⋮ handle with the block actions menu.",
+      "acceptance": [
+        {
+          "text": "Appears on hover, keyboard accessible",
+          "done": false
+        },
+        {
+          "text": "Menu triggers block actions",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S04.md",
+      "waiting_on": [
+        "E07-S01",
+        "E05-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S05",
+      "title": "Drag and drop visuals",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P1",
+      "size": "M",
+      "depends_on": [
+        "E07-S04",
+        "E05-S04"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Drag preview and drop indicator.",
+      "acceptance": [
+        {
+          "text": "Indicator shows before/after/nest",
+          "done": false
+        },
+        {
+          "text": "Auto-scroll near edges",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S05.md",
+      "waiting_on": [
+        "E07-S04",
+        "E05-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S06",
+      "title": "Slash menu popover",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E07-S02",
+        "E05-S02"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Popover anchored at caret.",
+      "acceptance": [
+        {
+          "text": "Keyboard navigation and mouse",
+          "done": false
+        },
+        {
+          "text": "Repositions near window edges",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S06.md",
+      "waiting_on": [
+        "E07-S02",
+        "E05-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S07",
+      "title": "Link popover",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E07-S02",
+        "E04-S07"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Edit link URL and open in browser.",
+      "acceptance": [
+        {
+          "text": "Cmd/Ctrl+K opens popover",
+          "done": false
+        },
+        {
+          "text": "Cmd/Ctrl+click opens link",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S07.md",
+      "waiting_on": [
+        "E07-S02",
+        "E04-S07"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S08",
+      "title": "Image block rendering",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E07-S01",
+        "E05-S07"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui",
+        "images"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Display image with resize handles and caption.",
+      "acceptance": [
+        {
+          "text": "Lazy-loads image, placeholder while loading",
+          "done": false
+        },
+        {
+          "text": "Resize persists width prop",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S08.md",
+      "waiting_on": [
+        "E07-S01",
+        "E05-S07"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E07-S09",
+      "title": "Code block rendering",
+      "epic": "E07",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E07-S02"
+      ],
+      "labels": [
+        "leaf-ui",
+        "editor-ui"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Monospace block with language label.",
+      "acceptance": [
+        {
+          "text": "Language picker",
+          "done": false
+        },
+        {
+          "text": "Tab inserts spaces inside code",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E07-S09.md",
+      "waiting_on": [
+        "E07-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E08-S01",
+      "title": "Large document fixtures",
+      "epic": "E08",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E02-S07"
+      ],
+      "labels": [
+        "testing"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Generator for big pages and deep page trees.",
+      "acceptance": [
+        {
+          "text": "10k-block page and 5k-page workspace fixtures",
+          "done": false
+        },
+        {
+          "text": "Deterministic with a seed",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E08-S01.md",
+      "waiting_on": [
+        "E02-S07"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E08-S02",
+      "title": "Performance benchmarks",
+      "epic": "E08",
+      "status": "todo",
+      "priority": "P1",
+      "size": "M",
+      "depends_on": [
+        "E08-S01",
+        "E04-S01",
+        "E03-S03"
+      ],
+      "labels": [
+        "testing",
+        "perf"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "divan benches for the budgets in PRODUCT_SPEC.md.",
+      "acceptance": [
+        {
+          "text": "Benches for open page, apply keystroke, view model update, save",
+          "done": false
+        },
+        {
+          "text": "Results tracked in CI as an artifact",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E08-S02.md",
+      "waiting_on": [
+        "E08-S01",
+        "E04-S01",
+        "E03-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E08-S03",
+      "title": "Phase 0 acceptance pass",
+      "epic": "E08",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E07-S03",
+        "E06-S05",
+        "E05-S06"
+      ],
+      "labels": [
+        "qa"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "Run the acceptance checklist in PRODUCT_SPEC.md and fix gaps.",
+      "acceptance": [
+        {
+          "text": "Every checklist item verified and ticked",
+          "done": false
+        },
+        {
+          "text": "Issues found filed as new stories",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E08-S03.md",
+      "waiting_on": [
+        "E07-S03",
+        "E06-S05",
+        "E05-S06"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E08-S04",
+      "title": "Release builds",
+      "epic": "E08",
+      "status": "todo",
+      "priority": "P2",
+      "size": "S",
+      "depends_on": [
+        "E08-S03"
+      ],
+      "labels": [
+        "release"
+      ],
+      "assignee": null,
+      "updated": "2026-10-28",
+      "context": "cargo-dist installers for macOS, Windows, Linux (unsigned for now).",
+      "acceptance": [
+        {
+          "text": "Tagged release produces installers",
+          "done": false
+        },
+        {
+          "text": "Install docs in README",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E08-S04.md",
+      "waiting_on": [
+        "E08-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    }
+  ]
+}

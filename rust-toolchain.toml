@@ -1,0 +1,5 @@
+[toolchain]
+# Pin to a specific stable version (e.g. "1.97.0") once the project builds, and bump deliberately.
+channel = "stable"
+components = ["rustfmt", "clippy", "llvm-tools-preview"]
+targets = ["wasm32-unknown-unknown"]

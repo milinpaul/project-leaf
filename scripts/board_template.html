@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leaf backlog</title>
+<style>
+:root {
+  --bg: #f2f4f1; --surface: #ffffff; --sunk: #e7ebe6; --ink: #1d2a23; --muted: #5d6b63; --line: #d5dcd5;
+  --leaf: #2f7d4f; --leaf-soft: #dcefe2; --amber: #a86a12; --amber-soft: #f6ead6; --red: #b23b32; --red-soft: #f6dedb;
+  --blue: #2c5f8a; --blue-soft: #dde9f3; --violet: #6a4c93; --violet-soft: #ebe3f4;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121814; --surface: #1a221d; --sunk: #222c26; --ink: #e4ebe6; --muted: #98a69d; --line: #2e3a33;
+    --leaf: #6cc48f; --leaf-soft: #1f3a2a; --amber: #e0a752; --amber-soft: #3a2e1b; --red: #ec8a80; --red-soft: #3d2320;
+    --blue: #8dbbe3; --blue-soft: #1e2f3e; --violet: #c0a6e6; --violet-soft: #2e2540;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+}
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.wrap { max-width: 1600px; margin: 0 auto; padding: 24px 20px 40px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+header.top h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+.stamp { color: var(--muted); font-size: 13px; }
+
+.next {
+  margin: 20px 0 8px; padding: 22px 24px; border-radius: 14px; background: var(--leaf-soft);
+  border: 1px solid color-mix(in srgb, var(--leaf) 35%, transparent); cursor: pointer; text-align: left; width: 100%;
+}
+.next .lead { color: var(--leaf); font-weight: 600; font-size: 14px; }
+.next .title { font-size: clamp(22px, 3.2vw, 32px); line-height: 1.15; font-weight: 650; letter-spacing: -0.02em; margin: 4px 0 8px; }
+.next .why { color: var(--muted); max-width: 70ch; }
+.error { margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--red-soft); color: var(--red); white-space: pre-wrap; font-size: 14px; }
+.live { display: inline-flex; align-items: center; gap: 6px; }
+.live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); }
+.next.empty { background: var(--sunk); border-color: var(--line); cursor: default; }
+
+.counts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 22px; font-size: 14px; color: var(--muted); }
+.counts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.epics { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 20px; margin-bottom: 22px; }
+.epic { all: unset; cursor: pointer; padding: 6px 8px; border-radius: 8px; display: grid; gap: 4px; }
+.epic:hover, .epic.on { background: var(--sunk); }
+.epic .row { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
+.epic .row span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--leaf); }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+.filters input[type=search], .filters select {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0;
+}
+.filters input[type=search] { flex: 1 1 220px; max-width: 360px; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--muted); padding: 0 6px; }
+.clear { background: none; border: 0; color: var(--leaf); cursor: pointer; padding: 6px; }
+
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(272px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.col { background: var(--sunk); border-radius: 12px; padding: 10px; min-height: 120px; display: flex; flex-direction: column; gap: 8px; }
+.col h2 { font-size: 14px; margin: 2px 4px 4px; display: flex; justify-content: space-between; font-weight: 600; }
+.col h2 span { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.col .none { color: var(--muted); font-size: 13px; padding: 4px; }
+
+.card {
+  all: unset; box-sizing: border-box; cursor: pointer; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px;
+}
+.card:hover { border-color: color-mix(in srgb, var(--ink) 30%, var(--line)); }
+.card.ready { border-color: var(--leaf); box-shadow: inset 3px 0 0 var(--leaf); }
+.card .id { font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.card .t { font-weight: 560; line-height: 1.3; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--sunk); color: var(--muted); }
+.tag.p0 { background: var(--red-soft); color: var(--red); }
+.tag.p1 { background: var(--amber-soft); color: var(--amber); }
+.tag.ready { background: var(--leaf-soft); color: var(--leaf); }
+.tag.wait { background: transparent; border: 1px dashed var(--line); }
+.tag.who { background: var(--blue-soft); color: var(--blue); }
+
+dialog { border: 0; padding: 0; margin: 0 0 0 auto; height: 100%; max-height: 100%; width: min(560px, 100%); background: var(--surface); color: var(--ink); }
+dialog::backdrop { background: rgb(0 0 0 / 0.35); }
+.dl { padding: 22px 24px 40px; display: grid; gap: 16px; padding-top: calc(22px + env(safe-area-inset-top, 0)); }
+.dl .head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.dl h3 { margin: 0; font-size: 22px; line-height: 1.2; letter-spacing: -0.015em; }
+.dl .close { background: var(--sunk); border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.dl section h4 { margin: 0 0 6px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.dl .text { white-space: pre-wrap; }
+.dl ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.dl li.ac { display: flex; gap: 8px; }
+.dl li.ac .box { flex: none; width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--line); margin-top: 2px; display: grid; place-items: center; font-size: 12px; }
+.dl li.ac.done .box { background: var(--leaf); border-color: var(--leaf); color: var(--surface); }
+.dl li.ac.done span:last-child { color: var(--muted); text-decoration: line-through; }
+.link { all: unset; cursor: pointer; color: var(--leaf); }
+.path { display: flex; gap: 8px; align-items: center; background: var(--sunk); padding: 8px 10px; border-radius: 8px; font-size: 13px; overflow-x: auto; }
+.path code { flex: 1; white-space: nowrap; }
+.path button { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 16px 14px 32px; }
+  .next { padding: 18px; }
+  .board { grid-auto-columns: 86%; scroll-snap-type: x mandatory; }
+  .col { scroll-snap-align: start; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open] { animation: slide .18s ease-out; }
+  @keyframes slide { from { transform: translateX(24px); opacity: .6; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Leaf backlog</h1>
+    <span class="stamp" id="stamp"></span>
+  </header>
+
+  <div class="error" id="error" hidden></div>
+  <button class="next" id="next"></button>
+  <div class="counts" id="counts"></div>
+  <div class="epics" id="epics"></div>
+
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search stories" aria-label="Search stories">
+    <select id="fEpic" aria-label="Epic"></select>
+    <select id="fPri" aria-label="Priority">
+      <option value="">Any priority</option><option>P0</option><option>P1</option><option>P2</option>
+    </select>
+    <label class="toggle"><input type="checkbox" id="fReady"> Ready only</label>
+    <label class="toggle"><input type="checkbox" id="fDone" checked> Show done</label>
+    <button class="clear" id="clear">Clear filters</button>
+  </div>
+
+  <div class="board" id="board"></div>
+</div>
+
+<dialog id="drawer"><div class="dl" id="dl"></div></dialog>
+
+<script id="backlog-data" type="application/json">__BACKLOG_DATA__</script>
+<script>
+(() => {
+  const data = JSON.parse(document.getElementById("backlog-data").textContent);
+  const meta = data.meta || {};
+  const byId = Object.fromEntries(data.stories.map(s => [s.id, s]));
+  const epicById = Object.fromEntries(data.epics.map(e => [e.id, e]));
+  const LABEL = { backlog: "Backlog", todo: "To do", planning: "Planning", in_progress: "In progress", review: "In review", done: "Done", blocked: "Blocked" };
+  const PRI = { P0: 0, P1: 1, P2: 2 };
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const dependents = id => data.stories.filter(s => s.depends_on.includes(id));
+  const state = { q: "", epic: "", pri: "", ready: false, done: true };
+
+  const live = location.protocol.startsWith("http");
+  $("stamp").textContent = meta.generated_at ? `${live ? "Live, updated" : "Updated"} ${meta.generated_at}` : "";
+  if (live) $("stamp").classList.add("live");
+  if (meta.error) { $("error").hidden = false; $("error").textContent = `Backlog has errors, showing last good state.\n${meta.error}`; }
+
+  // Restore view after a live reload
+  const KEY = "leaf-board-view";
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem(KEY) || "null"); sessionStorage.removeItem(KEY); } catch {}
+  if (saved?.state) Object.assign(state, saved.state);
+
+  // Next up
+  const ready = data.stories.filter(s => s.ready).sort((a, b) => PRI[a.priority] - PRI[b.priority] || a.id.localeCompare(b.id));
+  const next = ready[0];
+  const nb = $("next");
+  if (next) {
+    const unlocks = dependents(next.id).length;
+    nb.append(el("div", "lead", `Next up for an agent: ${next.id}`), el("div", "title", next.title),
+      el("div", "why", `${epicById[next.epic]?.title || next.epic}. ${next.priority}, size ${next.size}. ${unlocks ? `Unlocks ${unlocks} ${unlocks === 1 ? "story" : "stories"}.` : ""} ${ready.length - 1 > 0 ? `${ready.length - 1} more ready after this.` : ""}`));
+    nb.onclick = () => openStory(next.id);
+  } else {
+    nb.classList.add("empty"); nb.disabled = true;
+    nb.append(el("div", "lead", "Nothing ready"), el("div", "why", "Every to-do story is waiting on unfinished dependencies, or the board is clear."));
+  }
+
+  // Counts
+  const total = data.stories.length, done = data.stories.filter(s => s.status === "done").length;
+  const c = $("counts");
+  const addCount = (label, n) => { const s = el("span"); s.append(el("b", null, n), ` ${label}`); c.append(s); };
+  addCount(`of ${total} done`, done);
+  addCount("ready", ready.length);
+  for (const st of ["planning", "in_progress", "review", "blocked"]) {
+    const n = data.stories.filter(s => s.status === st).length; if (n) addCount(LABEL[st].toLowerCase(), n);
+  }
+
+  // Epics
+  const fEpic = $("fEpic");
+  fEpic.append(new Option("All epics", ""));
+  for (const e of data.epics) {
+    fEpic.append(new Option(`${e.id} ${e.title}`, e.id));
+    if (!e.story_count) continue;
+    const b = el("button", "epic"); b.dataset.id = e.id;
+    const row = el("div", "row"); row.append(el("span", null, `${e.id} ${e.title}`), el("span", null, `${e.done_count}/${e.story_count}`));
+    const bar = el("div", "bar"); const fill = el("i"); fill.style.width = `${Math.round(e.progress * 100)}%`; bar.append(fill);
+    b.append(row, bar);
+    b.onclick = () => { state.epic = state.epic === e.id ? "" : e.id; fEpic.value = state.epic; render(); };
+    $("epics").append(b);
+  }
+
+  // Filters
+  $("q").oninput = e => { state.q = e.target.value.toLowerCase(); render(); };
+  fEpic.onchange = e => { state.epic = e.target.value; render(); };
+  $("fPri").onchange = e => { state.pri = e.target.value; render(); };
+  $("fReady").onchange = e => { state.ready = e.target.checked; render(); };
+  $("fDone").onchange = e => { state.done = e.target.checked; render(); };
+  $("clear").onclick = () => {
+    Object.assign(state, { q: "", epic: "", pri: "", ready: false, done: true });
+    $("q").value = ""; fEpic.value = ""; $("fPri").value = ""; $("fReady").checked = false; $("fDone").checked = true; render();
+  };
+
+  function matches(s) {
+    if (state.epic && s.epic !== state.epic) return false;
+    if (state.pri && s.priority !== state.pri) return false;
+    if (state.ready && !s.ready) return false;
+    if (state.q && !`${s.id} ${s.title} ${s.labels.join(" ")} ${s.assignee || ""}`.toLowerCase().includes(state.q)) return false;
+    return true;
+  }
+
+  function card(s) {
+    const b = el("button", "card" + (s.ready ? " ready" : ""));
+    const id = el("div", "id"); id.append(el("span", null, s.id), el("span", null, s.size));
+    const tags = el("div", "tags");
+    tags.append(el("span", `tag ${s.priority.toLowerCase()}`, s.priority));
+    if (s.ready) tags.append(el("span", "tag ready", "Ready"));
+    else if (s.status === "todo" && s.waiting_on.length) tags.append(el("span", "tag wait", `Waiting on ${s.waiting_on.length}`));
+    if (s.assignee) tags.append(el("span", "tag who", s.assignee));
+    b.append(id, el("div", "t", s.title), tags);
+    if (s.progress > 0) { const bar = el("div", "bar"); const f = el("i"); f.style.width = `${Math.round(s.progress * 100)}%`; bar.append(f); b.append(bar); }
+    b.onclick = () => openStory(s.id);
+    return b;
+  }
+
+  function render() {
+    document.querySelectorAll(".epic").forEach(n => n.classList.toggle("on", n.dataset.id === state.epic));
+    const board = $("board"); board.replaceChildren();
+    for (const st of data.statuses) {
+      if (st === "done" && !state.done) continue;
+      let items = data.stories.filter(s => s.status === st && matches(s));
+      items.sort((a, b) => (b.ready - a.ready) || PRI[a.priority] - PRI[b.priority] || a.id.localeCompare(b.id));
+      if (!items.length && (st === "blocked" || st === "backlog")) continue;
+      const col = el("section", "col");
+      const h = el("h2", null, LABEL[st]); h.append(el("span", null, items.length));
+      col.append(h);
+      if (!items.length) col.append(el("div", "none", "No stories"));
+      items.forEach(s => col.append(card(s)));
+      board.append(col);
+    }
+  }
+
+  function storyLink(id) {
+    const s = byId[id]; const b = el("button", "link", `${id} ${s ? s.title : ""}`);
+    const li = el("li"); li.append(b, el("span", null, s ? `  ${LABEL[s.status]}` : "")); li.lastChild.style.color = "var(--muted)";
+    b.onclick = () => openStory(id); return li;
+  }
+
+  function openStory(id) {
+    const s = byId[id]; const dl = $("dl"); dl.replaceChildren(); dl.dataset.id = id;
+    const head = el("div", "head");
+    const t = el("div"); t.append(el("div", "stamp", `${s.id} in ${epicById[s.epic]?.title || s.epic}`), el("h3", null, s.title));
+    const x = el("button", "close", "Close"); x.onclick = () => $("drawer").close();
+    head.append(t, x);
+    const tags = el("div", "tags");
+    tags.append(el("span", "tag", LABEL[s.status]), el("span", `tag ${s.priority.toLowerCase()}`, s.priority), el("span", "tag", `Size ${s.size}`));
+    if (s.ready) tags.append(el("span", "tag ready", "Ready"));
+    if (s.assignee) tags.append(el("span", "tag who", s.assignee));
+    s.labels.forEach(l => tags.append(el("span", "tag", l)));
+    dl.append(head, tags);
+    const sec = (title, node) => { const n = el("section"); n.append(el("h4", null, title), node); dl.append(n); };
+    sec("Context", el("div", "text", s.context || "None"));
+    const ul = el("ul");
+    s.acceptance.forEach(a => { const li = el("li", "ac" + (a.done ? " done" : "")); li.append(el("span", "box", a.done ? "✓" : ""), el("span", null, a.text)); ul.append(li); });
+    sec(`Acceptance criteria (${s.acceptance.filter(a => a.done).length}/${s.acceptance.length})`, ul);
+    const plan = (s.plan || "").replace(/^_.*_$/, "").trim();
+    sec("Plan", el("div", "text", plan || "Not planned yet."));
+    if (s.depends_on.length) { const u = el("ul"); s.depends_on.forEach(d => u.append(storyLink(d))); sec("Depends on", u); }
+    const deps = dependents(s.id);
+    if (deps.length) { const u = el("ul"); deps.forEach(d => u.append(storyLink(d.id))); sec("Unlocks", u); }
+    const p = el("div", "path"); p.append(el("code", null, s.path));
+    const cp = el("button", null, "Copy path");
+    cp.onclick = async () => { try { await navigator.clipboard.writeText(s.path); cp.textContent = "Copied"; } catch { cp.textContent = "Copy failed"; } };
+    p.append(cp); sec("File", p);
+    const d = $("drawer"); if (!d.open) d.showModal(); d.scrollTop = 0;
+  }
+  $("drawer").addEventListener("click", e => { if (e.target.id === "drawer") e.target.close(); });
+
+  // Apply restored filters to the controls
+  $("q").value = state.q; fEpic.value = state.epic; $("fPri").value = state.pri;
+  $("fReady").checked = state.ready; $("fDone").checked = state.done;
+  render();
+  if (saved) {
+    window.scrollTo(0, saved.y || 0);
+    $("board").scrollLeft = saved.x || 0;
+    if (saved.open && byId[saved.open]) openStory(saved.open);
+  }
+
+  // Live reload when served by `backlog.py serve`
+  if (live) {
+    let current = String(meta.version);
+    setInterval(async () => {
+      try {
+        const v = (await (await fetch("/version", { cache: "no-store" })).text()).trim();
+        if (v !== current) {
+          const openId = $("drawer").open ? $("dl").dataset.id : null;
+          try { sessionStorage.setItem(KEY, JSON.stringify({ state, y: scrollY, x: $("board").scrollLeft, open: openId })); } catch {}
+          location.reload();
+        }
+      } catch {}
+    }, 1500);
+  }
+})();
+</script>
+</body>
+</html>
