@@ -79,7 +79,7 @@ impl PageDoc {
 
     /// The block's text container, or an error for blocks without text. Unknown kinds count as
     /// having none even if a newer version gave them text: they are never rewritten.
-    fn editable_text(&self, id: BlockId) -> Result<LoroText, ModelError> {
+    pub(super) fn editable_text(&self, id: BlockId) -> Result<LoroText, ModelError> {
         let kind = self.kind(id)?;
         match self.text_container(id)? {
             Some(text) if kind.has_text() => Ok(text),

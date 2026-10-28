@@ -3,7 +3,7 @@
 use leaf_core::BlockId;
 use leaf_model::{BlockKind, Mark, PageCommand, PageDoc};
 
-use super::{BlockRow, BlockStyle, PageEditor};
+use super::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
 
 fn editor() -> (PageEditor, BlockId) {
     let mut editor = PageEditor::new(PageDoc::new());
@@ -135,7 +135,9 @@ fn numbered_items_are_numbered_per_run_of_siblings() {
     let nested = editor.enter(two).unwrap();
     editor.indent(nested).unwrap();
     editor.set_text(nested, "nested").unwrap();
-    let three = editor.enter(two).unwrap();
+    // Enter at the end of a block with children adds a first child, so come back out with Shift+Tab.
+    let three = editor.enter(nested).unwrap();
+    editor.outdent(three).unwrap();
     editor.set_text(three, "three").unwrap();
     let break_ = editor.enter(three).unwrap();
     editor.turn_into(break_, BlockKind::Paragraph).unwrap();
@@ -198,37 +200,84 @@ fn every_kind_has_a_style() {
 }
 
 #[test]
-fn backspace_deletes_only_empty_childless_blocks_and_says_where_to_go() {
+fn enter_at_the_cursor_splits_the_block_and_moves_the_caret_to_the_new_one() {
     let (mut editor, first) = editor();
+    editor.set_text(first, "Hello world").unwrap();
+    let caret = editor.enter_at(first, 5).unwrap();
+    assert_ne!(caret.block, first);
+    assert_eq!(caret.at, 0);
     assert_eq!(
-        editor.backspace_empty(first).unwrap(),
-        None,
-        "the last block stays"
+        (text(&editor, first), text(&editor, caret.block)),
+        ("Hello".into(), " world".into())
     );
+}
 
-    editor.set_text(first, "keep").unwrap();
-    let second = editor.enter(first).unwrap();
+#[test]
+fn enter_after_a_divider_adds_a_paragraph() {
+    let (mut editor, first) = editor();
+    editor.turn_into(first, BlockKind::Divider).unwrap();
+    let caret = editor.enter_at(first, 0).unwrap();
+    assert_eq!(editor.doc().kind(caret.block).unwrap(), BlockKind::Paragraph);
+    assert_eq!(editor.doc().root_blocks(), vec![first, caret.block]);
+}
+
+#[test]
+fn backspace_at_start_turns_non_paragraphs_into_paragraphs_first() {
+    let (mut editor, first) = editor();
+    editor.set_text(first, "above").unwrap();
+    let item = editor.enter(first).unwrap();
+    editor.turn_into(item, BlockKind::BulletedList).unwrap();
+    editor.set_text(item, "item").unwrap();
+
     assert_eq!(
-        editor.backspace_empty(second).unwrap(),
-        Some(first),
-        "focus moves up"
+        editor.backspace_at_start(item).unwrap(),
+        Backspace::Moved(Caret { block: item, at: 0 })
+    );
+    assert_eq!(editor.doc().kind(item).unwrap(), BlockKind::Paragraph);
+    assert_eq!(text(&editor, item), "item", "text kept");
+
+    assert_eq!(
+        editor.backspace_at_start(item).unwrap(),
+        Backspace::Moved(Caret { block: first, at: 5 })
+    );
+    assert_eq!(
+        text(&editor, first),
+        "aboveitem",
+        "a second Backspace merges into the block above"
+    );
+    assert_eq!(editor.doc().len(), 1);
+}
+
+#[test]
+fn backspace_at_start_of_an_empty_paragraph_removes_it() {
+    let (mut editor, first) = editor();
+    editor.set_text(first, "keep").unwrap();
+    let empty = editor.enter(first).unwrap();
+    assert_eq!(
+        editor.backspace_at_start(empty).unwrap(),
+        Backspace::Moved(Caret { block: first, at: 4 })
     );
     assert_eq!(editor.doc().root_blocks(), vec![first]);
+}
 
-    assert_eq!(editor.backspace_empty(first).unwrap(), None, "not empty");
-    let child = editor.enter(first).unwrap();
-    editor.indent(child).unwrap();
-    editor.set_text(first, "").unwrap();
-    assert_eq!(editor.backspace_empty(first).unwrap(), None, "has children");
-
-    let (mut editor, top) = self::editor();
-    let below = editor.enter(top).unwrap();
+#[test]
+fn backspace_at_start_selects_a_divider_above_and_ignores_the_first_block() {
+    let (mut editor, first) = editor();
+    assert_eq!(
+        editor.backspace_at_start(first).unwrap(),
+        Backspace::Nothing,
+        "nothing above the first block"
+    );
+    let divider = editor.enter(first).unwrap();
+    editor.turn_into(divider, BlockKind::Divider).unwrap();
+    let below = editor.enter(divider).unwrap();
     editor.set_text(below, "below").unwrap();
     assert_eq!(
-        editor.backspace_empty(top).unwrap(),
-        Some(below),
-        "the first block hands focus down"
+        editor.backspace_at_start(below).unwrap(),
+        Backspace::Select(divider)
     );
+    assert_eq!(text(&editor, below), "below", "nothing merged");
+    assert_eq!(editor.backspace_at_start(divider).unwrap(), Backspace::Nothing);
 }
 
 #[test]

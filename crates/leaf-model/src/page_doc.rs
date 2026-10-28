@@ -213,6 +213,7 @@ fn block_id_of(tree: &LoroTree, node: TreeID) -> Result<BlockId, ModelError> {
 mod apply;
 mod kind_ops;
 mod nesting;
+mod split_merge;
 mod text_ops;
 
 #[cfg(test)]

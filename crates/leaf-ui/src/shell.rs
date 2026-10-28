@@ -329,4 +329,30 @@ mod tests {
             ]
         );
     }
+
+    #[gpui::test]
+    fn enter_mid_text_splits_and_backspace_at_start_joins_again(cx: &mut TestAppContext) {
+        let (shell, cx) = open_shell(cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        cx.simulate_keystrokes("enter");
+        cx.simulate_input("Hello world");
+        cx.simulate_keystrokes("left left left left left left enter");
+        assert_eq!(
+            blocks(&shell, cx),
+            vec![(0, "Hello".into()), (0, " world".into())]
+        );
+
+        cx.simulate_keystrokes("backspace");
+        assert_eq!(
+            blocks(&shell, cx),
+            vec![(0, "Hello world".into())],
+            "joined back together"
+        );
+        cx.simulate_input("!");
+        assert_eq!(
+            blocks(&shell, cx),
+            vec![(0, "Hello! world".into())],
+            "the caret sits at the join"
+        );
+    }
 }

@@ -5,7 +5,7 @@
 //! rules here carry over to the real editor (E04), which adds a cursor model and splitting text.
 
 use leaf_core::BlockId;
-use leaf_model::{BlockKind, BlockProp, PageCommand, PageDoc, PageOutcome};
+use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOutcome};
 
 use crate::EditorError;
 
@@ -58,6 +58,26 @@ pub struct BlockRow {
     pub style: BlockStyle,
     /// Its plain text, or `None` for blocks without text.
     pub text: Option<String>,
+}
+
+/// Where the text cursor goes after an action: a block and a Unicode scalar position in its text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Caret {
+    /// The block to focus.
+    pub block: BlockId,
+    /// Position in its text.
+    pub at: usize,
+}
+
+/// What Backspace at the start of a block did.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Backspace {
+    /// Something changed; put the caret here.
+    Moved(Caret),
+    /// The block above has no text (a divider or image): select it instead of merging.
+    Select(BlockId),
+    /// Nothing to do (the first block, or a block without text).
+    Nothing,
 }
 
 /// A page's blocks being edited.
@@ -124,57 +144,75 @@ impl PageEditor {
         Ok(())
     }
 
-    /// Enter: adds a block right below `id`, at the same level, and returns the block to focus. Lists
-    /// and to-dos continue (an unticked to-do); anything else continues as a paragraph.
+    /// Enter at the end of the block's text: see [`PageEditor::enter_at`]. Returns the block to focus.
+    pub fn enter(&mut self, id: BlockId) -> Result<BlockId, EditorError> {
+        let end = self.doc.plain_text(id)?.map_or(0, |text| text.chars().count());
+        Ok(self.enter_at(id, end)?.block)
+    }
+
+    /// Enter with the cursor at `at` (a Unicode scalar position). Splits the block there: the text
+    /// after the cursor moves, with its formatting, into a new block below, and the caret goes to its
+    /// start. Lists and to-dos continue; anything else continues as a paragraph.
     ///
     /// On an **empty** list item or to-do, Enter leaves the list instead (`PRODUCT_SPEC.md` "Editor
     /// behaviour"): a nested item moves out one level, a top-level one becomes a paragraph, and no
-    /// new block is added. That is how a run of list items is ended.
-    pub fn enter(&mut self, id: BlockId) -> Result<BlockId, EditorError> {
+    /// new block is added. That is how a run of list items is ended. Blocks without text (dividers)
+    /// get an empty paragraph below.
+    pub fn enter_at(&mut self, id: BlockId, at: usize) -> Result<Caret, EditorError> {
         let kind = self.doc.kind(id)?;
+        let Some(text) = self.doc.plain_text(id)? else {
+            let parent = self.doc.parent(id)?;
+            let siblings = match parent {
+                Some(parent) => self.doc.children(parent)?,
+                None => self.doc.root_blocks(),
+            };
+            let index = siblings
+                .iter()
+                .position(|&b| b == id)
+                .map_or(siblings.len(), |p| p + 1);
+            let block = self.insert(parent, index, BlockKind::Paragraph)?;
+            return Ok(Caret { block, at: 0 });
+        };
         let is_list = matches!(
             kind,
             BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. }
         );
-        if is_list && self.doc.plain_text(id)?.is_some_and(|text| text.is_empty()) {
+        if is_list && text.is_empty() {
             if self.doc.parent(id)?.is_some() {
                 self.outdent(id)?;
             } else {
                 self.turn_into(id, BlockKind::Paragraph)?;
             }
-            return Ok(id);
+            return Ok(Caret { block: id, at: 0 });
         }
-        let kind = match kind {
-            kind @ (BlockKind::BulletedList | BlockKind::NumberedList) => kind,
-            BlockKind::Todo { .. } => BlockKind::Todo { checked: false },
-            _ => BlockKind::Paragraph,
+        let PageOutcome::BlockCreated(block) = self.doc.apply(PageCommand::SplitBlock { id, pos: at })?
+        else {
+            unreachable!("SplitBlock always reports the block it created");
         };
-        let parent = self.doc.parent(id)?;
-        let siblings = match parent {
-            Some(parent) => self.doc.children(parent)?,
-            None => self.doc.root_blocks(),
-        };
-        let index = siblings
-            .iter()
-            .position(|&b| b == id)
-            .map_or(siblings.len(), |p| p + 1);
-        self.insert(parent, index, kind)
+        Ok(Caret { block, at: 0 })
     }
 
-    /// Backspace in an empty block: deletes it and returns the block to focus (the one above, or else
-    /// the one below). Does nothing, returning `None`, unless the block has empty text, no children,
-    /// and isn't the page's only block.
-    pub fn backspace_empty(&mut self, id: BlockId) -> Result<Option<BlockId>, EditorError> {
-        let empty = self.doc.plain_text(id)?.is_some_and(|text| text.is_empty());
-        if !empty || !self.doc.children(id)?.is_empty() || self.doc.len() <= 1 {
-            return Ok(None);
+    /// Backspace with the cursor at the very start of the block (`PRODUCT_SPEC.md` "Editor
+    /// behaviour"): a list, heading, quote or other non-paragraph turns into a paragraph, keeping its
+    /// text; a paragraph merges into the block above, with the caret where the texts join. If the
+    /// block above is a divider or image, it should be selected instead.
+    pub fn backspace_at_start(&mut self, id: BlockId) -> Result<Backspace, EditorError> {
+        match self.doc.kind(id)? {
+            BlockKind::Paragraph => {}
+            BlockKind::Divider | BlockKind::Image { .. } | BlockKind::Unknown { .. } => {
+                return Ok(Backspace::Nothing);
+            }
+            _ => {
+                self.turn_into(id, BlockKind::Paragraph)?;
+                return Ok(Backspace::Moved(Caret { block: id, at: 0 }));
+            }
         }
-        let focus = match self.previous(id)? {
-            Some(above) => Some(above),
-            None => self.next(id)?,
-        };
-        self.doc.apply(PageCommand::DeleteBlocks { ids: vec![id] })?;
-        Ok(focus)
+        match self.doc.apply(PageCommand::MergeIntoPrevious { id }) {
+            Ok(PageOutcome::BlockMerged { into, at }) => Ok(Backspace::Moved(Caret { block: into, at })),
+            Ok(_) => Ok(Backspace::Nothing),
+            Err(ModelError::MergeTargetNotText { target }) => Ok(Backspace::Select(target)),
+            Err(err) => Err(err.into()),
+        }
     }
 
     /// Tab: nests the block under the one above, if it can.

@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 
 use leaf_core::BlockId;
-use loro::{TreeID, TreeParentId};
+use loro::{LoroText, TreeID, TreeParentId};
 
 use super::PageDoc;
 use crate::block_kind::keys;
@@ -36,6 +36,8 @@ impl PageDoc {
                 let kind = self.kind(id)?.with_prop(prop)?;
                 self.set_kind(id, &kind)?
             }
+            PageCommand::SplitBlock { id, pos } => self.split_block(id, pos)?,
+            PageCommand::MergeIntoPrevious { id } => self.merge_into_previous(id)?,
             PageCommand::Indent { ids } => self.indent(&ids)?,
             PageCommand::Outdent { ids } => self.outdent(&ids)?,
         };
@@ -65,20 +67,34 @@ impl PageDoc {
             return Err(ModelError::IndexOutOfRange { index, len });
         }
 
+        let (block, container) = self.create_block(parent_node, index, kind)?;
+        if let Some(container) = container.filter(|_| !text.is_empty()) {
+            container.insert(0, text)?;
+        }
+        Ok(PageOutcome::BlockCreated(block))
+    }
+
+    /// Creates a block node with a fresh ID, its kind, and (for kinds with text) an empty text
+    /// container, which it returns. Callers have already checked the position and kind.
+    pub(super) fn create_block(
+        &mut self,
+        parent_node: Option<TreeID>,
+        index: usize,
+        kind: &BlockKind,
+    ) -> Result<(BlockId, Option<LoroText>), ModelError> {
         let block = BlockId::new();
         let node = self.tree.create_at(parent_node, index)?;
         let meta = self.tree.get_meta(node)?;
         meta.insert(keys::ID, block.to_string())?;
         kind.write(&meta)?;
-        if kind.has_text() {
-            // Mergeable: two peers creating it concurrently get one shared container (ADR 0001).
-            let container = meta.ensure_mergeable_text(keys::TEXT)?;
-            if !text.is_empty() {
-                container.insert(0, text)?;
-            }
-        }
+        // Mergeable: two peers creating it concurrently get one shared container (ADR 0001).
+        let text = if kind.has_text() {
+            Some(meta.ensure_mergeable_text(keys::TEXT)?)
+        } else {
+            None
+        };
         self.index.insert(block, node);
-        Ok(PageOutcome::BlockCreated(block))
+        Ok((block, text))
     }
 
     fn delete_blocks(&mut self, ids: &[BlockId]) -> Result<PageOutcome, ModelError> {
@@ -187,7 +203,7 @@ impl PageDoc {
     }
 
     /// Every block node, parents before children, in reading order.
-    fn document_order(&self) -> Vec<TreeID> {
+    pub(super) fn document_order(&self) -> Vec<TreeID> {
         fn walk(doc: &PageDoc, nodes: Vec<TreeID>, out: &mut Vec<TreeID>) {
             for node in nodes {
                 out.push(node);
