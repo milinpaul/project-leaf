@@ -1823,7 +1823,12 @@
       ],
       "plan": "- **`leaf-model`:** `PageDoc` subscribes to Loro's change events and records which blocks each change touched,\n  and whether the outline changed (create, move, delete).\n  - `take_changes()` hands them over as `BlockId`s; no Loro types leave the model.\n- **`leaf-editor/src/view.rs`:** `PageView` is the flattened, render-ready page. Each `BlockRow` has its depth,\n  its style with the list number, its plain text and its text runs with marks.\n  - **`refresh(doc)`:**\n    - re-reads only the touched blocks;\n    - if the outline changed or a block changed kind, it re-walks the tree to get the order, depth and\n      numbering, reusing the cached text of untouched blocks;\n    - otherwise it patches rows in place.\n  - `PageEditor::view()` uses it; `rows()` stays as the full rebuild.\n- **Numbering** at render time: consecutive numbered siblings count 1, 2, 3. Any other sibling restarts the count.\n  Nested lists count on their own, and a numbered item's children don't break its parent's run.\n- **Tests:**\n  - **Property test:** random commands plus undo and redo; after each step the incremental view equals a fresh\n    rebuild, and only touched blocks were re-read.\n  - **Numbering:** a unit test per restart rule.\n  - **Snapshots:** `insta` for representative pages: nested numbered lists, to-dos, code, marks, an unknown block.\n- **The UI** draws from `view()`.",
       "path": "backlog/stories/E04-S01.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/29",
+          "number": 29
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
