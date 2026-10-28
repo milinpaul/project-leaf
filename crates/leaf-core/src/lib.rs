@@ -7,10 +7,10 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! It depends on no other Leaf crate.
 
-#[cfg(test)]
-mod tests {
-    /// Placeholder so the coverage gate has something to measure while the crate is empty.
-    /// Delete it once the crate has real code and tests.
-    #[test]
-    fn crate_builds() {}
-}
+mod asset;
+mod error;
+mod ids;
+
+pub use asset::AssetId;
+pub use error::CoreError;
+pub use ids::{BlockId, PageId};
