@@ -32,11 +32,12 @@ Titles live here, not in page docs, so the sidebar renders without opening pages
 ```
 LoroDoc (page, keyed by PageId)
 └── "blocks": LoroTree         # block hierarchy, fractional index ordering enabled
-    └── node (TreeID = BlockId)
+    └── node (TreeID: internal handle, may change on undo/redo)
         meta: LoroMap
+          "id":    String      # BlockId (uuid v7), stable forever; see ADR 0006
           "type":  String      # see Block types
           "props": LoroMap     # type-specific properties
-          "text":  LoroText    # present for text-bearing types
+          "text":  LoroText    # present for text-bearing types; create with ensure_mergeable_text
 ```
 
 Root nodes of the `"blocks"` tree are the page's top-level blocks, in order.
@@ -46,13 +47,13 @@ Root nodes of the `"blocks"` tree are the page's top-level blocks, in order.
 | Thing | ID | Stability |
 |---|---|---|
 | Page | `PageId(Uuid)` v7 | Global, never changes. |
-| Block | `BlockId(TreeID)` from Loro | Stable within its page doc, survives moves and merges. |
+| Block | `BlockId(Uuid)` v7, stored in the block's meta `id` | Never changes: survives moves, merges, undo and redo. Unique within a page; paste and duplicate mint new ones. |
 | Block reference (Phase 1 links) | `(PageId, BlockId)` | |
 | Asset | `AssetId` = blake3 hash of bytes | Content-addressed, deduplicated. |
 
-> **Under review (E02-S10):** the E00-S05 spike found that Loro gives a block a new `TreeID` when undo or redo
-> re-creates it, so `BlockId = TreeID` is not stable across undo. Likely fix: a stable ID in each block's meta.
-> See [ADR 0001](../adr/0001-loro-document-model.md#spike-findings-e00-s05-loro-1171).
+Loro's `TreeID` is **not** an ID: undo and redo re-create nodes under new `TreeID`s
+([ADR 0006](../adr/0006-stable-block-ids.md)). It never leaves `leaf-model`, which maps `BlockId → TreeID`
+and rebuilds that index after undo, redo and import.
 
 ## Block types
 
@@ -137,7 +138,8 @@ Positions are Unicode scalar offsets as used by Loro; the editor converts to and
 4. `heading.level` ∈ 1..=3.
 5. `code` text has no marks.
 6. No cycles (guaranteed by LoroTree, still asserted).
-7. Undo of command N restores the exact document state before N.
+7. Undo of command N restores the exact document state before N, compared by `BlockId` (`TreeID`s may differ).
+8. Every block has an `id` in its meta, and no two blocks in a page share one.
 
 ## Persistence (`leaf-store`)
 

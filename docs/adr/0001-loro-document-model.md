@@ -38,8 +38,8 @@ Proved by `crates/leaf-model/tests/loro_spike.rs`:
 - **⚠ Block identity:** when undo or redo re-creates a block (undo of a delete, redo of a create), Loro gives
   it a **new `TreeID`**. Content, order and children come back, and so does anything in the block's meta.
   So `BlockId = TreeID` (BLOCK_MODEL.md) is not stable across undo, and "undo restores the exact state" holds
-  only if TreeIDs are ignored. A stable ID stored in each block's meta survives every cycle. Decision
-  deferred to E02-S10, which E02-S01 now waits for.
+  only if TreeIDs are ignored. A stable ID stored in each block's meta survives every cycle. Decided in
+  [ADR 0006](0006-stable-block-ids.md): stable IDs live in block meta.
 - **Mergeable child containers:** create a block's `text` with `LoroMap::ensure_mergeable_text`.
   `get_or_create_container` is deprecated, because two peers creating the same key concurrently would each get
   their own container, and one text would be lost.
