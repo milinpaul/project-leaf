@@ -8,10 +8,10 @@ use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use gpui::{
-    AppContext as _, Context, Entity, FocusHandle, FontWeight, InteractiveElement as _, IntoElement,
-    ParentElement, Render, Styled, Subscription, Window, div, px, rems,
+    AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement, ParentElement,
+    Render, Styled, Subscription, Window, div, px,
 };
-use gpui_component::input::{Input, InputEvent, InputState};
+use gpui_component::input::{InputEvent, InputState};
 use gpui_component::resizable::{h_resizable, resizable_panel};
 use gpui_component::{ActiveTheme as _, v_flex};
 use leaf_core::PageId;
@@ -30,6 +30,8 @@ pub struct Shell {
     blocks: blocks::BlockInputs,
     /// The sidebar's page tree: rename in progress, drag hint, scroll position.
     tree: tree::TreeState,
+    /// The page icon picker while it is open, and its events.
+    icon_picker: Option<(Entity<crate::icon_picker::IconPickerPanel>, Subscription)>,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
     storage: Option<Storage>,
     /// Focus for the window itself, so menu actions and shortcuts reach the shell even when no text
@@ -79,6 +81,7 @@ impl Shell {
             title,
             blocks: blocks::BlockInputs::default(),
             tree: tree::TreeState::default(),
+            icon_picker: None,
             storage,
             focus,
             subscriptions,
@@ -158,19 +161,8 @@ impl Render for Shell {
             .pt_16()
             .gap_3();
         let column = if self.editor.selected().is_some() {
-            // The title reads as the page's heading, not a form field: no box, large and bold.
             column
-                .child(
-                    Input::new(&self.title)
-                        .appearance(false)
-                        .focus_bordered(false)
-                        .text_size(px(theme::TITLE_SIZE))
-                        .font_weight(FontWeight::BOLD)
-                        // The input's own height and line height fit body text; size them to the heading.
-                        .line_height(rems(2.75))
-                        .h(rems(3.25))
-                        .px_0(),
-                )
+                .child(self.render_page_header(cx))
                 .child(self.render_blocks(window, cx))
         } else {
             column.child(
@@ -211,6 +203,7 @@ impl Render for Shell {
 }
 
 mod blocks;
+mod header;
 mod sidebar;
 mod storage;
 mod tree;

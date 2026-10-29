@@ -34,6 +34,8 @@ serde_json = "1"
 thiserror = "2"
 # Grapheme and word boundaries (UAX #29) for cursor movement; pure Rust, wasm-ok.
 unicode-segmentation = "1.12"
+# Emoji list, names, groups and shortcodes for the page icon picker; pure data, no required deps, wasm-ok.
+emojis = "0.9.1"
 anyhow = "1"
 # App icon: PNG decoding for the Linux (X11) window icon, and embedding the icon into leaf.exe on Windows.
 # Both are already in the tree through gpui.

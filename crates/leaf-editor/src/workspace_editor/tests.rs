@@ -255,3 +255,30 @@ fn a_new_page_goes_last_even_when_trashed_pages_follow_the_last_visible_one() {
     let order: Vec<PageId> = editor.sidebar().unwrap().into_iter().map(|i| i.page).collect();
     assert_eq!(order, vec![a, b, new]);
 }
+
+#[test]
+fn setting_and_removing_a_page_icon() {
+    let mut editor = WorkspaceEditor::new(Workspace::new());
+    assert_eq!(editor.selected_icon().unwrap(), None, "no page open");
+    let page = editor.new_page(NOW).unwrap();
+    assert_eq!(editor.selected_icon().unwrap(), None);
+    editor.set_icon(page, Some("🌱")).unwrap();
+    assert_eq!(editor.selected_icon().unwrap().as_deref(), Some("🌱"));
+    assert_eq!(
+        editor.sidebar().unwrap()[0].icon.as_deref(),
+        Some("🌱"),
+        "the sidebar shows it"
+    );
+
+    let before = editor.workspace().to_bytes().unwrap();
+    editor.set_icon(page, Some("🌱")).unwrap();
+    assert_eq!(
+        editor.workspace().to_bytes().unwrap(),
+        before,
+        "the same icon records nothing"
+    );
+
+    editor.set_icon(page, None).unwrap();
+    assert_eq!(editor.selected_icon().unwrap(), None);
+    assert!(editor.set_icon(PageId::new(), Some("x")).is_err());
+}

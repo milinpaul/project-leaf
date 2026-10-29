@@ -164,6 +164,27 @@ impl WorkspaceEditor {
         }
     }
 
+    /// Sets `page`'s emoji icon, or removes it with `None`. Does nothing when it is unchanged, so picking
+    /// the same emoji again records no change (or undo step).
+    pub fn set_icon(&mut self, page: PageId, icon: Option<&str>) -> Result<(), EditorError> {
+        if self.workspace.page(page)?.icon.as_deref() == icon {
+            return Ok(());
+        }
+        self.workspace.apply(WorkspaceCommand::SetPageIcon {
+            page,
+            icon: icon.map(str::to_owned),
+        })?;
+        Ok(())
+    }
+
+    /// The open page's icon, if a page is open and has one.
+    pub fn selected_icon(&self) -> Result<Option<String>, EditorError> {
+        match self.selected {
+            Some(page) => Ok(self.workspace.page(page)?.icon),
+            None => Ok(None),
+        }
+    }
+
     /// Renames `page`. Does nothing when the title is unchanged, so refreshing a title field never
     /// records a pointless change (or undo step).
     pub fn rename(&mut self, page: PageId, title: &str) -> Result<(), EditorError> {

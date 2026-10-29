@@ -102,6 +102,11 @@ Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole 
 `leaf_editor::QuickSwitcher`: a snapshot of the live pages with breadcrumbs, matched by `leaf_editor::fuzzy_match` as
 the owner types, recently opened pages first when nothing is typed. Enter or a click opens the page (ADR 0033).
 
+**Page header (E06-S05).** Above the title sits the page's emoji icon, or an "Add icon" button on hover
+(`leaf_ui::shell::header`). Clicking it opens `leaf_ui::icon_picker` in a popover over `leaf_editor::EmojiPicker`
+(emoji from the `emojis` crate, searchable by name, shortcode and group); the choice goes through
+`WorkspaceEditor::set_icon` (ADR 0034).
+
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
 `~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace
 document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls

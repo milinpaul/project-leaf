@@ -9,6 +9,7 @@
 //! **Boundaries:** UI crate, excluded from the coverage gate, so keep logic out of it. Core
 //! crates must never depend on it.
 
+mod icon_picker;
 pub mod menus;
 mod notice;
 pub mod settings;
@@ -27,7 +28,10 @@ pub use shell::{Shell, Storage};
 
 // Lucide icons Leaf draws beyond the ones gpui-component's widgets need. Listing them here embeds just
 // these few, not the whole 1,800-icon set.
-gpui_kit_assets::icon_assets!(LeafIcons, [FileText, PencilLine, SquarePen, Trash]);
+gpui_kit_assets::icon_assets!(
+    LeafIcons,
+    [FaceSlightlySmilingPlus, FileText, PencilLine, SquarePen, Trash]
+);
 
 /// The icons Leaf and gpui-component's widgets draw (a checkbox's tick, the sidebar's compose button).
 /// Register it with `Application::with_assets` at startup, or those icons render as blank shapes.
