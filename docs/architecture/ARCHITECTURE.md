@@ -109,6 +109,12 @@ the owner types, recently opened pages first when nothing is typed. Enter or a c
 (emoji from the `emojis` crate, searchable by name, shortcode and group); the choice goes through
 `WorkspaceEditor::set_icon` (ADR 0034).
 
+**Trash (E06-S06).** The Trash row at the foot of the sidebar opens `leaf_ui::trash_dialog` over
+`leaf_editor::TrashList` (pages trashed on their own, newest first, filterable). Restore and delete forever go through
+`WorkspaceEditor`; a permanent delete saves the workspace first, then removes the pages' documents with
+`Store::delete`, and search forgets them on its next pass (ADR 0036). A trashed page opened from the dialog shows a
+banner with Restore page and Delete forever.
+
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
 `~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace
 document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls

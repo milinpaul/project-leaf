@@ -89,3 +89,37 @@ fn a_page_saved_earlier_is_loaded_when_opened(cx: &mut TestAppContext) {
     assert_eq!(texts, vec!["first line"]);
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
+
+#[gpui::test]
+fn deleting_a_page_for_good_removes_its_document_from_disk(cx: &mut TestAppContext) {
+    let path = temp_workspace("delete");
+    let (shell, cx) = open_window(&path, cx);
+    cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+    cx.simulate_input("Doomed");
+    cx.simulate_keystrokes("enter");
+    cx.simulate_input("some text");
+    let page = shell.read_with(cx, |shell, _| shell.editor().selected().unwrap());
+    cx.update(|_, cx| shell.update(cx, |shell, _| shell.save(true)));
+    let store = leaf_store::Store::open(&path.join("workspace.sqlite")).unwrap();
+    assert!(
+        store.load::<PageDoc>(DocKey::Page(page)).unwrap().is_some(),
+        "saved first"
+    );
+
+    cx.update(|_, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.trash_page(page, cx);
+            shell.delete_page_forever(page, cx);
+        });
+    });
+    assert!(
+        store.load::<PageDoc>(DocKey::Page(page)).unwrap().is_none(),
+        "its blocks are gone"
+    );
+    let workspace: Workspace = store.load(DocKey::Workspace).unwrap().unwrap();
+    assert!(
+        !workspace.contains(page),
+        "and the saved page tree no longer lists it"
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
