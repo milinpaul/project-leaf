@@ -13,7 +13,7 @@ mod page_editor;
 mod view;
 mod workspace_editor;
 
-pub use caret::Motion;
+pub use caret::{LineLayout, Motion, Vertical};
 pub use page_editor::{Backspace, Caret, PageEditor};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};

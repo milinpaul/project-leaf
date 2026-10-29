@@ -6,7 +6,11 @@
 //! it moves to the nearest block above where the block was.
 
 pub(crate) mod motion;
+mod vertical;
 
+pub use vertical::{LineLayout, Vertical};
+
+use leaf_core::BlockId;
 use leaf_model::{Anchor, Caret};
 
 use crate::page_editor::PageEditor;
@@ -34,11 +38,19 @@ pub(crate) struct Tracked {
     anchor: Anchor,
     /// Its block's place in reading order when last seen, to recover if the block is deleted.
     row: usize,
+    /// The x position Up and Down aim for, kept while they repeat so short lines don't pull the
+    /// caret sideways for good.
+    goal_x: Option<f32>,
 }
 
 impl PageEditor {
     /// Puts the caret at `caret` (snapped to the start of the character it falls in).
     pub fn set_caret(&mut self, caret: Caret) -> Result<Caret, EditorError> {
+        self.place(caret, None)
+    }
+
+    /// Puts the caret at `caret`, remembering `goal_x` for the next Up or Down.
+    fn place(&mut self, caret: Caret, goal_x: Option<f32>) -> Result<Caret, EditorError> {
         let text = self.doc.plain_text(caret.block)?.unwrap_or_default();
         let caret = Caret {
             at: motion::snap(&text, caret.at),
@@ -50,7 +62,7 @@ impl PageEditor {
             .iter()
             .position(|row| row.id == caret.block)
             .unwrap_or(0);
-        self.caret = Some(Tracked { anchor, row });
+        self.caret = Some(Tracked { anchor, row, goal_x });
         Ok(caret)
     }
 
@@ -60,14 +72,14 @@ impl PageEditor {
         let Some(tracked) = &self.caret else {
             return Ok(None);
         };
-        let row = tracked.row;
+        let (row, goal_x) = (tracked.row, tracked.goal_x);
         let found = match self.doc.resolve(&tracked.anchor)? {
             Some(caret) => Some(caret),
             None => nearest_above(self.view()?, row),
         };
         // Re-anchoring keeps following edits even after undo re-created the block.
         if let Some(caret) = found {
-            return self.set_caret(caret).map(Some);
+            return self.place(caret, goal_x).map(Some);
         }
         self.caret = None;
         Ok(None)
@@ -94,16 +106,32 @@ impl PageEditor {
         self.set_caret(target.unwrap_or(caret)).map(Some)
     }
 
-    /// The end of the previous text block, or the start of the next one. Blocks without text
-    /// (dividers, images) are passed over.
+    /// The end of the previous text block, or the start of the next one.
     fn across(&mut self, caret: Caret, direction: Direction) -> Result<Option<Caret>, EditorError> {
+        Ok(self.neighbour(caret.block, direction)?.map(|(block, len)| Caret {
+            block,
+            at: match direction {
+                Direction::Back => len,
+                Direction::Forward => 0,
+            },
+        }))
+    }
+
+    /// The text block before or after `block` in reading order, with its text length. Blocks
+    /// without text (dividers, images) are passed over.
+    fn neighbour(
+        &mut self,
+        block: BlockId,
+        direction: Direction,
+    ) -> Result<Option<(BlockId, usize)>, EditorError> {
         let rows = self.view()?;
-        let Some(here) = rows.iter().position(|row| row.id == caret.block) else {
+        let Some(here) = rows.iter().position(|row| row.id == block) else {
             return Ok(None);
         };
+        let text_row = |row: &BlockRow| row.text.as_ref().map(|text| (row.id, text.chars().count()));
         Ok(match direction {
-            Direction::Back => rows[..here].iter().rev().find_map(end_of),
-            Direction::Forward => rows[here + 1..].iter().find_map(start_of),
+            Direction::Back => rows[..here].iter().rev().find_map(text_row),
+            Direction::Forward => rows[here + 1..].iter().find_map(text_row),
         })
     }
 }
