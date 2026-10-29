@@ -37,3 +37,4 @@ Records cover two kinds of decision:
 | [0018](0018-app-icon.md) | App icon: one SVG, generated per-OS files, a bundle for `just run` | Feature | Accepted |
 | [0019](0019-sqlite-fts5-search.md) | Full-text search with SQLite FTS5 in a disposable file, opened with Ctrl+K | Architecture | Accepted |
 | [0020](0020-structural-keys.md) | Structural keys at the caret, one undo step per press | Architecture | Accepted |
+| [0021](0021-selection-model.md) | Selection: text between two anchors, or whole blocks | Architecture | Accepted |

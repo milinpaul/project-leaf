@@ -62,8 +62,8 @@
       "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
       "path": "backlog/epics/E04.md",
       "story_count": 8,
-      "done_count": 4,
-      "progress": 0.5
+      "done_count": 5,
+      "progress": 0.62
     },
     {
       "id": "E05",
@@ -1975,7 +1975,7 @@
       "id": "E04-S05",
       "title": "Enter, Backspace, Delete, Tab rules",
       "epic": "E04",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -2023,7 +2023,7 @@
       "id": "E04-S06",
       "title": "Selection model",
       "epic": "E04",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -2032,33 +2032,33 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
-      "updated": "2026-10-28",
+      "assignee": "claude",
+      "updated": "2026-10-29",
       "context": "In-block and cross-block selection, Cmd/Ctrl+A escalation, block selection mode.",
       "acceptance": [
         {
           "text": "Shift+arrows extend across blocks",
-          "done": false
+          "done": true
         },
         {
           "text": "Cmd/Ctrl+A first selects block text, second selects all blocks",
-          "done": false
+          "done": true
         },
         {
           "text": "Typing over a cross-block selection deletes then inserts as one undo step",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- New `leaf-editor/src/selection.rs`: `Selection::Text { start, end }` (caret + tail anchor, may span blocks) and\n  `Selection::Blocks` (block selection mode); `select`, `select_between`, `select_blocks`, `select_all`, `extend`,\n  `extend_vertically`. Plain Left/Right collapse to the selection's edges.\n- `delete_span`: deletes text across blocks with existing commands inside `PageDoc::as_one_step` (trim ends,\n  delete blocks between, empty and merge away the blocks containing the last one, join).\n- Typing, IME commit, Enter, Backspace, Delete and Tab over a cross-block selection: one undo step each. Block mode:\n  Backspace/Delete delete, Tab nests; E04-S05's `SelectBlock` now enters it.\n- Tests: `selection/tests.rs`, including a proptest that typing over any selection replaces exactly it, keeps\n  invariants and undoes in one step.",
       "path": "backlog/stories/E04-S06.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E04-S07",
@@ -2186,10 +2186,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S01.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S05"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2233,10 +2231,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S02.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S05"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {

@@ -5,15 +5,16 @@
 //! splits the block). Undo puts the caret back where it was before the key (ADR 0020).
 //!
 //! Blocks without text, dividers and images, can't hold the caret. Backspace right after one, or
-//! Delete right before one, asks for it to be selected instead ([`KeyOutcome::SelectBlock`]). A
-//! selected block is deleted with [`PageEditor::delete_block`]; drawing the selection is E04-S06.
+//! Delete right before one, selects it instead ([`KeyOutcome::SelectBlock`]); pressing it again
+//! deletes it. Over a text selection, even one across blocks, every key is still one undo step.
 
 use leaf_core::BlockId;
 use leaf_model::{BlockKind, Caret, ModelError, PageCommand, PageOutcome};
 
 use crate::caret::{motion, nearest_above};
 use crate::page_editor::{enter_in, insert_after};
-use crate::{EditorError, PageEditor, TextRange};
+use crate::selection::delete_span;
+use crate::{EditorError, PageEditor, Selection, TextRange};
 
 /// A structural editing key.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,47 +45,64 @@ pub enum KeyOutcome {
 }
 
 impl PageEditor {
-    /// Handles a structural key at the caret (and its selection, if any).
+    /// Handles a structural key at the caret and selection. With whole blocks selected, Backspace and
+    /// Delete remove them, Tab and Shift+Tab nest them, and other keys do nothing.
     pub fn press(&mut self, key: Key) -> Result<KeyOutcome, EditorError> {
+        if let Some(Selection::Blocks(blocks)) = self.selection()? {
+            return self.block_key(key, &blocks);
+        }
         let Some(caret) = self.caret()? else {
             return Ok(KeyOutcome::Nothing);
         };
-        let selection = self.selection()?;
+        let span = self.text_selection()?;
         // Undo puts the caret back here.
         self.doc.set_caret(Some(caret));
-        let outcome = match key {
-            Key::Enter => self.enter_key(caret, selection, false)?,
-            Key::ModEnter => self.enter_key(caret, selection, true)?,
-            Key::Backspace => self.backspace_key(caret, selection)?,
-            Key::Delete => self.delete_key(caret, selection)?,
-            Key::Tab | Key::ShiftTab => {
-                let ids = vec![caret.block];
-                self.doc.apply(if key == Key::Tab {
-                    PageCommand::Indent { ids }
-                } else {
-                    PageCommand::Outdent { ids }
-                })?;
+        let outcome = match (key, span) {
+            (Key::Enter, Some((start, end))) if start.block != end.block => self.enter_over(start, end)?,
+            (Key::Enter | Key::ModEnter, _) => {
+                let range = self.text_range()?;
+                self.enter_key(caret, range, key == Key::ModEnter)?
+            }
+            (Key::Backspace | Key::Delete, Some((start, end))) => self.delete_selection(start, end)?,
+            (Key::Backspace, None) => self.backspace_key(caret)?,
+            (Key::Delete, None) => self.delete_key(caret)?,
+            (Key::Tab | Key::ShiftTab, span) => {
+                let ids = match span {
+                    Some((start, end)) => self.blocks_between(start, end)?,
+                    None => vec![caret.block],
+                };
+                self.nest(key, ids)?;
                 KeyOutcome::Caret(caret)
             }
         };
-        if let KeyOutcome::Caret(at) = outcome {
-            return self.set_caret(at).map(KeyOutcome::Caret);
+        match outcome {
+            KeyOutcome::Caret(at) if span.is_some() && matches!(key, Key::Tab | Key::ShiftTab) => {
+                // Nesting keeps the selection.
+                let (start, end) = span.unwrap_or((at, at));
+                let tail = if at == start { end } else { start };
+                self.select_between(tail, at)?;
+                Ok(KeyOutcome::Caret(at))
+            }
+            KeyOutcome::Caret(at) => self.set_caret(at).map(KeyOutcome::Caret),
+            KeyOutcome::SelectBlock(block) => {
+                self.select_blocks(&[block])?;
+                Ok(outcome)
+            }
+            KeyOutcome::Nothing => Ok(outcome),
         }
-        Ok(outcome)
     }
 
-    /// Deletes a block and everything nested in it, as one undo step: a selected divider or image, or
-    /// a block from its menu. The caret goes to the end of the nearest text block above, else the
-    /// start of the one below. A page is never left empty: an empty paragraph takes the last block's
-    /// place.
-    pub fn delete_block(&mut self, id: BlockId) -> Result<Option<Caret>, EditorError> {
-        let Some(row) = self.view()?.iter().position(|row| row.id == id) else {
+    /// Deletes whole blocks and everything nested in them, as one undo step. The caret goes to the
+    /// end of the nearest text block above the first, else the start of the one below. A page is
+    /// never left empty: an empty paragraph takes the last block's place.
+    pub fn delete_blocks(&mut self, ids: &[BlockId]) -> Result<Option<Caret>, EditorError> {
+        let Some(row) = self.view()?.iter().position(|row| ids.contains(&row.id)) else {
             return Ok(None);
         };
         let before = self.caret()?;
         self.doc.set_caret(before);
         self.doc.as_one_step(|doc| -> Result<(), EditorError> {
-            doc.apply(PageCommand::DeleteBlocks { ids: vec![id] })?;
+            doc.apply(PageCommand::DeleteBlocks { ids: ids.to_vec() })?;
             if doc.root_blocks().is_empty() {
                 crate::page_editor::insert_block(doc, None, 0, BlockKind::Paragraph)?;
             }
@@ -94,6 +112,69 @@ impl PageEditor {
             Some(caret) => self.set_caret(caret).map(Some),
             None => Ok(None),
         }
+    }
+
+    fn block_key(&mut self, key: Key, blocks: &[BlockId]) -> Result<KeyOutcome, EditorError> {
+        match key {
+            Key::Backspace | Key::Delete => Ok(match self.delete_blocks(blocks)? {
+                Some(caret) => KeyOutcome::Caret(caret),
+                None => KeyOutcome::Nothing,
+            }),
+            Key::Tab | Key::ShiftTab => {
+                let before = self.caret()?;
+                self.doc.set_caret(before);
+                self.nest(key, blocks.to_vec())?;
+                // Still selected, wherever they moved.
+                self.select_blocks(blocks)?;
+                Ok(KeyOutcome::Nothing)
+            }
+            Key::Enter | Key::ModEnter => Ok(KeyOutcome::Nothing),
+        }
+    }
+
+    fn nest(&mut self, key: Key, ids: Vec<BlockId>) -> Result<(), EditorError> {
+        self.doc.apply(if key == Key::Tab {
+            PageCommand::Indent { ids }
+        } else {
+            PageCommand::Outdent { ids }
+        })?;
+        Ok(())
+    }
+
+    /// Enter over a selection across blocks: the selection goes, then Enter happens where it started,
+    /// all in one undo step.
+    fn enter_over(&mut self, start: Caret, end: Caret) -> Result<KeyOutcome, EditorError> {
+        let order = self.order()?;
+        let caret = self.doc.as_one_step(|doc| -> Result<Caret, EditorError> {
+            let at = delete_span(doc, &order, start, end)?;
+            match doc.kind(at.block)? {
+                BlockKind::Code { .. } => {
+                    doc.apply(PageCommand::InsertText {
+                        id: at.block,
+                        pos: at.at,
+                        text: "\n".into(),
+                    })?;
+                    Ok(Caret { at: at.at + 1, ..at })
+                }
+                BlockKind::Image { .. } => Ok(Caret {
+                    block: insert_after(doc, at.block, BlockKind::Paragraph)?,
+                    at: 0,
+                }),
+                _ => enter_in(doc, at.block, at.at),
+            }
+        })?;
+        Ok(KeyOutcome::Caret(caret))
+    }
+
+    fn delete_selection(&mut self, start: Caret, end: Caret) -> Result<KeyOutcome, EditorError> {
+        let order = self.order()?;
+        let at = self.doc.as_one_step(|doc| delete_span(doc, &order, start, end))?;
+        Ok(KeyOutcome::Caret(at))
+    }
+
+    /// Deletes one block with everything nested in it: see [`PageEditor::delete_blocks`].
+    pub fn delete_block(&mut self, id: BlockId) -> Result<Option<Caret>, EditorError> {
+        self.delete_blocks(&[id])
     }
 
     fn enter_key(
@@ -157,14 +238,7 @@ impl PageEditor {
         })
     }
 
-    fn backspace_key(
-        &mut self,
-        caret: Caret,
-        selection: Option<TextRange>,
-    ) -> Result<KeyOutcome, EditorError> {
-        if let Some(selection) = selection {
-            return self.delete_range(selection);
-        }
+    fn backspace_key(&mut self, caret: Caret) -> Result<KeyOutcome, EditorError> {
         let block = caret.block;
         if caret.at > 0 {
             let text = self.doc.plain_text(block)?.unwrap_or_default();
@@ -184,10 +258,7 @@ impl PageEditor {
         })
     }
 
-    fn delete_key(&mut self, caret: Caret, selection: Option<TextRange>) -> Result<KeyOutcome, EditorError> {
-        if let Some(selection) = selection {
-            return self.delete_range(selection);
-        }
+    fn delete_key(&mut self, caret: Caret) -> Result<KeyOutcome, EditorError> {
         let block = caret.block;
         let text = self.doc.plain_text(block)?.unwrap_or_default();
         if caret.at < text.chars().count() {
