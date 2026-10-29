@@ -47,6 +47,8 @@ fn readable_pairs(p: &Palette) -> Vec<(&'static str, &'static str, &'static str,
         ("accent on soft accent", p.accent, p.accent_soft, 4.5),
         ("button text", p.on_accent, p.accent, 4.5),
         ("button text, hovered", p.on_accent, p.accent_hover, 4.5),
+        ("remove actions on page", p.danger, p.page, 4.5),
+        ("remove actions on hovered menu row", p.danger, p.hover, 4.5),
         ("caret", p.caret, p.page, 3.0),
         ("placeholder", p.faint, p.page, 2.5),
     ]
@@ -119,6 +121,7 @@ fn configs_carry_the_tokens() {
     assert_eq!(light.colors.background.as_deref(), Some(LIGHT.page));
     assert_eq!(dark.colors.background.as_deref(), Some(DARK.page));
     assert_eq!(light.colors.selection.as_deref(), Some(LIGHT.selection));
+    assert_eq!(dark.colors.danger.as_deref(), Some(DARK.danger));
     assert_eq!(light.font_family.as_deref(), Some(UI_FONT));
 }
 

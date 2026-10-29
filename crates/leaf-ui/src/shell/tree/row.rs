@@ -238,32 +238,52 @@ impl Shell {
     }
 }
 
-/// The row's right-click menu.
+/// The row's right-click menu: roomy rows with an icon each, and the one that removes the page in red.
 fn page_menu(menu: PopupMenu, shell: &WeakEntity<Shell>, page: PageId) -> PopupMenu {
     let (inside, rename, trash) = (shell.clone(), shell.clone(), shell.clone());
     // The shell outlives its rows; if it is gone the window is closing anyway.
-    menu.item(
-        PopupMenuItem::new("Add page inside")
-            .icon(IconName::Plus)
-            .on_click(move |_, window, cx| {
+    menu.min_w(px(MENU_WIDTH))
+        .item(
+            menu_row(IconName::Plus, "Add page inside", false).on_click(move |_, window, cx| {
                 let _ = inside.update(cx, |shell, cx| shell.new_page_inside(page, window, cx));
             }),
-    )
-    .item(
-        PopupMenuItem::new("Rename")
-            .icon(IconName::PencilLine)
-            .on_click(move |_, window, cx| {
+        )
+        .item(
+            menu_row(IconName::PencilLine, "Rename", false).on_click(move |_, window, cx| {
                 let _ = rename.update(cx, |shell, cx| shell.start_rename(page, window, cx));
             }),
-    )
-    .separator()
-    .item(
-        PopupMenuItem::new("Move to Trash")
-            .icon(IconName::Trash)
-            .on_click(move |_, _, cx| {
+        )
+        .separator()
+        .item(
+            menu_row(IconName::Trash, "Move to Trash", true).on_click(move |_, _, cx| {
                 let _ = trash.update(cx, |shell, cx| shell.trash_page(page, cx));
             }),
-    )
+        )
+}
+
+/// Width of the right-click menu, in pixels: room for the labels without crowding them.
+const MENU_WIDTH: f32 = 200.0;
+
+/// Height of a right-click menu row, in pixels; taller than the widget's default for an easier target.
+const MENU_ROW_HEIGHT: f32 = 32.0;
+
+/// One right-click menu row: icon and label, both red when it removes something.
+fn menu_row(icon: IconName, label: &'static str, danger: bool) -> PopupMenuItem {
+    PopupMenuItem::element(move |_, cx| {
+        let theme = cx.theme();
+        let (text, icon_colour) = if danger {
+            (theme.danger, theme.danger)
+        } else {
+            (theme.popover_foreground, theme.muted_foreground)
+        };
+        h_flex()
+            .h(px(MENU_ROW_HEIGHT))
+            .px_1()
+            .gap_2p5()
+            .text_color(text)
+            .child(Icon::new(icon).small().text_color(icon_colour))
+            .child(label)
+    })
 }
 
 /// A 2 px accent line across a row, placed by the caller.
