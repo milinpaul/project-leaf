@@ -47,8 +47,11 @@ pub(crate) struct Tracked {
 }
 
 impl PageEditor {
-    /// Puts the caret at `caret` (snapped to the start of the character it falls in).
+    /// Puts the caret at `caret` (snapped to the start of the character it falls in). Ends any
+    /// selection, and forgets formatting toggled for the next typed text.
     pub fn set_caret(&mut self, caret: Caret) -> Result<Caret, EditorError> {
+        self.blocks = None;
+        self.pending = None;
         self.place(caret, None)
     }
 
@@ -97,8 +100,22 @@ impl PageEditor {
         Ok(None)
     }
 
-    /// Moves the caret and returns where it went. Does nothing before the caret is set.
+    /// Moves the caret and returns where it went, ending any selection. With text selected, Left
+    /// and Right go to the selection's start and end. Does nothing before the caret is set.
     pub fn move_caret(&mut self, motion: Motion) -> Result<Option<Caret>, EditorError> {
+        if let Some((start, end)) = self.text_selection()? {
+            match motion {
+                Motion::Left => return self.set_caret(start).map(Some),
+                Motion::Right => return self.set_caret(end).map(Some),
+                _ => {}
+            }
+        }
+        self.blocks = None;
+        self.move_caret_from(motion)
+    }
+
+    /// Moves the caret from where it is, whatever is selected; the selection's other end is dropped.
+    pub(crate) fn move_caret_from(&mut self, motion: Motion) -> Result<Option<Caret>, EditorError> {
         let Some(caret) = self.caret()? else {
             return Ok(None);
         };

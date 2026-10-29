@@ -10,6 +10,7 @@ use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOut
 
 use crate::EditorError;
 use crate::caret::Tracked;
+use crate::format::Pending;
 use crate::input::Composing;
 use crate::view::{BlockRow, PageView};
 
@@ -33,6 +34,10 @@ pub struct PageEditor {
     pub(crate) caret: Option<Tracked>,
     /// The input method's draft while a composition is going on.
     pub(crate) composing: Option<Composing>,
+    /// Whole blocks selected (block selection mode), in reading order; `None` outside the mode.
+    pub(crate) blocks: Option<Vec<BlockId>>,
+    /// Mark toggles waiting for the next typed text (Cmd+B with no selection).
+    pub(crate) pending: Option<Pending>,
 }
 
 impl PageEditor {
@@ -44,6 +49,8 @@ impl PageEditor {
             view: PageView::default(),
             caret: None,
             composing: None,
+            blocks: None,
+            pending: None,
         }
     }
 
@@ -195,7 +202,7 @@ impl PageEditor {
             .copied())
     }
 
-    fn order(&self) -> Result<Vec<BlockId>, EditorError> {
+    pub(crate) fn order(&self) -> Result<Vec<BlockId>, EditorError> {
         Ok(self.rows()?.into_iter().map(|row| row.id).collect())
     }
 

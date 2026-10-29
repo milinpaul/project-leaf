@@ -7,22 +7,12 @@
 //! composition makes no undo steps, no saves and nothing for other devices until it is committed.
 //! An empty draft is the same as none: it never deletes the selection (ADR 0017).
 
-use std::ops::Range;
-
-use leaf_core::BlockId;
 use leaf_model::{Caret, PageCommand};
 
 use crate::caret::motion;
-use crate::{EditorError, PageEditor};
-
-/// A text selection inside one block. Selections across blocks come with E04-S06.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TextRange {
-    /// The block.
-    pub block: BlockId,
-    /// Unicode scalar positions, `start <= end`.
-    pub range: Range<usize>,
-}
+use crate::format::apply_pending;
+use crate::selection::delete_span;
+use crate::{EditorError, PageEditor, TextRange};
 
 /// The input method's draft, ready to draw.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,64 +33,48 @@ pub(crate) struct Composing {
 }
 
 impl PageEditor {
-    /// Selects `range` in `block`, with the caret at its end. Both ends snap to character starts.
-    pub fn select(&mut self, block: BlockId, range: Range<usize>) -> Result<(), EditorError> {
-        let start = self.set_caret(Caret {
-            block,
-            at: range.start,
-        })?;
-        let start = self.doc.anchor(start)?;
-        self.set_caret(Caret { block, at: range.end })?;
-        if let Some(tracked) = &mut self.caret {
-            tracked.tail = Some(start);
-        }
-        Ok(())
-    }
-
-    /// The selected text, after whatever changed since it was made. `None` if nothing is selected
-    /// or the selection collapsed to the caret.
-    pub fn selection(&mut self) -> Result<Option<TextRange>, EditorError> {
-        let Some(caret) = self.caret()? else {
-            return Ok(None);
-        };
-        let Some(tail) = self.caret.as_ref().and_then(|tracked| tracked.tail.clone()) else {
-            return Ok(None);
-        };
-        let Some(other) = self.doc.resolve(&tail)?.filter(|t| t.block == caret.block) else {
-            return Ok(None);
-        };
-        let range = caret.at.min(other.at)..caret.at.max(other.at);
-        Ok((!range.is_empty()).then_some(TextRange {
-            block: caret.block,
-            range,
-        }))
-    }
-
     /// Types `text`: replaces the selection, or inserts at the caret, as one undo step, and puts
-    /// the caret after it. Empty text, no caret, or a block without text (a divider) change nothing.
+    /// the caret after it. A selection across blocks is deleted first (joining what is left), in the
+    /// same step. Empty text, no caret, a block without text (a divider), or whole blocks selected
+    /// change nothing.
     pub fn insert_text(&mut self, text: &str) -> Result<Option<Caret>, EditorError> {
         let Some(caret) = self.caret()? else {
             return Ok(None);
         };
-        if text.is_empty() || self.doc.plain_text(caret.block)?.is_none() {
+        if text.is_empty() || self.blocks.is_some() || self.doc.plain_text(caret.block)?.is_none() {
             return Ok(Some(caret));
         }
-        let target = self.selection()?.unwrap_or(TextRange {
-            block: caret.block,
-            range: caret.at..caret.at,
-        });
         // Undo puts the caret back where it was before the typing.
         self.doc.set_caret(Some(caret));
-        self.doc.apply(PageCommand::ReplaceText {
-            id: target.block,
-            range: target.range.clone(),
-            text: text.to_owned(),
+        let (start, end) = self.text_selection()?.unwrap_or((caret, caret));
+        let pending = self.pending_at(caret).unwrap_or_default();
+        let typed = text.chars().count();
+        let order = self.order()?;
+        self.doc.as_one_step(|doc| -> Result<(), EditorError> {
+            if start.block == end.block {
+                doc.apply(PageCommand::ReplaceText {
+                    id: start.block,
+                    range: start.at..end.at,
+                    text: text.to_owned(),
+                })?;
+            } else {
+                let at = delete_span(doc, &order, start, end)?;
+                doc.apply(PageCommand::InsertText {
+                    id: at.block,
+                    pos: at.at,
+                    text: text.to_owned(),
+                })?;
+            }
+            apply_pending(doc, start.block, start.at..start.at + typed, &pending)
         })?;
-        let after = Caret {
-            block: target.block,
-            at: target.range.start + text.chars().count(),
-        };
-        self.set_caret(after).map(Some)
+        let after = self.set_caret(Caret {
+            at: start.at + typed,
+            ..start
+        })?;
+        if !pending.is_empty() {
+            self.carry_pending(pending, after);
+        }
+        Ok(Some(after))
     }
 
     /// The input method's draft changed. `cursor` is its own cursor inside `text`, in Unicode
@@ -141,10 +115,21 @@ impl PageEditor {
         if self.doc.plain_text(caret.block)?.is_none() {
             return Ok(None);
         }
-        let at = self.selection()?.unwrap_or(TextRange {
-            block: caret.block,
-            range: caret.at..caret.at,
-        });
+        // Across blocks the draft shows where the selection starts; the commit replaces all of it.
+        let at = match self.text_selection()? {
+            Some((start, end)) if start.block == end.block => TextRange {
+                block: start.block,
+                range: start.at..end.at,
+            },
+            Some((start, _)) => TextRange {
+                block: start.block,
+                range: start.at..start.at,
+            },
+            None => TextRange {
+                block: caret.block,
+                range: caret.at..caret.at,
+            },
+        };
         Ok(Some(Preedit { at, text, cursor }))
     }
 }

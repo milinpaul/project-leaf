@@ -9,15 +9,18 @@
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
 mod caret;
+mod format;
 mod input;
 mod keys;
 mod page_editor;
+mod selection;
 mod view;
 mod workspace_editor;
 
 pub use caret::{LineLayout, Motion, Vertical};
-pub use input::{Preedit, TextRange};
+pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use page_editor::{Backspace, Caret, PageEditor};
+pub use selection::{Selection, TextRange};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};
