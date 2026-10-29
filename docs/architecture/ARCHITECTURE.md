@@ -87,6 +87,13 @@ on a screen. The sidebar is resizable and can be hidden (Cmd/Ctrl+\\); its width
 frame are written back on blur and quit. A cog at the foot of the sidebar (or Cmd/Ctrl+,) opens the Settings dialog:
 Appearance (System / Light / Dark), Workspace (its folder) and About. Menus and shortcuts live in `leaf_ui::menus`.
 
+**Sidebar page tree (E06-S03).** The sidebar lists the page tree (`WorkspaceEditor::sidebar` in `leaf-editor`):
+children show under expanded pages, and which pages are expanded is saved in the workspace folder's `view.json`
+(`leaf_store::ViewState`), not in a document. Right-click offers Add page inside, Rename (inline) and Move to Trash;
+dragging a row shows a line (above or below) or a ring (inside) and drops through `WorkspaceEditor::move_page`, which
+turns the place on screen into a model index (indexes count trashed pages; ADR 0031). Only rows on screen are drawn
+(`uniform_list`), so 500 pages scroll smoothly. The UI code is `leaf_ui::shell::tree`.
+
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
 `~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace
 document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls

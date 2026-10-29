@@ -121,7 +121,9 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
   `PageId` (`Outcome::PagesDeleted`) so storage can drop their page docs
 - A command that would change nothing (same title, same icon, same position) writes nothing and returns
   `Outcome::Unchanged`, so it leaves no empty undo step
-- Positions (`index`) count every child, including pages in the trash, while `root_pages`/`children` hide them
+- Positions (`index`) count every child, including pages in the trash, while `root_pages`/`children` hide them; `child_slots(parent)` lists
+  every child (trashed included) and `parent(page)` gives a page's parent, so a caller can turn a place in a listing into
+  an `index`
 
 **Block commands (page doc)**: `PageCommand`, applied with `PageDoc::apply` (same rules as workspace commands:
 validate, write, commit once; `Unchanged` when nothing would change)
@@ -210,6 +212,7 @@ MyWorkspace.leaf/
   assets/<blake3-hash>       # image files
   search/index.sqlite        # FTS5 search index (disposable, ADR 0019)
   leaf.lock                  # OS file lock held by the app that has it open (ADR 0009)
+  view.json                  # sidebar view state on this computer: expanded pages (not a document, ADR 0031)
 ```
 
 `Workspace::create` makes this layout, in a new path or an empty folder only. `Workspace::open` needs

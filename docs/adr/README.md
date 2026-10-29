@@ -47,3 +47,4 @@ Records cover two kinds of decision:
 | [0028](0028-block-actions-and-duplicate.md) | Block actions follow the selection; Duplicate is a model command that copies everything | Feature | Accepted |
 | [0029](0029-app-settings-and-settings-dialog.md) | App settings in one JSON file; a Settings dialog over the page | Feature | Accepted |
 | [0030](0030-internal-clipboard-fragment.md) | Internal clipboard: versioned JSON fragments; pasting blocks mid-text splits the line | Feature | Accepted |
+| [0031](0031-sidebar-page-tree.md) | Sidebar page tree: logic in the editor, expanded pages in view.json | Feature | Accepted |

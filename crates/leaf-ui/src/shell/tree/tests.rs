@@ -120,8 +120,8 @@ fn moving_the_open_page_to_the_trash_closes_it(cx: &mut TestAppContext) {
 /// Presses on `from`, drags to `to` in small steps (as a hand would), and lets go.
 fn drag(cx: &mut VisualTestContext, from: Point<gpui::Pixels>, to: Point<gpui::Pixels>) {
     cx.simulate_mouse_down(from, MouseButton::Left, Modifiers::none());
-    for step in 1..=8 {
-        let t = step as f32 / 8.0;
+    for step in 1..=8u8 {
+        let t = f32::from(step) / 8.0;
         let at = point(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
         cx.simulate_mouse_move(at, MouseButton::Left, Modifiers::none());
         redraw(cx);
