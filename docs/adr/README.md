@@ -49,3 +49,4 @@ Records cover two kinds of decision:
 | [0030](0030-internal-clipboard-fragment.md) | Internal clipboard: versioned JSON fragments; pasting blocks mid-text splits the line | Feature | Accepted |
 | [0031](0031-sidebar-page-tree.md) | Sidebar page tree: logic in the editor, expanded pages in view.json | Feature | Accepted |
 | [0032](0032-markdown-paste-and-copy.md) | Pasting Markdown and plain text; copying writes Markdown and plain text | Feature | Accepted |
+| [0033](0033-quick-switcher.md) | Quick switcher: a snapshot at open, a small fuzzy matcher, Enter through the dialog | Feature | Accepted |

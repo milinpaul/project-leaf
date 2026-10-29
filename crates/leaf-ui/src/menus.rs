@@ -33,6 +33,8 @@ actions!(
         OpenSettings,
         /// Creates a page and opens it.
         NewPage,
+        /// Opens the quick switcher to jump to a page by its title.
+        QuickSwitch,
         /// Closes the window; with one window this quits, after saving.
         CloseWindow,
         /// Hides or shows the sidebar.
@@ -52,6 +54,7 @@ pub fn key_bindings() -> Vec<KeyBinding> {
         KeyBinding::new(command!("q"), Quit, None),
         KeyBinding::new(command!(","), OpenSettings, None),
         KeyBinding::new(command!("n"), NewPage, None),
+        KeyBinding::new(command!("p"), QuickSwitch, None),
         KeyBinding::new(command!("w"), CloseWindow, None),
         KeyBinding::new(command!("\\"), ToggleSidebar, None),
     ];
@@ -79,6 +82,7 @@ pub fn menus() -> Vec<Menu> {
             "File",
             vec![
                 MenuItem::action("New Page", NewPage),
+                MenuItem::action("Go to Page…", QuickSwitch),
                 MenuItem::separator(),
                 MenuItem::action("Close Window", CloseWindow),
             ],
