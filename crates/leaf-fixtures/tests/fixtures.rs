@@ -1,6 +1,11 @@
 //! The fixtures: their sizes, that a seed fixes their outline, that they are valid documents, and
 //! that they save and load like any workspace.
 
+#![allow(
+    clippy::unwrap_used,
+    reason = "the outline helpers panic on failure, as the tests do"
+)]
+
 use std::fmt::Write as _;
 use std::time::{Duration, Instant};
 
@@ -138,16 +143,16 @@ fn the_full_size_page_and_page_tree() {
     assert_eq!(page.len(), BIG_PAGE_BLOCKS);
     let tree = page_tree(2026, BIG_WORKSPACE_PAGES).unwrap();
     assert_eq!(tree.len(), BIG_WORKSPACE_PAGES);
-    let deepest = (0..)
-        .scan(tree.root_pages().unwrap(), |level, depth| {
-            let next: Vec<PageId> = level.iter().flat_map(|p| tree.children(*p).unwrap()).collect();
-            (!level.is_empty()).then(|| {
-                *level = next;
-                depth
-            })
-        })
-        .last()
-        .unwrap();
+    let mut level = tree.root_pages().unwrap();
+    let mut deepest = 0;
+    loop {
+        let next: Vec<PageId> = level.iter().flat_map(|p| tree.children(*p).unwrap()).collect();
+        if next.is_empty() {
+            break;
+        }
+        deepest += 1;
+        level = next;
+    }
     assert!((3..=6).contains(&deepest), "a tree a few levels deep: {deepest}");
     assert!(
         tree.root_pages().unwrap().len() > 100,
@@ -184,6 +189,10 @@ fn the_full_size_workspace_for_search() {
     let started = Instant::now();
     let fixture = big_workspace(2026, BIG_WORKSPACE_PAGES, BLOCKS_PER_PAGE).unwrap();
     assert_eq!(fixture.workspace.len(), BIG_WORKSPACE_PAGES);
-    assert_eq!(fixture.block_count(), 100_000, "the search budget's 5,000 pages and 100,000 blocks");
+    assert_eq!(
+        fixture.block_count(),
+        100_000,
+        "the search budget's 5,000 pages and 100,000 blocks"
+    );
     eprintln!("built in {:?}", started.elapsed());
 }

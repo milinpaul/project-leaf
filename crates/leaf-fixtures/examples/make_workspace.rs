@@ -17,7 +17,10 @@ fn main() -> ExitCode {
         .and_then(|fixture| save_to_folder(&folder, &fixture).map(|_| fixture.block_count()));
     match made {
         Ok(blocks) => {
-            println!("{}: {BIG_WORKSPACE_PAGES} pages, {blocks} blocks (seed {seed})", folder.display());
+            println!(
+                "{}: {BIG_WORKSPACE_PAGES} pages, {blocks} blocks (seed {seed})",
+                folder.display()
+            );
             ExitCode::SUCCESS
         }
         Err(err) => {

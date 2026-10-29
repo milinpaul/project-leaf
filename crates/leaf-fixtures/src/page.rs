@@ -121,7 +121,7 @@ impl Writer<'_> {
 /// The kind and text of block number `index`: a heading opens a section every 25 to 40 blocks,
 /// and the rest is mostly paragraphs and lists.
 fn pick_block(rng: &mut Rng, index: usize) -> (BlockKind, String) {
-    if index % 32 == 0 || rng.chance(2) {
+    if index.is_multiple_of(32) || rng.chance(2) {
         let level = u8::try_from(rng.between(1, 3)).unwrap_or(2);
         let count = rng.between(2, 6);
         return (BlockKind::Heading { level }, words(rng, count));
