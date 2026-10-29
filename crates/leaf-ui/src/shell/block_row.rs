@@ -1,14 +1,14 @@
 //! One block row of the page: indentation, list marker or checkbox, then the text, drawn with its
 //! formatting, selection and caret (E07-S02, E07-S03). An image row is a picture frame with its
-//! caption below as editable text (E05-S07); drawing the picture itself is E07-S08.
+//! caption below as editable text (E05-S07); the picture itself is drawn by `image_row` (E07-S08).
 
 use gpui::{
-    AnyElement, Context, ElementId, FontWeight, InteractiveElement as _, IntoElement, ParentElement, Pixels,
-    SharedString, Styled, Window, div, px,
+    AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, Pixels, SharedString, Styled,
+    Window, div, px,
 };
 use gpui_component::checkbox::Checkbox;
-use gpui_component::{ActiveTheme as _, Icon, h_flex, v_flex};
-use gpui_kit_assets::IconName;
+use gpui_component::{ActiveTheme as _, h_flex, v_flex};
+use leaf_core::AssetId;
 use leaf_editor::{BlockRow, BlockStyle};
 
 use super::rich_text::Look;
@@ -17,9 +17,6 @@ use crate::theme;
 
 /// Indent per nesting level; also how far right a drag must go to nest one level deeper.
 pub(super) const INDENT_PX: f32 = 24.0;
-
-/// The height of an image's frame until the picture itself is drawn (E07-S08).
-const IMAGE_FRAME_HEIGHT: f32 = 120.0;
 
 impl Shell {
     pub(super) fn render_row(
@@ -36,8 +33,8 @@ impl Shell {
             .gap_2()
             .pl(indent)
             .pt(space_above);
-        if let BlockStyle::Image { alt } = &row.style {
-            return self.render_image_row(row, alt, window, cx);
+        if let BlockStyle::Image { asset, width, .. } = &row.style {
+            return self.render_image_row(row, *asset, *width, window, cx);
         }
         if row.text.is_none() {
             let placeholder = match &row.style {
@@ -69,34 +66,19 @@ impl Shell {
         }
     }
 
-    /// An image: a frame where the picture will be drawn (E07-S08), then the caption, which takes the
-    /// caret like any text.
+    /// An image: the picture, then the caption, which takes the caret like any text.
     fn render_image_row(
         &mut self,
         row: &BlockRow,
-        alt: &str,
+        asset: AssetId,
+        width: Option<f64>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let id = row.id;
         let muted = cx.theme().muted_foreground;
-        let label = if alt.is_empty() {
-            "Image".to_owned()
-        } else {
-            alt.to_owned()
-        };
-        let frame = h_flex()
-            .id(ElementId::from(SharedString::from(format!("image-{id}"))))
-            .debug_selector(move || format!("image-{id}"))
-            .h(px(IMAGE_FRAME_HEIGHT))
-            .w_full()
-            .justify_center()
-            .gap_2()
-            .rounded_md()
-            .bg(cx.theme().muted)
-            .text_color(muted)
-            .child(Icon::new(IconName::Image).text_color(muted))
-            .child(label);
+        let indent = indent_of(row);
+        let picture = self.render_picture(id, asset, width, f32::from(indent), window, cx);
         let caption_look = Look {
             size: Some(px(14.0)),
             line_height: px(22.0),
@@ -109,7 +91,7 @@ impl Shell {
             .w_full()
             .gap_1()
             .pl(indent_of(row))
-            .child(frame)
+            .child(picture)
             .child(div().w_full().text_color(muted).child(caption))
             .into_any_element()
     }

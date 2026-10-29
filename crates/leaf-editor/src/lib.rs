@@ -39,7 +39,7 @@ pub use cover::{BuiltinCover, PageCover};
 pub use drag::{BlockDrop, RowBox};
 pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
-pub use image::{PasteKind, paste_kind};
+pub use image::{MIN_IMAGE_WIDTH, PasteKind, image_display_size, paste_kind, resized_image_width};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use page_editor::{Backspace, Caret, PageEditor};

@@ -195,7 +195,11 @@ fn every_kind_has_a_style() {
             BlockStyle::Code {
                 language: "rust".into()
             },
-            BlockStyle::Image { alt: "A leaf".into() },
+            BlockStyle::Image {
+                asset,
+                width: None,
+                alt: "A leaf".into()
+            },
             BlockStyle::Divider,
         ]
     );

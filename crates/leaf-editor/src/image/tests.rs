@@ -4,7 +4,7 @@
 use leaf_core::{AssetId, BlockId};
 use leaf_model::{BlockKind, Caret, PageCommand, PageDoc, PageOutcome};
 
-use super::{PasteKind, paste_kind};
+use super::{MIN_IMAGE_WIDTH, PasteKind, image_display_size, paste_kind, resized_image_width};
 use crate::{Key, KeyOutcome, PageEditor};
 
 fn page(blocks: &[(BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
@@ -205,4 +205,105 @@ fn a_paste_prefers_leaf_blocks_then_text_then_a_picture() {
     );
     assert_eq!(paste_kind(false, Some("x"), false), PasteKind::Text);
     assert_eq!(paste_kind(false, None, false), PasteKind::Nothing);
+}
+
+// ---- Size and resizing (E07-S08) ----
+
+#[test]
+fn a_picture_draws_at_its_natural_size_until_it_needs_to_fit_the_column() {
+    assert_eq!(image_display_size(None, (400.0, 200.0), 640.0), (400.0, 200.0));
+    assert_eq!(
+        image_display_size(None, (1600.0, 900.0), 640.0),
+        (640.0, 360.0),
+        "shrunk, same shape"
+    );
+}
+
+#[test]
+fn a_resized_picture_draws_at_its_stored_width_shrinking_only_to_fit() {
+    assert_eq!(
+        image_display_size(Some(300.0), (1600.0, 800.0), 640.0),
+        (300.0, 150.0)
+    );
+    assert_eq!(
+        image_display_size(Some(900.0), (1600.0, 800.0), 640.0),
+        (640.0, 320.0),
+        "a narrow window shrinks it; the stored width stays for a wider one"
+    );
+}
+
+#[test]
+fn a_picture_with_no_size_draws_nothing() {
+    assert_eq!(image_display_size(None, (0.0, 10.0), 640.0), (0.0, 0.0));
+    assert_eq!(image_display_size(Some(200.0), (10.0, 0.0), 640.0), (0.0, 0.0));
+}
+
+#[test]
+fn dragging_the_handle_follows_the_pointer_within_limits_in_whole_pixels() {
+    assert_eq!(resized_image_width(300.0, 45.4, 640.0), 345.0);
+    assert_eq!(
+        resized_image_width(300.0, -1000.0, 640.0),
+        MIN_IMAGE_WIDTH,
+        "never smaller than the minimum"
+    );
+    assert_eq!(
+        resized_image_width(300.0, 1000.0, 640.0),
+        640.0,
+        "never wider than the column"
+    );
+    assert_eq!(
+        resized_image_width(40.0, 0.0, 30.0),
+        30.0,
+        "a column narrower than the minimum wins"
+    );
+}
+
+#[test]
+fn setting_the_width_is_one_undo_step_and_unchanged_widths_record_nothing() {
+    let (mut editor, ids) = page(&[(image(), "Caption"), para("Text")]);
+    editor.set_image_width(ids[0], Some(320.0)).unwrap();
+    assert_eq!(
+        editor.doc().kind(ids[0]).unwrap(),
+        BlockKind::Image {
+            asset: picture(),
+            width: Some(320.0),
+            alt: String::new()
+        }
+    );
+    let before = editor.doc().to_bytes().unwrap();
+    editor.set_image_width(ids[0], Some(320.0)).unwrap();
+    assert_eq!(
+        editor.doc().to_bytes().unwrap(),
+        before,
+        "the same width records nothing"
+    );
+    editor.set_image_width(ids[1], Some(10.0)).unwrap();
+    assert_eq!(
+        editor.doc().kind(ids[1]).unwrap(),
+        BlockKind::Paragraph,
+        "not an image: left alone"
+    );
+
+    assert!(editor.undo().unwrap());
+    assert_eq!(
+        editor.doc().kind(ids[0]).unwrap(),
+        image(),
+        "back to its natural size"
+    );
+    assert!(!editor.undo().unwrap(), "that was the only step");
+}
+
+#[test]
+fn the_view_carries_the_picture_and_its_width() {
+    let (mut editor, ids) = page(&[(image(), "")]);
+    editor.set_image_width(ids[0], Some(250.0)).unwrap();
+    let row = editor.rows().unwrap().remove(0);
+    assert_eq!(
+        row.style,
+        crate::BlockStyle::Image {
+            asset: picture(),
+            width: Some(250.0),
+            alt: String::new()
+        }
+    );
 }

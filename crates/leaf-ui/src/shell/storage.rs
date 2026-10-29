@@ -83,6 +83,11 @@ impl Storage {
         self.folder.import_asset(bytes, now_ms()).map(|asset| asset.id)
     }
 
+    /// Where the picture `id` is kept, for drawing it.
+    pub(super) fn asset_path(&self, id: AssetId) -> std::path::PathBuf {
+        self.folder.asset_path(id)
+    }
+
     /// Copies the image file at `path` into the workspace's `assets/` folder and returns its id.
     pub(super) fn import_image_file(&mut self, path: &std::path::Path) -> Result<AssetId, StoreError> {
         self.folder

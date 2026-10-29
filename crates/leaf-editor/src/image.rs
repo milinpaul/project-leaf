@@ -1,12 +1,13 @@
-//! Image blocks: where a new picture goes, and what a paste from another app brings in (E05-S07).
+//! Image blocks: where a new picture goes, what a paste from another app brings in (E05-S07), and how
+//! big a picture is drawn and resized (E07-S08).
 //!
 //! The editor never touches files. The UI shows the file picker or reads the clipboard, stores the
 //! picture in the workspace's asset store and hands over its [`AssetId`]; the editor decides where
 //! the block goes. A picture asked for from the slash menu goes where the `/image` was typed, even if
 //! the caret moved while the picker was open, because that place is kept as an anchor.
 
-use leaf_core::AssetId;
-use leaf_model::{Anchor, BlockKind, Caret, PageCommand};
+use leaf_core::{AssetId, BlockId};
+use leaf_model::{Anchor, BlockKind, BlockProp, Caret, PageCommand};
 
 use crate::page_editor::insert_after;
 use crate::{EditorError, PageEditor};
@@ -48,7 +49,56 @@ pub fn paste_kind(has_fragment: bool, text: Option<&str>, has_image: bool) -> Pa
     }
 }
 
+/// The narrowest an image can be resized to, in logical pixels: still recognisable, still grabbable.
+pub const MIN_IMAGE_WIDTH: f32 = 64.0;
+
+/// How big to draw a picture whose natural size is `natural` (width, height, in pixels): the width the
+/// owner resized it to, else its natural width, never wider than `available` (the page's column at
+/// the image's indent), and the height that keeps its shape. A picture with no size draws nothing.
+#[must_use]
+pub fn image_display_size(stored: Option<f64>, natural: (f32, f32), available: f32) -> (f32, f32) {
+    let (natural_width, natural_height) = natural;
+    if natural_width <= 0.0 || natural_height <= 0.0 {
+        return (0.0, 0.0);
+    }
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "widths are a few thousand pixels at most"
+    )]
+    let wanted = stored.map_or(natural_width, |width| width as f32);
+    let width = wanted.min(available).max(1.0);
+    (width, width * natural_height / natural_width)
+}
+
+/// The width while dragging an image's resize handle: the width when the drag began plus how far the
+/// pointer moved, kept between [`MIN_IMAGE_WIDTH`] and `available`, in whole pixels.
+#[must_use]
+pub fn resized_image_width(start: f32, moved: f32, available: f32) -> f32 {
+    let widest = available.max(1.0);
+    (start + moved).clamp(MIN_IMAGE_WIDTH.min(widest), widest).round()
+}
+
 impl PageEditor {
+    /// Sets an image's width (`None` for its natural size), as one undo step. Does nothing for other
+    /// blocks or when the width is unchanged, so a click on the handle without a drag records nothing.
+    pub fn set_image_width(&mut self, id: BlockId, width: Option<f64>) -> Result<(), EditorError> {
+        let BlockKind::Image { width: current, .. } = self.doc.kind(id)? else {
+            return Ok(());
+        };
+        if current == width {
+            return Ok(());
+        }
+        self.begin()?;
+        self.doc.as_separate_step(|doc| {
+            doc.apply(PageCommand::SetProp {
+                id,
+                prop: BlockProp::ImageWidth(width),
+            })
+        })?;
+        self.finish()?;
+        Ok(())
+    }
+
     /// Remembers that a picture was asked for at `caret`, so the UI shows the file picker.
     pub(crate) fn request_image(&mut self, caret: Caret) -> Result<(), EditorError> {
         self.image = Some(ImageRequest {

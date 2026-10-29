@@ -88,8 +88,8 @@ fn a_pasted_screenshot_is_stored_and_becomes_an_image_with_an_editable_caption(c
         "the picture is in assets/"
     );
     // `debug_bounds` takes a `'static` selector; leaking one short string in a test is fine.
-    let frame: &'static str = Box::leak(format!("image-{}", first_block(&shell, cx)).into_boxed_str());
-    assert!(cx.debug_bounds(frame).is_some(), "the image frame is drawn");
+    let picture: &'static str = Box::leak(format!("picture-{}", first_block(&shell, cx)).into_boxed_str());
+    assert!(cx.debug_bounds(picture).is_some(), "the picture is drawn");
 
     cx.simulate_input("Harbour at dusk");
     assert_eq!(
