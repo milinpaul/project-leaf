@@ -134,11 +134,11 @@
     {
       "id": "E11",
       "title": "Search",
-      "phase": 1,
-      "status": "backlog",
-      "goal": "Phase 1. Full-text search across pages with tantivy.",
+      "phase": 0,
+      "status": "todo",
+      "goal": "Phase 0 (moved from Phase 1 on 2026-10-29). Full-text search across every page in the workspace, opened with a\nNotion-style `Cmd/Ctrl+K` search bar. SQLite FTS5 in a disposable `search/index.sqlite`; see ADR 0018.",
       "path": "backlog/epics/E11.md",
-      "story_count": 0,
+      "story_count": 7,
       "done_count": 0,
       "progress": 0.0
     },
@@ -2606,7 +2606,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Cmd/Ctrl+P fuzzy page search by title.",
+      "context": "Cmd/Ctrl+P fuzzy page search by title. Build it so full-text search (E11-S05) can extend the same box,\nwhich `Cmd/Ctrl+K` will also open (ADR 0018).",
       "acceptance": [
         {
           "text": "Fuzzy match with path breadcrumbs",
@@ -3170,7 +3170,7 @@
       "context": "Edit link URL and open in browser.",
       "acceptance": [
         {
-          "text": "Cmd/Ctrl+K opens popover",
+          "text": "Cmd/Ctrl+K with text selected opens popover (without a selection it opens search, E11-S05)",
           "done": false
         },
         {
@@ -3449,7 +3449,8 @@
       "depends_on": [
         "E07-S03",
         "E06-S05",
-        "E05-S06"
+        "E05-S06",
+        "E11-S06"
       ],
       "labels": [
         "qa"
@@ -3477,7 +3478,8 @@
       "waiting_on": [
         "E07-S03",
         "E06-S05",
-        "E05-S06"
+        "E05-S06",
+        "E11-S06"
       ],
       "ready": false,
       "progress": 0.0
@@ -3517,6 +3519,380 @@
       "prs": [],
       "waiting_on": [
         "E08-S03"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S01",
+      "title": "Search index file",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E03-S02"
+      ],
+      "labels": [
+        "leaf-search"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "`leaf-search` opens its own disposable index file, `search/index.sqlite`, with an FTS5 table (ADR 0018). It never\ntouches `workspace.sqlite`.",
+      "acceptance": [
+        {
+          "text": "Test proves FTS5 and the `unicode61 remove_diacritics` tokenizer work in our bundled SQLite on all three OSes",
+          "done": false
+        },
+        {
+          "text": "`SearchIndex::open(workspace_root)` creates `search/index.sqlite` with an FTS5 table (page, block, kind, text) and a title table",
+          "done": false
+        },
+        {
+          "text": "Index stores an index version; a missing, damaged or older-version file is deleted and recreated empty, and the caller is told a rebuild is needed",
+          "done": false
+        },
+        {
+          "text": "`index_page`, `remove_page` and `clear` write in one transaction each",
+          "done": false
+        },
+        {
+          "text": "`rusqlite` added to `leaf-search`; architecture test still passes; crate `//!` doc updated",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; coverage ≥ 90%",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S01.md",
+      "prs": [],
+      "waiting_on": [],
+      "ready": true,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S02",
+      "title": "Page text extraction",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P0",
+      "size": "S",
+      "depends_on": [
+        "E11-S01"
+      ],
+      "labels": [
+        "leaf-search",
+        "leaf-model"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "Turn a page into the rows the index stores: its title, and the plain text of each block (via `PageDoc::plain_text`).",
+      "acceptance": [
+        {
+          "text": "One row per block with text: page id, block id, block kind, plain text (no marks)",
+          "done": false
+        },
+        {
+          "text": "Title row from the workspace page meta; untitled pages index as \"Untitled\"",
+          "done": false
+        },
+        {
+          "text": "Pages in the trash produce no rows",
+          "done": false
+        },
+        {
+          "text": "Blocks of unknown kinds are indexed by their text if they have any, and nothing is changed (rule 5)",
+          "done": false
+        },
+        {
+          "text": "Dividers and images produce no rows; code blocks are indexed",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; coverage ≥ 90%",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S02.md",
+      "prs": [],
+      "waiting_on": [
+        "E11-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S03",
+      "title": "Search queries and ranking",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E11-S02"
+      ],
+      "labels": [
+        "leaf-search"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "Run a typed query against the index and return ranked, page-grouped results with excerpts.",
+      "acceptance": [
+        {
+          "text": "Each typed word matches as a prefix (\"pro\" finds \"project\"); matching ignores case and accents (\"cafe\" finds \"café\")",
+          "done": false
+        },
+        {
+          "text": "User input can never break the query: FTS5 syntax characters are escaped; `\"quoted words\"` match as a phrase",
+          "done": false
+        },
+        {
+          "text": "Ranking: BM25, title matches above body matches, ties broken by most recently edited page",
+          "done": false
+        },
+        {
+          "text": "Results grouped by page (best few blocks per page), capped at a sensible limit",
+          "done": false
+        },
+        {
+          "text": "Each hit carries an excerpt and the character ranges of matched words, for highlighting",
+          "done": false
+        },
+        {
+          "text": "Empty query returns nothing (the search bar shows recent pages instead)",
+          "done": false
+        },
+        {
+          "text": "Tests added (including proptest: arbitrary input never errors); `just check` passes; coverage ≥ 90%",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S03.md",
+      "prs": [],
+      "waiting_on": [
+        "E11-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S04",
+      "title": "Keep the index in step with saved pages",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E11-S02"
+      ],
+      "labels": [
+        "leaf-search",
+        "leaf-app"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "After autosave writes a page, re-index that page off the UI thread. Rebuild the whole index in the background when\n`SearchIndex::open` reports one is needed. The index only reads documents.",
+      "acceptance": [
+        {
+          "text": "A page edit is searchable within 1 s of the edit, without blocking typing",
+          "done": false
+        },
+        {
+          "text": "Renaming, trashing, restoring and permanently deleting a page update the index",
+          "done": false
+        },
+        {
+          "text": "Full rebuild runs in the background on open; title search keeps working meanwhile",
+          "done": false
+        },
+        {
+          "text": "Deleting `search/` while the app is closed loses nothing: it is rebuilt on next open",
+          "done": false
+        },
+        {
+          "text": "An index error is logged and triggers a rebuild; it never blocks editing or saving",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; ARCHITECTURE.md data-flow section updated",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S04.md",
+      "prs": [],
+      "waiting_on": [
+        "E11-S02"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S05",
+      "title": "Search bar model",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E11-S03",
+        "E06-S04"
+      ],
+      "labels": [
+        "leaf-editor"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "Extend the quick switcher (E06-S04) into one search bar with title and full-text results. All behaviour lives here\nas plain, testable Rust; `leaf-ui` only draws it. Results come in as plain data, so `leaf-editor` does not depend\non `leaf-search` and stays wasm-ok.",
+      "acceptance": [
+        {
+          "text": "State: query, results grouped by page, selected row; empty query shows recently opened pages",
+          "done": false
+        },
+        {
+          "text": "Typing waits for a short pause before searching, using a clock-free policy like `Autosave` (time passed in)",
+          "done": false
+        },
+        {
+          "text": "Results from an older query never replace those of a newer one",
+          "done": false
+        },
+        {
+          "text": "Up/Down move the selection (wrapping), Enter opens the selected page at its block, Escape closes",
+          "done": false
+        },
+        {
+          "text": "`Cmd/Ctrl+K` decision: with a text selection it is the link action, otherwise it opens search; `Cmd/Ctrl+P` always opens search",
+          "done": false
+        },
+        {
+          "text": "View model snapshots with `insta`",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; coverage ≥ 90%",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S05.md",
+      "prs": [],
+      "waiting_on": [
+        "E11-S03",
+        "E06-S04"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S06",
+      "title": "Search bar UI",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P0",
+      "size": "M",
+      "depends_on": [
+        "E11-S04",
+        "E11-S05",
+        "E07-S01"
+      ],
+      "labels": [
+        "leaf-ui",
+        "leaf-app"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "The `Cmd/Ctrl+K` search bar: a centred popup over the editor, like Notion.",
+      "acceptance": [
+        {
+          "text": "`Cmd/Ctrl+K` (no text selected) and `Cmd/Ctrl+P` open it from anywhere in the window",
+          "done": false
+        },
+        {
+          "text": "Each result shows page icon, title, breadcrumb path and an excerpt with matched words highlighted",
+          "done": false
+        },
+        {
+          "text": "Choosing a result opens the page, scrolls to the matching block and briefly highlights it",
+          "done": false
+        },
+        {
+          "text": "Fully usable by keyboard; light and dark themes; \"No results\" state",
+          "done": false
+        },
+        {
+          "text": "Screenshot added to `docs/screenshots/`",
+          "done": false
+        },
+        {
+          "text": "Tests added; `just check` passes; full CI matrix run before merge (UI change)",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S06.md",
+      "prs": [],
+      "waiting_on": [
+        "E11-S04",
+        "E11-S05",
+        "E07-S01"
+      ],
+      "ready": false,
+      "progress": 0.0
+    },
+    {
+      "id": "E11-S07",
+      "title": "Search performance",
+      "epic": "E11",
+      "status": "todo",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [
+        "E11-S04",
+        "E11-S03",
+        "E08-S01"
+      ],
+      "labels": [
+        "leaf-search",
+        "testing",
+        "perf"
+      ],
+      "assignee": null,
+      "updated": "2026-10-29",
+      "context": "Prove search meets its budget on a large workspace.",
+      "acceptance": [
+        {
+          "text": "Fixture: 5,000 pages, ~100k blocks (reuse E08-S01 fixtures)",
+          "done": false
+        },
+        {
+          "text": "Query results in < 50 ms (p95) on that fixture",
+          "done": false
+        },
+        {
+          "text": "Re-indexing one edited page takes < 20 ms",
+          "done": false
+        },
+        {
+          "text": "Full rebuild time measured and recorded in the story Log",
+          "done": false
+        },
+        {
+          "text": "Benchmarks added; `just check` passes",
+          "done": false
+        }
+      ],
+      "plan": "_Filled in by the agent during `planning`._",
+      "path": "backlog/stories/E11-S07.md",
+      "prs": [],
+      "waiting_on": [
+        "E11-S04",
+        "E11-S03",
+        "E08-S01"
       ],
       "ready": false,
       "progress": 0.0

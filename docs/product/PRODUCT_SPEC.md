@@ -38,12 +38,20 @@ macOS, Windows, Linux (desktop). Mobile and web are later phases.
 - Page has a title and an optional emoji icon.
 - Quick switcher (`Cmd/Ctrl+P`): fuzzy search by page title.
 
+### Search
+- **Search bar** (`Cmd/Ctrl+K` with no text selected, or `Cmd/Ctrl+P`): one box that finds pages by title and
+  by the text inside them, across the whole workspace (Notion-style).
+- Results are grouped by page, title matches first, each with a short excerpt and the matched words highlighted.
+- Choosing a result opens the page and scrolls to the matching block.
+- Pages in the trash are not searched. Matching ignores case and accents; partial words match as you type.
+- Works fully offline; the search index is rebuilt from the pages if it is lost.
+
 ### Block editor
 - **Block types:** paragraph, heading 1–3, bulleted list, numbered list, to-do, quote, code (language label; syntax highlighting optional), divider, image (local file).
 - **Inline marks:** bold, italic, strikethrough, inline code, link.
 - **Slash menu** (`/`): insert or convert blocks, fuzzy filtered.
 - **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`.
-- **Inline shortcuts:** `Cmd/Ctrl+B/I/E`, `Cmd/Ctrl+Shift+S` (strike), `Cmd/Ctrl+K` (link).
+- **Inline shortcuts:** `Cmd/Ctrl+B/I/E`, `Cmd/Ctrl+Shift+S` (strike), `Cmd/Ctrl+K` with text selected (link; without a selection it opens search).
 - **Block handle** (⋮⋮) on hover: drag to reorder or nest; menu with Turn into, Duplicate, Delete.
 - **Nesting:** `Tab` / `Shift+Tab` indent and outdent.
 - **Selection:** within a block and across blocks (Shift+arrows, mouse drag). `Cmd/Ctrl+A` once selects the block's text, twice selects all blocks.
@@ -52,7 +60,7 @@ macOS, Windows, Linux (desktop). Mobile and web are later phases.
 - **Autosave.** No save button. Nothing lost on crash or force-quit.
 
 ### Out of scope for Phase 0
-Databases, page links/backlinks, full-text search, sync, export, templates, comments, mobile.
+Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ---
 
@@ -64,7 +72,6 @@ Databases, page links/backlinks, full-text search, sync, export, templates, comm
   - Each row is a page (open it to write content).
   - Database as a full page and inline inside a page.
 - `[[page links]]` with autocomplete; backlinks panel.
-- Full-text search across all pages.
 - Markdown export (page and workspace) and import.
 - Trash: restore and permanent delete.
 
@@ -116,5 +123,6 @@ Numbered list numbers are computed when rendering, never stored.
 - [ ] Undo/redo restores exact state for every command, including block moves.
 - [ ] Kill the process mid-typing; reopening shows all text older than 1 s.
 - [ ] Page tree with 500 pages, 6 levels deep, stays smooth.
+- [ ] `Cmd/Ctrl+K` finds a word inside any page of a 5,000-page workspace and jumps to it; results appear in < 50 ms.
 - [ ] Performance budgets met on a mid-range laptop.
 - [ ] CI green on macOS, Windows, Linux with ≥ 90% coverage on core crates.

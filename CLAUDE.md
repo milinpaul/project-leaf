@@ -6,7 +6,7 @@ Read these before any work: `docs/product/PRODUCT_SPEC.md` (what and why), `docs
 
 ## Current phase
 
-**Phase 0: page editor.** Do not build databases, links, search, sync or export unless the task says so.
+**Phase 0: page editor.** Do not build databases, links, sync or export unless the task says so.
 
 ## Backlog (always on)
 
