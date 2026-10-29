@@ -1,7 +1,9 @@
 //! Tests for mark toggles and links (E04-S07).
 
 use leaf_core::BlockId;
-use leaf_model::{BlockKind, Caret, History, Mark, MarkKind, Marks, PageCommand, PageDoc, PageOutcome};
+use leaf_model::{
+    BlockKind, Caret, History, Mark, MarkKind, Marks, PageCommand, PageDoc, PageOutcome, SavedSelection,
+};
 
 use crate::{Motion, PageEditor, TextRange};
 
@@ -135,8 +137,12 @@ fn a_toggle_across_blocks_is_one_undo_step_and_skips_code() {
     assert_eq!(
         editor.doc.undo().unwrap(),
         History::Done {
-            caret: Some(at(ids[2], 2))
-        }
+            selection: Some(SavedSelection {
+                tail: Some(at(ids[0], 2)),
+                ..SavedSelection::at(at(ids[2], 2))
+            })
+        },
+        "the whole selection comes back"
     );
     assert_eq!(runs(&editor, ids[0]), vec![plain("first")]);
     assert_eq!(

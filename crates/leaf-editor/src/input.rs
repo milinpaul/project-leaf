@@ -44,8 +44,8 @@ impl PageEditor {
         if text.is_empty() || self.blocks.is_some() || self.doc.plain_text(caret.block)?.is_none() {
             return Ok(Some(caret));
         }
-        // Undo puts the caret back where it was before the typing.
-        self.doc.set_caret(Some(caret));
+        // Undo puts the selection back as it was before the typing.
+        self.begin()?;
         let (start, end) = self.text_selection()?.unwrap_or((caret, caret));
         let pending = self.pending_at(caret).unwrap_or_default();
         let typed = text.chars().count();
@@ -74,6 +74,7 @@ impl PageEditor {
         if !pending.is_empty() {
             self.carry_pending(pending, after);
         }
+        self.finish()?;
         Ok(Some(after))
     }
 

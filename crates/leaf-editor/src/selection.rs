@@ -173,7 +173,7 @@ impl PageEditor {
         self.caret()
     }
 
-    fn set_tail(&mut self, tail: Caret) -> Result<(), EditorError> {
+    pub(crate) fn set_tail(&mut self, tail: Caret) -> Result<(), EditorError> {
         let anchor = self.doc.anchor(tail)?;
         if let Some(tracked) = &mut self.caret {
             tracked.tail = Some(anchor);
