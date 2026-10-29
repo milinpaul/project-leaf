@@ -59,6 +59,18 @@ pub enum PageCommand {
         /// Unicode scalar positions, `start..end`, within the text; empty changes nothing.
         range: Range<usize>,
     },
+    /// Replaces the characters in `range` with `text` in one step (typing over a selection, or
+    /// committing an input-method composition), so it undoes as one. The new text takes the formatting
+    /// of the first character it replaces, as in word processors; with an empty range it is
+    /// [`PageCommand::InsertText`].
+    ReplaceText {
+        /// Block whose text to edit; it must have text.
+        id: BlockId,
+        /// Unicode scalar positions, `start..end`, within the text.
+        range: Range<usize>,
+        /// The replacement; empty just deletes.
+        text: String,
+    },
     /// Applies a mark to the characters in `range`. Code blocks take no marks.
     SetMark {
         /// Block whose text to format.

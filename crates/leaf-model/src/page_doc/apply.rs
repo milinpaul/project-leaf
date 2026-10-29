@@ -29,6 +29,7 @@ impl PageDoc {
             } => self.move_blocks(&ids, new_parent, index)?,
             PageCommand::InsertText { id, pos, text } => self.insert_text(id, pos, &text)?,
             PageCommand::DeleteText { id, range } => self.delete_text(id, range)?,
+            PageCommand::ReplaceText { id, range, text } => self.replace_text(id, range, &text)?,
             PageCommand::SetMark { id, range, mark } => self.set_mark(id, range, &mark)?,
             PageCommand::RemoveMark { id, range, kind } => self.remove_mark(id, range, kind)?,
             PageCommand::SetBlockKind { id, kind } => self.set_kind(id, &kind)?,

@@ -62,8 +62,8 @@
       "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
       "path": "backlog/epics/E04.md",
       "story_count": 8,
-      "done_count": 2,
-      "progress": 0.25
+      "done_count": 4,
+      "progress": 0.5
     },
     {
       "id": "E05",
@@ -1883,7 +1883,7 @@
       "id": "E04-S03",
       "title": "Vertical navigation via layout trait",
       "epic": "E04",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1893,7 +1893,7 @@
         "leaf-editor"
       ],
       "assignee": "claude",
-      "updated": "2026-10-28",
+      "updated": "2026-10-29",
       "context": "Up/down across lines and blocks using a `LineLayout` trait the UI implements.",
       "acceptance": [
         {
@@ -1929,7 +1929,7 @@
       "id": "E04-S04",
       "title": "Text input and IME composition",
       "epic": "E04",
-      "status": "todo",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1938,33 +1938,38 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
-      "updated": "2026-10-28",
+      "assignee": "claude",
+      "updated": "2026-10-29",
       "context": "Model for typed text, composition (preedit) and commit.",
       "acceptance": [
         {
           "text": "Insert replaces selection",
-          "done": false
+          "done": true
         },
         {
           "text": "Preedit does not create undo steps until committed",
-          "done": false
+          "done": true
         },
         {
           "text": "Empty preedit never deletes selection",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **Model:** new `PageCommand::ReplaceText { id, range, text }`, one commit, so typing over a selection or committing\n  a composition is one undo step. The new text takes the formatting of the first replaced character (typing over a\n  bold word stays bold, over link text keeps the link). Added to the invariants/undo proptest.\n- **Editor (`leaf-editor/src/input.rs`):** a minimal one-block selection (`select`, `selection`, kept as a second\n  anchor so it follows edits; any caret move drops it; E04-S06 grows it across blocks); `insert_text` replaces the\n  selection or inserts at the caret; preedit (`set_preedit`, `commit_preedit`, `cancel_preedit`, `preedit()` for\n  drawing) kept only in the editor, never written to the page, so it makes no undo steps or saves. An empty preedit\n  ends the composition and leaves the selection alone.\n- **Tests:** model replace tests (positions, one undo step, formatting, errors); editor tests for typing, replacing,\n  selections following edits, compositions writing nothing, empty compositions, and a draft following remote edits.\n  Docs: ADR 0017, BLOCK_MODEL command list, ARCHITECTURE.",
       "path": "backlog/stories/E04-S04.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/32",
+          "number": 32
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E04-S05",
@@ -2005,10 +2010,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S05.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S04"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2048,10 +2051,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S06.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S03"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2970,8 +2971,7 @@
       "path": "backlog/stories/E07-S02.md",
       "prs": [],
       "waiting_on": [
-        "E07-S01",
-        "E04-S03"
+        "E07-S01"
       ],
       "ready": false,
       "progress": 0.0
@@ -3016,8 +3016,7 @@
       "path": "backlog/stories/E07-S03.md",
       "prs": [],
       "waiting_on": [
-        "E07-S02",
-        "E04-S04"
+        "E07-S02"
       ],
       "ready": false,
       "progress": 0.0

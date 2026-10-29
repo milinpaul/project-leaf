@@ -1,9 +1,10 @@
-//! Editing a block's text: inserting, deleting, and applying or removing marks.
+//! Editing a block's text: inserting, deleting, replacing, and applying or removing marks.
 //!
 //! Positions are Unicode scalar values (what Loro calls "unicode" positions), not bytes and not
 //! grapheme clusters. Checking every range against the text length first means a bad position is a
 //! clear error rather than a partial edit.
 
+use std::collections::HashMap;
 use std::ops::Range;
 
 use leaf_core::BlockId;
@@ -36,6 +37,38 @@ impl PageDoc {
         check_range(&container, range.clone())?;
         if !range.is_empty() {
             container.delete(range.start, range.len())?;
+        }
+        Ok(PageOutcome::Changed)
+    }
+
+    pub(super) fn replace_text(
+        &mut self,
+        id: BlockId,
+        range: Range<usize>,
+        text: &str,
+    ) -> Result<PageOutcome, ModelError> {
+        let container = self.editable_text(id)?;
+        check_range(&container, range.clone())?;
+        if range.is_empty() {
+            return self.insert_text(id, range.start, text);
+        }
+        let wanted = attributes_at(&container, range.start)?;
+        container.delete(range.start, range.len())?;
+        if text.is_empty() {
+            return Ok(PageOutcome::Changed);
+        }
+        container.insert(range.start, text)?;
+        let added = range.start..range.start + text.chars().count();
+        // The expand rules gave the new text the marks of its neighbours; make them the replaced
+        // text's instead. Unknown marks from newer versions are carried over too.
+        let got = attributes_at(&container, range.start)?;
+        for (key, value) in &wanted {
+            if got.get(key) != Some(value) {
+                container.mark(added.clone(), key, value.clone())?;
+            }
+        }
+        for key in got.keys().filter(|key| !wanted.contains_key(*key)) {
+            container.unmark(added.clone(), key)?;
         }
         Ok(PageOutcome::Changed)
     }
@@ -125,6 +158,21 @@ fn mark_values(
         .collect())
 }
 
+/// The marks on the character at `pos`, as stored (absent and null both mean "not set").
+fn attributes_at(text: &LoroText, pos: usize) -> Result<HashMap<String, LoroValue>, ModelError> {
+    Ok(text
+        .slice_delta(pos, pos + 1, PosType::Unicode)?
+        .into_iter()
+        .find_map(|delta| match delta {
+            TextDelta::Insert { attributes, .. } => attributes,
+            _ => None,
+        })
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|(_, value)| !matches!(value, LoroValue::Null))
+        .collect())
+}
+
 /// Fails unless `range` is well-formed and within the text.
 fn check_range(text: &LoroText, range: Range<usize>) -> Result<(), ModelError> {
     let len = text.len_unicode();
@@ -137,5 +185,7 @@ fn check_range(text: &LoroText, range: Range<usize>) -> Result<(), ModelError> {
     Ok(())
 }
 
+#[cfg(test)]
+mod replace_tests;
 #[cfg(test)]
 mod tests;
