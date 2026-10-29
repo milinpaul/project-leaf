@@ -43,6 +43,9 @@ impl PageDoc {
             PageCommand::Outdent { ids } => self.outdent(&ids)?,
         };
         self.doc.commit();
+        if self.doc.oplog_vv() != before {
+            self.after_commit();
+        }
         if outcome == PageOutcome::Changed && self.doc.oplog_vv() == before {
             return Ok(PageOutcome::Unchanged);
         }
