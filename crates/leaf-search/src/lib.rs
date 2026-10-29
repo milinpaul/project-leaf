@@ -1,4 +1,4 @@
-//! Full-text search across a Leaf workspace. Phase 1; empty until then.
+//! Full-text search across a Leaf workspace (SQLite FTS5, ADR 0019). Empty until epic E11 lands.
 //!
 //! The search index is disposable: it can always be rebuilt from the documents, so it never
 //! holds data that exists nowhere else. Keeping it separate means the heavy indexing library

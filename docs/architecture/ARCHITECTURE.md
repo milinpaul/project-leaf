@@ -29,7 +29,7 @@ the screen stays thin.
                  ┌───────────────────────┴──────────────────────┐
                  │  leaf-store    SQLite file on disk           │
                  └──────────────────────────────────────────────┘
-  leaf-core: IDs and error types shared by all.   Phase 1: leaf-export (markdown), leaf-search (search).
+  leaf-core: IDs and error types shared by all.   Also: leaf-search (search index). Phase 1: leaf-export.
 ```
 
 ## The crates
@@ -41,7 +41,7 @@ the screen stays thin.
 | `leaf-editor` | All editing behaviour: what Enter, Backspace, Tab, paste, the slash menu do. Turns input into commands and documents into view models. | Draw anything, or change documents except through commands. |
 | `leaf-store` | Saves and loads documents in a SQLite file; autosave and crash recovery. | Know about the screen. |
 | `leaf-export` | Markdown import/export (Phase 1). | Touch files or the screen. |
-| `leaf-search` | Full-text search index (Phase 1). | Hold data that exists nowhere else. |
+| `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR 0019). | Hold data that exists nowhere else. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. | Contain editing logic. |
 | `leaf-app` | The program itself: starts up, opens windows, connects the crates. | Contain logic that a testable crate could hold. |
 
