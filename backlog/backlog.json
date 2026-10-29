@@ -3636,7 +3636,7 @@
       "id": "E11-S02",
       "title": "Page text extraction",
       "epic": "E11",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -3677,7 +3677,12 @@
       ],
       "plan": "- **API:** `leaf_search::page_text(workspace, page, doc) -> Result<Option<PageText>, SearchError>` in a new\n  `extract.rs`. `None` when `Workspace::is_in_trash` (covers pages hidden by a trashed parent). Title from\n  `PageMeta`, blank → \"Untitled\". Blocks walked depth-first in document order via `root_blocks`/`children`;\n  a row for every block whose `plain_text` has non-blank text, `kind` = `BlockKind::type_name()`.\n- **Unknown kinds:** `plain_text` reads the text container whatever the kind, so an unknown block that carries\n  text is indexed and nothing is written. Read-only, so rule 5 holds.\n- **Images:** the story said \"no rows\", but an image's text is its caption, which the owner typed and would\n  expect to find. Captions are indexed; criterion updated.\n- **Errors:** `SearchError::Model` wraps `ModelError`. Adds `leaf-model` (already a core dep) to `leaf-search`;\n  `loro` as a dev-dependency only, to write an unknown block in a test the way other crates' tests do.\n- **Tests:** `tests/extract.rs` covering each criterion; coverage ≥ 90%.",
       "path": "backlog/stories/E11-S02.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/38",
+          "number": 38
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
