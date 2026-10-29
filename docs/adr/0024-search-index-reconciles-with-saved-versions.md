@@ -1,4 +1,4 @@
-# 0023. The search index reconciles with saved versions on a background thread
+# 0024. The search index reconciles with saved versions on a background thread
 
 - **Status:** Accepted
 - **Type:** Architecture

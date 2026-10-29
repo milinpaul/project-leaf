@@ -166,15 +166,17 @@ Phase 0).
 ## Undo / redo
 
 - One Loro `UndoManager` per open page doc, plus one for the workspace doc.
-- Page: `PageDoc::undo`/`redo` return `History::Done { caret }`. The editor calls `set_caret` before each command,
-  undo and redo; each step stores that caret (as `BlockId` + position, not a Loro cursor, since `TreeID`s change on
-  undo) and gives it back when popped. Merged steps keep the first step's caret.
+- Page: each step remembers the editor's selection (`SavedSelection`: caret, the other end of selected text, selected
+  blocks) as it was **before** the change and right **after** it. The editor calls `set_selection` before each action
+  and `record_after` after it; `PageDoc::undo` returns the "before", `redo` the "after", in `History::Done { selection }`.
+  Loro's step value holds a step number; the selections live in a table in `PageDoc`, by `BlockId` + position, since
+  `TreeID`s change on undo. Merged steps keep the first "before" and the last "after" (ADR 0023).
 - Workspace: `Workspace::undo`/`redo`. The manager is created after loading, so saved history is not undoable;
   after each undo/redo the `PageId → TreeID` index is rebuilt (ADR 0006).
 - Each command commits once, so it is one undo step. Continuous typing is grouped with the manager's merge interval (~500 ms).
 - A key that needs several commands (Enter over a selection: delete, then split; leaving a code block: trim, then add
   a paragraph) wraps them in `PageDoc::as_one_step`, a Loro undo group, so it is still one undo step (ADR 0020).
-- Cursor and selection are stored with each undo step and restored on undo/redo.
+- `PageEditor::undo`/`redo` restore the whole selection, not just the caret.
 
 ## Invariants (checked in tests after every command)
 

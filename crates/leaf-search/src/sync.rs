@@ -2,7 +2,7 @@
 //!
 //! Instead of the editor reporting each change, the indexer compares what is saved (each page's
 //! [`PageVersion`], the workspace's titles and trash) with what it indexed, and fixes the
-//! difference (ADR 0023). That one comparison handles edits, renames, trash, restore and permanent
+//! difference (ADR 0024). That one comparison handles edits, renames, trash, restore and permanent
 //! delete alike, and also edits saved just before a crash, which nobody got to report.
 
 use std::collections::HashMap;

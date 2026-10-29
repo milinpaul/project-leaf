@@ -10,7 +10,7 @@
 //! page, read-only, so indexing can never change or lose anything in a document.
 //!
 //! - [`SearchWorker`] keeps the index current on its own thread: after each save it compares what is
-//!   saved with what it indexed ([`Syncer`], ADR 0023) and re-reads only what changed, through a
+//!   saved with what it indexed ([`Syncer`], ADR 0024) and re-reads only what changed, through a
 //!   [`PageSource`] the app supplies.
 //! - [`Searcher`] searches it, on a separate read-only connection: every typed word as a prefix,
 //!   ignoring case and accents, title matches first, with highlighted excerpts ([`PageHit`]).

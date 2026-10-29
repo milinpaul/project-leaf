@@ -19,7 +19,7 @@ pub struct PageText {
 /// Which save of a page the indexed rows came from, as `leaf_store::SavedVersion` reports it.
 ///
 /// Stored with the rows, so the index can tell which pages changed since it last read them
-/// without the editor reporting anything (ADR 0023).
+/// without the editor reporting anything (ADR 0024).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct PageVersion {
     /// When the page was last saved, in Unix milliseconds: ties in ranking go to the newer page.

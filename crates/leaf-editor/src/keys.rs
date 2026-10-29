@@ -48,6 +48,12 @@ impl PageEditor {
     /// Handles a structural key at the caret and selection. With whole blocks selected, Backspace and
     /// Delete remove them, Tab and Shift+Tab nest them, and other keys do nothing.
     pub fn press(&mut self, key: Key) -> Result<KeyOutcome, EditorError> {
+        let outcome = self.handle(key)?;
+        self.finish()?;
+        Ok(outcome)
+    }
+
+    fn handle(&mut self, key: Key) -> Result<KeyOutcome, EditorError> {
         if let Some(Selection::Blocks(blocks)) = self.selection()? {
             return self.block_key(key, &blocks);
         }
@@ -55,8 +61,8 @@ impl PageEditor {
             return Ok(KeyOutcome::Nothing);
         };
         let span = self.text_selection()?;
-        // Undo puts the caret back here.
-        self.doc.set_caret(Some(caret));
+        // Undo puts the selection back as it is now.
+        self.begin()?;
         let outcome = match (key, span) {
             (Key::Enter, Some((start, end))) if start.block != end.block => self.enter_over(start, end)?,
             (Key::Enter | Key::ModEnter, _) => {
@@ -99,8 +105,7 @@ impl PageEditor {
         let Some(row) = self.view()?.iter().position(|row| ids.contains(&row.id)) else {
             return Ok(None);
         };
-        let before = self.caret()?;
-        self.doc.set_caret(before);
+        self.begin()?;
         self.doc.as_one_step(|doc| -> Result<(), EditorError> {
             doc.apply(PageCommand::DeleteBlocks { ids: ids.to_vec() })?;
             if doc.root_blocks().is_empty() {
@@ -108,10 +113,12 @@ impl PageEditor {
             }
             Ok(())
         })?;
-        match nearest_above(self.view()?, row) {
-            Some(caret) => self.set_caret(caret).map(Some),
-            None => Ok(None),
-        }
+        let caret = match nearest_above(self.view()?, row) {
+            Some(caret) => Some(self.set_caret(caret)?),
+            None => None,
+        };
+        self.finish()?;
+        Ok(caret)
     }
 
     fn block_key(&mut self, key: Key, blocks: &[BlockId]) -> Result<KeyOutcome, EditorError> {
@@ -121,8 +128,7 @@ impl PageEditor {
                 None => KeyOutcome::Nothing,
             }),
             Key::Tab | Key::ShiftTab => {
-                let before = self.caret()?;
-                self.doc.set_caret(before);
+                self.begin()?;
                 self.nest(key, blocks.to_vec())?;
                 // Still selected, wherever they moved.
                 self.select_blocks(blocks)?;

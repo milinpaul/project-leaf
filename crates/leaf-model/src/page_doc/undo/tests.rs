@@ -1,11 +1,9 @@
 //! Tests for page undo and redo with caret metadata (E02-S08). States are compared as outlines
 //! (block IDs, nesting, kinds, formatted text), never by Loro `TreeID`s, which undo may change.
 
-use leaf_core::BlockId;
-use loro::LoroValue;
-
-use super::{Caret, History, caret_from_value, caret_to_value};
+use super::{Caret, History, SavedSelection};
 use crate::{BlockKind, BlockProp, Mark, MarkKind, PageCommand, PageDoc, PageOutcome, TextSpan};
+use leaf_core::BlockId;
 
 type Outline = Vec<(usize, BlockId, BlockKind, Option<Vec<TextSpan>>)>;
 
@@ -167,7 +165,7 @@ fn quick_typing_undoes_as_one_step_by_default() {
 }
 
 #[test]
-fn undo_and_redo_hand_back_the_caret_recorded_with_the_step() {
+fn undo_hands_back_the_selection_before_a_step_and_redo_the_one_after() {
     let mut page = fresh();
     let id = add(&mut page, None, BlockKind::Paragraph, "");
     let caret = |at| Caret { block: id, at };
@@ -186,12 +184,14 @@ fn undo_and_redo_hand_back_the_caret_recorded_with_the_step() {
         text: "cd".into(),
     })
     .unwrap();
+    page.record_after(Some(SavedSelection::at(caret(4))));
 
-    page.set_caret(Some(caret(4)));
+    // Where the caret is when undo is pressed doesn't matter.
+    page.set_caret(Some(caret(1)));
     assert_eq!(
         page.undo().unwrap(),
         History::Done {
-            caret: Some(caret(2))
+            selection: Some(SavedSelection::at(caret(2)))
         },
         "back to before the change"
     );
@@ -199,9 +199,9 @@ fn undo_and_redo_hand_back_the_caret_recorded_with_the_step() {
     assert_eq!(
         page.redo().unwrap(),
         History::Done {
-            caret: Some(caret(4))
+            selection: Some(SavedSelection::at(caret(4)))
         },
-        "back to before the undo"
+        "back to right after the change"
     );
 
     page.set_caret(None);
@@ -213,7 +213,7 @@ fn undo_and_redo_hand_back_the_caret_recorded_with_the_step() {
     .unwrap();
     assert_eq!(
         page.undo().unwrap(),
-        History::Done { caret: None },
+        History::Done { selection: None },
         "no caret recorded, none returned"
     );
 }
@@ -231,26 +231,6 @@ fn nothing_to_undo_or_redo_and_loaded_history_is_not_undoable() {
         "undo starts from the loaded state"
     );
     assert_eq!(loaded.len(), 1);
-}
-
-#[test]
-fn carets_survive_the_round_trip_through_loro_values() {
-    let caret = Caret {
-        block: BlockId::new(),
-        at: 7,
-    };
-    assert_eq!(caret_from_value(&caret_to_value(caret)), Some(caret));
-    assert_eq!(caret_from_value(&LoroValue::Null), None);
-    let bad = LoroValue::List(vec![LoroValue::String("nope".into()), LoroValue::I64(1)].into());
-    assert_eq!(caret_from_value(&bad), None);
-    let negative = LoroValue::List(
-        vec![
-            LoroValue::String(caret.block.to_string().into()),
-            LoroValue::I64(-1),
-        ]
-        .into(),
-    );
-    assert_eq!(caret_from_value(&negative), None);
 }
 
 #[test]
@@ -303,7 +283,7 @@ fn several_commands_as_one_step_undo_and_redo_together() {
     assert_eq!(
         page.undo().unwrap(),
         History::Done {
-            caret: Some(Caret { block: id, at: 5 })
+            selection: Some(SavedSelection::at(Caret { block: id, at: 5 }))
         }
     );
     assert_eq!(outline(&page), before, "both commands undone at once");
@@ -350,4 +330,110 @@ fn a_failing_step_still_ends_the_group() {
     .unwrap();
     page.undo().unwrap();
     assert_eq!(page.plain_text(id).unwrap().as_deref(), Some("abcd"));
+}
+
+#[test]
+fn a_whole_selection_survives_undo_redo_cycles_and_merged_steps() {
+    let mut page = fresh();
+    let a = add(&mut page, None, BlockKind::Paragraph, "hello");
+    let b = add(&mut page, None, BlockKind::Paragraph, "world");
+    let before = SavedSelection {
+        caret: Caret { block: b, at: 2 },
+        tail: Some(Caret { block: a, at: 1 }),
+        blocks: Vec::new(),
+    };
+    let after = SavedSelection::at(Caret { block: a, at: 2 });
+    page.set_selection(Some(before.clone()));
+    page.as_one_step(|page| {
+        page.apply(PageCommand::DeleteText { id: a, range: 1..5 })?;
+        page.apply(PageCommand::DeleteText { id: b, range: 0..2 })
+    })
+    .unwrap();
+    page.record_after(Some(after.clone()));
+    for _ in 0..3 {
+        assert_eq!(
+            page.undo().unwrap(),
+            History::Done {
+                selection: Some(before.clone())
+            }
+        );
+        assert_eq!(
+            page.redo().unwrap(),
+            History::Done {
+                selection: Some(after.clone())
+            }
+        );
+    }
+    assert_eq!(
+        History::Done {
+            selection: Some(after)
+        }
+        .caret(),
+        Some(Caret { block: a, at: 2 })
+    );
+    assert_eq!(History::Nothing.caret(), None);
+}
+
+#[test]
+fn typing_merged_into_one_step_keeps_the_first_before_and_the_last_after() {
+    let mut page = fresh();
+    let a = add(&mut page, None, BlockKind::Paragraph, "ab");
+    // A freshly loaded page has no history, so the typing below starts a step of its own.
+    let mut page = PageDoc::from_bytes(&page.to_bytes().unwrap()).unwrap();
+    page.set_undo_merge_interval(60_000);
+    for (i, ch) in ["x", "y"].into_iter().enumerate() {
+        page.set_caret(Some(Caret { block: a, at: 1 + i }));
+        page.apply(PageCommand::InsertText {
+            id: a,
+            pos: 1 + i,
+            text: ch.into(),
+        })
+        .unwrap();
+        page.record_after(Some(SavedSelection::at(Caret { block: a, at: 2 + i })));
+    }
+    assert_eq!(page.undo().unwrap().caret(), Some(Caret { block: a, at: 1 }));
+    assert_eq!(page.plain_text(a).unwrap().as_deref(), Some("ab"), "one step");
+    assert_eq!(page.redo().unwrap().caret(), Some(Caret { block: a, at: 3 }));
+}
+
+#[test]
+fn recording_after_with_no_steps_or_a_step_without_after_falls_back() {
+    let mut page = fresh();
+    page.record_after(Some(SavedSelection::at(Caret {
+        block: BlockId::new(),
+        at: 0,
+    })));
+    let id = add(&mut page, None, BlockKind::Paragraph, "");
+    page.set_caret(Some(Caret { block: id, at: 0 }));
+    page.apply(PageCommand::InsertText {
+        id,
+        pos: 0,
+        text: "a".into(),
+    })
+    .unwrap();
+    page.undo().unwrap();
+    assert_eq!(
+        page.redo().unwrap().caret(),
+        Some(Caret { block: id, at: 0 }),
+        "no 'after' recorded: redo uses the 'before'"
+    );
+}
+
+#[test]
+fn recording_after_an_action_that_changed_nothing_leaves_the_last_step_alone() {
+    let mut page = fresh();
+    let id = add(&mut page, None, BlockKind::Paragraph, "");
+    page.set_caret(Some(Caret { block: id, at: 0 }));
+    page.apply(PageCommand::InsertText {
+        id,
+        pos: 0,
+        text: "abc".into(),
+    })
+    .unwrap();
+    page.record_after(Some(SavedSelection::at(Caret { block: id, at: 3 })));
+    // A key that did nothing: the caret moved, the page didn't.
+    page.set_caret(Some(Caret { block: id, at: 0 }));
+    page.record_after(Some(SavedSelection::at(Caret { block: id, at: 0 })));
+    page.undo().unwrap();
+    assert_eq!(page.redo().unwrap().caret(), Some(Caret { block: id, at: 3 }));
 }

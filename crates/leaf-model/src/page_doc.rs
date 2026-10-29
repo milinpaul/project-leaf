@@ -290,7 +290,7 @@ mod invariants;
 pub use anchor::Anchor;
 pub use changes::Changes;
 pub use invariants::InvariantViolation;
-pub use undo::{Caret, History};
+pub use undo::{Caret, History, SavedSelection};
 
 mod kind_ops;
 mod nesting;
