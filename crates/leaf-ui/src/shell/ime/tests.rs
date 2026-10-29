@@ -100,7 +100,7 @@ fn typing_and_the_structural_keys_go_to_the_editor(cx: &mut TestAppContext) {
 fn shortcuts_format_and_select(cx: &mut TestAppContext) {
     let (shell, cx, ids) = open(cx, &["make bold"]);
     focus(&shell, cx, ids[0], 9);
-    cx.simulate_keystrokes("shift-left shift-left shift-left shift-left cmd-b");
+    cx.simulate_keystrokes("shift-left shift-left shift-left shift-left secondary-b");
     draw(cx);
     let spans = shell.update(cx, |shell, _| {
         shell.page().unwrap().doc().text(ids[0]).unwrap().unwrap()
@@ -108,7 +108,7 @@ fn shortcuts_format_and_select(cx: &mut TestAppContext) {
     assert_eq!(spans.len(), 2);
     assert!(spans[1].marks.bold && spans[1].text == "bold", "{spans:?}");
     // Cmd+B with just a caret formats what is typed next.
-    cx.simulate_keystrokes("right cmd-i");
+    cx.simulate_keystrokes("right secondary-i");
     cx.simulate_input("!");
     let spans = shell.update(cx, |shell, _| {
         shell.page().unwrap().doc().text(ids[0]).unwrap().unwrap()
@@ -116,7 +116,7 @@ fn shortcuts_format_and_select(cx: &mut TestAppContext) {
     let last = spans.last().unwrap();
     assert_eq!(last.text, "!");
     assert!(last.marks.italic);
-    cx.simulate_keystrokes("cmd-a");
+    cx.simulate_keystrokes("secondary-a");
     let selected = shell.update(cx, |shell, _| shell.page().unwrap().selection().unwrap());
     assert!(selected.is_some(), "Cmd+A selects the block's text");
 }
@@ -125,11 +125,11 @@ fn shortcuts_format_and_select(cx: &mut TestAppContext) {
 fn copy_and_paste_carry_formatting_through_the_clipboard(cx: &mut TestAppContext) {
     let (shell, cx, ids) = open(cx, &["one", ""]);
     focus(&shell, cx, ids[0], 3);
-    cx.simulate_keystrokes("cmd-a cmd-b cmd-c");
+    cx.simulate_keystrokes("secondary-a secondary-b secondary-c");
     let item = cx.read_from_clipboard().unwrap();
     assert_eq!(item.text().as_deref(), Some("**one**"), "Markdown for other apps");
     focus(&shell, cx, ids[1], 0);
-    cx.simulate_keystrokes("cmd-v");
+    cx.simulate_keystrokes("secondary-v");
     draw(cx);
     let spans = shell.update(cx, |shell, _| {
         shell.page().unwrap().doc().text(ids[1]).unwrap().unwrap()
@@ -141,7 +141,7 @@ fn copy_and_paste_carry_formatting_through_the_clipboard(cx: &mut TestAppContext
     );
     // Text from another app, on a new line: Markdown is read.
     cx.write_to_clipboard(gpui::ClipboardItem::new_string("- from elsewhere".into()));
-    cx.simulate_keystrokes("enter cmd-v");
+    cx.simulate_keystrokes("enter secondary-v");
     draw(cx);
     assert_eq!(
         texts(&shell, cx).last().map(String::as_str),
@@ -194,7 +194,7 @@ fn a_japanese_composition_writes_nothing_until_committed(cx: &mut TestAppContext
     assert_eq!(ime(&shell, cx, |s, w, cx| s.marked_text_range(w, cx)), None);
     // Undo takes the commit back. (The test's own setup is within the undo merge interval, so it may
     // go further back too; only the commit matters here.)
-    cx.simulate_keystrokes("cmd-z");
+    cx.simulate_keystrokes("secondary-z");
     draw(cx);
     assert!(!texts(&shell, cx).concat().contains('漢'));
 }

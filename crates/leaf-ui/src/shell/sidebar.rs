@@ -208,7 +208,7 @@ fn workspace_menu(menu: PopupMenu, focus: &FocusHandle, current: Option<&Path>, 
         .max_w(px(320.0))
         .label("Workspaces");
     for entry in recent.into_iter().filter(|entry| !entry.missing) {
-        let here = current == Some(entry.path.as_path());
+        let here = current.is_some_and(|current| same_folder(current, &entry.path));
         menu = menu.menu_with_check(entry.name, here, Box::new(OpenRecent { path: entry.path }));
     }
     menu.separator()
@@ -216,3 +216,14 @@ fn workspace_menu(menu: PopupMenu, focus: &FocusHandle, current: Option<&Path>, 
         .menu("Open workspace…", Box::new(OpenWorkspace))
         .menu("All workspaces…", Box::new(SwitchWorkspace))
 }
+
+/// Whether two paths name the same folder. The recent list holds resolved paths, while the open
+/// workspace keeps the path it was opened with (from the command line it may go through a link, as
+/// macOS's `/var` → `/private/var` does), so both are resolved before comparing.
+fn same_folder(a: &Path, b: &Path) -> bool {
+    let resolve = |path: &Path| std::fs::canonicalize(path).unwrap_or_else(|_| path.to_owned());
+    resolve(a) == resolve(b)
+}
+
+#[cfg(test)]
+mod tests;
