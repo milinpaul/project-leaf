@@ -123,7 +123,7 @@ matches first, matching blocks under each page), and Enter gives the page and bl
 When the bar says a search is due (a gpui timer at `next_deadline()`), the popup runs it on the background executor
 with a read-only `leaf_search::Searcher` on the workspace's index, and converts the results to `SearchHit`s. With no
 index yet, titles still match. Choosing a result calls `Shell::open_at`, which opens the page with the matching
-block at the top, the caret at its start and a tint that fades out (ADR 0045).
+block at the top, the caret at its start and a tint that fades out (ADR 0046).
 
 **Page header (E06-S05).** Above the title sits the page's emoji icon, or an "Add icon" button on hover
 (`leaf_ui::shell::header`). Clicking it opens `leaf_ui::icon_picker` in a popover over `leaf_editor::EmojiPicker`
