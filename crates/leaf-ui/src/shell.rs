@@ -36,6 +36,8 @@ pub struct Shell {
     tree: tree::TreeState,
     /// The page icon picker while it is open, and its events.
     icon_picker: Option<(Entity<crate::icon_picker::IconPickerPanel>, Subscription)>,
+    /// The cover picker while it is open, and the subscription to what is picked in it.
+    cover_picker: Option<(Entity<crate::cover_picker::CoverPickerPanel>, Subscription)>,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
     storage: Option<Storage>,
     /// Focus for the window itself, so menu actions and shortcuts reach the shell even when no text
@@ -88,6 +90,7 @@ impl Shell {
             menu_focus: cx.focus_handle(),
             tree: tree::TreeState::default(),
             icon_picker: None,
+            cover_picker: None,
             storage,
             focus,
             subscriptions,
@@ -216,6 +219,7 @@ impl Render for Shell {
 mod block_menu;
 mod block_row;
 mod blocks;
+mod cover;
 mod found;
 mod header;
 mod ime;

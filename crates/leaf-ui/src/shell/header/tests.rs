@@ -1,4 +1,4 @@
-//! The page header in a real window: adding an icon from the picker, changing it, removing it.
+//! The page header in a real window: adding, changing and removing the icon and the cover.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -86,4 +86,69 @@ fn random_picks_some_icon(cx: &mut TestAppContext) {
     click(cx, "add-icon");
     click(cx, "random-icon");
     assert!(icon(&shell, cx).is_some_and(|emoji| !emoji.is_empty()));
+}
+
+fn cover(shell: &Entity<Shell>, cx: &mut VisualTestContext) -> Option<leaf_editor::PageCover> {
+    shell.read_with(cx, |shell, _| shell.editor().selected_cover().unwrap())
+}
+
+fn cover_picker_open(shell: &Entity<Shell>, cx: &mut VisualTestContext) -> bool {
+    shell.read_with(cx, |shell, _| shell.cover_picker.is_some())
+}
+
+#[gpui::test]
+fn add_cover_opens_the_picker_and_a_thumbnail_sets_the_cover(cx: &mut TestAppContext) {
+    use leaf_editor::{BuiltinCover, PageCover};
+
+    let (shell, cx) = open_window(cx);
+    assert_eq!(cover(&shell, cx), None);
+    assert!(cx.debug_bounds("page-cover").is_none(), "no band without a cover");
+    click(cx, "add-cover");
+    assert!(cover_picker_open(&shell, cx));
+    click(cx, "cover-dawn");
+    assert_eq!(cover(&shell, cx), Some(PageCover::Builtin(BuiltinCover::Dawn)));
+    assert!(!cover_picker_open(&shell, cx), "picking closes the picker");
+
+    let band = cx.debug_bounds("page-cover").expect("the cover band is drawn");
+    let header = cx.debug_bounds("add-icon").expect("Add icon is still offered");
+    assert!(band.size.height >= gpui::px(200.0), "a tall band: {band:?}");
+    assert!(header.top() >= band.bottom(), "the header sits under the band");
+    assert!(
+        cx.debug_bounds("add-cover").is_none(),
+        "no Add cover once there is one"
+    );
+}
+
+#[gpui::test]
+fn the_icon_overlaps_the_cover_and_remove_takes_the_cover_away(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    click(cx, "add-icon");
+    click(cx, "emoji-😀");
+    click(cx, "add-cover");
+    click(cx, "cover-dawn");
+
+    let band = cx.debug_bounds("page-cover").unwrap();
+    let icon = cx.debug_bounds("page-icon").unwrap();
+    assert!(
+        icon.top() < band.bottom() && icon.bottom() > band.bottom(),
+        "the icon straddles the band's bottom edge: icon {icon:?}, band {band:?}"
+    );
+
+    click(cx, "remove-cover");
+    assert_eq!(cover(&shell, cx), None);
+    assert!(cx.debug_bounds("page-cover").is_none());
+}
+
+#[gpui::test]
+fn change_cover_reopens_the_picker_and_escape_closes_it(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    click(cx, "add-cover");
+    click(cx, "cover-dawn");
+
+    click(cx, "change-cover");
+    assert!(cover_picker_open(&shell, cx));
+    cx.simulate_keystrokes("escape");
+    redraw(cx);
+    assert!(!cover_picker_open(&shell, cx), "Esc closes the picker");
+    assert!(cover(&shell, cx).is_some(), "and changes nothing");
 }

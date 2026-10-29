@@ -1,4 +1,4 @@
-//! Tests for the page commands: create, rename and icon.
+//! Tests for the page commands: create, rename and icon. Covers are in `cover_tests`.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -7,9 +7,9 @@ use leaf_core::PageId;
 
 use crate::{ModelError, Outcome, Workspace, WorkspaceCommand};
 
-const T0: i64 = 1_700_000_000_000;
+pub(super) const T0: i64 = 1_700_000_000_000;
 
-fn create(ws: &mut Workspace, parent: Option<PageId>, index: usize, title: &str) -> PageId {
+pub(super) fn create(ws: &mut Workspace, parent: Option<PageId>, index: usize, title: &str) -> PageId {
     let command = WorkspaceCommand::CreatePage {
         parent,
         index,
@@ -37,7 +37,7 @@ fn icon(page: PageId, icon: Option<&str>) -> WorkspaceCommand {
 }
 
 /// Counts Loro commits: the local-update event fires once per commit that changed something.
-fn commit_counter(ws: &Workspace) -> (Arc<AtomicUsize>, loro::Subscription) {
+pub(super) fn commit_counter(ws: &Workspace) -> (Arc<AtomicUsize>, loro::Subscription) {
     let count = Arc::new(AtomicUsize::new(0));
     let seen = Arc::clone(&count);
     let subscription = ws.doc.subscribe_local_update(Box::new(move |_| {

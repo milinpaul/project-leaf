@@ -24,6 +24,10 @@ enum Step {
         page: usize,
         icon: Option<u8>,
     },
+    Cover {
+        page: usize,
+        cover: Option<u8>,
+    },
     Move {
         page: usize,
         parent: Option<usize>,
@@ -47,6 +51,7 @@ fn step() -> impl Strategy<Value = Step> {
         3 => (parent.clone(), 0..4_usize).prop_map(|(parent, index)| Step::Create { parent, index }),
         1 => (page.clone(), any::<u8>()).prop_map(|(page, title)| Step::Rename { page, title }),
         1 => (page.clone(), proptest::option::of(any::<u8>())).prop_map(|(page, icon)| Step::Icon { page, icon }),
+        1 => (page.clone(), proptest::option::of(0..4_u8)).prop_map(|(page, cover)| Step::Cover { page, cover }),
         2 => (page.clone(), parent, 0..4_usize).prop_map(|(page, parent, index)| Step::Move { page, parent, index }),
         1 => page.clone().prop_map(|page| Step::Trash { page }),
         1 => page.clone().prop_map(|page| Step::Restore { page }),
@@ -92,6 +97,10 @@ fn command(step: Step, pages: &[PageId]) -> Option<WorkspaceCommand> {
         Step::Icon { page, icon } => WorkspaceCommand::SetPageIcon {
             page: pick(page)?,
             icon: icon.map(|i| format!("i{i}")),
+        },
+        Step::Cover { page, cover } => WorkspaceCommand::SetPageCover {
+            page: pick(page)?,
+            cover: cover.map(|c| format!("builtin:c{c}")),
         },
         Step::Move { page, parent, index } => WorkspaceCommand::MovePage {
             page: pick(page)?,

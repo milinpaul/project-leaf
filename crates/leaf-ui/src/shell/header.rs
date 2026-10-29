@@ -1,5 +1,6 @@
-//! The open page's header: its emoji icon (or an "Add icon" button that shows on hover) above the title,
-//! which reads as the page's heading. Clicking the icon opens the icon picker in a popover under it.
+//! The open page's header: its emoji icon above the title, which reads as the page's heading, and the
+//! "Add icon" and "Add cover" buttons, which show on hover while the page has neither. Clicking the icon
+//! opens the icon picker in a popover under it. With a cover, the icon overlaps the cover's bottom edge.
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
@@ -9,7 +10,7 @@ use gpui::{
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::Input;
 use gpui_component::popover::Popover;
-use gpui_component::{ActiveTheme as _, Icon, Sizable as _, v_flex};
+use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 
 use super::{Shell, report};
@@ -20,13 +21,15 @@ use crate::theme;
 const ICON_SIZE: f32 = 56.0;
 
 impl Shell {
-    /// The icon (or "Add icon") and the title of the open page.
-    pub(super) fn render_page_header(&mut self, cx: &mut Context<Self>) -> AnyElement {
+    /// The icon, the "Add icon" and "Add cover" buttons, and the title of the open page. `on_cover` is
+    /// whether a cover is drawn above, which the icon then overlaps.
+    pub(super) fn render_page_header(&mut self, on_cover: bool, cx: &mut Context<Self>) -> AnyElement {
         let icon = self.editor.selected_icon().unwrap_or_else(|err| {
             report("could not read the page icon", err);
             None
         });
         let open = self.icon_picker.is_some();
+        let picking = open || self.cover_picker.is_some();
         let muted = cx.theme().muted_foreground;
         let trigger = match &icon {
             Some(emoji) => Button::new("page-icon")
@@ -69,21 +72,46 @@ impl Shell {
         if let Some((panel, _)) = &self.icon_picker {
             popover = popover.child(panel.clone());
         }
-        // Without an icon, "Add icon" stays out of the way until the pointer is over the header.
-        let hidden_until_hover = icon.is_none() && !open;
-        let icon_row = div()
-            .flex()
-            .min_h(px(28.0))
-            .when(hidden_until_hover, |row| {
+        let add_cover = (!on_cover).then(|| {
+            let trigger = Button::new("add-cover")
+                .debug_selector(|| "add-cover".into())
+                .ghost()
+                .small()
+                .text_color(muted)
+                .icon(Icon::new(IconName::ImagePlus))
+                .label("Add cover");
+            self.cover_popover(trigger, cx)
+        });
+        // The emoji sits on its own line; "Add icon" joins "Add cover" in a row of buttons.
+        let (big_icon, add_icon) = if icon.is_some() {
+            (Some(popover), None)
+        } else {
+            (None, Some(popover))
+        };
+        let has_buttons = add_icon.is_some() || add_cover.is_some();
+        // The buttons stay out of the way until the pointer is over the header.
+        let buttons = h_flex()
+            .gap_1()
+            .when(has_buttons, |row| row.min_h(px(28.0)))
+            .when(!picking, |row| {
                 row.opacity(0.0)
                     .group_hover("page-header", |style| style.opacity(1.0))
             })
-            .child(popover);
+            .children(add_icon)
+            .children(add_cover);
+        let big_icon = big_icon.map(|popover| {
+            div()
+                .flex()
+                // Pulled up so the emoji sits half on the cover's bottom edge.
+                .when(on_cover, |row| row.mt(px(-(ICON_SIZE / 2.0 + 8.0))))
+                .child(popover)
+        });
         v_flex()
             .id("page-header")
             .group("page-header")
             .gap_1()
-            .child(icon_row)
+            .children(big_icon)
+            .child(buttons)
             // The title reads as the page's heading, not a form field: no box, large and bold.
             .child(
                 Input::new(&self.title)
