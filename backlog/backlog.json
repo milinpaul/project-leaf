@@ -3577,7 +3577,7 @@
       "id": "E11-S01",
       "title": "Search index file",
       "epic": "E11",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -3586,41 +3586,41 @@
       "labels": [
         "leaf-search"
       ],
-      "assignee": null,
+      "assignee": "claude",
       "updated": "2026-10-29",
       "context": "`leaf-search` opens its own disposable index file, `search/index.sqlite`, with an FTS5 table (ADR 0019). It never\ntouches `workspace.sqlite`.",
       "acceptance": [
         {
           "text": "Test proves FTS5 and the `unicode61 remove_diacritics` tokenizer work in our bundled SQLite on all three OSes",
-          "done": false
+          "done": true
         },
         {
           "text": "`SearchIndex::open(workspace_root)` creates `search/index.sqlite` with an FTS5 table (page, block, kind, text) and a title table",
-          "done": false
+          "done": true
         },
         {
           "text": "Index stores an index version; a missing, damaged or older-version file is deleted and recreated empty, and the caller is told a rebuild is needed",
-          "done": false
+          "done": true
         },
         {
           "text": "`index_page`, `remove_page` and `clear` write in one transaction each",
-          "done": false
+          "done": true
         },
         {
           "text": "`rusqlite` added to `leaf-search`; architecture test still passes; crate `//!` doc updated",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; coverage ≥ 90%",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- **Branch:** `story/E11-S01`, stacked on `docs/phase0-search` (PR #34), which adds this story and ADR 0019.\n- **Files:** `crates/leaf-search/` gets `error.rs` (`SearchError`), `page_text.rs` (input rows: `PageText`,\n  `BlockText`, plain data so S02 fills them from the model), `schema.rs` (SQL + `INDEX_VERSION`), `index.rs`\n  (`SearchIndex`). Deps: `leaf-core`, `rusqlite`, `thiserror`, `tracing` (all already in the workspace).\n- **Schema:** `meta(key, value)`; FTS5 tables `blocks(page_id, block_id, kind UNINDEXED…, text)` and\n  `titles(page_id, title)`, tokenizer `unicode61 remove_diacritics 2`, prefix indexes for type-ahead.\n- **Open:** `SearchIndex::open(workspace_root)` → `(index, IndexState)`. `NeedsRebuild` when the file is new,\n  was recreated (unreadable/damaged, other version), or the last rebuild never finished (a `complete` flag\n  set by `mark_complete`, cleared by `clear`). Recreate = delete the file plus `-wal`/`-shm`, start empty.\n- **Writes:** `index_page` replaces a page's rows, `remove_page`, `clear`; one transaction each.\n- **Tests:** integration tests with a temp workspace folder: FTS5 + diacritics + prefix work, open states,\n  garbage/other-version files recreated, writes replace rows, transactions. Coverage ≥ 90%.\n- **Risk:** FTS5 must be in the bundled SQLite; the first test proves it (CI runs it on all three OSes).",
       "path": "backlog/stories/E11-S01.md",
       "prs": [],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E11-S02",
