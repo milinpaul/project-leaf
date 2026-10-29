@@ -1,4 +1,4 @@
-# 0018. Full-text search with SQLite FTS5 in a disposable file, opened with Ctrl+K
+# 0019. Full-text search with SQLite FTS5 in a disposable file, opened with Ctrl+K
 
 - **Status:** Accepted
 - **Type:** Architecture

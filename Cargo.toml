@@ -35,6 +35,10 @@ thiserror = "2"
 # Grapheme and word boundaries (UAX #29) for cursor movement; pure Rust, wasm-ok.
 unicode-segmentation = "1.12"
 anyhow = "1"
+# App icon: PNG decoding for the Linux (X11) window icon, and embedding the icon into leaf.exe on Windows.
+# Both are already in the tree through gpui.
+image = { version = "0.25", default-features = false, features = ["png"] }
+embed-resource = "3"
 tracing = "0.1"
 # dev
 proptest = "1"

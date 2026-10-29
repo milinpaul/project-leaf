@@ -8,7 +8,7 @@
 | UI | GPUI + `gpui-component` (Longbridge) | `gpui-component =0.8.1` with the gpui it pins (`gpui-pre =0.3.10`) and `gpui-pre-platform =0.3.10`; see [ADR 0002](../adr/0002-gpui-and-gpui-component.md). All GPUI usage stays inside `leaf-ui` and `leaf-app`. |
 | Document model | `loro` 1.x | `LoroTree` for page and block hierarchy, `LoroText` for rich text, `UndoManager` for undo. |
 | Persistence | SQLite via `rusqlite` (`bundled`) | Stores Loro snapshots + incremental updates, plus index tables. |
-| Search | SQLite FTS5 (in the bundled SQLite, via `rusqlite`) | Full-text index in its own disposable file, rebuilt from documents if lost ([ADR 0018](../adr/0018-sqlite-fts5-search.md)). |
+| Search | SQLite FTS5 (in the bundled SQLite, via `rusqlite`) | Full-text index in its own disposable file, rebuilt from documents if lost ([ADR 0019](../adr/0019-sqlite-fts5-search.md)). |
 | Markdown (Phase 1) | `comrak` | Import/export only. |
 | IDs | `uuid` v7 for pages and blocks (`PageId`, `BlockId`); BLAKE3 hash for assets (`AssetId`) | In `leaf-core`; see [BLOCK_MODEL.md](BLOCK_MODEL.md) and [ADR 0006](../adr/0006-stable-block-ids.md). On `wasm32-unknown-unknown`, `uuid`'s `js` feature supplies the clock and randomness. |
 | Hashing | `blake3` | Content-addressed image assets. |

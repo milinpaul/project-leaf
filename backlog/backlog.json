@@ -62,8 +62,8 @@
       "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
       "path": "backlog/epics/E04.md",
       "story_count": 8,
-      "done_count": 3,
-      "progress": 0.38
+      "done_count": 4,
+      "progress": 0.5
     },
     {
       "id": "E05",
@@ -105,7 +105,7 @@
       "status": "todo",
       "goal": "Benchmarks, large fixtures, Phase 0 acceptance and release builds.",
       "path": "backlog/epics/E08.md",
-      "story_count": 4,
+      "story_count": 5,
       "done_count": 0,
       "progress": 0.0
     },
@@ -136,7 +136,7 @@
       "title": "Search",
       "phase": 0,
       "status": "todo",
-      "goal": "Phase 0 (moved from Phase 1 on 2026-10-29). Full-text search across every page in the workspace, opened with a\nNotion-style `Cmd/Ctrl+K` search bar. SQLite FTS5 in a disposable `search/index.sqlite`; see ADR 0018.",
+      "goal": "Phase 0 (moved from Phase 1 on 2026-10-29). Full-text search across every page in the workspace, opened with a\nNotion-style `Cmd/Ctrl+K` search bar. SQLite FTS5 in a disposable `search/index.sqlite`; see ADR 0019.",
       "path": "backlog/epics/E11.md",
       "story_count": 7,
       "done_count": 0,
@@ -1929,7 +1929,7 @@
       "id": "E04-S04",
       "title": "Text input and IME composition",
       "epic": "E04",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1939,7 +1939,7 @@
         "leaf-editor"
       ],
       "assignee": "claude",
-      "updated": "2026-10-28",
+      "updated": "2026-10-29",
       "context": "Model for typed text, composition (preedit) and commit.",
       "acceptance": [
         {
@@ -2010,10 +2010,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S05.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S04"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2606,7 +2604,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-28",
-      "context": "Cmd/Ctrl+P fuzzy page search by title. Build it so full-text search (E11-S05) can extend the same box,\nwhich `Cmd/Ctrl+K` will also open (ADR 0018).",
+      "context": "Cmd/Ctrl+P fuzzy page search by title. Build it so full-text search (E11-S05) can extend the same box,\nwhich `Cmd/Ctrl+K` will also open (ADR 0019).",
       "acceptance": [
         {
           "text": "Fuzzy match with path breadcrumbs",
@@ -3018,8 +3016,7 @@
       "path": "backlog/stories/E07-S03.md",
       "prs": [],
       "waiting_on": [
-        "E07-S02",
-        "E04-S04"
+        "E07-S02"
       ],
       "ready": false,
       "progress": 0.0
@@ -3524,6 +3521,59 @@
       "progress": 0.0
     },
     {
+      "id": "E08-S05",
+      "title": "App icon",
+      "epic": "E08",
+      "status": "in_progress",
+      "priority": "P1",
+      "size": "S",
+      "depends_on": [],
+      "labels": [
+        "release",
+        "design"
+      ],
+      "assignee": "claude",
+      "updated": "2026-10-29",
+      "context": "Leaf shows a generic icon in the Dock, taskbar and app switcher. Give it its own modern icon, drawn once as an\nSVG and generated into every format each OS needs, and make the app show it when it runs. Installers are\nE08-S04; this story only adds the artwork and the per-OS wiring they will reuse.",
+      "acceptance": [
+        {
+          "text": "One master SVG; PNG sizes, macOS `.icns` and Windows `.ico` generated from it by one command",
+          "done": true
+        },
+        {
+          "text": "macOS: `just run` launches Leaf from a `Leaf.app` bundle, so the Dock and app switcher show the icon",
+          "done": true
+        },
+        {
+          "text": "Windows: the icon is built into `leaf.exe`",
+          "done": false
+        },
+        {
+          "text": "Linux: the window gets the icon (X11) and a `.desktop` entry ships alongside the PNG files",
+          "done": false
+        },
+        {
+          "text": "Verified with screenshots on macOS",
+          "done": true
+        },
+        {
+          "text": "Tests added; `just check` passes; docs updated if structure changed",
+          "done": true
+        }
+      ],
+      "plan": "- Draw `crates/leaf-app/resources/icon.svg` (macOS grid: 824 px tile on 1024 canvas). `scripts/icons.py` (`just icons`)\n  renders PNG files with `resvg`, `Leaf.icns` with `iconutil`, writes `leaf.ico` directly. Outputs are committed.\n- macOS: `scripts/macos_app.py` wraps the binary in `Leaf.app` (Info.plist + icns); `just run` launches from it.\n- Windows: `build.rs` + `leaf.rc` embed icon resource 1 via `embed-resource` (GPUI loads id 1).\n- Linux: `app_id` + X11 window icon (`image`, PNG only); `.desktop` entry named after the app ID.\n- Tests: `leaf-app/tests/icon.rs` checks sizes, ICO/ICNS structure and that the app ID matches everywhere.\n- Risk: Windows/Linux can't be run here; run the full CI matrix on the branch.",
+      "path": "backlog/stories/E08-S05.md",
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/33",
+          "number": 33
+        }
+      ],
+      "waiting_on": [],
+      "ready": false,
+      "progress": 0.67
+    },
+    {
       "id": "E11-S01",
       "title": "Search index file",
       "epic": "E11",
@@ -3538,7 +3588,7 @@
       ],
       "assignee": null,
       "updated": "2026-10-29",
-      "context": "`leaf-search` opens its own disposable index file, `search/index.sqlite`, with an FTS5 table (ADR 0018). It never\ntouches `workspace.sqlite`.",
+      "context": "`leaf-search` opens its own disposable index file, `search/index.sqlite`, with an FTS5 table (ADR 0019). It never\ntouches `workspace.sqlite`.",
       "acceptance": [
         {
           "text": "Test proves FTS5 and the `unicode61 remove_diacritics` tokenizer work in our bundled SQLite on all three OSes",

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Leaf
+GenericName=Notes
+Comment=Local-first pages and notes
+Exec=leaf %f
+Icon=io.github.milinpaul.Leaf
+Terminal=false
+Categories=Office;TextEditor;
+StartupWMClass=io.github.milinpaul.Leaf

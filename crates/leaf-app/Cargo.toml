@@ -11,5 +11,12 @@ gpui.workspace = true
 gpui-platform.workspace = true
 leaf-ui.workspace = true
 
+# The window icon is only set at runtime on X11; other systems take it from the bundle or the .exe.
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+image.workspace = true
+
+[build-dependencies]
+embed-resource.workspace = true
+
 [lints]
 workspace = true
