@@ -172,6 +172,8 @@ Phase 0).
 - Workspace: `Workspace::undo`/`redo`. The manager is created after loading, so saved history is not undoable;
   after each undo/redo the `PageId → TreeID` index is rebuilt (ADR 0006).
 - Each command commits once, so it is one undo step. Continuous typing is grouped with the manager's merge interval (~500 ms).
+- A key that needs several commands (Enter over a selection: delete, then split; leaving a code block: trim, then add
+  a paragraph) wraps them in `PageDoc::as_one_step`, a Loro undo group, so it is still one undo step (ADR 0020).
 - Cursor and selection are stored with each undo step and restored on undo/redo.
 
 ## Invariants (checked in tests after every command)
