@@ -136,6 +136,8 @@ impl Default for Merging {
 pub(super) fn manager(doc: &LoroDoc, slots: &Arc<CaretSlots>) -> UndoManager {
     let mut undo = UndoManager::new(doc);
     undo.set_merge_interval(DEFAULT_UNDO_MERGE_MS);
+    // Repairs after a merge put the page's rules back; they aren't the user's edits to undo.
+    undo.add_exclude_origin_prefix(super::repair::REPAIR_ORIGIN);
     let record = Arc::clone(slots);
     undo.set_on_push(Some(Box::new(move |_, _, _| {
         // After a pop, this push is the same step moving to the other stack.
