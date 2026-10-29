@@ -219,3 +219,39 @@ fn expanded_pages_are_remembered_in_the_workspace_folder(cx: &mut TestAppContext
     assert!(!shell.read_with(cx, |shell, _| shell.editor().is_expanded(b)));
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
+
+#[gpui::test]
+fn the_compose_and_plus_buttons_add_top_level_pages(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    let compose = centre(cx, "new-page");
+    cx.simulate_click(compose, Modifiers::none());
+    cx.simulate_input("From compose");
+    redraw(cx);
+    let plus = centre(cx, "add-page");
+    cx.simulate_click(plus, Modifiers::none());
+    cx.simulate_input("From plus");
+    redraw(cx);
+    assert_eq!(outline(&shell, cx), ["From compose", "From plus"]);
+}
+
+#[gpui::test]
+fn a_rows_plus_adds_a_page_inside_without_opening_the_row(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    add(&shell, None, "Parent", cx);
+    add(&shell, None, "Other", cx);
+    let plus = centre(cx, "add-inside-0");
+    cx.simulate_mouse_move(plus, None, Modifiers::none());
+    cx.simulate_click(plus, Modifiers::none());
+    cx.simulate_input("Child");
+    redraw(cx);
+    assert_eq!(outline(&shell, cx), ["Parent", "  Child", "Other"]);
+    let open = shell.read_with(cx, |shell, _| {
+        shell
+            .editor()
+            .workspace()
+            .page(shell.editor().selected().unwrap())
+            .unwrap()
+            .title
+    });
+    assert_eq!(open, "Child", "the new page is open with its title being typed");
+}

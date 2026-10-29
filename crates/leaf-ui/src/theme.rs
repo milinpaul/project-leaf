@@ -74,6 +74,8 @@ pub struct Palette {
     pub code: &'static str,
     /// A faint green wash, for gentle emphasis such as a focused row.
     pub accent_soft: &'static str,
+    /// Red for actions that remove things (Move to Trash), readable on the page and on a hovered row.
+    pub danger: &'static str,
 }
 
 /// Warm paper. The accent is the icon's #16A970, deepened so text in it meets WCAG AA on the page.
@@ -93,6 +95,7 @@ pub const LIGHT: Palette = Palette {
     on_accent: "#FFFFFF",
     code: "#F3F1EC",
     accent_soft: "#E3F4EB",
+    danger: "#C2362E",
 };
 
 /// Soft charcoal, warm like the light mode, with the green brightened to stay readable.
@@ -112,6 +115,7 @@ pub const DARK: Palette = Palette {
     on_accent: "#0F1D16",
     code: "#252422",
     accent_soft: "#1E3A2E",
+    danger: "#FF7B72",
 };
 
 /// The bundled font files, embedded so Leaf needs nothing installed. Inter is under the SIL Open Font
@@ -204,6 +208,7 @@ fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {
     colors.secondary_hover = c(p.active);
     colors.secondary_active = c(p.active);
     colors.secondary_foreground = c(p.text);
+    colors.danger = c(p.danger);
     colors.link = c(p.accent);
     colors.link_hover = c(p.accent_hover);
     colors.link_active = c(p.accent_hover);
