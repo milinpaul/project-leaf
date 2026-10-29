@@ -20,8 +20,8 @@ use leaf_store::Appearance;
 use crate::settings;
 use crate::theme::{self, DARK, LIGHT, Palette};
 
-/// Leaf's app icon, shown in About.
-static APP_ICON: LazyLock<Arc<Image>> = LazyLock::new(|| {
+/// Leaf's app icon, shown in About and on the welcome screen.
+pub(crate) static APP_ICON: LazyLock<Arc<Image>> = LazyLock::new(|| {
     let png = include_bytes!("../../leaf-app/resources/png/leaf-256.png");
     Arc::new(Image::from_bytes(ImageFormat::Png, png.to_vec()))
 });
