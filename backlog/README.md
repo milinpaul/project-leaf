@@ -1,13 +1,14 @@
 # Backlog
 
 The backlog is a set of markdown files. They are the **source of truth**.
-`backlog.json` is generated from them for the control panel. Never edit the JSON by hand.
+`backlog.json` and `board.html` are generated from them for the control panel. Both are local files, not
+committed (so parallel PRs never conflict on them). Never edit them by hand.
 
 ```
 backlog/
   epics/E01.md          one file per epic
   stories/E01-S03.md    one file per story
-  backlog.json          generated: `just backlog`
+  backlog.json          generated locally: `just backlog` (gitignored)
 ```
 
 One file per story means parallel agents never hit merge conflicts on a shared file.
@@ -66,5 +67,5 @@ Claude Code handles all of this itself:
 4. **Build:** set `status: in_progress`. Work on branch `story/<id>`. Tick acceptance boxes as they are met.
 5. **Review:** when every box is ticked and `just check` passes, open a PR titled `<id>: <title>`, link it with `python3 scripts/backlog.py pr <id> <url>` (fills `pr:`, shown on the board card), and set `status: review`.
 6. **Done:** only a human sets `status: done` after merging.
-7. Hooks regenerate `backlog.json` after edits; CI fails if it is out of sync.
+7. Hooks regenerate `backlog.json` after edits; CI fails if the backlog is invalid.
 8. Found new work? Create a new story file in the same format with `status: backlog` and mention it in the Log. Do not expand the current story's scope.

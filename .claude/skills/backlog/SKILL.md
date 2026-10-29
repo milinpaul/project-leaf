@@ -6,7 +6,7 @@ description: Manage the project backlog in backlog/ (epics and stories as markdo
 # Backlog housekeeping
 
 The owner never runs backlog commands. You do all housekeeping yourself, every time, without being asked.
-Markdown files in `backlog/` are the source of truth. `backlog/backlog.json` and `backlog/board.html` are generated; never edit them by hand.
+Markdown files in `backlog/` are the source of truth. `backlog/backlog.json` and `backlog/board.html` are generated locally and gitignored; never edit or commit them.
 
 Hooks already do two things automatically:
 - At session start, the backlog is regenerated and a status summary is added to your context.

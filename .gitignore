@@ -1,4 +1,6 @@
 /target
 /backlog/board.html
+/backlog/backlog.json
 .claude/settings.local.json
 .DS_Store
+__pycache__/
