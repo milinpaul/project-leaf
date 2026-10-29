@@ -73,11 +73,14 @@ impl PageDoc {
 
     /// Merges changes made by another copy of this page (exported with
     /// [`PageDoc::unsaved_changes`] or [`PageDoc::to_bytes`]). The changes are reported by
-    /// [`PageDoc::take_changes`] like local ones and are not undoable here. Phase 0 has no sync;
-    /// tests use this to check that carets and views follow other peers' edits.
+    /// [`PageDoc::take_changes`] like local ones and are not undoable here. Edits made at the same
+    /// time on both copies can merge into a page that breaks the invariants; it is then repaired the
+    /// same way on every copy (ADR 0044). Phase 0 has no sync; tests use this to check that carets
+    /// and views follow other peers' edits and that copies converge.
     pub fn import_changes(&mut self, bytes: &[u8]) -> Result<(), ModelError> {
         self.doc.import(bytes)?;
         self.index = super::BlockIndex::build(&self.tree)?;
+        self.repair()?;
         Ok(())
     }
 }
