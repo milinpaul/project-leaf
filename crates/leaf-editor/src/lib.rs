@@ -10,6 +10,7 @@
 
 mod block_actions;
 mod caret;
+mod clipboard;
 mod format;
 mod history;
 mod input;
@@ -23,6 +24,7 @@ mod workspace_editor;
 
 pub use block_actions::BlockAction;
 pub use caret::{LineLayout, Motion, Vertical};
+pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use page_editor::{Backspace, Caret, PageEditor};

@@ -15,7 +15,7 @@
 | Text segmentation | `unicode-segmentation` | Grapheme and word boundaries (UAX #29) for caret movement in `leaf-editor`; see [ADR 0015](../adr/0015-caret-anchors-and-grapheme-motion.md). |
 | Errors | `thiserror` (libraries), `anyhow` (app binary only) | |
 | Logging | `tracing`, `tracing-subscriber` | |
-| Serialization | `serde`, `serde_json` | |
+| Serialization | `serde`, `serde_json` | Settings and the clipboard fragment format (`leaf-editor`, ADR 0030). |
 | Later: server | `axum`, `tokio`, Postgres, S3 | Cloud sync and team workspaces. |
 
 ## Crate layout
