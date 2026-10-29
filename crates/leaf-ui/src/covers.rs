@@ -12,6 +12,11 @@ use leaf_editor::BuiltinCover;
 pub fn asset_path(cover: BuiltinCover) -> &'static str {
     match cover {
         BuiltinCover::Dawn => "covers/dawn.svg",
+        BuiltinCover::Forest => "covers/forest.svg",
+        BuiltinCover::Ocean => "covers/ocean.svg",
+        BuiltinCover::Paper => "covers/paper.svg",
+        BuiltinCover::Night => "covers/night.svg",
+        BuiltinCover::Travel => "covers/travel.svg",
     }
 }
 
@@ -19,6 +24,11 @@ pub fn asset_path(cover: BuiltinCover) -> &'static str {
 pub(crate) fn load(path: &str) -> Option<Cow<'static, [u8]>> {
     let bytes: &'static [u8] = match path {
         "covers/dawn.svg" => include_bytes!("../assets/covers/dawn.svg"),
+        "covers/forest.svg" => include_bytes!("../assets/covers/forest.svg"),
+        "covers/ocean.svg" => include_bytes!("../assets/covers/ocean.svg"),
+        "covers/paper.svg" => include_bytes!("../assets/covers/paper.svg"),
+        "covers/night.svg" => include_bytes!("../assets/covers/night.svg"),
+        "covers/travel.svg" => include_bytes!("../assets/covers/travel.svg"),
         _ => return None,
     };
     Some(Cow::Borrowed(bytes))

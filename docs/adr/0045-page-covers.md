@@ -8,7 +8,7 @@
 ## Context
 
 A page can have a cover: a full-width band above the title, with the page icon overlapping its bottom edge, as in
-Notion. Phase 0 ships a few built-in covers (E06-S12: Dawn, Forest, Ocean, Paper, Night); uploading your own image
+Notion. Phase 0 ships a few built-in covers (E06-S12: Dawn, Forest, Ocean, Paper, Night, Travel); uploading your own image
 may come later. Two questions: how a page stores its cover, and how the app draws one.
 
 ## Decision
@@ -23,9 +23,12 @@ may come later. Two questions: how a page stores its cover, and how the app draw
 - **Drawn from bundled SVG files** (`crates/leaf-ui/assets/covers/<name>.svg`, embedded in the binary) with GPUI's
   `img()`, which renders SVG in full colour, scaled to fill the band (`ObjectFit::Cover`). Files are 1200×300
   (4:1); GPUI rasterises SVG at twice its size, so a cover stays sharp across the band without an outsized texture.
-- **Layout:** the band is 220 px tall and spans the page area; the icon is pulled up half its size to sit on the
-  band's edge. "Add cover" sits beside "Add icon" and shows on hover; "Change cover" and "Remove" show on hover over
-  the band. The picker is a popover of thumbnails.
+- **Layout:** the band spans the page area and its height follows its width (3.5:1, kept between 160 and 320 px;
+  E06-S12), so a very wide window doesn't crop most of the picture away and a narrow one keeps its middle. An
+  invisible spacer sets the height, because an aspect ratio on the band itself would narrow it once the height hits
+  its limit. Designs keep their key elements in a central safe area, since the edges may be cropped. The icon is
+  pulled up half its size to sit on the band's edge. "Add cover" sits beside "Add icon" and shows on hover; "Change
+  cover" and "Remove" show on hover over the band. The picker is a popover of thumbnails.
 
 ## Alternatives considered
 

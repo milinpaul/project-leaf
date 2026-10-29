@@ -16,8 +16,12 @@ use super::{Shell, report};
 use crate::cover_picker::{CoverPicked, CoverPickerPanel};
 use crate::covers;
 
-/// The cover band's height, in pixels.
-pub(super) const COVER_HEIGHT: f32 = 220.0;
+/// The cover band's shape: its height follows its width, so a wide window crops less off the top and
+/// bottom of the picture and a narrow one less off its sides (covers are drawn at 4:1).
+const COVER_ASPECT: f32 = 3.5;
+
+/// The band's height limits, in pixels: never a sliver, never most of the screen.
+const COVER_HEIGHT: (f32, f32) = (160.0, 320.0);
 
 impl Shell {
     /// The open page's cover, if it has one. A read error is logged and shows as no cover.
@@ -66,9 +70,17 @@ impl Shell {
             .group("page-cover")
             .relative()
             .w_full()
-            .h(px(COVER_HEIGHT))
             .overflow_hidden()
-            .child(picture)
+            // An invisible spacer sets the height: an aspect ratio on the band itself would narrow it
+            // to keep its shape once the height hits its limit, instead of spanning the page.
+            .child(
+                div()
+                    .w_full()
+                    .aspect_ratio(COVER_ASPECT)
+                    .min_h(px(COVER_HEIGHT.0))
+                    .max_h(px(COVER_HEIGHT.1)),
+            )
+            .child(div().absolute().inset_0().child(picture))
             .child(controls)
             .into_any_element()
     }

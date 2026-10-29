@@ -111,7 +111,10 @@ fn add_cover_opens_the_picker_and_a_thumbnail_sets_the_cover(cx: &mut TestAppCon
 
     let band = cx.debug_bounds("page-cover").expect("the cover band is drawn");
     let header = cx.debug_bounds("add-icon").expect("Add icon is still offered");
-    assert!(band.size.height >= gpui::px(200.0), "a tall band: {band:?}");
+    assert!(
+        band.size.height >= gpui::px(160.0) && band.size.height <= gpui::px(320.0),
+        "the band's height stays within its limits: {band:?}"
+    );
     assert!(header.top() >= band.bottom(), "the header sits under the band");
     assert!(
         cx.debug_bounds("add-cover").is_none(),
@@ -151,4 +154,24 @@ fn change_cover_reopens_the_picker_and_escape_closes_it(cx: &mut TestAppContext)
     redraw(cx);
     assert!(!cover_picker_open(&shell, cx), "Esc closes the picker");
     assert!(cover(&shell, cx).is_some(), "and changes nothing");
+}
+
+#[gpui::test]
+fn the_picker_offers_every_built_in_cover(cx: &mut TestAppContext) {
+    use leaf_editor::{BuiltinCover, PageCover};
+
+    let (shell, cx) = open_window(cx);
+    click(cx, "add-cover");
+    for selector in [
+        "cover-dawn",
+        "cover-forest",
+        "cover-ocean",
+        "cover-paper",
+        "cover-night",
+        "cover-travel",
+    ] {
+        assert!(cx.debug_bounds(selector).is_some(), "{selector} is offered");
+    }
+    click(cx, "cover-night");
+    assert_eq!(cover(&shell, cx), Some(PageCover::Builtin(BuiltinCover::Night)));
 }

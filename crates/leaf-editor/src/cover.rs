@@ -14,17 +14,39 @@ const BUILTIN_PREFIX: &str = "builtin:";
 pub enum BuiltinCover {
     /// Warm peach-to-rose: writing and journals.
     Dawn,
+    /// Misty layers of pine trees: personal and nature.
+    Forest,
+    /// Calm water seen from above, with ripples: work and projects.
+    Ocean,
+    /// Soft off-white with a faint texture: notes and research.
+    Paper,
+    /// Indigo-to-violet with stars: ideas and creative work.
+    Night,
+    /// A map with a flight route, pins and a compass: trips and travel plans.
+    Travel,
 }
 
 impl BuiltinCover {
     /// Every built-in cover, in the order the picker shows them.
-    pub const ALL: &'static [Self] = &[Self::Dawn];
+    pub const ALL: &'static [Self] = &[
+        Self::Dawn,
+        Self::Forest,
+        Self::Ocean,
+        Self::Paper,
+        Self::Night,
+        Self::Travel,
+    ];
 
     /// The stable name, used in the stored value and the cover's file name.
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::Dawn => "dawn",
+            Self::Forest => "forest",
+            Self::Ocean => "ocean",
+            Self::Paper => "paper",
+            Self::Night => "night",
+            Self::Travel => "travel",
         }
     }
 
@@ -33,6 +55,11 @@ impl BuiltinCover {
     pub const fn label(self) -> &'static str {
         match self {
             Self::Dawn => "Dawn",
+            Self::Forest => "Forest",
+            Self::Ocean => "Ocean",
+            Self::Paper => "Paper",
+            Self::Night => "Night",
+            Self::Travel => "Travel",
         }
     }
 
@@ -76,16 +103,30 @@ mod tests {
                 "labels read as names"
             );
         }
+        let stored: Vec<String> = BuiltinCover::ALL.iter().map(|c| c.stored()).collect();
         assert_eq!(
-            BuiltinCover::Dawn.stored(),
-            "builtin:dawn",
-            "stored names never change"
+            stored,
+            [
+                "builtin:dawn",
+                "builtin:forest",
+                "builtin:ocean",
+                "builtin:paper",
+                "builtin:night",
+                "builtin:travel",
+            ],
+            "stored names never change once shipped"
         );
     }
 
     #[test]
     fn names_this_version_does_not_know_are_kept_as_they_are() {
-        for stored in ["builtin:aurora", "image:0123abcd", "dawn", "builtin:"] {
+        for stored in [
+            "builtin:aurora",
+            "builtin:Forest",
+            "image:0123abcd",
+            "dawn",
+            "builtin:",
+        ] {
             assert_eq!(PageCover::parse(stored), PageCover::Unknown(stored.to_owned()));
         }
     }
