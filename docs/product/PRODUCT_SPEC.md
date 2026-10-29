@@ -103,7 +103,7 @@ Mobile; P2P collaboration (maybe).
 | `Backspace` at start of non-paragraph block | Convert to paragraph (keep text). |
 | `Backspace` at start of paragraph | Merge text into previous text block; children move to previous block. If previous is a divider or image, select it instead. |
 | `Delete` at end of block | Merge next block into this one. |
-| `Tab` / `Shift+Tab` | Indent under previous sibling / outdent to parent's level. |
+| `Tab` / `Shift+Tab` | Indent under previous sibling / outdent to parent's level. Inside a code block: indent / outdent the caret's or selected lines by four spaces instead. |
 | Arrow up/down at first/last visual line | Move to previous/next block, keeping horizontal position. |
 | Paste multi-line text | Each line becomes a paragraph; markdown syntax is converted. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |

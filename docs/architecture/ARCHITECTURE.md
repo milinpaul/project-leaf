@@ -42,7 +42,7 @@ the screen stays thin.
 | `leaf-store` | Saves and loads documents in a SQLite file; autosave and crash recovery. | Know about the screen. |
 | `leaf-export` | Markdown import/export (Phase 1). | Touch files or the screen. |
 | `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR 0019). | Hold data that exists nowhere else. |
-| `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR 0054). Test support only. | Be used by the app. |
+| `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR 0055). Test support only. | Be used by the app. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. Holds Leaf's look (colours, bundled fonts, sizes) in one `theme` module (ADR 0027). | Contain editing logic. |
 | `leaf-app` | The program itself: starts up, opens windows, connects the crates. | Contain logic that a testable crate could hold. |
 
@@ -79,7 +79,9 @@ the answer's depth, the dragged rows fade, and holding near the page's top or bo
 selected text opens the **link popover** (E07-S07, ADR 0052, `shell/link_popover.rs`): an address field under the
 selection, filled in when the selection is already one link, with Open and Remove; Enter saves through
 `PageEditor::set_link`. `Cmd/Ctrl+click` on a link opens it; `leaf_editor::openable_url` decides which addresses the
-system may open. The **slash menu** is drawn as a popover
+system may open. A **code block** shows its language at the top right on hover; a click opens a searchable list
+(E07-S09, ADR 0054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
+and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR 0043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
 The page keeps the keyboard, so typing filters and the editor's keys drive it; the mouse highlights and picks. `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);

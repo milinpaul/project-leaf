@@ -70,6 +70,10 @@ impl PageEditor {
         let span = self.text_selection()?;
         // Undo puts the selection back as it is now.
         self.begin()?;
+        // Inside a code block, Tab and Shift+Tab indent lines instead of nesting the block.
+        if let Some(outcome) = self.code_tab(key, caret, span)? {
+            return Ok(outcome);
+        }
         let outcome = match (key, span) {
             (Key::Enter, Some((start, end))) if start.block != end.block => self.enter_over(start, end)?,
             (Key::Enter | Key::ModEnter, _) => {

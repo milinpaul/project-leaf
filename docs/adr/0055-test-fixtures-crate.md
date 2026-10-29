@@ -1,4 +1,4 @@
-# 0054. Large test fixtures: a small crate, built through real commands, fixed by a seed
+# 0055. Large test fixtures: a small crate, built through real commands, fixed by a seed
 
 - **Status:** Accepted
 - **Type:** Architecture

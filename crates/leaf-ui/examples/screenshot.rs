@@ -12,6 +12,7 @@
 //! - `dark`: the dark appearance.
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
+//! - `language=B`: open code block B's language picker.
 //! - `link`: then open the link popover over the selection (Cmd/Ctrl+K); `type=TEXT` types into it.
 //! - `type=TEXT`: then type TEXT through the platform text input. Avoid spaces: in this off-screen
 //!   context, keys after a space don't arrive (the real app types spaces normally).
@@ -68,10 +69,11 @@ mod mac {
         menu: Option<String>,
         drag: Option<String>,
         link: bool,
+        language: Option<String>,
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] [link] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -88,6 +90,7 @@ mod mac {
             dark: rest.iter().any(|a| a == "dark"),
             bench: rest.iter().any(|a| a == "bench"),
             link: rest.iter().any(|a| a == "link"),
+            language: value("language="),
             caret: value("caret="),
             select: value("select="),
             typed: value("type="),
@@ -223,9 +226,37 @@ mod mac {
                 });
             })?;
         }
+        if let Some(block) = &options.language {
+            language(cx, window, shell, block)?;
+        }
         if let Some(spec) = &options.drag {
             drag(cx, window, shell, spec)?;
         }
+        Ok(())
+    }
+
+    /// Opens code block B's language picker.
+    fn language(
+        cx: &mut VisualTestAppContext,
+        window: AnyWindowHandle,
+        shell: &Entity<Shell>,
+        block: &str,
+    ) -> Result<(), Error> {
+        draw(cx, window)?;
+        let index: usize = block.parse()?;
+        cx.update_window(window, |_, window, cx| {
+            shell.update(cx, |shell, cx| {
+                let rows = shell
+                    .editor_mut()
+                    .open_page()
+                    .ok()
+                    .flatten()
+                    .and_then(|p| p.rows().ok());
+                if let Some(id) = rows.and_then(|rows| rows.get(index).map(|r| r.id)) {
+                    shell.open_language_picker_beside(id, window, cx);
+                }
+            });
+        })?;
         Ok(())
     }
 
