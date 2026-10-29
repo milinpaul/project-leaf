@@ -141,6 +141,8 @@ validate, write, commit once; `Unchanged` when nothing would change)
   must belong to the block's kind
 - `InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets, checked against the
   text length; blocks without text (dividers, unknown kinds) are refused
+- `ReplaceText { id, range, text }`: one commit replacing `range` (typing over a selection, committing an input-method
+  composition); the new text takes the marks of the first replaced character; an empty range is `InsertText` (ADR 0017)
 - `SetMark { id, range, mark: Mark }`, `RemoveMark { id, range, kind: MarkKind }`: `Mark` is bold, italic, strike,
   code or `Link(href)` (href must not be empty); code blocks take no marks; expand behaviour follows the table above;
   setting a mark the whole range already has, or removing one it doesn't have, is `Unchanged` and writes nothing
