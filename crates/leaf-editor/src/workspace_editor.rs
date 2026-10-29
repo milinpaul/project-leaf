@@ -11,6 +11,9 @@ use leaf_model::{ModelError, PageDoc, Workspace, WorkspaceCommand};
 use crate::PageEditor;
 use thiserror::Error;
 
+/// How many recently opened pages are remembered.
+pub const RECENT_LIMIT: usize = 20;
+
 /// What the sidebar shows for an empty title, so a new page is never an invisible row.
 pub const UNTITLED: &str = "Untitled";
 
@@ -49,6 +52,8 @@ pub struct WorkspaceEditor {
     pages: HashMap<PageId, PageEditor>,
     /// Pages whose children the sidebar lists. View state for this device, not part of the document.
     expanded: HashSet<PageId>,
+    /// Pages opened in this window, most recent first, for the quick switcher.
+    recent: Vec<PageId>,
 }
 
 impl WorkspaceEditor {
@@ -60,6 +65,7 @@ impl WorkspaceEditor {
             selected: None,
             pages: HashMap::new(),
             expanded: HashSet::new(),
+            recent: Vec::new(),
         }
     }
 
@@ -75,7 +81,22 @@ impl WorkspaceEditor {
             return Err(ModelError::PageNotFound(page).into());
         }
         self.selected = Some(page);
+        self.remember_opened(page);
         Ok(())
+    }
+
+    /// Pages opened in this window, most recent first (at most [`RECENT_LIMIT`]). Some may since have
+    /// gone to the trash; the quick switcher leaves those out.
+    #[must_use]
+    pub fn recent_pages(&self) -> &[PageId] {
+        &self.recent
+    }
+
+    /// Puts `page` at the front of the recently opened pages.
+    pub(crate) fn remember_opened(&mut self, page: PageId) {
+        self.recent.retain(|&seen| seen != page);
+        self.recent.insert(0, page);
+        self.recent.truncate(RECENT_LIMIT);
     }
 
     /// The open page's blocks, creating its document (with one empty paragraph to type in) the first

@@ -14,6 +14,7 @@ mod notice;
 pub mod settings;
 mod settings_dialog;
 mod shell;
+mod switcher;
 pub mod theme;
 
 use std::path::Path;

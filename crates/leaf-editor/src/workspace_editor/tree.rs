@@ -154,6 +154,7 @@ impl WorkspaceEditor {
             self.set_expanded(parent, true);
         }
         self.selected = Some(page);
+        self.remember_opened(page);
         Ok(page)
     }
 

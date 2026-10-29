@@ -5,7 +5,7 @@ use gpui::{Context, Div, InteractiveElement as _, Subscription, Window, WindowBo
 use leaf_store::WindowFrame;
 
 use super::Shell;
-use crate::menus::{About, CloseWindow, Minimize, NewPage, OpenSettings, ToggleSidebar, Zoom};
+use crate::menus::{About, CloseWindow, Minimize, NewPage, OpenSettings, QuickSwitch, ToggleSidebar, Zoom};
 use crate::settings;
 use crate::settings_dialog::{self, Section, WorkspaceInfo};
 
@@ -22,6 +22,9 @@ impl Shell {
     /// Makes `root` answer the app's actions while this window is focused.
     pub(super) fn with_actions(root: Div, cx: &mut Context<Self>) -> Div {
         root.on_action(cx.listener(|shell, _: &NewPage, window, cx| shell.new_page(window, cx)))
+            .on_action(cx.listener(|shell, _: &QuickSwitch, window, cx| {
+                crate::switcher::open(cx.entity().downgrade(), &shell.editor, window, cx);
+            }))
             .on_action(cx.listener(|_, _: &ToggleSidebar, _, cx| {
                 settings::update(cx, |settings| {
                     settings.set_sidebar_hidden(!settings.sidebar_hidden());

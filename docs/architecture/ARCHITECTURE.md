@@ -98,6 +98,10 @@ The sidebar's frame (`leaf_ui::shell::sidebar`, E06-S10) has a workspace header 
 "Pages" heading with a "+", and Settings at the foot; rows show a page icon and a hover "+" that adds a page inside.
 Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole set.
 
+**Quick switcher (E06-S04).** Cmd/Ctrl+P (File › Go to Page…) opens `leaf_ui::switcher`, a popup over
+`leaf_editor::QuickSwitcher`: a snapshot of the live pages with breadcrumbs, matched by `leaf_editor::fuzzy_match` as
+the owner types, recently opened pages first when nothing is typed. Enter or a click opens the page (ADR 0033).
+
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
 `~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace
 document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls
