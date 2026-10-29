@@ -12,6 +12,7 @@ use crate::EditorError;
 use crate::caret::Tracked;
 use crate::format::Pending;
 use crate::input::Composing;
+use crate::slash::Slash;
 use crate::view::{BlockRow, PageView};
 
 /// What Backspace at the start of a block did.
@@ -38,6 +39,8 @@ pub struct PageEditor {
     pub(crate) blocks: Option<Vec<BlockId>>,
     /// Mark toggles waiting for the next typed text (Cmd+B with no selection).
     pub(crate) pending: Option<Pending>,
+    /// The slash menu, while it is open.
+    pub(crate) slash: Option<Slash>,
 }
 
 impl PageEditor {
@@ -51,6 +54,7 @@ impl PageEditor {
             composing: None,
             blocks: None,
             pending: None,
+            slash: None,
         }
     }
 

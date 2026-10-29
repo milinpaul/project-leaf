@@ -42,3 +42,4 @@ Records cover two kinds of decision:
 | [0023](0023-undo-restores-selection.md) | Undo restores the selection before an edit; redo the one right after | Architecture | Accepted |
 | [0024](0024-search-index-reconciles-with-saved-versions.md) | The search index reconciles with saved versions on a background thread | Architecture | Accepted |
 | [0025](0025-markdown-shortcuts.md) | Markdown shortcuts fire on typing and undo separately | Feature | Accepted |
+| [0026](0026-slash-menu.md) | Slash menu: the query is page text; a small built-in fuzzy filter | Feature | Accepted |
