@@ -147,39 +147,21 @@ impl Shell {
 }
 
 impl Render for Shell {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let sidebar = self.render_sidebar(cx);
 
-        // A centred column no wider than a comfortable line, with room above the title.
-        let column = v_flex()
-            .w_full()
-            .max_w(px(theme::READING_WIDTH))
-            .px_10()
-            .pt_16()
-            .gap_3();
-        let column = if self.editor.selected().is_some() {
-            // The title reads as the page's heading, not a form field: no box, large and bold.
-            column
-                .child(
-                    Input::new(&self.title)
-                        .appearance(false)
-                        .focus_bordered(false)
-                        .text_size(px(theme::TITLE_SIZE))
-                        .font_weight(FontWeight::BOLD)
-                        // The input's own height and line height fit body text; size them to the heading.
-                        .line_height(rems(2.75))
-                        .h(rems(3.25))
-                        .px_0(),
-                )
-                .child(self.render_blocks(window, cx))
+        let page = if self.editor.selected().is_some() {
+            self.render_page(cx)
         } else {
-            column.child(
+            column(
                 div()
+                    .pt_16()
                     .text_color(cx.theme().muted_foreground)
                     .child("Create a page with the + beside Pages."),
             )
+            .into_any_element()
         };
-        let page = v_flex().flex_1().size_full().items_center().child(column);
+        let page = v_flex().flex_1().size_full().child(page);
         let layout = settings::get(cx);
         let body = if layout.sidebar_hidden() {
             page.into_any_element()
@@ -210,7 +192,12 @@ impl Render for Shell {
     }
 }
 
+mod block_row;
 mod blocks;
+mod markers;
+mod page_list;
+#[cfg(test)]
+mod page_list_window_tests;
 mod sidebar;
 mod storage;
 mod tree;
@@ -222,6 +209,35 @@ impl Drop for Shell {
     /// Closing the window saves everything, even if the app keeps running.
     fn drop(&mut self) {
         self.save(true);
+    }
+}
+
+/// A centred column no wider than a comfortable line of text, with the page's side margins. Every
+/// row of the page sits in one, so the virtual list can scroll the full width of the page area.
+fn column(content: impl IntoElement) -> gpui::Div {
+    div().w_full().flex().justify_center().child(
+        div()
+            .w_full()
+            .max_w(px(theme::READING_WIDTH))
+            .px_10()
+            .child(content),
+    )
+}
+
+impl Shell {
+    /// The page title: it reads as the page's heading, not a form field (no box, large and bold).
+    fn render_title(&self) -> impl IntoElement {
+        div().pt_16().pb_3().child(
+            Input::new(&self.title)
+                .appearance(false)
+                .focus_bordered(false)
+                .text_size(px(theme::TITLE_SIZE))
+                .font_weight(FontWeight::BOLD)
+                // The input's own height and line height fit body text; size them to the heading.
+                .line_height(rems(2.75))
+                .h(rems(3.25))
+                .px_0(),
+        )
     }
 }
 

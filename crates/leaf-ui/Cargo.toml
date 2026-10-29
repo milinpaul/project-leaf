@@ -18,6 +18,9 @@ leaf-store.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
+# The screenshot example: real off-screen rendering and PNG output.
+gpui-platform = { workspace = true, features = ["test-support"] }
+image.workspace = true
 gpui-component = { workspace = true, features = ["test-support"] }
 
 [lints]

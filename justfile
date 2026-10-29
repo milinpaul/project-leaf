@@ -71,6 +71,11 @@ run *args:
 run *args:
     cargo run -p leaf-app -- {{args}}
 
+# Screenshot a workspace off screen (works with the screen locked; macOS):
+# just screenshot <workspace folder> <out.png> [first block] [dark] [bench]
+screenshot *args:
+    cargo run -q -p leaf-ui --example screenshot -- {{args}}
+
 # Regenerate the app icons from crates/leaf-app/resources/icon.svg (needs resvg; .icns needs macOS)
 icons:
     python3 scripts/icons.py
