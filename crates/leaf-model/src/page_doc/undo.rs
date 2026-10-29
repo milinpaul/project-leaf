@@ -116,6 +116,22 @@ impl CaretSlots {
     }
 }
 
+/// The merge interval as configured, and whether a separate step is waiting for the next commit to
+/// end it (see [`PageDoc::as_separate_step`]).
+pub(super) struct Merging {
+    ms: i64,
+    restore_after_next_commit: bool,
+}
+
+impl Default for Merging {
+    fn default() -> Self {
+        Self {
+            ms: DEFAULT_UNDO_MERGE_MS,
+            restore_after_next_commit: false,
+        }
+    }
+}
+
 /// The undo manager every page starts with, wired to number steps.
 pub(super) fn manager(doc: &LoroDoc, slots: &Arc<CaretSlots>) -> UndoManager {
     let mut undo = UndoManager::new(doc);
@@ -223,7 +239,34 @@ impl PageDoc {
     /// How close together, in milliseconds, commits must be to undo as one step. `0` makes every
     /// command its own step.
     pub fn set_undo_merge_interval(&mut self, ms: i64) {
+        self.merge = Merging {
+            ms,
+            restore_after_next_commit: false,
+        };
         self.undo.set_merge_interval(ms);
+    }
+
+    /// Like [`PageDoc::as_one_step`], and also never merged with the step before or after it by the
+    /// merge interval. For an automatic change right after typing, such as a Markdown shortcut turning
+    /// "# " into a heading: undo must take back the conversion alone, giving back the typed "# ".
+    pub fn as_separate_step<T, E: From<ModelError>>(
+        &mut self,
+        steps: impl FnOnce(&mut Self) -> Result<T, E>,
+    ) -> Result<T, E> {
+        // With no merge interval, the step's first commit starts a new step; the rest join it as a
+        // group. The interval stays off until the next commit, which then starts a step of its own.
+        self.undo.set_merge_interval(0);
+        let result = self.as_one_step(steps);
+        self.merge.restore_after_next_commit = true;
+        result
+    }
+
+    /// Called after every commit: ends a separate step by turning the merge interval back on.
+    pub(super) fn after_commit(&mut self) {
+        if self.merge.restore_after_next_commit && !self.undo.is_paused() {
+            self.merge.restore_after_next_commit = false;
+            self.undo.set_merge_interval(self.merge.ms);
+        }
     }
 
     /// Runs `steps`, which apply several commands, as **one** undo step. For edits a user sees as one

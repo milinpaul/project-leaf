@@ -73,7 +73,8 @@ is anchored to the text, so edits before it, undo and other devices' changes car
 selected rather than merged (ADR 0020). A selection (E04-S06) is either text between the caret and a tail anchor, possibly
 across blocks, or whole blocks (Cmd/Ctrl+A twice); typing or a key over it is still one undo step (ADR 0021). Formatting shortcuts and links (E04-S07) toggle marks over the whole selection,
 or, with just a caret, for the next typed text (ADR 0022). Undo puts back the selection from just before a change and redo the one right
-after it (E04-S08, ADR 0023). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+after it (E04-S08, ADR 0023). Typing a Markdown shortcut at the start of a block (`# `, `- `, `[] `, …) converts
+it, as an undo step of its own (E05-S01, ADR 0025). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
 through those commands (E06-S07).
 
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or

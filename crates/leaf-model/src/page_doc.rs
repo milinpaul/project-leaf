@@ -33,6 +33,7 @@ pub struct PageDoc {
     pending: Arc<std::sync::Mutex<changes::Pending>>,
     _events: loro::Subscription,
     carets: Arc<undo::CaretSlots>,
+    merge: undo::Merging,
 }
 
 /// Two-way map between permanent `BlockId`s and Loro's current `TreeID`s, for O(1) lookups.
@@ -62,6 +63,7 @@ impl PageDoc {
             pending,
             _events: events,
             carets,
+            merge: undo::Merging::default(),
         }
     }
 
@@ -109,6 +111,7 @@ impl PageDoc {
             pending,
             _events: events,
             carets,
+            merge: undo::Merging::default(),
         })
     }
 
