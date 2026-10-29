@@ -44,6 +44,8 @@ pub(super) struct PageState {
     pub(super) menu_at: Point<Pixels>,
     /// The block whose menu is open as of this frame, so its handle stays shown.
     pub(super) menu_block: Option<BlockId>,
+    /// The block a search result opened at, tinted for a moment.
+    pub(super) flash: super::found::Flash,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -282,10 +284,11 @@ impl Shell {
         let content = if let Some(row) = self.blocks.list.row(item).cloned() {
             let (left, top) = super::block_row::handle_place(&row);
             let handle = self.render_handle(row.id, left, top, cx);
+            let body = self.render_row(&row, window, cx);
             div()
                 .relative()
                 .group(super::block_menu::ROW_GROUP)
-                .child(self.render_row(&row, window, cx))
+                .child(self.with_flash(row.id, body, cx))
                 .child(handle)
                 .into_any_element()
         } else {

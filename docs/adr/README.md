@@ -62,3 +62,4 @@ Records cover two kinds of decision:
 | [0043](0043-slash-menu-popover.md) | The slash popover keeps the page's keyboard and opens above the line near the bottom edge | Feature | Accepted |
 | [0044](0044-repair-after-merge.md) | Pages are repaired after a merge, the same way on every copy | Architecture | Accepted |
 | [0045](0045-page-covers.md) | Page covers: a stored name, drawn from bundled SVG files | Feature | Accepted |
+| [0046](0046-search-bar-ui.md) | Search bar UI: one popup for Cmd/Ctrl+K and P, searched off the UI thread, results opened in place | Feature | Accepted |

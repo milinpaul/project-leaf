@@ -45,8 +45,10 @@ actions!(
         OpenSettings,
         /// Creates a page and opens it.
         NewPage,
-        /// Opens the quick switcher to jump to a page by its title.
-        QuickSwitch,
+        /// Opens the search bar: pages by title and by the text inside them (Cmd/Ctrl+P).
+        Search,
+        /// Cmd/Ctrl+K: makes a link over selected text, otherwise opens the search bar.
+        SearchOrLink,
         /// Shows the welcome screen's create form for a new workspace.
         NewWorkspace,
         /// Shows the system's folder picker to open a workspace.
@@ -72,7 +74,8 @@ pub fn key_bindings() -> Vec<KeyBinding> {
         KeyBinding::new(command!("q"), Quit, None),
         KeyBinding::new(command!(","), OpenSettings, None),
         KeyBinding::new(command!("n"), NewPage, None),
-        KeyBinding::new(command!("p"), QuickSwitch, None),
+        KeyBinding::new(command!("p"), Search, None),
+        KeyBinding::new(command!("k"), SearchOrLink, None),
         KeyBinding::new(command!("shift-n"), NewWorkspace, None),
         KeyBinding::new(command!("o"), OpenWorkspace, None),
         KeyBinding::new(command!("shift-o"), SwitchWorkspace, None),
@@ -103,7 +106,7 @@ pub fn menus(recent: &[RecentWorkspace]) -> Vec<Menu> {
         .collect();
     let mut file = vec![
         MenuItem::action("New Page", NewPage),
-        MenuItem::action("Go to Page…", QuickSwitch),
+        MenuItem::action("Search…", Search),
         MenuItem::separator(),
         MenuItem::action("New Workspace…", NewWorkspace),
         MenuItem::action("Open Workspace…", OpenWorkspace),
