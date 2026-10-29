@@ -78,7 +78,8 @@ it, as an undo step of its own (E05-S01, ADR 0025). Typing `/` at the start of a
 which filters block types by the typed query and converts the block or adds one below (E05-S02, ADR 0026). The block menu's Turn into, Duplicate and Delete (`PageEditor::block_action`) act on
 the selection when the block is part of it, as one undo step each (E05-S03, ADR 0028). Copy and cut turn the selection into a `Fragment` (formatted text or whole blocks)
 that the UI puts on the system clipboard as versioned JSON; paste puts one back at the caret, splitting the line for
-blocks, as one undo step (E05-S05, ADR 0030). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+blocks, as one undo step (E05-S05, ADR 0030). Text from other apps goes through `paste_text`, which reads Markdown into blocks;
+copying also writes Markdown and plain text for them (E05-S06, ADR 0032). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
 through those commands (E06-S07).
 
 **Window, sidebar and Settings (E06-S02).** At startup `leaf-app` loads the app settings (`settings.json` in the

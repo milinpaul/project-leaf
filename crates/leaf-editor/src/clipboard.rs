@@ -11,6 +11,7 @@
 //!   blocks and pasting them on an empty line gives back exactly what was copied.
 
 mod fragment;
+mod markdown;
 
 pub use fragment::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 
@@ -102,6 +103,28 @@ impl PageEditor {
         let caret = self.set_caret(caret)?;
         self.finish()?;
         Ok(Some(caret))
+    }
+
+    /// Pastes text from another app (or a Leaf clipboard without a fragment). Markdown is converted:
+    /// one line without block syntax goes into the line with its inline formatting; anything else
+    /// becomes blocks, a paragraph per plain line. Into a code block it goes exactly as it is. One
+    /// undo step, like [`PageEditor::paste`].
+    pub fn paste_text(&mut self, text: &str) -> Result<Option<Caret>, EditorError> {
+        let into_code = match (self.caret()?, self.selection()?) {
+            (Some(caret), None | Some(Selection::Text { .. })) => {
+                matches!(self.doc.kind(caret.block)?, BlockKind::Code { .. })
+            }
+            _ => false,
+        };
+        let fragment = if into_code {
+            Fragment::Text(vec![TextSpan {
+                text: text.replace("\r\n", "\n"),
+                marks: leaf_model::Marks::default(),
+            }])
+        } else {
+            markdown::fragment_from_text(text)
+        };
+        self.paste(&fragment)
     }
 
     /// The blocks a cross-block text selection touches, trimmed at both ends, nested as they are

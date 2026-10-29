@@ -261,7 +261,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
   append-only list; each step runs in one transaction with its version bump. A file newer than the app is refused
   untouched (ADR 0008).
 
-## Markdown mapping (Phase 1 export)
+## Markdown mapping (copy and paste now; page export in Phase 1)
 
 | Block | Markdown |
 |---|---|
@@ -273,6 +273,8 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | code | fenced block with language |
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
+
+Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR 0032); plain lines become paragraphs.
 
 ## Testing requirements
 
