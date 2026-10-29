@@ -2,10 +2,13 @@
 //! window's frame, and opening Settings.
 
 use gpui::{Context, Div, InteractiveElement as _, Subscription, Window, WindowBounds};
+use leaf_editor::{Selection, Shortcut, ShortcutAction, shortcut_action};
 use leaf_store::WindowFrame;
 
 use super::Shell;
-use crate::menus::{About, CloseWindow, Minimize, NewPage, OpenSettings, QuickSwitch, ToggleSidebar, Zoom};
+use crate::menus::{
+    About, CloseWindow, Minimize, NewPage, OpenSettings, Search, SearchOrLink, ToggleSidebar, Zoom,
+};
 use crate::settings;
 use crate::settings_dialog::{self, Section, WorkspaceInfo};
 
@@ -22,8 +25,19 @@ impl Shell {
     /// Makes `root` answer the app's actions while this window is focused.
     pub(super) fn with_actions(root: Div, cx: &mut Context<Self>) -> Div {
         root.on_action(cx.listener(|shell, _: &NewPage, window, cx| shell.new_page(window, cx)))
-            .on_action(cx.listener(|shell, _: &QuickSwitch, window, cx| {
-                crate::switcher::open(cx.entity().downgrade(), &shell.editor, window, cx);
+            .on_action(cx.listener(|shell, _: &Search, window, cx| shell.open_search(window, cx)))
+            .on_action(cx.listener(|shell, _: &SearchOrLink, window, cx| {
+                let text_selected = shell.page_focus.is_focused(window)
+                    && matches!(
+                        shell.page().and_then(|page| page.selection().ok().flatten()),
+                        Some(Selection::Text { .. })
+                    );
+                match shortcut_action(Shortcut::ModK, text_selected) {
+                    ShortcutAction::OpenSearch => shell.open_search(window, cx),
+                    // The link popover is E07-S07; until then Cmd/Ctrl+K over selected text does nothing,
+                    // rather than opening search over the selection.
+                    ShortcutAction::Link => {}
+                }
             }))
             .on_action(cx.listener(|_, _: &ToggleSidebar, _, cx| {
                 settings::update(cx, |settings| {
@@ -40,6 +54,12 @@ impl Shell {
             .on_action(cx.listener(|_, _: &CloseWindow, window, _| window.remove_window()))
             .on_action(cx.listener(|_, _: &Minimize, window, _| window.minimize_window()))
             .on_action(cx.listener(|_, _: &Zoom, window, _| window.zoom_window()))
+    }
+
+    /// Opens the search bar over this workspace (Cmd/Ctrl+P, or Cmd/Ctrl+K with no text selected).
+    pub fn open_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let root = self.storage.as_ref().map(|storage| storage.root().to_owned());
+        crate::search::open(cx.entity().downgrade(), &self.editor, root, window, cx);
     }
 
     /// Opens the Settings dialog on `section`.
