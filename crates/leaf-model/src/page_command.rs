@@ -127,6 +127,15 @@ pub enum PageCommand {
         /// Unicode scalar position to split at, at most the text length.
         pos: usize,
     },
+    /// "Duplicate" from the block menu: a deep copy of each block, with everything nested in it, right
+    /// after the original. Everything stored is copied, formatting and properties this version doesn't
+    /// know included; only the block IDs are new. Blocks inside another listed block are copied with it,
+    /// not twice. Returns the copies of the outermost blocks, in reading order, in
+    /// [`PageOutcome::BlocksCreated`].
+    DuplicateBlocks {
+        /// Blocks to copy.
+        ids: Vec<BlockId>,
+    },
     /// Backspace at the start of a block: its text, with formatting, is appended to the block just
     /// above it in reading order, its children move there too, and the block is removed. Reports
     /// where the two texts joined in [`PageOutcome::BlockMerged`]. The block above must have text:
@@ -142,6 +151,8 @@ pub enum PageCommand {
 pub enum PageOutcome {
     /// A block was created with this ID.
     BlockCreated(BlockId),
+    /// These blocks were created, in reading order (the outermost copies made by duplicating).
+    BlocksCreated(Vec<BlockId>),
     /// These blocks were deleted: each listed block and everything inside it, in document order.
     BlocksDeleted(Vec<BlockId>),
     /// A block was merged into `into`; its text starts at position `at` there, which is where the

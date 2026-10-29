@@ -98,7 +98,7 @@ impl PageDoc {
 
 /// Appends formatted text (a delta of inserts) at the end of `text`, keeping each run's marks exactly.
 /// Marks absent from a run are cleared on it, so nothing leaks from the text it is appended to.
-fn append_delta(text: &LoroText, delta: Vec<TextDelta>) -> Result<(), ModelError> {
+pub(super) fn append_delta(text: &LoroText, delta: Vec<TextDelta>) -> Result<(), ModelError> {
     for run in delta {
         let TextDelta::Insert { insert, attributes } = run else {
             continue;
