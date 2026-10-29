@@ -47,7 +47,14 @@ pub enum KeyOutcome {
 impl PageEditor {
     /// Handles a structural key at the caret and selection. With whole blocks selected, Backspace and
     /// Delete remove them, Tab and Shift+Tab nest them, and other keys do nothing.
+    /// With the slash menu open and something matching, Enter applies the highlighted entry instead.
     pub fn press(&mut self, key: Key) -> Result<KeyOutcome, EditorError> {
+        if key == Key::Enter
+            && self.slash_menu()?.is_some_and(|menu| !menu.items.is_empty())
+            && let Some(caret) = self.slash_apply(None)?
+        {
+            return Ok(KeyOutcome::Caret(caret));
+        }
         let outcome = self.handle(key)?;
         self.finish()?;
         Ok(outcome)

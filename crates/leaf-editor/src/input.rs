@@ -76,7 +76,11 @@ impl PageEditor {
             self.carry_pending(pending, after);
         }
         self.finish()?;
-        Ok(Some(self.markdown_shortcut(after)?.unwrap_or(after)))
+        if let Some(converted) = self.markdown_shortcut(after)? {
+            return Ok(Some(converted));
+        }
+        self.maybe_open_slash(text, after)?;
+        Ok(Some(after))
     }
 
     /// The input method's draft changed. `cursor` is its own cursor inside `text`, in Unicode
