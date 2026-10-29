@@ -223,6 +223,7 @@ mod blocks;
 mod cover;
 mod found;
 mod header;
+mod image;
 mod ime;
 mod link_popover;
 mod markers;

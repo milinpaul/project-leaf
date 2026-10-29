@@ -4,10 +4,11 @@
 //!
 //! `secondary!` is Cmd on macOS and Ctrl elsewhere.
 
-use gpui::{App, ClipboardItem, Context, InteractiveElement, KeyBinding, Window, actions};
-use leaf_editor::{Fragment, Key, KeyOutcome, Motion, Vertical};
+use gpui::{App, ClipboardEntry, ClipboardItem, Context, InteractiveElement, KeyBinding, Window, actions};
+use leaf_editor::{Fragment, Key, KeyOutcome, Motion, PasteKind, Vertical, paste_kind};
 use leaf_model::MarkKind;
 
+use super::image::ImageSource;
 use super::{Shell, report};
 
 /// A shortcut with Cmd on macOS and Ctrl elsewhere.
@@ -198,7 +199,8 @@ impl Shell {
     }
 
     /// After any page action: the caret is shown solid, kept in view, and the page redrawn.
-    fn changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.pick_image_if_asked(window, cx);
         self.restart_blink();
         self.reveal_caret();
         window.invalidate_character_coordinates();
@@ -314,10 +316,28 @@ impl Shell {
             return;
         };
         let fragment = item.metadata().and_then(|json| Fragment::from_json(json));
-        let pasted = match (fragment, item.text()) {
-            (Some(fragment), _) => self.page().map(|page| page.paste(&fragment)),
-            (None, Some(text)) => self.page().map(|page| page.paste_text(&text)),
-            (None, None) => None,
+        let contents = Pasted::read(&item);
+        let pasted = match paste_kind(fragment.is_some(), Some(&contents.text), contents.has_image()) {
+            PasteKind::Fragment => {
+                fragment.and_then(|fragment| self.page().map(|page| page.paste(&fragment)))
+            }
+            PasteKind::Text => self.page().map(|page| page.paste_text(&contents.text)),
+            PasteKind::Image => {
+                let inserted = match (&contents.image, &contents.file) {
+                    (Some(bytes), _) => self.insert_image(&ImageSource::Bytes(bytes), window, cx),
+                    (None, Some(path)) => self.insert_image(&ImageSource::File(path), window, cx),
+                    (None, None) => false,
+                };
+                // A copied file that isn't a picture pastes as its path, as it always did.
+                match &contents.file {
+                    Some(path) if !inserted => {
+                        let path = path.display().to_string();
+                        self.page().map(|page| page.paste_text(&path))
+                    }
+                    _ => None,
+                }
+            }
+            PasteKind::Nothing => None,
         };
         if let Some(Err(err)) = pasted {
             report("could not paste", err);
@@ -329,4 +349,42 @@ impl Shell {
 /// What copying `fragment` puts on the clipboard: Markdown as text, the fragment as metadata.
 fn clipboard_item(fragment: &Fragment) -> ClipboardItem {
     ClipboardItem::new_string_with_metadata(fragment.to_markdown(), fragment.to_json())
+}
+
+/// What a clipboard item holds, by kind: text, a picture, a copied file.
+struct Pasted {
+    /// The text entries, joined; empty when there are none. Unlike `ClipboardItem::text`, a copied
+    /// file's path is not counted as text, so a copied picture pastes as a picture.
+    text: String,
+    /// The first picture's bytes.
+    image: Option<Vec<u8>>,
+    /// The first copied file.
+    file: Option<std::path::PathBuf>,
+}
+
+impl Pasted {
+    fn read(item: &ClipboardItem) -> Self {
+        let mut pasted = Self {
+            text: String::new(),
+            image: None,
+            file: None,
+        };
+        for entry in item.entries() {
+            match entry {
+                ClipboardEntry::String(string) => pasted.text.push_str(string.text()),
+                ClipboardEntry::Image(image) if pasted.image.is_none() => {
+                    pasted.image = Some(image.bytes().to_vec());
+                }
+                ClipboardEntry::ExternalPaths(paths) if pasted.file.is_none() => {
+                    pasted.file = paths.paths().first().cloned();
+                }
+                _ => {}
+            }
+        }
+        pasted
+    }
+
+    fn has_image(&self) -> bool {
+        self.image.is_some() || self.file.is_some()
+    }
 }

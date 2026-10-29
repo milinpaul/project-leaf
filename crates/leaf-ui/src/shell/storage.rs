@@ -7,7 +7,7 @@
 use std::time::Duration;
 
 use gpui::{Context, Window};
-use leaf_core::PageId;
+use leaf_core::{AssetId, PageId};
 use leaf_model::{PageDoc, Workspace};
 use leaf_search::SearchWorker;
 use leaf_store::{Autosave, DocKey, Savable, StoreError, ViewState, Workspace as Folder};
@@ -75,6 +75,19 @@ impl Storage {
         }
         self.view.set_expanded(pages);
         self.view.save(&self.folder.view_state_path())
+    }
+
+    /// Stores the picture `bytes` in the workspace's `assets/` folder (ADR 0047) and returns its id.
+    /// Refused unless the bytes are an image.
+    pub(super) fn import_image(&mut self, bytes: &[u8]) -> Result<AssetId, StoreError> {
+        self.folder.import_asset(bytes, now_ms()).map(|asset| asset.id)
+    }
+
+    /// Copies the image file at `path` into the workspace's `assets/` folder and returns its id.
+    pub(super) fn import_image_file(&mut self, path: &std::path::Path) -> Result<AssetId, StoreError> {
+        self.folder
+            .import_asset_file(path, now_ms())
+            .map(|asset| asset.id)
     }
 
     /// The saved blocks of `page`, or `None` for a page never saved (a new one).

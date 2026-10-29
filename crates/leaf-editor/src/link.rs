@@ -1,5 +1,5 @@
 //! Following links: which link sits at a place in the text, and which addresses Leaf hands to the
-//! system to open (E07-S07, ADR 0051). Adding, changing and removing links is in `format`.
+//! system to open (E07-S07, ADR 0052). Adding, changing and removing links is in `format`.
 
 use leaf_model::Caret;
 

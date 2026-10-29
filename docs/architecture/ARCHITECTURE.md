@@ -75,7 +75,7 @@ returns where the line goes (a gap between rows and a depth), and `drop_blocks` 
 `shell/block_drag.rs` (E07-S05, ADR 0050) uses GPUI's drag: a click on the handle still opens the menu, pressing and
 moving starts a drag with a preview of the block's first line, each row records where it was drawn, the line is drawn at
 the answer's depth, the dragged rows fade, and holding near the page's top or bottom edge scrolls it. `Cmd/Ctrl+K` over
-selected text opens the **link popover** (E07-S07, ADR 0051, `shell/link_popover.rs`): an address field under the
+selected text opens the **link popover** (E07-S07, ADR 0052, `shell/link_popover.rs`): an address field under the
 selection, filled in when the selection is already one link, with Open and Remove; Enter saves through
 `PageEditor::set_link`. `Cmd/Ctrl+click` on a link opens it; `leaf_editor::openable_url` decides which addresses the
 system may open. The **slash menu** is drawn as a popover
@@ -138,6 +138,13 @@ block at the top, the caret at its start and a tint that fades out (ADR 0046).
 (`leaf_ui::shell::header`). Clicking it opens `leaf_ui::icon_picker` in a popover over `leaf_editor::EmojiPicker`
 (emoji from the `emojis` crate, searchable by name, shortcode and group); the choice goes through
 `WorkspaceEditor::set_icon` (ADR 0034).
+
+**Inserting images (E05-S07).** "Image" in the slash menu removes the typed `/image` and asks the UI, once, to show
+the file picker (`PageEditor::take_image_request`); a paste from another app brings a screenshot, a copied image or
+a copied image file (`leaf_editor::paste_kind` picks Leaf blocks, then text, then a picture). The UI
+(`leaf_ui::shell::image`) stores the picture in the asset store and calls `PageEditor::insert_image`, which turns an
+empty block into the image or adds it below, with the caret in its caption (ADR 0051). Until E07-S08 draws pictures,
+an image row is a frame with its caption below.
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;

@@ -155,7 +155,7 @@ fn deleting_the_slash_or_moving_away_closes_it() {
 #[test]
 fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
     let items = all_items();
-    assert_eq!(labels(&filter(&items, "")).len(), 10);
+    assert_eq!(labels(&filter(&items, "")).len(), 11);
     assert_eq!(
         labels(&filter(&items, "h")),
         vec![
@@ -164,10 +164,11 @@ fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
             "Heading 3",
             "Divider",
             "To-do list",
+            "Image",
             "Text"
         ],
         "names starting with h; then the divider's \"hr\" keyword; then h somewhere in a keyword, \
-         closest first (\"checkbox\" before \"paragraph\")"
+         closest first (\"checkbox\" and \"photo\" before \"paragraph\"), ties in menu order"
     );
     assert_eq!(
         labels(&filter(&items, "list")),

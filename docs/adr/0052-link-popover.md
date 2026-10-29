@@ -1,4 +1,4 @@
-# 0051. Link popover: an address box under the selection; only web and mail addresses are opened
+# 0052. Link popover: an address box under the selection; only web and mail addresses are opened
 
 - **Status:** Accepted
 - **Type:** Feature

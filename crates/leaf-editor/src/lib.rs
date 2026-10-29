@@ -19,6 +19,7 @@ mod emoji_picker;
 mod format;
 mod fuzzy;
 mod history;
+mod image;
 mod input;
 mod keys;
 mod link;
@@ -39,6 +40,7 @@ pub use cover::{BuiltinCover, PageCover};
 pub use drag::{BlockDrop, RowBox};
 pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
+pub use image::{PasteKind, paste_kind};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use link::openable_url;
@@ -48,7 +50,7 @@ pub use search_bar::{
     SearchOutcome, SearchRequest, SearchRow, Shortcut, ShortcutAction, shortcut_action,
 };
 pub use selection::{Selection, TextRange};
-pub use slash::{SlashItem, SlashMenu};
+pub use slash::{SlashAction, SlashItem, SlashMenu};
 pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{

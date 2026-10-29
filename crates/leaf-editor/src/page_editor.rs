@@ -12,6 +12,7 @@ use crate::EditorError;
 use crate::block_menu::OpenMenu;
 use crate::caret::Tracked;
 use crate::format::Pending;
+use crate::image::ImageRequest;
 use crate::input::Composing;
 use crate::slash::Slash;
 use crate::view::{BlockRow, PageView};
@@ -44,6 +45,8 @@ pub struct PageEditor {
     pub(crate) slash: Option<Slash>,
     /// The block menu, while it is open.
     pub(crate) menu: Option<OpenMenu>,
+    /// A picture asked for from the slash menu, until it arrives or the picker is cancelled.
+    pub(crate) image: Option<ImageRequest>,
 }
 
 impl PageEditor {
@@ -59,6 +62,7 @@ impl PageEditor {
             pending: None,
             slash: None,
             menu: None,
+            image: None,
         }
     }
 
