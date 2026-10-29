@@ -19,6 +19,7 @@ use leaf_model::{BlockKind, Caret};
 
 use super::block_drag::{BlockDrag, DrawnRows};
 use super::column;
+use super::image_row::{ImageResize, ImageRoom};
 use super::page_list::{HEADER_ITEMS, PageList};
 use super::rich_text::{Highlight, PaintedLayout, highlights};
 use super::{Shell, report};
@@ -52,6 +53,12 @@ pub(super) struct PageState {
     pub(super) drawn: DrawnRows,
     /// A drag of blocks by their handle, while it lasts.
     pub(super) dragging: Option<BlockDrag>,
+    /// How much room each image row had in the last frame.
+    pub(super) image_room: ImageRoom,
+    /// A resize of an image by its handle, while it lasts.
+    pub(super) resizing: Option<ImageResize>,
+    /// Where an image's resize handle was last pressed, for the resize it may start.
+    pub(super) resize_press: Option<Pixels>,
     /// The link popover, while it is open.
     pub(super) link: Option<super::link_popover::OpenLink>,
 }
@@ -157,6 +164,7 @@ impl Shell {
     /// The open page: the "Turn into" toolbar, then the title and blocks as a virtual list that
     /// scrolls. Only the rows on screen are built.
     pub(super) fn render_page(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+        self.finish_image_resize(cx);
         // Only blocks that changed since the last frame are re-read (E04-S01).
         let rows = match self.page().map(|page| page.view().map(<[_]>::to_vec)) {
             Some(Ok(rows)) => rows,
@@ -237,6 +245,8 @@ impl Shell {
                     )
                     .on_drag_move(cx.listener(Self::on_block_drag_move))
                     .on_drop(cx.listener(Self::on_block_drop))
+                    .on_drag_move(cx.listener(Self::on_image_resize_move))
+                    .on_drop(cx.listener(Self::on_image_resize_drop))
                     .child(input)
                     .child(rows),
             )

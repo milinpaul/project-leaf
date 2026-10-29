@@ -10,7 +10,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
-use leaf_core::BlockId;
+use leaf_core::{AssetId, BlockId};
 use leaf_model::{BlockKind, ModelError, PageDoc, TextSpan};
 
 /// How to draw a block. Mirrors `BlockKind`, but with what the screen needs: list numbers are worked
@@ -39,8 +39,12 @@ pub enum BlockStyle {
     },
     /// A horizontal line.
     Divider,
-    /// A picture; drawn as a placeholder until images render (E07-S08).
+    /// A picture from the workspace's asset store, with its caption as the row's text.
     Image {
+        /// Which stored picture.
+        asset: AssetId,
+        /// The width the owner resized it to, in logical pixels; `None` for its natural size.
+        width: Option<f64>,
         /// Description for screen readers.
         alt: String,
     },
@@ -63,7 +67,7 @@ impl BlockStyle {
             BlockKind::Quote => Self::Quote,
             BlockKind::Code { language } => Self::Code { language },
             BlockKind::Divider => Self::Divider,
-            BlockKind::Image { alt, .. } => Self::Image { alt },
+            BlockKind::Image { asset, width, alt } => Self::Image { asset, width, alt },
             BlockKind::Unknown { type_name } => Self::Unknown { type_name },
         }
     }

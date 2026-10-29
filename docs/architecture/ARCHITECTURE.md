@@ -143,8 +143,13 @@ block at the top, the caret at its start and a tint that fades out (ADR 0046).
 the file picker (`PageEditor::take_image_request`); a paste from another app brings a screenshot, a copied image or
 a copied image file (`leaf_editor::paste_kind` picks Leaf blocks, then text, then a picture). The UI
 (`leaf_ui::shell::image`) stores the picture in the asset store and calls `PageEditor::insert_image`, which turns an
-empty block into the image or adds it below, with the caret in its caption (ADR 0051). Until E07-S08 draws pictures,
-an image row is a frame with its caption below.
+empty block into the image or adds it below, with the caret in its caption (ADR 0051).
+
+**Drawing images (E07-S08).** `leaf_ui::shell::image_row` draws the picture from `assets/` with GPUI's image loader,
+which reads it in the background the first time its row is on screen; a frame shows while it loads. Its size comes
+from `leaf_editor::image_display_size`: the stored width (or the natural one), shrunk to the room the row has. A bar on
+the right edge resizes it; the width is saved once on release with `PageEditor::set_image_width`, one undo step
+(ADR 0053).
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;

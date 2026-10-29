@@ -13,4 +13,4 @@ Paragraph "Pack light"<b> " and " "book"<link=https://trains.example> " early."
 Quote "Travel far, travel light."
 Divider 
 Code { language: "rust" } "fn main() {}"
-Image { alt: "Route map" }
+Image { asset: AssetId([144, 28, 195, 225, 161, 153, 251, 147, 106, 224, 224, 109, 48, 112, 238, 106, 55, 107, 9, 73, 173, 227, 18, 93, 178, 207, 219, 87, 245, 179, 127, 66]), width: None, alt: "Route map" }
