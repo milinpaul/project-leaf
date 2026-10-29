@@ -8,22 +8,17 @@ use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use gpui::{
-    AppContext as _, ClickEvent, Context, Entity, FocusHandle, FontWeight, InteractiveElement as _,
-    IntoElement, MouseButton, MouseDownEvent, ParentElement, Render, Styled, Subscription, Window, div, px,
-    rems,
+    AppContext as _, Context, Entity, FocusHandle, FontWeight, InteractiveElement as _, IntoElement,
+    ParentElement, Render, Styled, Subscription, Window, div, px, rems,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputEvent, InputState};
 use gpui_component::resizable::{h_resizable, resizable_panel};
-use gpui_component::sidebar::SidebarFooter;
-use gpui_component::{ActiveTheme as _, Icon, h_flex, v_flex};
-use gpui_kit_assets::IconName;
+use gpui_component::{ActiveTheme as _, v_flex};
 use leaf_core::PageId;
 use leaf_editor::{UNTITLED, WorkspaceEditor};
 use leaf_model::Workspace;
 use leaf_store::settings::SIDEBAR_WIDTH_RANGE;
 
-use crate::settings_dialog::Section;
 use crate::{settings, theme};
 
 /// Top-level view of a Leaf window.
@@ -153,42 +148,7 @@ impl Shell {
 
 impl Render for Shell {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let new_page = Button::new("new-page")
-            .label("New page")
-            .ghost()
-            .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.new_page(window, cx)));
-        // Settings sit at the foot of the sidebar, out of the way of the pages, as a quiet row.
-        let open_settings = SidebarFooter::new()
-            .w_full()
-            .gap_2()
-            .text_sm()
-            .child(Icon::new(IconName::Settings))
-            .child("Settings")
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|shell, _: &MouseDownEvent, window, cx| {
-                    shell.open_settings(Section::Appearance, window, cx);
-                }),
-            );
-        let sidebar = v_flex()
-            .id("sidebar")
-            .size_full()
-            .bg(cx.theme().sidebar)
-            .text_color(cx.theme().sidebar_foreground)
-            .border_r_1()
-            .border_color(cx.theme().sidebar_border)
-            .child(h_flex().pt_3().px_3().child(new_page))
-            .child(
-                div()
-                    .px_3()
-                    .pt_4()
-                    .pb_1()
-                    .text_xs()
-                    .text_color(cx.theme().muted_foreground)
-                    .child("Pages"),
-            )
-            .child(v_flex().flex_1().min_h_0().px_2().child(self.render_tree(cx)))
-            .child(open_settings);
+        let sidebar = self.render_sidebar(cx);
 
         // A centred column no wider than a comfortable line, with room above the title.
         let column = v_flex()
@@ -216,7 +176,7 @@ impl Render for Shell {
             column.child(
                 div()
                     .text_color(cx.theme().muted_foreground)
-                    .child("Create a page with New page."),
+                    .child("Create a page with the + beside Pages."),
             )
         };
         let page = v_flex().flex_1().size_full().items_center().child(column);
@@ -251,6 +211,7 @@ impl Render for Shell {
 }
 
 mod blocks;
+mod sidebar;
 mod storage;
 mod tree;
 mod window;

@@ -24,11 +24,35 @@ use gpui_component::Root;
 pub use notice::Notice;
 pub use shell::{Shell, Storage};
 
-/// The icons gpui-component's widgets draw (a checkbox's tick, for example). Register it with
-/// `Application::with_assets` at startup, or those icons render as blank shapes.
+// Lucide icons Leaf draws beyond the ones gpui-component's widgets need. Listing them here embeds just
+// these few, not the whole 1,800-icon set.
+gpui_kit_assets::icon_assets!(LeafIcons, [FileText, PencilLine, SquarePen, Trash]);
+
+/// The icons Leaf and gpui-component's widgets draw (a checkbox's tick, the sidebar's compose button).
+/// Register it with `Application::with_assets` at startup, or those icons render as blank shapes.
 #[must_use]
 pub fn assets() -> impl gpui::AssetSource {
-    gpui_kit_assets::Assets
+    Assets
+}
+
+/// Leaf's extra icons first, then gpui-component's.
+struct Assets;
+
+impl gpui::AssetSource for Assets {
+    fn load(&self, path: &str) -> gpui::Result<Option<std::borrow::Cow<'static, [u8]>>> {
+        match LeafIcons.load(path)? {
+            Some(bytes) => Ok(Some(bytes)),
+            None => gpui_kit_assets::Assets.load(path),
+        }
+    }
+
+    fn list(&self, path: &str) -> gpui::Result<Vec<gpui::SharedString>> {
+        let mut paths = gpui_kit_assets::Assets.list(path)?;
+        paths.extend(LeafIcons.list(path)?);
+        paths.sort();
+        paths.dedup();
+        Ok(paths)
+    }
 }
 
 /// Sets up widgets, loads the app settings from `settings_path` (defaults if `None`), then Leaf's fonts
@@ -61,4 +85,36 @@ pub fn workspace_root(path: &Path, window: &mut Window, cx: &mut App) -> Entity<
             .into(),
     };
     cx.new(|cx| Root::new(view, window, cx))
+}
+
+#[cfg(test)]
+mod tests {
+    use gpui::AssetSource as _;
+    use gpui_kit_assets::IconName;
+
+    #[test]
+    fn leaf_icons_and_widget_icons_both_load() {
+        let assets = super::assets();
+        for icon in [
+            IconName::Trash,
+            IconName::SquarePen,
+            IconName::PencilLine,
+            IconName::FileText,
+            IconName::Plus,
+        ] {
+            let bytes = assets.load(icon.path().as_ref()).unwrap();
+            assert!(bytes.is_some_and(|svg| svg.starts_with(b"<svg")), "{icon:?}");
+        }
+        let missing = assets.load("icons/no-such-icon.svg");
+        assert!(
+            missing.is_err() || missing.is_ok_and(|bytes| bytes.is_none()),
+            "an unknown icon is not invented"
+        );
+        let listed = assets.list("icons/").unwrap();
+        assert!(listed.iter().any(|path| path.as_ref() == "icons/trash.svg"));
+        assert!(
+            listed.windows(2).all(|pair| pair[0] < pair[1]),
+            "sorted, no duplicates"
+        );
+    }
 }

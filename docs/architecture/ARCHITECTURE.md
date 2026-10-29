@@ -93,6 +93,9 @@ children show under expanded pages, and which pages are expanded is saved in the
 dragging a row shows a line (above or below) or a ring (inside) and drops through `WorkspaceEditor::move_page`, which
 turns the place on screen into a model index (indexes count trashed pages; ADR 0031). Only rows on screen are drawn
 (`uniform_list`), so 500 pages scroll smoothly. The UI code is `leaf_ui::shell::tree`.
+The sidebar's frame (`leaf_ui::shell::sidebar`, E06-S10) has a workspace header (badge, name, compose button), a
+"Pages" heading with a "+", and Settings at the foot; rows show a page icon and a hover "+" that adds a page inside.
+Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole set.
 
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
 `~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace

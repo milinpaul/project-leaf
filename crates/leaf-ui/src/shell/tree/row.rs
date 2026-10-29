@@ -9,6 +9,7 @@ use gpui::{
 };
 use gpui_component::input::Input;
 use gpui_component::menu::{ContextMenuExt as _, PopupMenu, PopupMenuItem};
+use gpui_component::tooltip::Tooltip;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::PageId;
@@ -68,6 +69,7 @@ impl Shell {
 
         let mut row = h_flex()
             .id(("page-row", ix))
+            .group("page-row")
             .debug_selector(|| format!("page-row-{ix}"))
             .relative()
             .w_full()
@@ -80,8 +82,9 @@ impl Shell {
             .hover(|style| style.bg(hover))
             .when(item.selected, |row| row.bg(active))
             .child(Self::chevron(ix, item, cx))
-            .children(item.icon.clone().map(|icon| div().flex_none().child(icon)))
-            .child(self.label(item, cx));
+            .child(Self::page_icon(item, cx))
+            .child(self.label(item, cx))
+            .when(!renaming, |row| row.child(Self::add_inside(ix, page, cx)));
         let title_left = indent(item.depth) + px(CHEVRON_PX);
         row = match self.mark(page, ix + 1 == count) {
             Some(Mark::Above) => row.child(line(accent).top_0().left(title_left)),
@@ -157,6 +160,47 @@ impl Shell {
             .into_any_element()
     }
 
+    /// The page's emoji, or a quiet page icon when it has none, so every title starts at the same place.
+    fn page_icon(item: &SidebarItem, cx: &mut Context<Self>) -> AnyElement {
+        let slot = div().flex_none().w(px(18.0)).flex().justify_center();
+        match &item.icon {
+            Some(emoji) => slot.child(emoji.clone()).into_any_element(),
+            None => slot
+                .text_color(cx.theme().muted_foreground)
+                .child(Icon::new(IconName::FileText).small())
+                .into_any_element(),
+        }
+    }
+
+    /// A "+" at the row's right end, shown while the pointer is over the row, that adds a page inside.
+    fn add_inside(ix: usize, page: PageId, cx: &mut Context<Self>) -> AnyElement {
+        let theme = cx.theme();
+        let (muted, active, radius) = (theme.muted_foreground, theme.sidebar_accent, theme.radius);
+        div()
+            .id(("add-inside", ix))
+            .debug_selector(|| format!("add-inside-{ix}"))
+            .flex_none()
+            .size(px(20.0))
+            .flex()
+            .items_center()
+            .justify_center()
+            .rounded(radius)
+            .text_color(muted)
+            .opacity(0.0)
+            .group_hover("page-row", |style| style.opacity(1.0))
+            .hover(|style| style.bg(active))
+            .tooltip(|window, cx| Tooltip::new("Add a page inside").build(window, cx))
+            .child(Icon::new(IconName::Plus).xsmall())
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(move |shell, _: &MouseDownEvent, window, cx| {
+                    cx.stop_propagation(); // not also a click that opens this row's page
+                    shell.new_page_inside(page, window, cx);
+                }),
+            )
+            .into_any_element()
+    }
+
     /// The row's title, or the rename field while it is being renamed.
     fn label(&self, item: &SidebarItem, cx: &mut Context<Self>) -> AnyElement {
         let cell = div().flex_1().min_w_0();
@@ -199,17 +243,27 @@ fn page_menu(menu: PopupMenu, shell: &WeakEntity<Shell>, page: PageId) -> PopupM
     let (inside, rename, trash) = (shell.clone(), shell.clone(), shell.clone());
     // The shell outlives its rows; if it is gone the window is closing anyway.
     menu.item(
-        PopupMenuItem::new("Add page inside").on_click(move |_, window, cx| {
-            let _ = inside.update(cx, |shell, cx| shell.new_page_inside(page, window, cx));
-        }),
+        PopupMenuItem::new("Add page inside")
+            .icon(IconName::Plus)
+            .on_click(move |_, window, cx| {
+                let _ = inside.update(cx, |shell, cx| shell.new_page_inside(page, window, cx));
+            }),
     )
-    .item(PopupMenuItem::new("Rename").on_click(move |_, window, cx| {
-        let _ = rename.update(cx, |shell, cx| shell.start_rename(page, window, cx));
-    }))
+    .item(
+        PopupMenuItem::new("Rename")
+            .icon(IconName::PencilLine)
+            .on_click(move |_, window, cx| {
+                let _ = rename.update(cx, |shell, cx| shell.start_rename(page, window, cx));
+            }),
+    )
     .separator()
-    .item(PopupMenuItem::new("Move to Trash").on_click(move |_, _, cx| {
-        let _ = trash.update(cx, |shell, cx| shell.trash_page(page, cx));
-    }))
+    .item(
+        PopupMenuItem::new("Move to Trash")
+            .icon(IconName::Trash)
+            .on_click(move |_, _, cx| {
+                let _ = trash.update(cx, |shell, cx| shell.trash_page(page, cx));
+            }),
+    )
 }
 
 /// A 2 px accent line across a row, placed by the caller.
