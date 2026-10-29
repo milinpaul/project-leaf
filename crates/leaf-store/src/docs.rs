@@ -131,6 +131,17 @@ impl Store {
         Ok(true)
     }
 
+    /// Removes the document saved under `key`, snapshot and updates together, for a page deleted for
+    /// good. Returns whether there was anything to remove.
+    pub fn delete(&mut self, key: DocKey) -> Result<bool, StoreError> {
+        let id = key.to_string();
+        let tx = self.conn.transaction()?;
+        tx.execute("DELETE FROM doc_updates WHERE doc_id = ?1", params![id])?;
+        let removed = tx.execute("DELETE FROM docs WHERE doc_id = ?1", params![id])?;
+        tx.commit()?;
+        Ok(removed > 0)
+    }
+
     /// Loads the document saved under `key`, or `None` if it was never saved.
     ///
     /// A damaged update (a crash mid-write, a bad disk sector) doesn't stop the document from

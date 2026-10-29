@@ -335,6 +335,11 @@ impl Shell {
             .capture_action(cx.listener(Self::on_outdent))
             .capture_action(cx.listener(Self::on_move_up))
             .capture_action(cx.listener(Self::on_move_down))
+            // A page opened from the Trash says so above everything, and stays in view while scrolling.
+            .children(
+                self.render_trash_banner(cx)
+                    .map(|banner| column(div().pt_4().child(banner))),
+            )
             .child(column(div().pt_2().pb_1().child(toolbar)))
             .child(rows)
             .into_any_element()

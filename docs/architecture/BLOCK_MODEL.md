@@ -215,6 +215,8 @@ MyWorkspace.leaf/
   view.json                  # sidebar view state on this computer: expanded pages (not a document, ADR 0031)
 ```
 
+A page deleted for good has its document removed with `Store::delete` after the workspace document is saved (ADR 0036).
+
 `Workspace::create` makes this layout, in a new path or an empty folder only. `Workspace::open` needs
 `workspace.sqlite` to be present, recreates missing subfolders, and refuses a workspace another Leaf has open.
 
