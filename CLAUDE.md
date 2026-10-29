@@ -59,8 +59,9 @@ The owner does not write Rust and relies on these docs to understand the system.
 ## Definition of done
 
 - `just check` passes locally; PR CI is green (PRs skip the test job; core-crate tests run in the coverage job).
-- After merge, the `main` CI run is green on all three OSes. For platform-sensitive changes (UI, file system, paths),
-  run the full matrix before merging via Actions → CI → Run workflow on the PR branch.
+- After merge, the `main` CI run is green on all three OSes. Don't start full-matrix runs on PR branches (owner's
+  decision, 2026-10-29): check the `main` run after merge instead, and fix anything red on a new story branch. If that
+  run was cancelled because a later merge queued behind it, check the newest `main` run that includes the change.
 - Coverage gate passes.
 - Docs updated (`docs/architecture/ARCHITECTURE.md` / ADR / crate docs) if behaviour or structure changed.
 - PR description: what changed, why, how it was tested, plain-English summary for a non-Rust reader.

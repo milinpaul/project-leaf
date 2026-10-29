@@ -126,7 +126,9 @@ Each crate adds `[lints] workspace = true`. Versions above are starting points: 
 
 The `nextest` job is skipped on pull requests (core-crate tests still run there inside the coverage job, and
 the lefthook pre-push hook runs every test locally). It runs on macOS, Windows and Linux for pushes to `main` and manual runs
-(Actions → CI → Run workflow). Runs on `main` are never cancelled, so every merge gets its three-OS result.
+(Actions → CI → Run workflow). A running `main` run is never cancelled, but when merges land close together a run
+still waiting to start is replaced by the newer one, which includes the earlier change; so check the newest `main`
+run after a merge. Full-matrix runs aren't started on PR branches; the `main` run after merge is the check.
 
 ## GPUI notes
 
