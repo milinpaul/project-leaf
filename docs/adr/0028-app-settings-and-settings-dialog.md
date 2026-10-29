@@ -23,8 +23,11 @@ sidebar. Settings are a convenience: nothing about them may stop Leaf from start
   pixel of a drag.
 - **Sane on restore:** the sidebar stays 180–480 px wide; a window smaller than 480 × 320 or no longer on any
   screen (an unplugged monitor) opens centred instead.
-- **Settings dialog:** a centred dialog with sections on the left: Appearance (System / Light / Dark), Workspace
-  (name, folder, Show in Finder/Explorer/Files) and About (version, font licence). Opened from the sidebar's cog, the
+- **Settings window:** a large panel (about 80% of the app window, 760–1080 px wide) floating over the dimmed page.
+  Its left column is styled like the app's sidebar, with section groups split by hairline dividers and the version at
+  the foot; the right side has a large heading and the section's content in rounded cards. Sections: Appearance
+  (three preview cards showing a miniature Leaf in System, Light and Dark), Workspace (name, folder, Show in
+  Finder/Explorer/Files) and About (app icon, version, font licence). Opened from the sidebar's cog, the
   Settings… menu item and Cmd/Ctrl+,; About Leaf opens it on About. Esc or a click outside closes it.
 - **Menus:** Leaf (About, Settings…, Quit), File (New Page, Close Window), Edit (Undo, Redo, Cut, Copy, Paste, Select
   All), View (Toggle Sidebar), and Window (Minimize, Zoom) on macOS. Shortcuts use Cmd on macOS and Ctrl elsewhere.
@@ -34,7 +37,7 @@ sidebar. Settings are a convenience: nothing about them may stop Leaf from start
 - **Settings inside each workspace:** the window size would change with the workspace and couldn't apply before one
   opens; it also mixes app preferences into the owner's data.
 - **SQLite for settings:** heavier than needed for a handful of values, and harder to read or fix by hand.
-- **A full-page Settings view:** roomier, but the owner preferred keeping their place in the page (a dialog).
+- **A full-page Settings view:** roomier, but the owner preferred keeping their place in the page (a large dialog).
 - **The first-launch open/create dialog in this story:** moved to the welcome screen (E06-S09), which covers it fully.
 
 ## Consequences
