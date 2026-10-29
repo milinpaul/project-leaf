@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use leaf_core::PageId;
 use leaf_model::{ModelError, PageDoc, Workspace, WorkspaceCommand};
 
-use crate::PageEditor;
+use crate::{BuiltinCover, PageCover, PageEditor};
 use thiserror::Error;
 
 /// How many recently opened pages are remembered.
@@ -181,6 +181,27 @@ impl WorkspaceEditor {
     pub fn selected_icon(&self) -> Result<Option<String>, EditorError> {
         match self.selected {
             Some(page) => Ok(self.workspace.page(page)?.icon),
+            None => Ok(None),
+        }
+    }
+
+    /// Sets `page`'s cover to a built-in one, or removes it with `None`. Does nothing when it is unchanged,
+    /// so picking the same cover again records no change (or undo step).
+    pub fn set_cover(&mut self, page: PageId, cover: Option<BuiltinCover>) -> Result<(), EditorError> {
+        let cover = cover.map(BuiltinCover::stored);
+        if self.workspace.page(page)?.cover == cover {
+            return Ok(());
+        }
+        self.workspace
+            .apply(WorkspaceCommand::SetPageCover { page, cover })?;
+        Ok(())
+    }
+
+    /// The open page's cover, if a page is open and has one. A name this version doesn't know comes
+    /// back as [`PageCover::Unknown`], so it can still be shown and removed.
+    pub fn selected_cover(&self) -> Result<Option<PageCover>, EditorError> {
+        match self.selected {
+            Some(page) => Ok(self.workspace.page(page)?.cover.as_deref().map(PageCover::parse)),
             None => Ok(None),
         }
     }

@@ -47,6 +47,20 @@ impl Workspace {
                 }
                 Outcome::Changed
             }
+            WorkspaceCommand::SetPageCover { page, cover } => {
+                if cover.as_deref() == Some("") {
+                    return Err(ModelError::EmptyCover(page));
+                }
+                let node = self.node(page)?;
+                if self.page(page)?.cover != cover {
+                    let meta = self.tree.get_meta(node)?;
+                    match cover {
+                        Some(cover) => meta.insert(keys::COVER, cover)?,
+                        None => meta.delete(keys::COVER)?,
+                    }
+                }
+                Outcome::Changed
+            }
             WorkspaceCommand::MovePage {
                 page,
                 new_parent,
@@ -132,5 +146,7 @@ impl Workspace {
     }
 }
 
+#[cfg(test)]
+mod cover_tests;
 #[cfg(test)]
 mod tests;

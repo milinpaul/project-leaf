@@ -264,16 +264,22 @@ impl Shell {
         self.blocks.caret_on = true;
     }
 
-    /// List item `item`: the page header (icon and title) first, then one block each. The header is
-    /// part of the list so it scrolls away with the page.
+    /// List item `item`: the page header (cover, icon and title) first, then one block each. The header
+    /// is part of the list so it scrolls away with the page.
     fn render_item(&mut self, item: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        let content = if item < HEADER_ITEMS {
-            div()
-                .pt_16()
-                .pb_3()
-                .child(self.render_page_header(cx))
-                .into_any_element()
-        } else if let Some(row) = self.blocks.list.row(item).cloned() {
+        if item < HEADER_ITEMS {
+            // The cover spans the whole page area; the icon and title stay in the reading column.
+            let cover = self.page_cover();
+            let band = cover.as_ref().map(|cover| self.render_cover(cover, cx));
+            let header = self.render_page_header(band.is_some(), cx);
+            let top = if band.is_some() { px(0.0) } else { px(64.0) };
+            return v_flex()
+                .w_full()
+                .children(band)
+                .child(column(div().pt(top).pb_3().child(header)))
+                .into_any_element();
+        }
+        let content = if let Some(row) = self.blocks.list.row(item).cloned() {
             let (left, top) = super::block_row::handle_place(&row);
             let handle = self.render_handle(row.id, left, top, cx);
             div()

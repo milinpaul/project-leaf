@@ -4,6 +4,7 @@ use leaf_core::PageId;
 use leaf_model::{ModelError, Workspace, WorkspaceCommand};
 
 use super::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};
+use crate::{BuiltinCover, PageCover};
 
 const NOW: i64 = 1_700_000_000_000;
 
@@ -281,4 +282,66 @@ fn setting_and_removing_a_page_icon() {
     editor.set_icon(page, None).unwrap();
     assert_eq!(editor.selected_icon().unwrap(), None);
     assert!(editor.set_icon(PageId::new(), Some("x")).is_err());
+}
+
+#[test]
+fn setting_and_removing_a_page_cover() {
+    let mut editor = WorkspaceEditor::new(Workspace::new());
+    assert_eq!(editor.selected_cover().unwrap(), None, "no page open");
+    let page = editor.new_page(NOW).unwrap();
+    assert_eq!(editor.selected_cover().unwrap(), None);
+
+    editor.set_cover(page, Some(BuiltinCover::Dawn)).unwrap();
+    assert_eq!(
+        editor.selected_cover().unwrap(),
+        Some(PageCover::Builtin(BuiltinCover::Dawn))
+    );
+    assert_eq!(
+        editor.workspace().page(page).unwrap().cover.as_deref(),
+        Some("builtin:dawn")
+    );
+
+    let before = editor.workspace().to_bytes().unwrap();
+    editor.set_cover(page, Some(BuiltinCover::Dawn)).unwrap();
+    assert_eq!(
+        editor.workspace().to_bytes().unwrap(),
+        before,
+        "the same cover records nothing"
+    );
+
+    editor.set_cover(page, None).unwrap();
+    assert_eq!(editor.selected_cover().unwrap(), None);
+    assert!(editor.set_cover(PageId::new(), Some(BuiltinCover::Dawn)).is_err());
+}
+
+#[test]
+fn a_cover_from_a_newer_version_reads_as_unknown_and_can_be_removed() {
+    let mut workspace = Workspace::new();
+    let page = match workspace
+        .apply(WorkspaceCommand::CreatePage {
+            parent: None,
+            index: 0,
+            title: "From the future".into(),
+            created_at: NOW,
+        })
+        .unwrap()
+    {
+        leaf_model::Outcome::PageCreated(page) => page,
+        other => panic!("expected a new page, got {other:?}"),
+    };
+    workspace
+        .apply(WorkspaceCommand::SetPageCover {
+            page,
+            cover: Some("builtin:aurora".into()),
+        })
+        .unwrap();
+    let mut editor = WorkspaceEditor::new(workspace);
+    editor.select(page).unwrap();
+
+    assert_eq!(
+        editor.selected_cover().unwrap(),
+        Some(PageCover::Unknown("builtin:aurora".into()))
+    );
+    editor.set_cover(page, None).unwrap();
+    assert_eq!(editor.selected_cover().unwrap(), None);
 }

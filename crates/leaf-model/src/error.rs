@@ -70,6 +70,10 @@ pub enum ModelError {
     #[error("page {0}: icon cannot be empty (use None to clear it)")]
     EmptyIcon(PageId),
 
+    /// A cover was set to empty text; clearing a cover uses `None`.
+    #[error("page {0}: cover cannot be empty (use None to clear it)")]
+    EmptyCover(PageId),
+
     /// The block is not on this page (never existed, or deleted).
     #[error("block {0} not found")]
     BlockNotFound(BlockId),
