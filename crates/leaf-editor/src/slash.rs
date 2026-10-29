@@ -8,7 +8,7 @@
 
 mod items;
 
-pub use items::SlashItem;
+pub use items::{SlashAction, SlashItem};
 
 use leaf_model::{Anchor, BlockKind, Caret, PageCommand};
 
@@ -132,17 +132,36 @@ impl PageEditor {
         self.begin()?;
         let block = menu.at.block;
         let typed = menu.at.at..menu.at.at + 1 + menu.query.chars().count();
+        let kind = match item.action {
+            SlashAction::Block(kind) => kind,
+            SlashAction::Image => {
+                // The `/image` goes now; the picture arrives once the owner has picked a file.
+                self.doc.as_separate_step(|doc| {
+                    doc.apply(PageCommand::DeleteText {
+                        id: block,
+                        range: typed.clone(),
+                    })
+                })?;
+                let caret = self.set_caret(Caret {
+                    block,
+                    at: typed.start,
+                })?;
+                self.finish()?;
+                self.request_image(caret)?;
+                return Ok(Some(caret));
+            }
+        };
         let caret = self.doc.as_separate_step(|doc| -> Result<Caret, EditorError> {
             doc.apply(PageCommand::DeleteText {
                 id: block,
                 range: typed.clone(),
             })?;
             let empty = doc.plain_text(block)?.is_some_and(|t| t.is_empty());
-            let divider = item.kind == BlockKind::Divider;
+            let divider = kind == BlockKind::Divider;
             if empty {
                 doc.apply(PageCommand::SetBlockKind {
                     id: block,
-                    kind: item.kind,
+                    kind: kind.clone(),
                 })?;
                 return Ok(if divider {
                     Caret {
@@ -153,7 +172,7 @@ impl PageEditor {
                     Caret { block, at: 0 }
                 });
             }
-            let below = insert_after(doc, block, item.kind)?;
+            let below = insert_after(doc, block, kind)?;
             Ok(if divider {
                 Caret {
                     block,

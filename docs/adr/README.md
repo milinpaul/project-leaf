@@ -66,3 +66,4 @@ Records cover two kinds of decision:
 | [0047](0047-asset-store.md) | Asset store: images named by hash, type read from content, file before row | Architecture | Accepted |
 | [0048](0048-compaction.md) | Compaction: the save past 200 updates folds them into a fresh snapshot, in one transaction | Architecture | Accepted |
 | [0049](0049-dragging-blocks.md) | Dragging blocks: drops land in a gap between rows, at a depth picked by the pointer's x | Feature | Accepted |
+| [0050](0050-inserting-images.md) | Inserting images: the editor places the block, the UI fetches the picture | Feature | Accepted |

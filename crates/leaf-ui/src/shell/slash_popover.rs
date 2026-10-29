@@ -9,7 +9,8 @@ use gpui::{
     Pixels, Point, Styled, Window, anchored, deferred, div, point, px,
 };
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
-use leaf_editor::SlashMenu;
+use gpui_kit_assets::IconName;
+use leaf_editor::{SlashAction, SlashMenu};
 
 use super::block_menu::kind_icon;
 use super::{Shell, report};
@@ -120,7 +121,14 @@ impl Shell {
                     .rounded(radius)
                     .cursor_pointer()
                     .when(ix == menu.selected, |row| row.bg(accent))
-                    .child(Icon::new(kind_icon(&item.kind)).small().text_color(muted))
+                    .child(
+                        Icon::new(match &item.action {
+                            SlashAction::Block(kind) => kind_icon(kind),
+                            SlashAction::Image => IconName::Image,
+                        })
+                        .small()
+                        .text_color(muted),
+                    )
                     .child(item.label)
                     .on_mouse_move(cx.listener(move |shell, _, _, cx| {
                         let changed = shell.page().and_then(|page| {
@@ -139,6 +147,7 @@ impl Shell {
                                 report("could not apply the slash menu", err);
                             }
                             shell.focus_page(window, cx);
+                            shell.pick_image_if_asked(window, cx);
                         }),
                     )
             }))

@@ -1,12 +1,14 @@
 //! One block row of the page: indentation, list marker or checkbox, then the text, drawn with its
-//! formatting, selection and caret (E07-S02, E07-S03).
+//! formatting, selection and caret (E07-S02, E07-S03). An image row is a picture frame with its
+//! caption below as editable text (E05-S07); drawing the picture itself is E07-S08.
 
 use gpui::{
-    AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, Pixels, SharedString, Styled,
-    Window, div, px,
+    AnyElement, Context, ElementId, FontWeight, InteractiveElement as _, IntoElement, ParentElement, Pixels,
+    SharedString, Styled, Window, div, px,
 };
 use gpui_component::checkbox::Checkbox;
-use gpui_component::{ActiveTheme as _, h_flex};
+use gpui_component::{ActiveTheme as _, Icon, h_flex, v_flex};
+use gpui_kit_assets::IconName;
 use leaf_editor::{BlockRow, BlockStyle};
 
 use super::rich_text::Look;
@@ -15,6 +17,9 @@ use crate::theme;
 
 /// Indent per nesting level.
 const INDENT_PX: f32 = 24.0;
+
+/// The height of an image's frame until the picture itself is drawn (E07-S08).
+const IMAGE_FRAME_HEIGHT: f32 = 120.0;
 
 impl Shell {
     pub(super) fn render_row(
@@ -31,6 +36,9 @@ impl Shell {
             .gap_2()
             .pl(indent)
             .pt(space_above);
+        if let BlockStyle::Image { alt } = &row.style {
+            return self.render_image_row(row, alt, window, cx);
+        }
         if row.text.is_none() {
             let placeholder = match &row.style {
                 BlockStyle::Divider => {
@@ -38,7 +46,6 @@ impl Shell {
                         .child(div().h(px(1.0)).w_full().bg(cx.theme().border))
                         .into_any_element();
                 }
-                BlockStyle::Image { alt } => format!("[image] {alt}"),
                 BlockStyle::Unknown { type_name } => {
                     format!("[{type_name}: made by a newer Leaf, read-only]")
                 }
@@ -60,6 +67,51 @@ impl Shell {
             BlockStyle::Code { .. } => line.bg(cx.theme().muted).rounded_md().px_2().into_any_element(),
             _ => line.into_any_element(),
         }
+    }
+
+    /// An image: a frame where the picture will be drawn (E07-S08), then the caption, which takes the
+    /// caret like any text.
+    fn render_image_row(
+        &mut self,
+        row: &BlockRow,
+        alt: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let id = row.id;
+        let muted = cx.theme().muted_foreground;
+        let label = if alt.is_empty() {
+            "Image".to_owned()
+        } else {
+            alt.to_owned()
+        };
+        let frame = h_flex()
+            .id(ElementId::from(SharedString::from(format!("image-{id}"))))
+            .debug_selector(move || format!("image-{id}"))
+            .h(px(IMAGE_FRAME_HEIGHT))
+            .w_full()
+            .justify_center()
+            .gap_2()
+            .rounded_md()
+            .bg(cx.theme().muted)
+            .text_color(muted)
+            .child(Icon::new(IconName::Image).text_color(muted))
+            .child(label);
+        let caption_look = Look {
+            size: Some(px(14.0)),
+            line_height: px(22.0),
+            ..look_of(&row.style)
+        };
+        let highlight = self.blocks.highlights.get(&id).cloned();
+        let caret = self.blocks.caret.filter(|c| c.block == id).map(|c| c.at);
+        let caption = self.render_rich_text(row, &caption_look, highlight.as_ref(), caret, window, cx);
+        v_flex()
+            .w_full()
+            .gap_1()
+            .pl(indent_of(row))
+            .child(frame)
+            .child(div().w_full().text_color(muted).child(caption))
+            .into_any_element()
     }
 
     /// What sits before a row's text: its list marker, checkbox or quote bar.

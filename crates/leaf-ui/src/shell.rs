@@ -222,6 +222,7 @@ mod blocks;
 mod cover;
 mod found;
 mod header;
+mod image;
 mod ime;
 mod markers;
 mod page_keys;
