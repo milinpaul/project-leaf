@@ -1,4 +1,4 @@
-# 0043. Search bar UI: one popup for Cmd/Ctrl+K and P, searched off the UI thread, results opened in place
+# 0044. Search bar UI: one popup for Cmd/Ctrl+K and P, searched off the UI thread, results opened in place
 
 - **Status:** Accepted
 - **Type:** Feature

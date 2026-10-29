@@ -370,3 +370,18 @@ fn undo_right_after_applying_gives_back_the_typed_query() {
         vec![(BlockKind::Heading { level: 1 }, String::new())]
     );
 }
+
+#[test]
+fn the_mouse_highlights_an_entry_and_a_new_query_resets_it() {
+    let (mut editor, _) = empty();
+    assert_eq!(editor.slash_highlight(2).unwrap(), None, "no menu, nothing to do");
+    type_keys(&mut editor, "/");
+    assert_eq!(editor.slash_highlight(3).unwrap().unwrap().selected, 3);
+    assert_eq!(
+        editor.slash_highlight(99).unwrap().unwrap().selected,
+        3,
+        "past the end is ignored"
+    );
+    type_keys(&mut editor, "h");
+    assert_eq!(editor.slash_menu().unwrap().unwrap().selected, 0);
+}

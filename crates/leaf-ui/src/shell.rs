@@ -226,6 +226,7 @@ mod page_list;
 mod page_list_window_tests;
 mod rich_text;
 mod sidebar;
+mod slash_popover;
 mod storage;
 mod trash;
 mod tree;
