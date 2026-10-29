@@ -132,9 +132,20 @@ impl Shell {
             .into_any_element()
     }
 
-    /// Settings, at the foot of the sidebar out of the way of the pages, as a quiet row.
+    /// Trash and Settings, at the foot of the sidebar out of the way of the pages, as quiet rows.
     fn render_footer(cx: &mut Context<Self>) -> AnyElement {
-        SidebarFooter::new()
+        let trash = SidebarFooter::new()
+            .debug_selector(|| "open-trash".into())
+            .w_full()
+            .gap_2()
+            .text_sm()
+            .child(Icon::new(IconName::Trash))
+            .child("Trash")
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|shell, _: &MouseDownEvent, window, cx| shell.open_trash(window, cx)),
+            );
+        let settings = SidebarFooter::new()
             .w_full()
             .gap_2()
             .text_sm()
@@ -145,7 +156,7 @@ impl Shell {
                 cx.listener(|shell, _: &MouseDownEvent, window, cx| {
                     shell.open_settings(Section::Appearance, window, cx);
                 }),
-            )
-            .into_any_element()
+            );
+        v_flex().child(trash).child(settings).into_any_element()
     }
 }

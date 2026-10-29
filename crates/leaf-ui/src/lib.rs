@@ -17,6 +17,7 @@ mod settings_dialog;
 mod shell;
 mod switcher;
 pub mod theme;
+mod trash_dialog;
 
 use std::path::Path;
 
@@ -30,7 +31,14 @@ pub use shell::{Shell, Storage};
 // these few, not the whole 1,800-icon set.
 gpui_kit_assets::icon_assets!(
     LeafIcons,
-    [FaceSlightlySmilingPlus, FileText, PencilLine, SquarePen, Trash]
+    [
+        FaceSlightlySmilingPlus,
+        FileText,
+        PencilLine,
+        RotateCcw,
+        SquarePen,
+        Trash
+    ]
 );
 
 /// The icons Leaf and gpui-component's widgets draw (a checkbox's tick, the sidebar's compose button).

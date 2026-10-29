@@ -162,6 +162,7 @@ impl Render for Shell {
             .gap_3();
         let column = if self.editor.selected().is_some() {
             column
+                .children(self.render_trash_banner(cx))
                 .child(self.render_page_header(cx))
                 .child(self.render_blocks(window, cx))
         } else {
@@ -206,6 +207,7 @@ mod blocks;
 mod header;
 mod sidebar;
 mod storage;
+mod trash;
 mod tree;
 mod window;
 
@@ -219,7 +221,7 @@ impl Drop for Shell {
 }
 
 /// Current time in Unix milliseconds. The UI owns the clock so the model never reads it.
-fn now_ms() -> i64 {
+pub(crate) fn now_ms() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |since| i64::try_from(since.as_millis()).unwrap_or(i64::MAX))

@@ -199,8 +199,10 @@ impl WorkspaceEditor {
     }
 }
 
+mod trash;
 mod tree;
 
+pub use trash::{TrashItem, TrashList, trashed_ago};
 pub use tree::DropPlace;
 
 #[cfg(test)]

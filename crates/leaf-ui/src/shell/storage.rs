@@ -136,6 +136,28 @@ impl Shell {
         }
     }
 
+    /// Removes permanently deleted pages from disk. The workspace (which no longer lists them) is saved
+    /// first, so a crash in between leaves unused documents behind, never a live page without its
+    /// blocks. Search forgets them on its next pass.
+    pub(super) fn remove_from_disk(&mut self, pages: &[PageId]) {
+        if pages.is_empty() {
+            return;
+        }
+        self.save(true);
+        let Some(storage) = &mut self.storage else {
+            return;
+        };
+        for &page in pages {
+            storage.autosave.forget(DocKey::Page(page));
+            if let Err(err) = storage.folder.store_mut().delete(DocKey::Page(page)) {
+                report("could not remove a deleted page from disk", err);
+            }
+        }
+        if let Some(search) = &storage.search {
+            search.poke();
+        }
+    }
+
     /// Brings the selected page's saved blocks into the editor the first time it is opened.
     pub(super) fn load_selected_page(&mut self) {
         let (Some(storage), Some(page)) = (&self.storage, self.editor.selected()) else {

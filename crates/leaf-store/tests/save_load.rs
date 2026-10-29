@@ -210,3 +210,34 @@ fn keys_are_stored_as_the_spec_says() {
     assert_eq!(DocKey::Workspace.to_string(), "workspace");
     assert_eq!(DocKey::Page(page).to_string(), page.to_string());
 }
+
+#[test]
+fn deleting_a_page_document_removes_its_snapshot_and_updates_only() {
+    let dir = TempDir::new();
+    let path = dir.0.join("W.leaf");
+    let mut folder = Folder::create(&path).unwrap();
+    let (gone, kept) = (PageId::new(), PageId::new());
+    for (page, text) in [(gone, "bye"), (kept, "stay")] {
+        let mut doc = PageDoc::new();
+        insert(&mut doc, None, BlockKind::Paragraph, text);
+        folder.store_mut().save(DocKey::Page(page), &doc, 1).unwrap();
+        insert(&mut doc, None, BlockKind::Paragraph, "more"); // an update row too
+        folder.store_mut().save(DocKey::Page(page), &doc, 2).unwrap();
+    }
+    assert!(folder.store_mut().delete(DocKey::Page(gone)).unwrap());
+    assert!(
+        folder
+            .store()
+            .load::<PageDoc>(DocKey::Page(gone))
+            .unwrap()
+            .is_none()
+    );
+    assert_eq!(update_rows(&path, &gone.to_string()), 0);
+    assert_eq!(update_rows(&path, &kept.to_string()), 1);
+    let left: PageDoc = folder.store().load(DocKey::Page(kept)).unwrap().unwrap();
+    assert_eq!(left.root_blocks().len(), 2, "the other page is untouched");
+    assert!(
+        !folder.store_mut().delete(DocKey::Page(gone)).unwrap(),
+        "nothing left to remove"
+    );
+}
