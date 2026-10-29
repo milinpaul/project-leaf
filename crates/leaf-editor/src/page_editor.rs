@@ -120,37 +120,7 @@ impl PageEditor {
     /// new block is added. That is how a run of list items is ended. Blocks without text (dividers)
     /// get an empty paragraph below.
     pub fn enter_at(&mut self, id: BlockId, at: usize) -> Result<Caret, EditorError> {
-        let kind = self.doc.kind(id)?;
-        let Some(text) = self.doc.plain_text(id)? else {
-            let parent = self.doc.parent(id)?;
-            let siblings = match parent {
-                Some(parent) => self.doc.children(parent)?,
-                None => self.doc.root_blocks(),
-            };
-            let index = siblings
-                .iter()
-                .position(|&b| b == id)
-                .map_or(siblings.len(), |p| p + 1);
-            let block = self.insert(parent, index, BlockKind::Paragraph)?;
-            return Ok(Caret { block, at: 0 });
-        };
-        let is_list = matches!(
-            kind,
-            BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. }
-        );
-        if is_list && text.is_empty() {
-            if self.doc.parent(id)?.is_some() {
-                self.outdent(id)?;
-            } else {
-                self.turn_into(id, BlockKind::Paragraph)?;
-            }
-            return Ok(Caret { block: id, at: 0 });
-        }
-        let PageOutcome::BlockCreated(block) = self.doc.apply(PageCommand::SplitBlock { id, pos: at })?
-        else {
-            unreachable!("SplitBlock always reports the block it created");
-        };
-        Ok(Caret { block, at: 0 })
+        enter_in(&mut self.doc, id, at)
     }
 
     /// Backspace with the cursor at the very start of the block (`PRODUCT_SPEC.md` "Editor
@@ -235,17 +205,69 @@ impl PageEditor {
         index: usize,
         kind: BlockKind,
     ) -> Result<BlockId, EditorError> {
-        let command = PageCommand::InsertBlock {
-            parent,
-            index,
-            kind,
-            text: String::new(),
-        };
-        let PageOutcome::BlockCreated(id) = self.doc.apply(command)? else {
-            unreachable!("InsertBlock always reports the block it created");
-        };
-        Ok(id)
+        insert_block(&mut self.doc, parent, index, kind)
     }
+}
+
+/// Enter at `at` in block `id`, on the document alone so it can run inside
+/// [`PageDoc::as_one_step`]. See [`PageEditor::enter_at`].
+pub(crate) fn enter_in(doc: &mut PageDoc, id: BlockId, at: usize) -> Result<Caret, EditorError> {
+    let kind = doc.kind(id)?;
+    let Some(text) = doc.plain_text(id)? else {
+        let block = insert_after(doc, id, BlockKind::Paragraph)?;
+        return Ok(Caret { block, at: 0 });
+    };
+    let is_list = matches!(
+        kind,
+        BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. }
+    );
+    if is_list && text.is_empty() {
+        if doc.parent(id)?.is_some() {
+            doc.apply(PageCommand::Outdent { ids: vec![id] })?;
+        } else {
+            doc.apply(PageCommand::SetBlockKind {
+                id,
+                kind: BlockKind::Paragraph,
+            })?;
+        }
+        return Ok(Caret { block: id, at: 0 });
+    }
+    let PageOutcome::BlockCreated(block) = doc.apply(PageCommand::SplitBlock { id, pos: at })? else {
+        unreachable!("SplitBlock always reports the block it created");
+    };
+    Ok(Caret { block, at: 0 })
+}
+
+/// Adds an empty block of `kind` right after `id`, at the same level.
+pub(crate) fn insert_after(doc: &mut PageDoc, id: BlockId, kind: BlockKind) -> Result<BlockId, EditorError> {
+    let parent = doc.parent(id)?;
+    let siblings = match parent {
+        Some(parent) => doc.children(parent)?,
+        None => doc.root_blocks(),
+    };
+    let index = siblings
+        .iter()
+        .position(|&b| b == id)
+        .map_or(siblings.len(), |p| p + 1);
+    insert_block(doc, parent, index, kind)
+}
+
+pub(crate) fn insert_block(
+    doc: &mut PageDoc,
+    parent: Option<BlockId>,
+    index: usize,
+    kind: BlockKind,
+) -> Result<BlockId, EditorError> {
+    let command = PageCommand::InsertBlock {
+        parent,
+        index,
+        kind,
+        text: String::new(),
+    };
+    let PageOutcome::BlockCreated(id) = doc.apply(command)? else {
+        unreachable!("InsertBlock always reports the block it created");
+    };
+    Ok(id)
 }
 
 #[cfg(test)]

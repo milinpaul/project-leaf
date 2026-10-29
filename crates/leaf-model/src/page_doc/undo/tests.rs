@@ -283,3 +283,71 @@ fn redoing_a_kind_change_on_a_re_created_block_keeps_its_properties() {
         assert_eq!(page.check_invariants(), Ok(()));
     }
 }
+
+#[test]
+fn several_commands_as_one_step_undo_and_redo_together() {
+    let mut page = fresh();
+    let id = add(&mut page, None, BlockKind::Paragraph, "hello world");
+    let before = outline(&page);
+    page.set_caret(Some(Caret { block: id, at: 5 }));
+    let created = page
+        .as_one_step(|page| {
+            page.apply(PageCommand::DeleteText { id, range: 5..11 })?;
+            page.apply(PageCommand::SplitBlock { id, pos: 5 })
+        })
+        .unwrap();
+    assert!(matches!(created, PageOutcome::BlockCreated(_)));
+    let after = outline(&page);
+    assert_eq!(after.len(), 2);
+
+    assert_eq!(
+        page.undo().unwrap(),
+        History::Done {
+            caret: Some(Caret { block: id, at: 5 })
+        }
+    );
+    assert_eq!(outline(&page), before, "both commands undone at once");
+    page.redo().unwrap();
+    assert_eq!(outline(&page), after);
+
+    // The group ended: the next command is a step of its own.
+    page.apply(PageCommand::InsertText {
+        id,
+        pos: 0,
+        text: ">".into(),
+    })
+    .unwrap();
+    page.undo().unwrap();
+    assert_eq!(outline(&page), after);
+}
+
+#[test]
+fn a_failing_step_still_ends_the_group() {
+    let mut page = fresh();
+    let id = add(&mut page, None, BlockKind::Paragraph, "abc");
+    let result = page.as_one_step(|page| {
+        page.apply(PageCommand::InsertText {
+            id,
+            pos: 3,
+            text: "d".into(),
+        })?;
+        page.apply(PageCommand::DeleteText { id, range: 0..99 })
+    });
+    assert!(result.is_err());
+    assert_eq!(
+        page.plain_text(id).unwrap().as_deref(),
+        Some("abcd"),
+        "the first step stays"
+    );
+    // A new group can start, so the first one was closed.
+    page.as_one_step(|page| {
+        page.apply(PageCommand::InsertText {
+            id,
+            pos: 0,
+            text: "_".into(),
+        })
+    })
+    .unwrap();
+    page.undo().unwrap();
+    assert_eq!(page.plain_text(id).unwrap().as_deref(), Some("abcd"));
+}

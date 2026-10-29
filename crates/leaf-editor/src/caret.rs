@@ -167,7 +167,7 @@ fn start_of(row: &BlockRow) -> Option<Caret> {
 
 /// Where a caret goes when its block (once at `row`) was deleted: the end of the nearest text block
 /// above, else the start of the first text block below, else any block.
-fn nearest_above(rows: &[BlockRow], row: usize) -> Option<Caret> {
+pub(crate) fn nearest_above(rows: &[BlockRow], row: usize) -> Option<Caret> {
     let split = row.min(rows.len());
     rows[..split]
         .iter()

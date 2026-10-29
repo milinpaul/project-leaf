@@ -106,8 +106,8 @@
       "goal": "Benchmarks, large fixtures, Phase 0 acceptance and release builds.",
       "path": "backlog/epics/E08.md",
       "story_count": 5,
-      "done_count": 0,
-      "progress": 0.0
+      "done_count": 1,
+      "progress": 0.2
     },
     {
       "id": "E09",
@@ -1975,7 +1975,7 @@
       "id": "E04-S05",
       "title": "Enter, Backspace, Delete, Tab rules",
       "epic": "E04",
-      "status": "todo",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1986,33 +1986,38 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
-      "updated": "2026-10-28",
+      "assignee": "claude",
+      "updated": "2026-10-29",
       "context": "Implement every row of the Editor behaviour table in docs/product/PRODUCT_SPEC.md.",
       "acceptance": [
         {
           "text": "One test per table row",
-          "done": false
+          "done": true
         },
         {
           "text": "Code block Enter behaviour",
-          "done": false
+          "done": true
         },
         {
           "text": "Behaviour on divider and image blocks",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- New `leaf-editor/src/keys.rs`: caret-driven handlers `press(Key)` for Enter, Cmd/Ctrl+Enter, Backspace,\n  Delete, Tab, Shift+Tab, plus `delete_block` (a selected divider/image, or any block with its children). They reuse\n  the existing `enter_at` / `backspace_at_start` / indent rules and the tracked caret from E04-S02.\n- Mid-text Backspace/Delete remove one grapheme; a selection is deleted first.\n- Code block: Enter inserts a newline; Cmd/Ctrl+Enter, or Enter at the end after two empty lines, leaves the block\n  (trailing empty lines removed) into a new paragraph below.\n- Dividers/images: Backspace after one, or Delete before one, selects it; a selected one is deleted with\n  `delete_block`; Enter in an image caption adds a paragraph below.\n- `leaf-model`: `PageDoc::as_one_step` groups several commands into one undo step (Loro undo groups), so\n  \"delete selection + split\" and \"leave code block\" undo at once.\n- Table rows covered elsewhere: arrows (E04-S03, tested there), paste (E05-S06).\n- Tests: one per table row in `keys/tests.rs`, plus code, divider/image and undo-as-one-step tests.",
       "path": "backlog/stories/E04-S05.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/35",
+          "number": 35
+        }
+      ],
       "waiting_on": [],
-      "ready": true,
-      "progress": 0.0
+      "ready": false,
+      "progress": 1.0
     },
     {
       "id": "E04-S06",
@@ -3524,7 +3529,7 @@
       "id": "E08-S05",
       "title": "App icon",
       "epic": "E08",
-      "status": "in_progress",
+      "status": "done",
       "priority": "P1",
       "size": "S",
       "depends_on": [],
@@ -3546,11 +3551,11 @@
         },
         {
           "text": "Windows: the icon is built into `leaf.exe`",
-          "done": false
+          "done": true
         },
         {
           "text": "Linux: the window gets the icon (X11) and a `.desktop` entry ships alongside the PNG files",
-          "done": false
+          "done": true
         },
         {
           "text": "Verified with screenshots on macOS",
@@ -3571,7 +3576,7 @@
       ],
       "waiting_on": [],
       "ready": false,
-      "progress": 0.67
+      "progress": 1.0
     },
     {
       "id": "E11-S01",
