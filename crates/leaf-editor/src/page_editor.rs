@@ -187,7 +187,7 @@ impl PageEditor {
     }
 
     /// The block just above `id` in reading order, for the up arrow.
-    pub fn previous(&self, id: BlockId) -> Result<Option<BlockId>, EditorError> {
+    pub fn previous(&mut self, id: BlockId) -> Result<Option<BlockId>, EditorError> {
         let order = self.order()?;
         Ok(order
             .iter()
@@ -197,7 +197,7 @@ impl PageEditor {
     }
 
     /// The block just below `id` in reading order, for the down arrow.
-    pub fn next(&self, id: BlockId) -> Result<Option<BlockId>, EditorError> {
+    pub fn next(&mut self, id: BlockId) -> Result<Option<BlockId>, EditorError> {
         let order = self.order()?;
         Ok(order
             .iter()
@@ -206,8 +206,10 @@ impl PageEditor {
             .copied())
     }
 
-    pub(crate) fn order(&self) -> Result<Vec<BlockId>, EditorError> {
-        Ok(self.rows()?.into_iter().map(|row| row.id).collect())
+    /// Every block in reading order, from the incrementally kept view: typing in one block costs no
+    /// rebuild of the whole page.
+    pub(crate) fn order(&mut self) -> Result<Vec<BlockId>, EditorError> {
+        Ok(self.view()?.iter().map(|row| row.id).collect())
     }
 
     fn insert(

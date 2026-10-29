@@ -58,15 +58,15 @@ create, rename and set an icon (E01-S03), move or reorder pages (E01-S04), trash
 restore and permanent delete (E01-S05), and undo/redo of all of them (E01-S06). Each page's own document, `PageDoc`, holds its blocks:
 the block schema and reading text with formatting (E02-S01), inserting, deleting and moving blocks (E02-S02),
 editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
-block's kind and properties (E02-S04). The window can edit a page's blocks with an **interim block editor**
-(E07-S10): one plain text input per block, drawn from `PageEditor`'s rows in `leaf-editor`, with Enter, Backspace,
-Tab and Shift+Tab caught before the input sees them. The page is a **virtual list** (E07-S01, ADR 0035): only the rows
-on screen are laid out and given inputs, and each frame's rows are compared with the last to re-measure or splice just
-what changed, so a 10,000-block page scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR 0038):
-GPUI `StyledText` runs carry the marks, the selection is a run background, an overlay draws the blinking caret and
-records the painted layout, which answers the editor's `LineLayout` for Up/Down. The block being typed in keeps its
-input until E07-S03. The rich text element (E07-S02) replaces the inputs later;
-`PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
+block's kind and properties (E02-S04). The page is a **virtual list** (E07-S01, ADR 0035): only the rows on screen are laid out,
+and each frame's rows are compared with the last to re-measure or splice just what changed, so a 10,000-block page
+scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR 0038): GPUI `StyledText` runs carry the marks,
+the selection is a run background, an overlay draws the blinking caret and records the painted layout, which answers
+the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E07-S03, ADR 0040): keys are actions
+bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); typed text, input-method drafts and the
+emoji picker arrive through GPUI's platform text input (`shell/ime.rs`), which sees the caret's block with the draft
+spliced in; the mouse places the caret, drags select, double and triple clicks select a word and the block. (The first
+version, E07-S10, used one text input per block; those are gone.) `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
 the editor wires Cmd+Z to it in E04-S08. The editor's caret (E04-S02) moves by
 whole characters as a reader sees them (an emoji, a Hindi syllable), jumps by word, and goes to line start and end; it

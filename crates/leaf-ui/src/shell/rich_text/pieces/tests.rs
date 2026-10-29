@@ -4,7 +4,7 @@ use leaf_core::BlockId;
 use leaf_editor::{BlockRow, BlockStyle, Selection};
 use leaf_model::{Caret, Marks, TextSpan};
 
-use super::{Highlight, Piece, byte_of, highlights, pieces};
+use super::{Highlight, Piece, byte_of, highlights, pieces, with_draft};
 
 fn row(depth: usize, text: Option<&str>) -> BlockRow {
     BlockRow {
@@ -84,7 +84,7 @@ fn span(text: &str, bold: bool) -> TextSpan {
 fn pieces_split_runs_at_the_selection_and_count_bytes() {
     // "héllo" (é is two bytes) plain, then "wörld" bold; select "lo wö".
     let spans = vec![span("héllo ", false), span("wörld", true)];
-    let got = pieces(&spans, Some(&(3..8)));
+    let got = pieces(&spans, Some(&(3..8)), None);
     let summary: Vec<(std::ops::Range<usize>, bool, bool)> = got
         .iter()
         .map(|p: &Piece| (p.bytes.clone(), p.marks.bold, p.selected))
@@ -99,11 +99,11 @@ fn pieces_split_runs_at_the_selection_and_count_bytes() {
         ]
     );
     assert_eq!(
-        pieces(&spans, None).len(),
+        pieces(&spans, None, None).len(),
         2,
         "without a selection, one piece per run"
     );
-    assert_eq!(pieces(&[], Some(&(0..0))), Vec::<Piece>::new());
+    assert_eq!(pieces(&[], Some(&(0..0)), None), Vec::<Piece>::new());
 }
 
 #[test]
@@ -113,4 +113,28 @@ fn character_offsets_become_byte_offsets() {
     assert_eq!(byte_of(text, 1), 1);
     assert_eq!(byte_of(text, 3), 9);
     assert_eq!(byte_of(text, 99), text.len());
+}
+
+#[test]
+fn a_draft_shows_in_place_of_what_it_covers_and_is_flagged() {
+    let spans = vec![span("ab", false), span("cd", true)];
+    // At the caret, inside a run: the run splits around the draft.
+    let (with, at) = with_draft(&spans, &(1..1), "か");
+    let texts: Vec<&str> = with.iter().map(|s| s.text.as_str()).collect();
+    assert_eq!((texts, at.clone()), (vec!["a", "か", "b", "cd"], 1..2));
+    let drawn = pieces(&with, None, Some(&at));
+    assert_eq!(
+        drawn.iter().map(|p| p.draft).collect::<Vec<_>>(),
+        vec![false, true, false, false]
+    );
+    assert_eq!(drawn[1].bytes, 1..4, "か is three bytes");
+    // Over a selection spanning two runs: the selected text is hidden.
+    let (with, at) = with_draft(&spans, &(1..3), "XY");
+    let texts: Vec<&str> = with.iter().map(|s| s.text.as_str()).collect();
+    assert_eq!((texts, at), (vec!["a", "XY", "d"], 1..3));
+    // At the very end, and on an empty block.
+    let (with, _) = with_draft(&spans, &(4..4), "!");
+    assert_eq!(with.last().map(|s| s.text.as_str()), Some("!"));
+    let (with, at) = with_draft(&[], &(0..0), "क");
+    assert_eq!((with.len(), at), (1, 0..1));
 }

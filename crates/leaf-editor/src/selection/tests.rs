@@ -540,3 +540,62 @@ mod property {
         }
     }
 }
+
+// ---- Double and triple click ----
+
+#[test]
+fn a_double_click_selects_the_word_under_it_whole() {
+    let (mut editor, ids) = page(&[p(0, "Hello, नमस्ते world 👋🏽!")]);
+    let b = ids[0];
+    let word = |editor: &mut PageEditor, at: usize| editor.select_word_at(Caret { block: b, at }).unwrap();
+    assert_eq!(
+        word(&mut editor, 2),
+        text(Caret { block: b, at: 0 }, Caret { block: b, at: 5 }),
+        "Hello"
+    );
+    assert_eq!(
+        word(&mut editor, 0),
+        text(Caret { block: b, at: 0 }, Caret { block: b, at: 5 }),
+        "its start"
+    );
+    assert_eq!(
+        word(&mut editor, 8),
+        text(Caret { block: b, at: 7 }, Caret { block: b, at: 13 }),
+        "a Hindi word is one word"
+    );
+    assert_eq!(
+        word(&mut editor, 13),
+        text(Caret { block: b, at: 13 }, Caret { block: b, at: 14 }),
+        "the space after it"
+    );
+    let emoji = word(&mut editor, 20);
+    assert_eq!(
+        emoji,
+        text(Caret { block: b, at: 20 }, Caret { block: b, at: 22 }),
+        "an emoji with its skin tone"
+    );
+    assert_eq!(
+        word(&mut editor, 23),
+        text(Caret { block: b, at: 22 }, Caret { block: b, at: 23 }),
+        "past the end: the last segment"
+    );
+}
+
+#[test]
+fn a_double_click_in_an_empty_block_places_the_caret_and_a_triple_click_selects_the_block() {
+    let (mut editor, ids) = page(&[p(0, ""), p(0, "two words")]);
+    assert_eq!(
+        editor.select_word_at(Caret { block: ids[0], at: 0 }).unwrap(),
+        None
+    );
+    assert_eq!(editor.caret().unwrap(), Some(Caret { block: ids[0], at: 0 }));
+    assert_eq!(
+        editor.select_block_text(ids[1]).unwrap(),
+        text(Caret { block: ids[1], at: 0 }, Caret { block: ids[1], at: 9 })
+    );
+    assert_eq!(
+        editor.select_block_text(ids[0]).unwrap(),
+        None,
+        "nothing to select"
+    );
+}

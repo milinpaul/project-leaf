@@ -54,6 +54,38 @@ impl PageEditor {
         self.set_tail(tail)
     }
 
+    /// Double-click: selects the word at `caret` (or the run of spaces or punctuation there), using
+    /// Unicode word boundaries so emoji and Hindi words select whole. Returns what got selected.
+    pub fn select_word_at(&mut self, caret: Caret) -> Result<Option<Selection>, EditorError> {
+        use unicode_segmentation::UnicodeSegmentation as _;
+        let text = self.doc.plain_text(caret.block)?.unwrap_or_default();
+        let mut start = 0;
+        let mut found = None;
+        for segment in text.split_word_bounds() {
+            let end = start + segment.chars().count();
+            // A click on a boundary belongs to the segment after it, except at the very end.
+            if caret.at < end || end == text.chars().count() {
+                found = Some(start..end);
+                break;
+            }
+            start = end;
+        }
+        match found {
+            Some(range) if !range.is_empty() => self.select(caret.block, range)?,
+            _ => {
+                self.set_caret(caret)?;
+            }
+        }
+        self.selection()
+    }
+
+    /// Triple-click: selects all of `block`'s text.
+    pub fn select_block_text(&mut self, block: BlockId) -> Result<Option<Selection>, EditorError> {
+        let len = self.doc.plain_text(block)?.map_or(0, |t| t.chars().count());
+        self.select(block, 0..len)?;
+        self.selection()
+    }
+
     /// Selects whole blocks (block selection mode). The caret stays where it was, for when the mode
     /// ends. Blocks not on the page are ignored; none at all ends the mode.
     pub fn select_blocks(&mut self, blocks: &[BlockId]) -> Result<(), EditorError> {

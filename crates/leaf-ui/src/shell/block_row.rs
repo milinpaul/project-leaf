@@ -1,13 +1,11 @@
 //! One block row of the page: indentation, list marker or checkbox, then the text, drawn with its
-//! formatting (E07-S02). The block being typed in shows a text input instead, until typing moves into
-//! the text view (E07-S03).
+//! formatting, selection and caret (E07-S02, E07-S03).
 
 use gpui::{
     AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, SharedString, Styled, Window,
     div, px,
 };
 use gpui_component::checkbox::Checkbox;
-use gpui_component::input::Input;
 use gpui_component::{ActiveTheme as _, h_flex};
 use leaf_editor::{BlockRow, BlockStyle};
 
@@ -38,7 +36,7 @@ impl Shell {
             .gap_2()
             .pl(indent)
             .pt(space_above);
-        let Some(text) = row.text.clone() else {
+        if row.text.is_none() {
             let placeholder = match &row.style {
                 BlockStyle::Divider => {
                     return line
@@ -54,63 +52,19 @@ impl Shell {
             return line
                 .child(div().text_color(cx.theme().muted_foreground).child(placeholder))
                 .into_any_element();
-        };
+        }
 
         let id = row.id;
         let prefix = Self::marker(row, cx);
         let look = look_of(&row.style);
-        let body = if self.blocks.focused == Some(id) {
-            self.render_row_input(row, &text, &look, window, cx)
-        } else {
-            let highlight = self.blocks.highlights.get(&id).cloned();
-            let caret = self.blocks.caret.filter(|c| c.block == id).map(|c| c.at);
-            self.render_rich_text(row, &look, highlight.as_ref(), caret, window, cx)
-        };
+        let highlight = self.blocks.highlights.get(&id).cloned();
+        let caret = self.blocks.caret.filter(|c| c.block == id).map(|c| c.at);
+        let body = self.render_rich_text(row, &look, highlight.as_ref(), caret, window, cx);
         let line = line.children(prefix).child(body);
         match &row.style {
             BlockStyle::Code { .. } => line.bg(cx.theme().muted).rounded_md().px_2().into_any_element(),
             _ => line.into_any_element(),
         }
-    }
-
-    /// The block being typed in: a text input styled like the text view it stands in for (interim,
-    /// until typing moves into the text view in E07-S03).
-    fn render_row_input(
-        &mut self,
-        row: &BlockRow,
-        text: &str,
-        look: &Look,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> AnyElement {
-        let state = self.block_input(row.id, window, cx);
-        state.update(cx, |input, cx| {
-            if input.value() != text {
-                input.set_value(text.to_owned(), window, cx);
-            }
-        });
-        let input = Input::new(&state)
-            .appearance(false)
-            .focus_bordered(false)
-            .px_0()
-            .line_height(look.line_height)
-            .h(look.line_height + look.pad * 2.0)
-            .font_weight(look.weight);
-        let input = match look.size {
-            Some(size) => input.text_size(size),
-            None => input,
-        };
-        let input = if look.mono {
-            input.font_family(cx.theme().mono_font_family.clone())
-        } else {
-            input
-        };
-        let input = if look.done {
-            input.text_color(cx.theme().muted_foreground)
-        } else {
-            input
-        };
-        div().flex_1().min_w_0().child(input).into_any_element()
     }
 
     /// What sits before a row's text: its list marker, checkbox or quote bar.
