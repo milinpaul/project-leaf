@@ -10,6 +10,8 @@
 //! crates must never depend on it.
 
 mod app;
+mod cover_picker;
+pub mod covers;
 mod icon_picker;
 pub mod menus;
 mod notice;
@@ -44,6 +46,7 @@ gpui_kit_assets::icon_assets!(
         Heading1,
         Heading2,
         Heading3,
+        ImagePlus,
         List,
         ListOrdered,
         Minus,
@@ -66,11 +69,14 @@ pub fn assets() -> impl gpui::AssetSource {
     Assets
 }
 
-/// Leaf's extra icons first, then gpui-component's.
+/// Leaf's cover images and extra icons first, then gpui-component's.
 struct Assets;
 
 impl gpui::AssetSource for Assets {
     fn load(&self, path: &str) -> gpui::Result<Option<std::borrow::Cow<'static, [u8]>>> {
+        if let Some(cover) = covers::load(path) {
+            return Ok(Some(cover));
+        }
         match LeafIcons.load(path)? {
             Some(bytes) => Ok(Some(bytes)),
             None => gpui_kit_assets::Assets.load(path),

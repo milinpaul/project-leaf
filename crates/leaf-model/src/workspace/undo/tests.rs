@@ -90,6 +90,14 @@ fn every_page_command_undoes_and_redoes_exactly() {
     assert_undoable(&mut ws, &WorkspaceCommand::SetPageIcon { page: a, icon: None });
     assert_undoable(
         &mut ws,
+        &WorkspaceCommand::SetPageCover {
+            page: a,
+            cover: Some("builtin:dawn".into()),
+        },
+    );
+    assert_undoable(&mut ws, &WorkspaceCommand::SetPageCover { page: a, cover: None });
+    assert_undoable(
+        &mut ws,
         &WorkspaceCommand::MovePage {
             page: child,
             new_parent: Some(b),

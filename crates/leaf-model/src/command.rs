@@ -6,7 +6,7 @@
 
 use leaf_core::PageId;
 
-/// A change to the workspace doc: the page tree and each page's title, icon and trash state.
+/// A change to the workspace doc: the page tree and each page's title, icon, cover and trash state.
 ///
 /// Applied with [`Workspace::apply`](crate::Workspace::apply); undone with [`Workspace::undo`](crate::Workspace::undo).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,6 +38,14 @@ pub enum WorkspaceCommand {
         /// The new icon (a single emoji, chosen by the emoji picker), or `None` to remove it.
         /// An empty string is rejected: use `None` to clear.
         icon: Option<String>,
+    },
+    /// Sets or clears a page's cover.
+    SetPageCover {
+        /// Page to change.
+        page: PageId,
+        /// The cover's name (for example `builtin:dawn`, chosen in the cover picker), or `None` to remove
+        /// it. An empty string is rejected: use `None` to clear.
+        cover: Option<String>,
     },
     /// Moves a page, with everything inside it, under `new_parent` (or to the top level when
     /// `None`) at position `index`.

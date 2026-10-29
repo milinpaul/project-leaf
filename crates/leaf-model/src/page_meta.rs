@@ -13,6 +13,7 @@ pub(crate) mod keys {
     pub const ID: &str = "id";
     pub const TITLE: &str = "title";
     pub const ICON: &str = "icon";
+    pub const COVER: &str = "cover";
     pub const CREATED_AT: &str = "created_at";
     pub const TRASHED_AT: &str = "trashed_at";
 }
@@ -26,6 +27,9 @@ pub struct PageMeta {
     pub title: String,
     /// A single emoji, if the page has one.
     pub icon: Option<String>,
+    /// The page's cover, by name (for example `builtin:dawn`), if it has one. The model stores any
+    /// non-empty name without knowing the catalogue, so a cover from a newer version survives.
+    pub cover: Option<String>,
     /// When the page was created, in Unix milliseconds.
     pub created_at: i64,
     /// When the page was moved to the trash, in Unix milliseconds. `None` means not in the trash.
@@ -52,6 +56,11 @@ impl PageMeta {
             Some(_) => return Err(invalid(keys::ICON, "is not text")),
             None => None,
         };
+        let cover = match value(meta, keys::COVER) {
+            Some(LoroValue::String(s)) => Some(s.to_string()),
+            Some(_) => return Err(invalid(keys::COVER, "is not text")),
+            None => None,
+        };
         let created_at = match value(meta, keys::CREATED_AT) {
             Some(LoroValue::I64(ms)) => ms,
             Some(_) => return Err(invalid(keys::CREATED_AT, "is not a whole number")),
@@ -66,6 +75,7 @@ impl PageMeta {
             id,
             title,
             icon,
+            cover,
             created_at,
             trashed_at,
         })
