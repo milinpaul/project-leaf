@@ -16,6 +16,8 @@
 //!   context, keys after a space don't arrive (the real app types spaces normally).
 //! - `draft=TEXT`: then show TEXT as an input method's draft (composing, not yet written).
 //! - `menu=B`: open block B's ⋮⋮ menu; `menu=B:kinds` also opens its "Turn into" list.
+//! - `drag=B:T[:L]`: drag block B by its handle onto the lower half of block T, L indents in (default
+//!   0), and keep holding: shows the drop line and the preview.
 //! - `bench`: time frames while scrolling and while typing, and print the results.
 
 fn main() {
@@ -41,7 +43,8 @@ mod mac {
     use std::time::{Duration, Instant};
 
     use gpui::{
-        AnyWindowHandle, AppContext as _, Entity, EntityInputHandler as _, VisualTestAppContext, px, size,
+        AnyWindowHandle, AppContext as _, Entity, EntityInputHandler as _, Modifiers, MouseButton,
+        VisualTestAppContext, point, px, size,
     };
     use gpui_component::Root;
     use leaf_model::Caret;
@@ -62,11 +65,12 @@ mod mac {
         typed: Option<String>,
         draft: Option<String>,
         menu: Option<String>,
+        drag: Option<String>,
     }
 
     fn options() -> Result<Options, Error> {
         let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] \
-                     [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [bench]";
+                     [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
         let out = args.next().ok_or(usage)?;
@@ -86,6 +90,7 @@ mod mac {
             typed: value("type="),
             draft: value("draft="),
             menu: value("menu="),
+            drag: value("drag="),
         })
     }
 
@@ -207,6 +212,39 @@ mod mac {
                     }
                 });
             })?;
+        }
+        if let Some(spec) = &options.drag {
+            drag(cx, window, shell, spec)?;
+        }
+        Ok(())
+    }
+
+    /// Presses on block B's handle and moves onto block T (`B:T[:L]`), without letting go.
+    fn drag(
+        cx: &mut VisualTestAppContext,
+        window: AnyWindowHandle,
+        shell: &Entity<Shell>,
+        spec: &str,
+    ) -> Result<(), Error> {
+        draw(cx, window)?;
+        let mut parts = spec.split(':');
+        let from: usize = parts.next().ok_or("drag=B:T")?.parse()?;
+        let to: usize = parts.next().ok_or("drag=B:T")?.parse()?;
+        let levels: f32 = parts.next().map_or(Ok(0.0), str::parse)?;
+        let points = cx.update_window(window, |_, _, cx| {
+            shell.update(cx, |shell, _| {
+                let rows = shell.editor_mut().open_page().ok().flatten()?.rows().ok()?;
+                let (from, to) = (rows.get(from)?.id, rows.get(to)?.id);
+                shell.block_drag_points(from, to, levels)
+            })
+        })?;
+        let (start, end) = points.ok_or("no such rows on screen")?;
+        cx.simulate_mouse_down(window, start, MouseButton::Left, Modifiers::none());
+        for step in 1..=8_u8 {
+            let t = f32::from(step) / 8.0;
+            let at = point(start.x + (end.x - start.x) * t, start.y + (end.y - start.y) * t);
+            cx.simulate_mouse_move(window, at, MouseButton::Left, Modifiers::none());
+            draw(cx, window)?;
         }
         Ok(())
     }

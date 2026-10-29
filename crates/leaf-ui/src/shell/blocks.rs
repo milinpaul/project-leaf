@@ -6,6 +6,7 @@
 
 use std::collections::HashMap;
 
+use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, ClickEvent, Context, ElementInputHandler, InteractiveElement as _, IntoElement, MouseButton,
     MouseUpEvent, ParentElement, Pixels, Point, SharedString, Styled, Task, Window, canvas, div, list, px,
@@ -16,6 +17,7 @@ use leaf_core::BlockId;
 use leaf_editor::{PageEditor, Preedit};
 use leaf_model::{BlockKind, Caret};
 
+use super::block_drag::{BlockDrag, DrawnRows};
 use super::column;
 use super::page_list::{HEADER_ITEMS, PageList};
 use super::rich_text::{Highlight, PaintedLayout, highlights};
@@ -46,6 +48,10 @@ pub(super) struct PageState {
     pub(super) menu_block: Option<BlockId>,
     /// The block a search result opened at, tinted for a moment.
     pub(super) flash: super::found::Flash,
+    /// Where each row was drawn in the last frame, for dropping dragged blocks.
+    pub(super) drawn: DrawnRows,
+    /// A drag of blocks by their handle, while it lasts.
+    pub(super) dragging: Option<BlockDrag>,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -176,6 +182,8 @@ impl Shell {
         // Placed by where the `/` was drawn last frame: this frame's layout is only known once painted.
         let slash = self.render_slash_popover(window, cx);
         self.blocks.painted.clear();
+        self.blocks.drawn.clear();
+        self.end_stale_drag(cx);
         self.blocks.list.sync(self.editor.selected(), rows);
 
         let toolbar = h_flex()
@@ -224,6 +232,8 @@ impl Shell {
                         MouseButton::Left,
                         cx.listener(|shell, _: &MouseUpEvent, _, _| shell.blocks.drag = None),
                     )
+                    .on_drag_move(cx.listener(Self::on_block_drag_move))
+                    .on_drop(cx.listener(Self::on_block_drop))
                     .child(input)
                     .child(rows),
             )
@@ -285,11 +295,20 @@ impl Shell {
             let (left, top) = super::block_row::handle_place(&row);
             let handle = self.render_handle(row.id, left, top, cx);
             let body = self.render_row(&row, window, cx);
+            let faded = self
+                .blocks
+                .dragging
+                .as_ref()
+                .is_some_and(|drag| drag.faded.contains(&row.id));
+            let line = self.render_drop_line(&row, item == HEADER_ITEMS, cx);
             div()
                 .relative()
                 .group(super::block_menu::ROW_GROUP)
+                .when(faded, |row| row.opacity(0.4))
+                .child(self.blocks.drawn.recorder(row.id))
                 .child(self.with_flash(row.id, body, cx))
                 .child(handle)
+                .children(line)
                 .into_any_element()
         } else {
             div().into_any_element()

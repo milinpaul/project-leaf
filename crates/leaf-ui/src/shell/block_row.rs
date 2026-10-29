@@ -13,8 +13,8 @@ use super::rich_text::Look;
 use super::{Shell, markers};
 use crate::theme;
 
-/// Indent per nesting level.
-const INDENT_PX: f32 = 24.0;
+/// Indent per nesting level; also how far right a drag must go to nest one level deeper.
+pub(super) const INDENT_PX: f32 = 24.0;
 
 impl Shell {
     pub(super) fn render_row(
