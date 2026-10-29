@@ -62,18 +62,18 @@ fn restored_bounds(cx: &App) -> WindowBounds {
     }
 }
 
-/// Where the workspace lives when no path is given: a visible folder the user can find and back up.
-fn default_workspace() -> PathBuf {
+/// Where new workspaces go unless the owner picks another folder: a visible folder they can find
+/// and back up.
+fn default_location() -> PathBuf {
     std::env::home_dir()
         .unwrap_or_default()
         .join("Documents")
         .join("Leaf")
-        .join("My Workspace.leaf")
 }
 
 fn main() {
-    // `leaf <path>` opens (or creates) the workspace at <path>; plain `leaf` reopens the last one, or the
-    // default the first time.
+    // `leaf <path>` opens the workspace at <path>; plain `leaf` reopens the last one. With neither (the
+    // first launch) or if it can't be opened, the welcome screen shows.
     let named = std::env::args_os().nth(1).map(PathBuf::from);
     gpui_platform::application()
         .with_assets(leaf_ui::assets())
@@ -81,11 +81,10 @@ fn main() {
         .run(move |cx: &mut App| {
             cx.set_app_identity(APP_ID, "Leaf");
             leaf_ui::init(settings::default_settings_path(), cx);
-            let path = leaf_ui::workspace_to_open(named.clone(), default_workspace(), cx);
             // Quitting saves every unsaved change first (the shell and the settings flush on quit).
             cx.on_action(|_: &Quit, cx| cx.quit());
             cx.bind_keys(menus::key_bindings());
-            cx.set_menus(menus::menus());
+            leaf_ui::refresh_menus(cx);
             let options = WindowOptions {
                 window_bounds: Some(restored_bounds(cx)),
                 app_id: Some(APP_ID.into()),
@@ -93,8 +92,9 @@ fn main() {
                 icon: window_icon(),
                 ..Default::default()
             };
-            if let Err(err) = cx.open_window(options, |window, cx| leaf_ui::workspace_root(&path, window, cx))
-            {
+            if let Err(err) = cx.open_window(options, |window, cx| {
+                leaf_ui::app_root(named.clone(), default_location(), window, cx)
+            }) {
                 eprintln!("leaf: could not open a window: {err:#}");
                 cx.quit();
                 return;

@@ -62,7 +62,7 @@ block's kind and properties (E02-S04). The page is a **virtual list** (E07-S01, 
 and each frame's rows are compared with the last to re-measure or splice just what changed, so a 10,000-block page
 scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR 0038): GPUI `StyledText` runs carry the marks,
 the selection is a run background, an overlay draws the blinking caret and records the painted layout, which answers
-the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E07-S03, ADR 0039): keys are actions
+the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E07-S03, ADR 0040): keys are actions
 bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); typed text, input-method drafts and the
 emoji picker arrive through GPUI's platform text input (`shell/ime.rs`), which sees the caret's block with the draft
 spliced in; the mouse places the caret, drags select, double and triple clicks select a word and the block. (The first
@@ -118,10 +118,11 @@ the owner types, recently opened pages first when nothing is typed. Enter or a c
 `Store::delete`, and search forgets them on its next pass (ADR 0036). A trashed page opened from the dialog shows a
 banner with Restore page and Delete forever.
 
-**Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, else the one
-opened last if it still exists (`leaf_ui::workspace_to_open`, E06-S08), else `~/Documents/Leaf/My Workspace.leaf`,
-creating it if missing (`leaf_ui::workspace_root`, which also adds it to the recent list in the app settings,
-ADR 0037). It loads the workspace
+**Startup and saving (E03-S08).** `leaf-app` opens a window whose top view (`leaf_ui::AppView`, E06-S09) opens the
+workspace folder given as its first argument, else the one opened last; if there is none (first launch) or it can't
+be opened, it shows the welcome screen (`leaf_ui::welcome`) with the reason, where workspaces are created, opened
+and switched (ADR 0039). The workspace name at the top of the sidebar also opens a menu for switching to a recent
+workspace or making a new one; it sends the same actions as the File menu. Opening a workspace adds it to the recent list in the app settings (ADR 0037). It loads the workspace
 document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls
 `Autosave::tick` from `leaf-store`, which polls every open document for unsaved changes and saves those that are
 due. Window blur, quit (Cmd+Q / Ctrl+Q, or the app menu) and window close save everything at once. If the folder

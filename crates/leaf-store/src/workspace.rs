@@ -5,6 +5,10 @@ use std::path::{Path, PathBuf};
 
 use crate::{Store, StoreError};
 
+mod folders;
+
+pub use folders::{FolderKind, NameProblem, inspect, new_workspace_path};
+
 /// The database file inside a workspace folder.
 pub const DATABASE: &str = "workspace.sqlite";
 /// Folder for image files, named by content hash.

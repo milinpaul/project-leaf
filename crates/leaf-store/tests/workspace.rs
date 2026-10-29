@@ -169,3 +169,51 @@ fn a_reader_sees_what_the_workspace_saves() {
             .is_some()
     );
 }
+
+#[test]
+fn a_picked_folder_is_recognised_before_opening() {
+    use leaf_store::{FolderKind, inspect};
+    let dir = TempDir::new();
+    let ws = dir.0.join("W.leaf");
+    drop(Workspace::create(&ws).unwrap());
+    let empty = dir.0.join("empty");
+    fs::create_dir(&empty).unwrap();
+    let other = dir.0.join("other");
+    fs::create_dir(&other).unwrap();
+    fs::write(other.join("notes.txt"), "hi").unwrap();
+    assert_eq!(inspect(&ws), FolderKind::Workspace);
+    assert_eq!(inspect(&empty), FolderKind::Empty);
+    assert_eq!(inspect(&other), FolderKind::Other);
+    assert_eq!(inspect(&dir.0.join("nowhere")), FolderKind::Missing);
+    assert_eq!(
+        inspect(&other.join("notes.txt")),
+        FolderKind::Missing,
+        "a file is not a folder"
+    );
+}
+
+#[test]
+fn new_workspace_names_become_safe_folder_paths() {
+    use leaf_store::{NameProblem, new_workspace_path};
+    let dir = TempDir::new();
+    assert_eq!(
+        new_workspace_path(&dir.0, "  Work notes "),
+        Ok(dir.0.join("Work notes.leaf"))
+    );
+    assert_eq!(
+        new_workspace_path(&dir.0, "Home.leaf"),
+        Ok(dir.0.join("Home.leaf")),
+        "no double ending"
+    );
+    assert_eq!(new_workspace_path(&dir.0, "  "), Err(NameProblem::Empty));
+    for bad in ["a/b", "a\\b", "what?", ".hidden", "x:y"] {
+        assert_eq!(new_workspace_path(&dir.0, bad), Err(NameProblem::Unsafe), "{bad}");
+    }
+    fs::create_dir(dir.0.join("Taken.leaf")).unwrap();
+    let taken = new_workspace_path(&dir.0, "Taken").unwrap_err();
+    assert_eq!(
+        taken.to_string(),
+        "There's already something called “Taken.leaf” there."
+    );
+    assert_eq!(NameProblem::Empty.to_string(), "Give the workspace a name.");
+}

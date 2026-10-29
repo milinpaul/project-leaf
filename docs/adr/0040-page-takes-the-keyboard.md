@@ -1,4 +1,4 @@
-# 0039. The page takes the keyboard: actions for keys, the platform text input for typing and input methods
+# 0040. The page takes the keyboard: actions for keys, the platform text input for typing and input methods
 
 - **Status:** Accepted
 - **Type:** Architecture

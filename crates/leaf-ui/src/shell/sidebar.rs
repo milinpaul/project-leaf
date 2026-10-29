@@ -2,15 +2,20 @@
 //! "Pages" heading with its "+", and Settings at the foot. Quiet icon buttons with tooltips instead
 //! of labelled buttons, so the pages stay the loudest thing in the sidebar.
 
+use std::path::Path;
+
 use gpui::{
-    AnyElement, ClickEvent, Context, FontWeight, InteractiveElement as _, IntoElement, MouseButton,
-    MouseDownEvent, ParentElement, SharedString, Styled, div, px,
+    AnyElement, App, ClickEvent, Context, FocusHandle, FontWeight, InteractiveElement as _, IntoElement,
+    MouseButton, MouseDownEvent, ParentElement, SharedString, Styled, div, px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::menu::{DropdownMenu as _, PopupMenu};
+use gpui_component::sidebar::SidebarHeader;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 
 use super::Shell;
+use crate::menus::{NewWorkspace, OpenRecent, OpenWorkspace, SwitchWorkspace};
 use crate::settings_dialog::Section;
 
 /// The name shown for a workspace that isn't saved to a folder (tests).
@@ -50,7 +55,8 @@ impl Shell {
             .into_any_element()
     }
 
-    /// The workspace badge and name, and the compose button that starts a new page.
+    /// The workspace switcher (badge, name and a ⇕ mark; clicking opens the workspace menu) and the
+    /// compose button that starts a new page.
     fn render_header(&self, cx: &mut Context<Self>) -> AnyElement {
         let name = self.workspace_name();
         let initial: SharedString = name
@@ -58,7 +64,7 @@ impl Shell {
             .next()
             .map_or_else(|| "L".into(), |c| c.to_uppercase().to_string().into());
         let theme = cx.theme();
-        let (accent, radius) = (theme.primary, theme.radius);
+        let (accent, radius, muted) = (theme.primary, theme.radius, theme.muted_foreground);
         let badge = div()
             .flex_none()
             .size(px(22.0))
@@ -71,6 +77,31 @@ impl Shell {
             .text_xs()
             .font_weight(FontWeight::BOLD)
             .child(initial);
+        let switcher = SidebarHeader::new()
+            .debug_selector(|| "workspace-switcher".into())
+            .px_1p5()
+            .py_1()
+            .justify_start()
+            .child(badge)
+            .child(
+                div()
+                    .min_w_0()
+                    .truncate()
+                    .text_sm()
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .child(name),
+            )
+            .child(
+                Icon::new(IconName::ChevronsUpDown)
+                    .xsmall()
+                    .text_color(muted)
+                    .flex_none(),
+            )
+            .dropdown_menu({
+                let focus = self.focus.clone();
+                let current = self.storage.as_ref().map(|storage| storage.root().to_owned());
+                move |menu, _, cx| workspace_menu(menu, &focus, current.as_deref(), cx)
+            });
         let compose = Button::new("new-page")
             .debug_selector(|| "new-page".into())
             .icon(Icon::new(IconName::SquarePen))
@@ -80,19 +111,11 @@ impl Shell {
             .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.new_page(window, cx)));
         h_flex()
             .h(px(48.0))
-            .pl_3()
+            .pl_1p5()
             .pr_2()
-            .gap_2()
-            .child(badge)
-            .child(
-                div()
-                    .flex_1()
-                    .min_w_0()
-                    .truncate()
-                    .text_sm()
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .child(name),
-            )
+            .gap_1()
+            // The menu wraps the switcher in a popover of its own, which must grow, not the switcher.
+            .child(div().flex_1().min_w_0().child(switcher))
             .child(compose)
             .into_any_element()
     }
@@ -172,4 +195,24 @@ impl Shell {
             .child(Icon::new(icon).small())
             .child(label)
     }
+}
+
+/// The workspace menu under the sidebar's workspace name: the recent workspaces (this one ticked),
+/// then New, Open and All workspaces with their shortcuts. Its items are the File menu's actions,
+/// sent from the workspace view so the app view (which switches workspaces) receives them.
+fn workspace_menu(menu: PopupMenu, focus: &FocusHandle, current: Option<&Path>, cx: &App) -> PopupMenu {
+    let recent = crate::settings::get(cx).recent_workspaces(Path::exists);
+    let mut menu = menu
+        .action_context(focus.clone())
+        .min_w(px(240.0))
+        .max_w(px(320.0))
+        .label("Workspaces");
+    for entry in recent.into_iter().filter(|entry| !entry.missing) {
+        let here = current == Some(entry.path.as_path());
+        menu = menu.menu_with_check(entry.name, here, Box::new(OpenRecent { path: entry.path }));
+    }
+    menu.separator()
+        .menu("New workspace…", Box::new(NewWorkspace))
+        .menu("Open workspace…", Box::new(OpenWorkspace))
+        .menu("All workspaces…", Box::new(SwitchWorkspace))
 }

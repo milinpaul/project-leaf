@@ -44,4 +44,4 @@ pub use settings::{AppSettings, Appearance, DisplayArea, RecentWorkspace, Window
 pub use store::Store;
 pub use versions::SavedVersion;
 pub use view_state::{VIEW_STATE, ViewState};
-pub use workspace::Workspace;
+pub use workspace::{FolderKind, NameProblem, Workspace, inspect, new_workspace_path};

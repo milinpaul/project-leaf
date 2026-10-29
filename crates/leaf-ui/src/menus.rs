@@ -20,7 +20,19 @@ macro_rules! command {
         concat!("ctrl-", $key)
     };
 }
+use std::path::PathBuf;
+
 use gpui_component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
+use leaf_store::RecentWorkspace;
+
+/// Opens a workspace from File → Open Recent. Carries the folder, so it is built in code (from the
+/// recent list), never from a key binding.
+#[derive(Clone, Debug, PartialEq, gpui::Action)]
+#[action(namespace = leaf, no_json)]
+pub struct OpenRecent {
+    /// The workspace folder.
+    pub path: PathBuf,
+}
 
 actions!(
     leaf,
@@ -35,6 +47,12 @@ actions!(
         NewPage,
         /// Opens the quick switcher to jump to a page by its title.
         QuickSwitch,
+        /// Shows the welcome screen's create form for a new workspace.
+        NewWorkspace,
+        /// Shows the system's folder picker to open a workspace.
+        OpenWorkspace,
+        /// Closes the open workspace and shows the welcome screen.
+        SwitchWorkspace,
         /// Closes the window; with one window this quits, after saving.
         CloseWindow,
         /// Hides or shows the sidebar.
@@ -55,6 +73,9 @@ pub fn key_bindings() -> Vec<KeyBinding> {
         KeyBinding::new(command!(","), OpenSettings, None),
         KeyBinding::new(command!("n"), NewPage, None),
         KeyBinding::new(command!("p"), QuickSwitch, None),
+        KeyBinding::new(command!("shift-n"), NewWorkspace, None),
+        KeyBinding::new(command!("o"), OpenWorkspace, None),
+        KeyBinding::new(command!("shift-o"), SwitchWorkspace, None),
         KeyBinding::new(command!("w"), CloseWindow, None),
         KeyBinding::new(command!("\\"), ToggleSidebar, None),
     ];
@@ -64,9 +85,37 @@ pub fn key_bindings() -> Vec<KeyBinding> {
     bindings
 }
 
-/// The menu bar: the standard menus a Mac app has, holding only what Leaf can do today.
+/// The menu bar: the standard menus a Mac app has, holding only what Leaf can do today. `recent` fills
+/// File → Open Recent (missing workspaces left out).
 #[must_use]
-pub fn menus() -> Vec<Menu> {
+pub fn menus(recent: &[RecentWorkspace]) -> Vec<Menu> {
+    let recent_items: Vec<MenuItem> = recent
+        .iter()
+        .filter(|entry| !entry.missing)
+        .map(|entry| {
+            MenuItem::action(
+                entry.name.clone(),
+                OpenRecent {
+                    path: entry.path.clone(),
+                },
+            )
+        })
+        .collect();
+    let mut file = vec![
+        MenuItem::action("New Page", NewPage),
+        MenuItem::action("Go to Page…", QuickSwitch),
+        MenuItem::separator(),
+        MenuItem::action("New Workspace…", NewWorkspace),
+        MenuItem::action("Open Workspace…", OpenWorkspace),
+    ];
+    if !recent_items.is_empty() {
+        file.push(MenuItem::submenu(menu("Open Recent", recent_items)));
+    }
+    file.extend([
+        MenuItem::action("Switch Workspace…", SwitchWorkspace),
+        MenuItem::separator(),
+        MenuItem::action("Close Window", CloseWindow),
+    ]);
     let mut menus = vec![
         menu(
             "Leaf",
@@ -78,15 +127,7 @@ pub fn menus() -> Vec<Menu> {
                 MenuItem::action("Quit Leaf", Quit),
             ],
         ),
-        menu(
-            "File",
-            vec![
-                MenuItem::action("New Page", NewPage),
-                MenuItem::action("Go to Page…", QuickSwitch),
-                MenuItem::separator(),
-                MenuItem::action("Close Window", CloseWindow),
-            ],
-        ),
+        menu("File", file),
         menu(
             "Edit",
             vec![
