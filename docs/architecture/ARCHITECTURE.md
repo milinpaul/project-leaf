@@ -71,8 +71,10 @@ opens the **block menu** (E07-S04, ADR 0041): Turn into, Duplicate, Move up, Mov
 state lives in `PageEditor` (`leaf-editor/src/block_menu.rs`) like the slash menu; `shell/block_menu.rs` draws it, gives
 it the keyboard while open, and `Cmd/Ctrl+/` opens it for the caret's block. Dragging the handle is worked out in
 `leaf-editor/src/drag.rs` (E05-S04, ADR 0049): the UI passes the rows it drew and the pointer, `PageEditor::drop_target`
-returns where the line goes (a gap between rows and a depth), and `drop_blocks` moves the blocks there as one undo step;
-the line itself is drawn in E07-S05. The **slash menu** is drawn as a popover
+returns where the line goes (a gap between rows and a depth), and `drop_blocks` moves the blocks there as one undo step.
+`shell/block_drag.rs` (E07-S05, ADR 0050) uses GPUI's drag: a click on the handle still opens the menu, pressing and
+moving starts a drag with a preview of the block's first line, each row records where it was drawn, the line is drawn at
+the answer's depth, the dragged rows fade, and holding near the page's top or bottom edge scrolls it. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR 0043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
 The page keeps the keyboard, so typing filters and the editor's keys drive it; the mouse highlights and picks. `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
@@ -137,7 +139,7 @@ block at the top, the caret at its start and a tint that fades out (ADR 0046).
 the file picker (`PageEditor::take_image_request`); a paste from another app brings a screenshot, a copied image or
 a copied image file (`leaf_editor::paste_kind` picks Leaf blocks, then text, then a picture). The UI
 (`leaf_ui::shell::image`) stores the picture in the asset store and calls `PageEditor::insert_image`, which turns an
-empty block into the image or adds it below, with the caret in its caption (ADR 0050). Until E07-S08 draws pictures,
+empty block into the image or adds it below, with the caret in its caption (ADR 0051). Until E07-S08 draws pictures,
 an image row is a frame with its caption below.
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping

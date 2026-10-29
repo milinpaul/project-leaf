@@ -1,4 +1,4 @@
-//! Inserting images (E05-S07, ADR 0048): the file picker that the slash menu's "Image" asks for, and
+//! Inserting images (E05-S07, ADR 0051): the file picker that the slash menu's "Image" asks for, and
 //! pictures pasted from other apps. Either way the picture is stored in the workspace's asset store
 //! first, then `PageEditor::insert_image` decides where the block goes.
 

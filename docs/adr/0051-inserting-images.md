@@ -1,4 +1,4 @@
-# 0050. Inserting images: the editor places the block, the UI fetches the picture
+# 0051. Inserting images: the editor places the block, the UI fetches the picture
 
 - **Status:** Accepted
 - **Type:** Feature

@@ -4,8 +4,9 @@
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, App, Context, InteractiveElement, IntoElement, KeyBinding, MouseButton, MouseDownEvent,
-    ParentElement, Pixels, Point, SharedString, Styled, Window, actions, anchored, deferred, div, point, px,
+    AnyElement, App, AppContext as _, ClickEvent, Context, InteractiveElement, IntoElement, KeyBinding,
+    MouseButton, MouseDownEvent, ParentElement, Pixels, Point, SharedString, StatefulInteractiveElement as _,
+    Styled, Window, actions, anchored, deferred, div, point, px,
 };
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
@@ -13,6 +14,7 @@ use leaf_core::BlockId;
 use leaf_editor::{BlockMenu, MenuEntry, MenuItem, MenuKey};
 use leaf_model::BlockKind;
 
+use super::block_drag::{DragPreview, DraggedBlock};
 use super::{Shell, report};
 
 /// The menu's key context, active while it has the keyboard.
@@ -177,6 +179,7 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let open = self.blocks.menu_block == Some(block);
+        let shell = cx.entity().downgrade();
         let theme = cx.theme();
         let (muted, hover) = (theme.muted_foreground, theme.muted);
         div()
@@ -196,17 +199,16 @@ impl Shell {
             .hover(|s| s.bg(hover))
             .when(open, |s| s.bg(hover))
             .child(Icon::new(IconName::GripVertical).small().text_color(muted))
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(move |shell, event: &MouseDownEvent, window, cx| {
-                    cx.stop_propagation();
-                    let at = point(
-                        event.position.x - px(HANDLE_PX / 2.0),
-                        event.position.y + px(HANDLE_PX / 2.0),
-                    );
-                    shell.open_block_menu(block, at, window, cx);
-                }),
-            )
+            // A click opens the menu; pressing and moving drags the block instead (E07-S05).
+            .on_click(cx.listener(move |shell, event: &ClickEvent, window, cx| {
+                let at = event.position();
+                let at = point(at.x - px(HANDLE_PX / 2.0), at.y + px(HANDLE_PX / 2.0));
+                shell.open_block_menu(block, at, window, cx);
+            }))
+            .on_drag(DraggedBlock(block), move |dragged, _, _, cx| {
+                let preview = shell.update(cx, |shell, cx| shell.start_block_drag(dragged.0, cx));
+                cx.new(|_| preview.unwrap_or_else(|_| DragPreview::empty()))
+            })
             .into_any_element()
     }
 

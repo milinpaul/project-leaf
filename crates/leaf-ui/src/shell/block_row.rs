@@ -15,8 +15,8 @@ use super::rich_text::Look;
 use super::{Shell, markers};
 use crate::theme;
 
-/// Indent per nesting level.
-const INDENT_PX: f32 = 24.0;
+/// Indent per nesting level; also how far right a drag must go to nest one level deeper.
+pub(super) const INDENT_PX: f32 = 24.0;
 
 /// The height of an image's frame until the picture itself is drawn (E07-S08).
 const IMAGE_FRAME_HEIGHT: f32 = 120.0;
