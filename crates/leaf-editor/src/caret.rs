@@ -48,9 +48,10 @@ pub(crate) struct Tracked {
 
 impl PageEditor {
     /// Puts the caret at `caret` (snapped to the start of the character it falls in). Ends any
-    /// selection.
+    /// selection, and forgets formatting toggled for the next typed text.
     pub fn set_caret(&mut self, caret: Caret) -> Result<Caret, EditorError> {
         self.blocks = None;
+        self.pending = None;
         self.place(caret, None)
     }
 

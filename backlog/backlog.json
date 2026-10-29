@@ -62,8 +62,8 @@
       "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
       "path": "backlog/epics/E04.md",
       "story_count": 8,
-      "done_count": 5,
-      "progress": 0.62
+      "done_count": 6,
+      "progress": 0.75
     },
     {
       "id": "E05",
@@ -139,8 +139,8 @@
       "goal": "Phase 0 (moved from Phase 1 on 2026-10-29). Full-text search across every page in the workspace, opened with a\nNotion-style `Cmd/Ctrl+K` search bar. SQLite FTS5 in a disposable `search/index.sqlite`; see ADR 0019.",
       "path": "backlog/epics/E11.md",
       "story_count": 7,
-      "done_count": 0,
-      "progress": 0.0
+      "done_count": 1,
+      "progress": 0.14
     },
     {
       "id": "E12",
@@ -2023,7 +2023,7 @@
       "id": "E04-S06",
       "title": "Selection model",
       "epic": "E04",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -2069,7 +2069,7 @@
       "id": "E04-S07",
       "title": "Inline mark toggles and links",
       "epic": "E04",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -2079,35 +2079,33 @@
       "labels": [
         "leaf-editor"
       ],
-      "assignee": null,
-      "updated": "2026-10-28",
+      "assignee": "claude",
+      "updated": "2026-10-29",
       "context": "Cmd+B/I/E, Shift+S, Cmd+K behaviour.",
       "acceptance": [
         {
           "text": "Toggle applies or removes based on whole selection state",
-          "done": false
+          "done": true
         },
         {
           "text": "Cursor-only toggle affects next typed text",
-          "done": false
+          "done": true
         },
         {
           "text": "Link create, edit, remove",
-          "done": false
+          "done": true
         },
         {
           "text": "Tests added; `just check` passes; docs updated if structure changed",
-          "done": false
+          "done": true
         }
       ],
-      "plan": "_Filled in by the agent during `planning`._",
+      "plan": "- New `leaf-editor/src/format.rs`: `toggle_mark(MarkKind)` over the selection (text across blocks or whole blocks):\n  remove if every character has it, else apply; code blocks left out; one undo step.\n- Caret-only toggle: kept as pending marks tied to the caret; `insert_text` applies them in the typing's undo step\n  and carries them while typing; any caret move drops them.\n- Links: `set_link` (selection, or the whole link at the caret; blank = remove), `remove_link`, `link_at_caret`\n  for the popover. `active_marks()` for the toolbar.\n- Tests: `format/tests.rs`; ADR 0022.",
       "path": "backlog/stories/E04-S07.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S06"
-      ],
+      "waiting_on": [],
       "ready": false,
-      "progress": 0.0
+      "progress": 1.0
     },
     {
       "id": "E04-S08",
@@ -2148,10 +2146,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S08.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S06"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2277,10 +2273,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S03.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S06"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2320,10 +2314,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S04.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S06"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2364,10 +2356,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E05-S05.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S06"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -3583,7 +3573,7 @@
       "id": "E11-S01",
       "title": "Search index file",
       "epic": "E11",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -3679,10 +3669,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E11-S02.md",
       "prs": [],
-      "waiting_on": [
-        "E11-S01"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
