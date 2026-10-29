@@ -33,12 +33,28 @@ pub use shell::{Shell, Storage};
 gpui_kit_assets::icon_assets!(
     LeafIcons,
     [
+        ArrowDown,
+        ArrowUp,
+        Check,
+        ChevronRight,
+        Copy,
         FaceSlightlySmilingPlus,
         FileText,
+        GripVertical,
+        Heading1,
+        Heading2,
+        Heading3,
+        List,
+        ListOrdered,
         PencilLine,
+        Repeat,
         RotateCcw,
+        SquareCheck,
+        SquareCode,
         SquarePen,
-        Trash
+        TextQuote,
+        Trash,
+        Type
     ]
 );
 

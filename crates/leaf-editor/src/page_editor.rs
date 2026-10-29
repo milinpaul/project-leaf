@@ -9,6 +9,7 @@ pub use leaf_model::Caret;
 use leaf_model::{BlockKind, BlockProp, ModelError, PageCommand, PageDoc, PageOutcome};
 
 use crate::EditorError;
+use crate::block_menu::OpenMenu;
 use crate::caret::Tracked;
 use crate::format::Pending;
 use crate::input::Composing;
@@ -41,6 +42,8 @@ pub struct PageEditor {
     pub(crate) pending: Option<Pending>,
     /// The slash menu, while it is open.
     pub(crate) slash: Option<Slash>,
+    /// The block menu, while it is open.
+    pub(crate) menu: Option<OpenMenu>,
 }
 
 impl PageEditor {
@@ -55,6 +58,7 @@ impl PageEditor {
             blocks: None,
             pending: None,
             slash: None,
+            menu: None,
         }
     }
 

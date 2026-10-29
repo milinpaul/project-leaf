@@ -154,6 +154,7 @@ pub(crate) fn bind(cx: &mut App) {
         ]);
     }
     cx.bind_keys(bindings);
+    super::block_menu::bind(cx, CONTEXT, secondary!("/"));
 }
 
 impl Shell {

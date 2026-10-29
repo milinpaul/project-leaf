@@ -6,7 +6,7 @@ use leaf_model::{BlockKind, Caret, Mark, PageCommand, PageDoc, PageOutcome};
 
 use crate::{BlockAction, PageEditor, Selection};
 
-fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
+pub(crate) fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
     let mut doc = PageDoc::new();
     let mut ids: Vec<BlockId> = Vec::new();
     let mut parents: Vec<BlockId> = Vec::new();
@@ -33,15 +33,15 @@ fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
     (PageEditor::new(doc), ids)
 }
 
-fn p(depth: usize, text: &str) -> (usize, BlockKind, &str) {
+pub(crate) fn p(depth: usize, text: &str) -> (usize, BlockKind, &str) {
     (depth, BlockKind::Paragraph, text)
 }
 
-fn at(block: BlockId, at: usize) -> Caret {
+pub(crate) fn at(block: BlockId, at: usize) -> Caret {
     Caret { block, at }
 }
 
-fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, String)> {
+pub(crate) fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, String)> {
     editor
         .rows()
         .unwrap()
@@ -56,7 +56,7 @@ fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, String)> {
         .collect()
 }
 
-fn row(depth: usize, kind: BlockKind, text: &str) -> (usize, BlockKind, String) {
+pub(crate) fn row(depth: usize, kind: BlockKind, text: &str) -> (usize, BlockKind, String) {
     (depth, kind, text.into())
 }
 
@@ -259,4 +259,92 @@ fn an_action_on_a_missing_block_does_nothing() {
         Some(at(ids[0], 1))
     );
     assert_eq!(outline(&editor), vec![row(0, BlockKind::Paragraph, "a")]);
+}
+
+// ---- Move up / Move down ----
+
+fn texts(editor: &PageEditor) -> Vec<(usize, String)> {
+    outline(editor).into_iter().map(|(d, _, t)| (d, t)).collect()
+}
+
+fn t(depth: usize, text: &str) -> (usize, String) {
+    (depth, text.into())
+}
+
+#[test]
+fn move_up_and_down_swap_with_a_sibling_taking_children_along() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(0, "b"), p(1, "b child"), p(0, "c")]);
+    editor.set_caret(at(ids[1], 1)).unwrap();
+    act_and_undo(&mut editor, ids[1], BlockAction::MoveUp);
+    assert_eq!(
+        texts(&editor),
+        vec![t(0, "b"), t(1, "b child"), t(0, "a"), t(0, "c")]
+    );
+    assert_eq!(
+        editor.caret().unwrap(),
+        Some(at(ids[1], 1)),
+        "the caret travels with the block"
+    );
+    act_and_undo(&mut editor, ids[1], BlockAction::MoveDown);
+    act_and_undo(&mut editor, ids[1], BlockAction::MoveDown);
+    assert_eq!(
+        texts(&editor),
+        vec![t(0, "a"), t(0, "c"), t(0, "b"), t(1, "b child")]
+    );
+}
+
+#[test]
+fn moves_stay_among_siblings_and_stop_at_the_edges() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(1, "x"), p(1, "y"), p(0, "b")]);
+    assert!(!editor.can_move(ids[0], true).unwrap(), "first on the page");
+    assert!(editor.can_move(ids[0], false).unwrap());
+    assert!(
+        !editor.can_move(ids[1], true).unwrap(),
+        "first among its siblings"
+    );
+    assert!(
+        !editor.can_move(ids[2], false).unwrap(),
+        "last among its siblings"
+    );
+    assert!(!editor.can_move(ids[3], false).unwrap(), "last on the page");
+    let before = outline(&editor);
+    editor.block_action(ids[3], BlockAction::MoveDown).unwrap();
+    assert_eq!(outline(&editor), before, "nothing happens at the edge");
+    assert!(!editor.undo().unwrap(), "and no undo step is left behind");
+
+    editor.block_action(ids[2], BlockAction::MoveUp).unwrap();
+    assert_eq!(
+        texts(&editor),
+        vec![t(0, "a"), t(1, "y"), t(1, "x"), t(0, "b")],
+        "a nested block moves inside its parent"
+    );
+}
+
+#[test]
+fn a_selection_moves_together() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(0, "b"), p(0, "c"), p(0, "d")]);
+    editor.select_blocks(&[ids[1], ids[2]]).unwrap();
+    act_and_undo(&mut editor, ids[2], BlockAction::MoveDown);
+    assert_eq!(texts(&editor), vec![t(0, "a"), t(0, "d"), t(0, "b"), t(0, "c")]);
+    assert_eq!(
+        editor.selection().unwrap(),
+        Some(Selection::Blocks(vec![ids[1], ids[2]])),
+        "the selection stays on the moved blocks"
+    );
+    act_and_undo(&mut editor, ids[1], BlockAction::MoveUp);
+    act_and_undo(&mut editor, ids[1], BlockAction::MoveUp);
+    assert_eq!(texts(&editor), vec![t(0, "b"), t(0, "c"), t(0, "a"), t(0, "d")]);
+}
+
+#[test]
+fn a_selection_across_levels_does_not_move() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(1, "x"), p(0, "b"), p(0, "c")]);
+    editor.select_between(at(ids[1], 0), at(ids[2], 1)).unwrap();
+    assert!(!editor.can_move(ids[2], true).unwrap());
+    assert!(!editor.can_move(ids[2], false).unwrap());
+    // A parent with its child selected is just the parent.
+    editor.select_between(at(ids[0], 0), at(ids[1], 1)).unwrap();
+    assert!(editor.can_move(ids[0], false).unwrap());
+    editor.block_action(ids[0], BlockAction::MoveDown).unwrap();
+    assert_eq!(texts(&editor), vec![t(0, "b"), t(0, "a"), t(1, "x"), t(0, "c")]);
 }
