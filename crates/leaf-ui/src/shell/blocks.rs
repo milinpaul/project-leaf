@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use gpui::{
     AnyElement, ClickEvent, Context, ElementInputHandler, InteractiveElement as _, IntoElement, MouseButton,
-    MouseUpEvent, ParentElement, SharedString, Styled, Task, Window, canvas, div, list, px,
+    MouseUpEvent, ParentElement, Pixels, Point, SharedString, Styled, Task, Window, canvas, div, list, px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::{h_flex, v_flex};
@@ -40,6 +40,10 @@ pub(super) struct PageState {
     blink: Option<Task<()>>,
     /// Where a mouse drag started, while the button is down.
     pub(super) drag: Option<Caret>,
+    /// Where the block menu's top-left corner goes, set when it opens.
+    pub(super) menu_at: Point<Pixels>,
+    /// The block whose menu is open as of this frame, so its handle stays shown.
+    pub(super) menu_block: Option<BlockId>,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -196,6 +200,7 @@ impl Shell {
         .left_0()
         .size_full();
 
+        let menu = self.render_block_menu(cx);
         let page = v_flex()
             .size_full()
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
@@ -217,7 +222,10 @@ impl Shell {
                     )
                     .child(input)
                     .child(rows),
-            );
+            )
+            // Outside the page's key context, so keys reach the menu and not the page while it is open.
+            .children(menu);
+        let page = Self::with_block_menu_action(page, cx);
         Self::with_page_actions(page, cx).into_any_element()
     }
 
@@ -263,7 +271,14 @@ impl Shell {
                 .child(self.render_page_header(cx))
                 .into_any_element()
         } else if let Some(row) = self.blocks.list.row(item).cloned() {
-            self.render_row(&row, window, cx)
+            let (left, top) = super::block_row::handle_place(&row);
+            let handle = self.render_handle(row.id, left, top, cx);
+            div()
+                .relative()
+                .group(super::block_menu::ROW_GROUP)
+                .child(self.render_row(&row, window, cx))
+                .child(handle)
+                .into_any_element()
         } else {
             div().into_any_element()
         };

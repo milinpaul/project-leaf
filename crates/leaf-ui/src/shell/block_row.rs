@@ -2,8 +2,8 @@
 //! formatting, selection and caret (E07-S02, E07-S03).
 
 use gpui::{
-    AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, SharedString, Styled, Window,
-    div, px,
+    AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, Pixels, SharedString, Styled,
+    Window, div, px,
 };
 use gpui_component::checkbox::Checkbox;
 use gpui_component::{ActiveTheme as _, h_flex};
@@ -23,13 +23,8 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
-        let indent = px(INDENT_PX * f32::from(u16::try_from(row.depth).unwrap_or(u16::MAX)));
-        // Headings get room above them, so a page reads as sections rather than a wall of lines.
-        let space_above = match row.style {
-            BlockStyle::Heading(1) => px(18.0),
-            BlockStyle::Heading(_) => px(12.0),
-            _ => px(0.0),
-        };
+        let indent = indent_of(row);
+        let space_above = space_above(&row.style);
         let line = h_flex()
             .w_full()
             .items_center()
@@ -91,6 +86,31 @@ impl Shell {
             _ => None,
         }
     }
+}
+
+/// How far a row's content is indented.
+fn indent_of(row: &BlockRow) -> Pixels {
+    px(INDENT_PX * f32::from(u16::try_from(row.depth).unwrap_or(u16::MAX)))
+}
+
+/// Headings get room above them, so a page reads as sections rather than a wall of lines.
+fn space_above(style: &BlockStyle) -> Pixels {
+    match style {
+        BlockStyle::Heading(1) => px(18.0),
+        BlockStyle::Heading(_) => px(12.0),
+        _ => px(0.0),
+    }
+}
+
+/// Where a row's ⋮⋮ handle goes: the left edge of its content, and how far down to sit level with
+/// the first line of text.
+pub(super) fn handle_place(row: &BlockRow) -> (Pixels, Pixels) {
+    let look = look_of(&row.style);
+    let first_line = look.line_height + look.pad * 2.0;
+    (
+        indent_of(row),
+        space_above(&row.style) + (first_line - px(20.0)) / 2.0,
+    )
 }
 
 /// How a block kind's text looks as a whole. One-line rows come out 28 px tall, as the inputs were.

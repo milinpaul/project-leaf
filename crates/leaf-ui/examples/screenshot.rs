@@ -15,6 +15,7 @@
 //! - `type=TEXT`: then type TEXT through the platform text input. Avoid spaces: in this off-screen
 //!   context, keys after a space don't arrive (the real app types spaces normally).
 //! - `draft=TEXT`: then show TEXT as an input method's draft (composing, not yet written).
+//! - `menu=B`: open block B's ⋮⋮ menu; `menu=B:kinds` also opens its "Turn into" list.
 //! - `bench`: time frames while scrolling and while typing, and print the results.
 
 fn main() {
@@ -60,11 +61,12 @@ mod mac {
         select: Option<String>,
         typed: Option<String>,
         draft: Option<String>,
+        menu: Option<String>,
     }
 
     fn options() -> Result<Options, Error> {
         let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] \
-                     [type=TEXT] [draft=TEXT] [bench]";
+                     [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
         let out = args.next().ok_or(usage)?;
@@ -83,6 +85,7 @@ mod mac {
             select: value("select="),
             typed: value("type="),
             draft: value("draft="),
+            menu: value("menu="),
         })
     }
 
@@ -178,6 +181,30 @@ mod mac {
                 let len = draft.encode_utf16().count();
                 shell.update(cx, |shell, cx| {
                     shell.replace_and_mark_text_in_range(None, draft, Some(len..len), window, cx);
+                });
+            })?;
+        }
+        if let Some(spec) = &options.menu {
+            draw(cx, window)?;
+            let (block, kinds) = spec
+                .split_once(':')
+                .map_or((spec.as_str(), false), |(b, k)| (b, k == "kinds"));
+            let index: usize = block.parse()?;
+            cx.update_window(window, |_, window, cx| {
+                shell.update(cx, |shell, cx| {
+                    let id = shell
+                        .editor_mut()
+                        .open_page()
+                        .ok()
+                        .flatten()
+                        .and_then(|page| page.rows().ok())
+                        .and_then(|rows| rows.get(index).map(|row| row.id));
+                    if let Some(id) = id {
+                        shell.open_block_menu_beside(id, window, cx);
+                        if kinds && let Some(page) = shell.editor_mut().open_page().ok().flatten() {
+                            let _ = page.block_menu_key(leaf_editor::MenuKey::Right);
+                        }
+                    }
                 });
             })?;
         }

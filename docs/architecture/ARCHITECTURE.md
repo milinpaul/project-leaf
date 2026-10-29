@@ -66,7 +66,10 @@ the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E
 bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); typed text, input-method drafts and the
 emoji picker arrive through GPUI's platform text input (`shell/ime.rs`), which sees the caret's block with the draft
 spliced in; the mouse places the caret, drags select, double and triple clicks select a word and the block. (The first
-version, E07-S10, used one text input per block; those are gone.) `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
+version, E07-S10, used one text input per block; those are gone.) Each row has a **⋮⋮ handle** that shows on hover and
+opens the **block menu** (E07-S04, ADR 0041): Turn into, Duplicate, Move up, Move down, Delete, with icons. The menu's
+state lives in `PageEditor` (`leaf-editor/src/block_menu.rs`) like the slash menu; `shell/block_menu.rs` draws it, gives
+it the keyboard while open, and `Cmd/Ctrl+/` opens it for the caret's block. `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
 the editor wires Cmd+Z to it in E04-S08. The editor's caret (E04-S02) moves by
 whole characters as a reader sees them (an emoji, a Hindi syllable), jumps by word, and goes to line start and end; it

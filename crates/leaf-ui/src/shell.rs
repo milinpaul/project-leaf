@@ -30,6 +30,8 @@ pub struct Shell {
     blocks: blocks::PageState,
     /// The page's keyboard focus: while it has it, keys and typed text go to the page.
     page_focus: FocusHandle,
+    /// The block menu's keyboard focus, while it is open.
+    menu_focus: FocusHandle,
     /// The sidebar's page tree: rename in progress, drag hint, scroll position.
     tree: tree::TreeState,
     /// The page icon picker while it is open, and its events.
@@ -83,6 +85,7 @@ impl Shell {
             title,
             blocks: blocks::PageState::default(),
             page_focus: cx.focus_handle(),
+            menu_focus: cx.focus_handle(),
             tree: tree::TreeState::default(),
             icon_picker: None,
             storage,
@@ -210,6 +213,7 @@ impl Render for Shell {
     }
 }
 
+mod block_menu;
 mod block_row;
 mod blocks;
 mod header;
