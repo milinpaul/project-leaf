@@ -62,7 +62,7 @@ block's kind and properties (E02-S04). The window can edit a page's blocks with 
 (E07-S10): one plain text input per block, drawn from `PageEditor`'s rows in `leaf-editor`, with Enter, Backspace,
 Tab and Shift+Tab caught before the input sees them. The page is a **virtual list** (E07-S01, ADR 0035): only the rows
 on screen are laid out and given inputs, and each frame's rows are compared with the last to re-measure or splice just
-what changed, so a 10,000-block page scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR 0037):
+what changed, so a 10,000-block page scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR 0038):
 GPUI `StyledText` runs carry the marks, the selection is a run background, an overlay draws the blinking caret and
 records the painted layout, which answers the editor's `LineLayout` for Up/Down. The block being typed in keeps its
 input until E07-S03. The rich text element (E07-S02) replaces the inputs later;

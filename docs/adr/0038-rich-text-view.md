@@ -1,4 +1,4 @@
-# 0037. Block text drawn with GPUI's StyledText; line layout read back from the painted text
+# 0038. Block text drawn with GPUI's StyledText; line layout read back from the painted text
 
 - **Status:** Accepted
 - **Type:** Architecture
