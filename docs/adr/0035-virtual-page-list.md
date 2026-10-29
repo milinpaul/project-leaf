@@ -1,4 +1,4 @@
-# 0034. The page is a virtual list; rows are diffed to keep it in step
+# 0035. The page is a virtual list; rows are diffed to keep it in step
 
 - **Status:** Accepted
 - **Type:** Architecture

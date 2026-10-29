@@ -1,5 +1,5 @@
 //! The open page as a virtual list: only the rows on screen are laid out and drawn, so a page of ten
-//! thousand blocks scrolls as smoothly as a page of ten (ADR 0034).
+//! thousand blocks scrolls as smoothly as a page of ten (ADR 0035).
 //!
 //! GPUI's `list` remembers each item's measured height by position. When the page changes, the list
 //! must be told which positions changed, or it would keep stale heights and jump. [`changes`] works

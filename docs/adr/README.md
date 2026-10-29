@@ -50,4 +50,5 @@ Records cover two kinds of decision:
 | [0031](0031-sidebar-page-tree.md) | Sidebar page tree: logic in the editor, expanded pages in view.json | Feature | Accepted |
 | [0032](0032-markdown-paste-and-copy.md) | Pasting Markdown and plain text; copying writes Markdown and plain text | Feature | Accepted |
 | [0033](0033-quick-switcher.md) | Quick switcher: a snapshot at open, a small fuzzy matcher, Enter through the dialog | Feature | Accepted |
-| [0034](0034-virtual-page-list.md) | The page is a virtual list; rows are diffed to keep it in step | Architecture | Accepted |
+| [0034](0034-page-icon-picker.md) | Page icon picker: the `emojis` crate, Unicode 13 and older, in a popover | Feature | Accepted |
+| [0035](0035-virtual-page-list.md) | The page is a virtual list; rows are diffed to keep it in step | Architecture | Accepted |

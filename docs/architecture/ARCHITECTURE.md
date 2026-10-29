@@ -60,7 +60,7 @@ the block schema and reading text with formatting (E02-S01), inserting, deleting
 editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
 block's kind and properties (E02-S04). The window can edit a page's blocks with an **interim block editor**
 (E07-S10): one plain text input per block, drawn from `PageEditor`'s rows in `leaf-editor`, with Enter, Backspace,
-Tab and Shift+Tab caught before the input sees them. The page is a **virtual list** (E07-S01, ADR 0034): only the rows
+Tab and Shift+Tab caught before the input sees them. The page is a **virtual list** (E07-S01, ADR 0035): only the rows
 on screen are laid out and given inputs, and each frame's rows are compared with the last to re-measure or splice just
 what changed, so a 10,000-block page scrolls smoothly. The rich text element (E07-S02) replaces the inputs later;
 `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
@@ -103,6 +103,11 @@ Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole 
 **Quick switcher (E06-S04).** Cmd/Ctrl+P (File › Go to Page…) opens `leaf_ui::switcher`, a popup over
 `leaf_editor::QuickSwitcher`: a snapshot of the live pages with breadcrumbs, matched by `leaf_editor::fuzzy_match` as
 the owner types, recently opened pages first when nothing is typed. Enter or a click opens the page (ADR 0033).
+
+**Page header (E06-S05).** Above the title sits the page's emoji icon, or an "Add icon" button on hover
+(`leaf_ui::shell::header`). Clicking it opens `leaf_ui::icon_picker` in a popover over `leaf_editor::EmojiPicker`
+(emoji from the `emojis` crate, searchable by name, shortcode and group); the choice goes through
+`WorkspaceEditor::set_icon` (ADR 0034).
 
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
 `~/Documents/Leaf/My Workspace.leaf`, creating it if missing (`leaf_ui::workspace_root`). It loads the workspace

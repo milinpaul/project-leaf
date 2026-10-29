@@ -320,10 +320,15 @@ impl Shell {
             .into_any_element()
     }
 
-    /// List item `item`: the title first, then one block each.
+    /// List item `item`: the page header (icon and title) first, then one block each. The header is
+    /// part of the list so it scrolls away with the page.
     fn render_item(&mut self, item: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         let content = if item < HEADER_ITEMS {
-            self.render_title().into_any_element()
+            div()
+                .pt_16()
+                .pb_3()
+                .child(self.render_page_header(cx))
+                .into_any_element()
         } else if let Some(row) = self.blocks.list.row(item).cloned() {
             self.render_row(&row, window, cx)
         } else {
