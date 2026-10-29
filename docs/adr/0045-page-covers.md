@@ -37,7 +37,7 @@ may come later. Two questions: how a page stores its cover, and how the app draw
   (tested). `img()` picks the decoder from the file extension; GPUI already links the WebP decoder, so no new
   dependency. Licence: OpenAI's Terms of Use (checked 2026-10-29) say the user owns the output and
   OpenAI assigns its rights in it, "if any"; other users may get similar output, and AI images may have no copyright
-  protection, so Leaf can ship them but can't stop others using look-alikes. Check the current terms before adding
+  protection, so Leaf can ship them but can't stop others using similar images. Check the current terms before adding
   more. Image models don't reliably respect safe areas,
   so check every bitmap cover in the real app at narrow, normal and very wide widths.
 
