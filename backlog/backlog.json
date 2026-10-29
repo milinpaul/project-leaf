@@ -3582,7 +3582,7 @@
       "id": "E11-S01",
       "title": "Search index file",
       "epic": "E11",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -3622,7 +3622,12 @@
       ],
       "plan": "- **Branch:** `story/E11-S01`, stacked on `docs/phase0-search` (PR #34), which adds this story and ADR 0019.\n- **Files:** `crates/leaf-search/` gets `error.rs` (`SearchError`), `page_text.rs` (input rows: `PageText`,\n  `BlockText`, plain data so S02 fills them from the model), `schema.rs` (SQL + `INDEX_VERSION`), `index.rs`\n  (`SearchIndex`). Deps: `leaf-core`, `rusqlite`, `thiserror`, `tracing` (all already in the workspace).\n- **Schema:** `meta(key, value)`; FTS5 tables `blocks(page_id, block_id, kind UNINDEXED…, text)` and\n  `titles(page_id, title)`, tokenizer `unicode61 remove_diacritics 2`, prefix indexes for type-ahead.\n- **Open:** `SearchIndex::open(workspace_root)` → `(index, IndexState)`. `NeedsRebuild` when the file is new,\n  was recreated (unreadable/damaged, other version), or the last rebuild never finished (a `complete` flag\n  set by `mark_complete`, cleared by `clear`). Recreate = delete the file plus `-wal`/`-shm`, start empty.\n- **Writes:** `index_page` replaces a page's rows, `remove_page`, `clear`; one transaction each.\n- **Tests:** integration tests with a temp workspace folder: FTS5 + diacritics + prefix work, open states,\n  garbage/other-version files recreated, writes replace rows, transactions. Coverage ≥ 90%.\n- **Risk:** FTS5 must be in the bundled SQLite; the first test proves it (CI runs it on all three OSes).",
       "path": "backlog/stories/E11-S01.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/36",
+          "number": 36
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
