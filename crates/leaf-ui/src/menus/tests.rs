@@ -1,10 +1,13 @@
 use gpui::{Action, MenuItem};
 
-use super::{CloseWindow, NewPage, OpenSettings, QuickSwitch, Quit, ToggleSidebar, key_bindings, menus};
+use super::{
+    CloseWindow, NewPage, OpenRecent, OpenSettings, OpenWorkspace, QuickSwitch, Quit, ToggleSidebar,
+    key_bindings, menus,
+};
 
 /// The menus' titles and their items' labels, separators left out.
 fn outline() -> Vec<(String, Vec<String>)> {
-    menus()
+    menus(&[])
         .into_iter()
         .map(|menu| {
             let items = menu
@@ -31,7 +34,17 @@ fn the_standard_menus_are_there() {
     };
     assert_eq!(titles, expected);
     assert_eq!(outline[0].1, ["About Leaf", "Settings…", "Quit Leaf"]);
-    assert_eq!(outline[1].1, ["New Page", "Go to Page…", "Close Window"]);
+    assert_eq!(
+        outline[1].1,
+        [
+            "New Page",
+            "Go to Page…",
+            "New Workspace…",
+            "Open Workspace…",
+            "Switch Workspace…",
+            "Close Window"
+        ]
+    );
     assert_eq!(
         outline[2].1,
         ["Undo", "Redo", "Cut", "Copy", "Paste", "Select All"]
@@ -63,6 +76,7 @@ fn app_actions_have_their_standard_shortcuts() {
         (&OpenSettings, ","),
         (&NewPage, "n"),
         (&QuickSwitch, "p"),
+        (&OpenWorkspace, "o"),
         (&CloseWindow, "w"),
         (&ToggleSidebar, "\\"),
     ] {
@@ -73,4 +87,35 @@ fn app_actions_have_their_standard_shortcuts() {
             action.name()
         );
     }
+}
+
+#[test]
+fn open_recent_lists_workspaces_that_are_still_there() {
+    use std::path::PathBuf;
+
+    use leaf_store::RecentWorkspace;
+
+    let entry = |name: &str, missing: bool| RecentWorkspace {
+        path: PathBuf::from(format!("/w/{name}.leaf")),
+        name: name.to_owned(),
+        opened_at: 0,
+        missing,
+    };
+    let file = menus(&[entry("Work", false), entry("Gone", true)]).remove(1);
+    let recent = file
+        .items
+        .into_iter()
+        .find_map(|item| match item {
+            MenuItem::Submenu(menu) if menu.name.as_ref() == "Open Recent" => Some(menu),
+            _ => None,
+        })
+        .unwrap();
+    assert_eq!(recent.items.len(), 1, "the missing one is left out");
+    let MenuItem::Action { name, action, .. } = &recent.items[0] else {
+        panic!("an action")
+    };
+    assert_eq!(name.as_ref(), "Work");
+    assert!(action.partial_eq(&OpenRecent {
+        path: PathBuf::from("/w/Work.leaf")
+    }));
 }

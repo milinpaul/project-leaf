@@ -55,3 +55,4 @@ Records cover two kinds of decision:
 | [0036](0036-trash-view-and-permanent-delete.md) | Trash view: a dialog over the sidebar, and deleting from disk after the page tree is saved | Feature | Accepted |
 | [0037](0037-recent-workspaces.md) | Recent workspaces live in the app settings; a missing one is flagged, not dropped | Feature | Accepted |
 | [0038](0038-rich-text-view.md) | Block text drawn with StyledText; line layout read back from the painted text | Architecture | Accepted |
+| [0039](0039-welcome-screen.md) | Welcome screen: one window that switches between the welcome screen and a workspace | Feature | Accepted |
