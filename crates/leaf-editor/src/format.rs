@@ -324,7 +324,7 @@ fn covered(doc: &PageDoc, range: &TextRange, kind: MarkKind) -> Result<bool, Edi
 }
 
 /// The marks of each character of the block's text, by Unicode scalar position.
-fn char_marks(doc: &PageDoc, block: BlockId) -> Result<Vec<Marks>, EditorError> {
+pub(crate) fn char_marks(doc: &PageDoc, block: BlockId) -> Result<Vec<Marks>, EditorError> {
     Ok(doc
         .text(block)?
         .unwrap_or_default()

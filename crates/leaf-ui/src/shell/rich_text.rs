@@ -159,6 +159,17 @@ impl Shell {
             .unwrap_or(len);
         let here = Caret { block, at };
         let Some(page) = self.page() else { return };
+        // Cmd/Ctrl+click on a link opens it (in the browser or mail app) and leaves the caret alone.
+        if event.modifiers.secondary(cx)
+            && let Some(url) = page
+                .link_at(here)
+                .ok()
+                .flatten()
+                .and_then(|href| leaf_editor::openable_url(&href))
+        {
+            cx.open_url(&url);
+            return;
+        }
         let result = match event.click_count {
             2 => page.select_word_at(here).map(|_| ()),
             n if n >= 3 => page.select_block_text(block).map(|_| ()),

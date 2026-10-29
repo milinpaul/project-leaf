@@ -12,6 +12,7 @@
 //! - `dark`: the dark appearance.
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
+//! - `link`: then open the link popover over the selection (Cmd/Ctrl+K); `type=TEXT` types into it.
 //! - `type=TEXT`: then type TEXT through the platform text input. Avoid spaces: in this off-screen
 //!   context, keys after a space don't arrive (the real app types spaces normally).
 //! - `draft=TEXT`: then show TEXT as an input method's draft (composing, not yet written).
@@ -66,10 +67,11 @@ mod mac {
         draft: Option<String>,
         menu: Option<String>,
         drag: Option<String>,
+        link: bool,
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] [link] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -85,6 +87,7 @@ mod mac {
             scroll: rest.iter().find_map(|a| a.parse().ok()),
             dark: rest.iter().any(|a| a == "dark"),
             bench: rest.iter().any(|a| a == "bench"),
+            link: rest.iter().any(|a| a == "link"),
             caret: value("caret="),
             select: value("select="),
             typed: value("type="),
@@ -173,6 +176,13 @@ mod mac {
                 }
             });
         })?;
+        if options.link {
+            // Placed by where the selection was drawn, so draw it first.
+            draw(cx, window)?;
+            cx.update_window(window, |_, window, cx| {
+                shell.update(cx, |shell, cx| shell.open_link_popover(window, cx));
+            })?;
+        }
         if let Some(text) = &options.typed {
             // One character at a time with a frame in between, as a person types.
             for ch in text.chars() {
