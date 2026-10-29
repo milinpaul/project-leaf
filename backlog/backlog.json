@@ -1975,7 +1975,7 @@
       "id": "E04-S05",
       "title": "Enter, Backspace, Delete, Tab rules",
       "epic": "E04",
-      "status": "in_progress",
+      "status": "review",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -2009,7 +2009,12 @@
       ],
       "plan": "- New `leaf-editor/src/keys.rs`: caret-driven handlers `press(Key)` for Enter, Cmd/Ctrl+Enter, Backspace,\n  Delete, Tab, Shift+Tab, plus `delete_block` (a selected divider/image, or any block with its children). They reuse\n  the existing `enter_at` / `backspace_at_start` / indent rules and the tracked caret from E04-S02.\n- Mid-text Backspace/Delete remove one grapheme; a selection is deleted first.\n- Code block: Enter inserts a newline; Cmd/Ctrl+Enter, or Enter at the end after two empty lines, leaves the block\n  (trailing empty lines removed) into a new paragraph below.\n- Dividers/images: Backspace after one, or Delete before one, selects it; a selected one is deleted with\n  `delete_block`; Enter in an image caption adds a paragraph below.\n- `leaf-model`: `PageDoc::as_one_step` groups several commands into one undo step (Loro undo groups), so\n  \"delete selection + split\" and \"leave code block\" undo at once.\n- Table rows covered elsewhere: arrows (E04-S03, tested there), paste (E05-S06).\n- Tests: one per table row in `keys/tests.rs`, plus code, divider/image and undo-as-one-step tests.",
       "path": "backlog/stories/E04-S05.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/35",
+          "number": 35
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 1.0
