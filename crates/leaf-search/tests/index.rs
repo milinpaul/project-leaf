@@ -289,7 +289,7 @@ fn indexed_pages_report_title_and_version() {
     assert_eq!(
         index.indexed_pages().unwrap().len(),
         1,
-        "unparseable IDs are left out"
+        "unparsable IDs are left out"
     );
 }
 

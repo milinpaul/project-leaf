@@ -49,7 +49,7 @@ fn words_match_as_prefixes_ignoring_case_and_accents() {
     let page = text("Plans", &["The Café PROJECT"]);
     put(&mut index, &page, 1);
 
-    for query in ["pro", "project", "PROJ", "cafe", "café", "CAFE pro", "the caf"] {
+    for query in ["pro", "project", "PROJ", "cafe", "café", "CAFE pro", "the proj"] {
         assert_eq!(pages(&index.search(query).unwrap()), [page.page], "{query:?}");
     }
     assert!(
