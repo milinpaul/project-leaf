@@ -3,7 +3,8 @@
 //!
 //! It is not part of any workspace, so it never travels with one. Settings are a convenience: a
 //! missing, unreadable or damaged file never stops Leaf from starting; it starts with defaults
-//! instead. Fields this version doesn't know (written by a newer Leaf) are kept on save.
+//! instead. Fields this version doesn't know (written by a newer Leaf) are kept on save. It also
+//! remembers the workspaces opened recently, for reopening the last one and for the welcome screen.
 
 use std::path::{Path, PathBuf};
 
@@ -11,6 +12,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::{StoreError, json_file};
+
+mod recent;
+
+pub use recent::{MAX_RECENT_WORKSPACES, RecentWorkspace};
 
 /// The settings file's name inside Leaf's settings folder.
 pub const SETTINGS_FILE: &str = "settings.json";
@@ -85,6 +90,14 @@ pub struct AppSettings {
         deserialize_with = "appearance_or_system"
     )]
     appearance: Appearance,
+    /// Workspaces opened recently, most recent first (see `recent`). Entries this version can't read
+    /// are skipped rather than failing the whole file.
+    #[serde(
+        default,
+        skip_serializing_if = "Vec::is_empty",
+        deserialize_with = "recent::readable_entries"
+    )]
+    recent_workspaces: Vec<recent::Saved>,
     /// Fields from a newer Leaf, kept as they were.
     #[serde(flatten)]
     other: Map<String, Value>,

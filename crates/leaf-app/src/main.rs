@@ -72,16 +72,16 @@ fn default_workspace() -> PathBuf {
 }
 
 fn main() {
-    // `leaf <path>` opens (or creates) the workspace at <path>; plain `leaf` uses the default.
-    let path = std::env::args_os()
-        .nth(1)
-        .map_or_else(default_workspace, PathBuf::from);
+    // `leaf <path>` opens (or creates) the workspace at <path>; plain `leaf` reopens the last one, or the
+    // default the first time.
+    let named = std::env::args_os().nth(1).map(PathBuf::from);
     gpui_platform::application()
         .with_assets(leaf_ui::assets())
         .with_quit_mode(QuitMode::LastWindowClosed)
         .run(move |cx: &mut App| {
             cx.set_app_identity(APP_ID, "Leaf");
             leaf_ui::init(settings::default_settings_path(), cx);
+            let path = leaf_ui::workspace_to_open(named.clone(), default_workspace(), cx);
             // Quitting saves every unsaved change first (the shell and the settings flush on quit).
             cx.on_action(|_: &Quit, cx| cx.quit());
             cx.bind_keys(menus::key_bindings());

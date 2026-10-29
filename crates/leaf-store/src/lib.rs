@@ -40,7 +40,7 @@ pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
 pub use docs::{DocKey, Document, Recovered, Savable};
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;
-pub use settings::{AppSettings, Appearance, DisplayArea, WindowFrame};
+pub use settings::{AppSettings, Appearance, DisplayArea, RecentWorkspace, WindowFrame};
 pub use store::Store;
 pub use versions::SavedVersion;
 pub use view_state::{VIEW_STATE, ViewState};
