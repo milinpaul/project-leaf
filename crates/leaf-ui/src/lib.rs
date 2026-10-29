@@ -1,5 +1,6 @@
 //! GPUI components and theme that draw Leaf's view models and forward input events. Leaf's look
-//! (colours, fonts, sizes) lives in [`theme`].
+//! (colours, fonts, sizes) lives in [`theme`]; the app settings while Leaf runs in [`settings`]; menus
+//! and shortcuts in [`menus`].
 //!
 //! This crate renders and nothing more: editing decisions belong in `leaf-editor`. It also wraps
 //! every `gpui-component` widget the app uses, so a future change of UI framework touches only
@@ -8,7 +9,10 @@
 //! **Boundaries:** UI crate, excluded from the coverage gate, so keep logic out of it. Core
 //! crates must never depend on it.
 
+pub mod menus;
 mod notice;
+pub mod settings;
+mod settings_dialog;
 mod shell;
 pub mod theme;
 
@@ -27,10 +31,11 @@ pub fn assets() -> impl gpui::AssetSource {
     gpui_kit_assets::Assets
 }
 
-/// Sets up widgets, Leaf's fonts and its light and dark themes. Call once at startup, before opening
-/// any window.
-pub fn init(cx: &mut App) {
+/// Sets up widgets, loads the app settings from `settings_path` (defaults if `None`), then Leaf's fonts
+/// and its light and dark themes. Call once at startup, before opening any window.
+pub fn init(settings_path: Option<std::path::PathBuf>, cx: &mut App) {
     gpui_component::init(cx);
+    settings::init(settings_path, cx);
     theme::init(cx);
 }
 

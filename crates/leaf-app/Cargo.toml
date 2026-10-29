@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 gpui.workspace = true
 gpui-platform.workspace = true
+leaf-store.workspace = true
 leaf-ui.workspace = true
 
 # The window icon is only set at runtime on X11; other systems take it from the bundle or the .exe.

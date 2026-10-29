@@ -8,18 +8,23 @@ use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use gpui::{
-    AppContext as _, ClickEvent, Context, Entity, FontWeight, IntoElement, ParentElement, Render, Styled,
-    Subscription, Window, div, px, rems,
+    AppContext as _, ClickEvent, Context, Entity, FocusHandle, FontWeight, InteractiveElement as _,
+    IntoElement, MouseButton, MouseDownEvent, ParentElement, Render, Styled, Subscription, Window, div, px,
+    rems,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputEvent, InputState};
-use gpui_component::sidebar::{Sidebar, SidebarGroup, SidebarMenu, SidebarMenuItem};
-use gpui_component::{ActiveTheme as _, h_flex, v_flex};
+use gpui_component::resizable::{h_resizable, resizable_panel};
+use gpui_component::sidebar::{Sidebar, SidebarFooter, SidebarGroup, SidebarMenu, SidebarMenuItem};
+use gpui_component::{ActiveTheme as _, Icon, v_flex};
+use gpui_kit_assets::IconName;
 use leaf_core::PageId;
 use leaf_editor::{SidebarItem, UNTITLED, WorkspaceEditor};
 use leaf_model::Workspace;
+use leaf_store::settings::SIDEBAR_WIDTH_RANGE;
 
-use crate::theme;
+use crate::settings_dialog::Section;
+use crate::{settings, theme};
 
 /// Top-level view of a Leaf window.
 pub struct Shell {
@@ -30,6 +35,9 @@ pub struct Shell {
     blocks: blocks::BlockInputs,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
     storage: Option<Storage>,
+    /// Focus for the window itself, so menu actions and shortcuts reach the shell even when no text
+    /// field has the cursor.
+    focus: FocusHandle,
     subscriptions: Vec<Subscription>,
 }
 
@@ -63,12 +71,16 @@ impl Shell {
         let subscriptions = vec![
             cx.subscribe_in(&title, window, Self::on_title_event),
             crate::theme::follow_system(window),
+            Self::track_window(window, cx),
         ];
+        let focus = cx.focus_handle();
+        window.focus(&focus, cx);
         Self {
             editor: WorkspaceEditor::new(workspace),
             title,
             blocks: blocks::BlockInputs::default(),
             storage,
+            focus,
             subscriptions,
         }
     }
@@ -163,9 +175,24 @@ impl Render for Shell {
             .label("New page")
             .ghost()
             .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.new_page(window, cx)));
+        // Settings sit at the foot of the sidebar, out of the way of the pages, as a quiet row.
+        let open_settings = SidebarFooter::new()
+            .w_full()
+            .gap_2()
+            .text_sm()
+            .child(Icon::new(IconName::Settings))
+            .child("Settings")
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|shell, _: &MouseDownEvent, window, cx| {
+                    shell.open_settings(Section::Appearance, window, cx);
+                }),
+            );
         let sidebar = Sidebar::new("sidebar")
+            .w_full()
             .header(new_page)
-            .child(SidebarGroup::new("Pages").child(SidebarMenu::new().children(rows)));
+            .child(SidebarGroup::new("Pages").child(SidebarMenu::new().children(rows)))
+            .footer(open_settings);
 
         // A centred column no wider than a comfortable line, with room above the title.
         let column = v_flex()
@@ -196,19 +223,40 @@ impl Render for Shell {
                     .child("Create a page with New page."),
             )
         };
-        let page = v_flex().flex_1().h_full().items_center().child(column);
-        h_flex()
+        let page = v_flex().flex_1().size_full().items_center().child(column);
+        let layout = settings::get(cx);
+        let body = if layout.sidebar_hidden() {
+            page.into_any_element()
+        } else {
+            // Dragging the divider resizes the sidebar; the width is remembered for the next launch.
+            let (min, max) = SIDEBAR_WIDTH_RANGE;
+            h_resizable("shell")
+                .child(
+                    resizable_panel()
+                        .size(px(layout.sidebar_width()))
+                        .size_range(px(min)..px(max))
+                        .fixed()
+                        .child(sidebar),
+                )
+                .child(resizable_panel().child(page))
+                .on_resize(|state, _, cx| {
+                    if let Some(width) = state.read(cx).sizes().first().copied() {
+                        settings::update(cx, |settings| settings.set_sidebar_width(width.into()));
+                    }
+                })
+                .into_any_element()
+        };
+        Self::with_actions(div().track_focus(&self.focus), cx)
             .size_full()
-            .items_start()
             .bg(cx.theme().background)
             .text_color(cx.theme().foreground)
-            .child(sidebar)
-            .child(page)
+            .child(body)
     }
 }
 
 mod blocks;
 mod storage;
+mod window;
 
 pub use storage::Storage;
 
@@ -239,7 +287,7 @@ mod tests {
     use leaf_editor::UNTITLED;
 
     fn open_shell(cx: &mut TestAppContext) -> (gpui::Entity<Shell>, &mut VisualTestContext) {
-        cx.update(crate::init);
+        cx.update(|cx| crate::init(None, cx));
         let (shell, cx) = cx.add_window_view(Shell::new);
         cx.update(|window, cx| window.draw(cx).clear(cx));
         (shell, cx)

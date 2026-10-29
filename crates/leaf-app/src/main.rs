@@ -7,17 +7,9 @@
 
 use std::path::PathBuf;
 
-use gpui::{
-    App, Bounds, KeyBinding, Menu, MenuItem, QuitMode, WindowBounds, WindowOptions, actions, px, size,
-};
-
-actions!(
-    leaf,
-    [
-        /// Quits Leaf. Quitting saves every unsaved change first (the shell flushes on quit).
-        Quit
-    ]
-);
+use gpui::{App, Bounds, QuitMode, WindowBounds, WindowOptions, point, px, size};
+use leaf_store::{DisplayArea, settings};
+use leaf_ui::menus::{self, Quit};
 
 /// Leaf's identity for the operating system: the macOS bundle identifier, the Windows taskbar group and
 /// the Linux `app_id`, which must match the `.desktop` file name. Reverse-DNS under the owner's GitHub,
@@ -35,6 +27,38 @@ fn window_icon() -> Option<std::sync::Arc<image::RgbaImage>> {
             eprintln!("leaf: could not load the window icon: {err}");
             None
         }
+    }
+}
+
+/// Where the window opens: where it was last time if that is still on a screen, else centred at a
+/// comfortable size.
+fn restored_bounds(cx: &App) -> WindowBounds {
+    let displays: Vec<DisplayArea> = cx
+        .displays()
+        .iter()
+        .map(|display| {
+            let area = display.bounds();
+            DisplayArea {
+                x: area.origin.x.into(),
+                y: area.origin.y.into(),
+                width: area.size.width.into(),
+                height: area.size.height.into(),
+            }
+        })
+        .collect();
+    match leaf_ui::settings::get(cx).window_frame(&displays) {
+        Some(frame) => {
+            let bounds = Bounds {
+                origin: point(px(frame.x), px(frame.y)),
+                size: size(px(frame.width), px(frame.height)),
+            };
+            if frame.maximized {
+                WindowBounds::Maximized(bounds)
+            } else {
+                WindowBounds::Windowed(bounds)
+            }
+        }
+        None => WindowBounds::Windowed(Bounds::centered(None, size(px(1000.), px(700.)), cx)),
     }
 }
 
@@ -57,23 +81,13 @@ fn main() {
         .with_quit_mode(QuitMode::LastWindowClosed)
         .run(move |cx: &mut App| {
             cx.set_app_identity(APP_ID, "Leaf");
-            leaf_ui::init(cx);
-            // Cmd+Q on macOS, Ctrl+Q elsewhere, plus the standard app menu entry.
+            leaf_ui::init(settings::default_settings_path(), cx);
+            // Quitting saves every unsaved change first (the shell and the settings flush on quit).
             cx.on_action(|_: &Quit, cx| cx.quit());
-            let quit = if cfg!(target_os = "macos") {
-                "cmd-q"
-            } else {
-                "ctrl-q"
-            };
-            cx.bind_keys([KeyBinding::new(quit, Quit, None)]);
-            cx.set_menus([Menu {
-                name: "Leaf".into(),
-                items: vec![MenuItem::action("Quit Leaf", Quit)],
-                disabled: false,
-            }]);
-            let bounds = Bounds::centered(None, size(px(1000.), px(700.)), cx);
+            cx.bind_keys(menus::key_bindings());
+            cx.set_menus(menus::menus());
             let options = WindowOptions {
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
+                window_bounds: Some(restored_bounds(cx)),
                 app_id: Some(APP_ID.into()),
                 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
                 icon: window_icon(),
