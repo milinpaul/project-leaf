@@ -60,3 +60,4 @@ Records cover two kinds of decision:
 | [0041](0041-block-handle-menu.md) | The block menu is editor state; Move up/down move among siblings | Feature | Accepted |
 | [0042](0042-search-bar-model.md) | Search bar model: titles at once, full text after a pause, stale results dropped by id | Feature | Accepted |
 | [0043](0043-slash-menu-popover.md) | The slash popover keeps the page's keyboard and opens above the line near the bottom edge | Feature | Accepted |
+| [0044](0044-repair-after-merge.md) | Pages are repaired after a merge, the same way on every copy | Architecture | Accepted |
