@@ -8,32 +8,30 @@
 use std::collections::HashMap;
 
 use gpui::{
-    AnyElement, AppContext as _, ClickEvent, Context, ElementId, Entity, FontWeight, InteractiveElement as _,
-    IntoElement, MouseButton, MouseDownEvent, ParentElement, SharedString, Styled, Subscription, Window, div,
-    px,
+    AnyElement, AppContext as _, ClickEvent, Context, Entity, InteractiveElement as _, IntoElement,
+    ParentElement, SharedString, Styled, Subscription, Window, div, list, px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
-use gpui_component::checkbox::Checkbox;
 use gpui_component::input::{
-    Backspace as BackspaceKey, IndentInline, Input, InputEvent, InputState, MoveDown, MoveUp, OutdentInline,
+    Backspace as BackspaceKey, IndentInline, InputEvent, InputState, MoveDown, MoveUp, OutdentInline,
 };
-use gpui_component::{ActiveTheme as _, h_flex, v_flex};
+use gpui_component::{h_flex, v_flex};
 use leaf_core::BlockId;
-use leaf_editor::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
+use leaf_editor::{Backspace, Caret, PageEditor};
 use leaf_model::BlockKind;
 
+use super::column;
+use super::page_list::{HEADER_ITEMS, PageList};
 use super::{Shell, report};
-use crate::theme;
-
-/// Indent per nesting level.
-const INDENT_PX: f32 = 24.0;
 
 /// The block inputs of the open page and which one has focus.
 #[derive(Default)]
 pub(super) struct BlockInputs {
-    inputs: HashMap<BlockId, Entity<InputState>>,
+    pub(super) inputs: HashMap<BlockId, Entity<InputState>>,
     subscriptions: HashMap<BlockId, Subscription>,
-    focused: Option<BlockId>,
+    pub(super) focused: Option<BlockId>,
+    /// The page's rows as a virtual list: only those on screen are laid out.
+    pub(super) list: PageList,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -72,7 +70,7 @@ impl Shell {
     }
 
     /// The input for `id`, created and wired up the first time it is needed.
-    fn block_input(
+    pub(super) fn block_input(
         &mut self,
         id: BlockId,
         window: &mut Window,
@@ -104,6 +102,8 @@ impl Shell {
             input.focus(window, cx);
         });
         self.blocks.focused = Some(id);
+        // The block may be scrolled out of view (arrow keys, Enter at the bottom of the screen).
+        self.blocks.list.reveal(id);
         cx.notify();
     }
 
@@ -131,6 +131,19 @@ impl Shell {
                 input.set_selected_range(byte..byte, cx);
             });
         }
+    }
+
+    /// How many blocks the open page has, as last drawn.
+    #[must_use]
+    pub fn page_block_count(&self) -> usize {
+        self.blocks.list.rows.len()
+    }
+
+    /// Scrolls the open page so block number `index` (in reading order, from 0) is at the top. Used
+    /// to show a search result in place, and by the screenshot tool.
+    pub fn scroll_page_to(&mut self, index: usize, cx: &mut Context<Self>) {
+        self.blocks.list.scroll_to_block(index);
+        cx.notify();
     }
 
     /// Focuses the open page's first block, so a freshly opened page is ready for typing.
@@ -265,10 +278,10 @@ impl Shell {
         cx.notify();
     }
 
-    /// The toolbar and the open page's blocks.
-    pub(super) fn render_blocks(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        // Only blocks that changed since the last frame are re-read (E04-S01); the copy lets the
-        // rows outlive the borrow of the editor while inputs are updated below.
+    /// The open page: the "Turn into" toolbar, then the title and blocks as a virtual list that
+    /// scrolls. Only the rows on screen are built, so only they get text inputs.
+    pub(super) fn render_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        // Only blocks that changed since the last frame are re-read (E04-S01).
         let rows = match self.page().map(|page| page.view().map(<[_]>::to_vec)) {
             Some(Ok(rows)) => rows,
             Some(Err(err)) => {
@@ -278,9 +291,10 @@ impl Shell {
             None => Vec::new(),
         };
         // Drop inputs of blocks that are gone (deleted, or another page's).
-        let live: Vec<BlockId> = rows.iter().map(|row| row.id).collect();
+        let live: std::collections::HashSet<BlockId> = rows.iter().map(|row| row.id).collect();
         self.blocks.inputs.retain(|id, _| live.contains(id));
         self.blocks.subscriptions.retain(|id, _| live.contains(id));
+        self.blocks.list.sync(self.editor.selected(), rows);
 
         let toolbar = h_flex()
             .gap_1()
@@ -292,127 +306,35 @@ impl Shell {
                         shell.turn_focused_into(kind.clone(), window, cx);
                     }))
             }));
-        let list: Vec<AnyElement> = rows
-            .into_iter()
-            .map(|row| self.render_row(row, window, cx))
-            .collect();
+        let rows = list(self.blocks.list.state.clone(), cx.processor(Self::render_item)).size_full();
 
         v_flex()
-            .gap_0p5()
+            .size_full()
             .capture_action(cx.listener(Self::on_backspace))
             .capture_action(cx.listener(Self::on_indent))
             .capture_action(cx.listener(Self::on_outdent))
             .capture_action(cx.listener(Self::on_move_up))
             .capture_action(cx.listener(Self::on_move_down))
-            .child(toolbar)
-            .children(list)
+            .child(column(div().pt_2().pb_1().child(toolbar)))
+            .child(rows)
             .into_any_element()
     }
 
-    fn render_row(&mut self, row: BlockRow, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
-        let indent = px(INDENT_PX * f32::from(u16::try_from(row.depth).unwrap_or(u16::MAX)));
-        // Headings get room above them, so a page reads as sections rather than a wall of lines.
-        let space_above = match row.style {
-            BlockStyle::Heading(1) => px(18.0),
-            BlockStyle::Heading(_) => px(12.0),
-            _ => px(0.0),
-        };
-        let line = h_flex()
-            .w_full()
-            .items_center()
-            .gap_2()
-            .pl(indent)
-            .pt(space_above);
-        let Some(text) = row.text else {
-            let placeholder = match &row.style {
-                BlockStyle::Divider => {
-                    return line
-                        .child(div().h(px(1.0)).w_full().bg(cx.theme().border))
-                        .into_any_element();
-                }
-                BlockStyle::Image { alt } => format!("[image] {alt}"),
-                BlockStyle::Unknown { type_name } => {
-                    format!("[{type_name}: made by a newer Leaf, read-only]")
-                }
-                _ => String::new(),
-            };
-            return line
-                .child(div().text_color(cx.theme().muted_foreground).child(placeholder))
-                .into_any_element();
-        };
-
-        let state = self.block_input(row.id, window, cx);
-        state.update(cx, |input, cx| {
-            if input.value() != text {
-                input.set_value(text, window, cx);
-            }
-        });
-        // Body rows are 28px: the input's default height is sized for form fields, which spaces blocks too far apart.
-        let input = Input::new(&state)
-            .appearance(false)
-            .focus_bordered(false)
-            .px_0()
-            .h_7();
-        let muted = cx.theme().muted_foreground;
-        let input = match &row.style {
-            BlockStyle::Heading(level) => {
-                let size = theme::HEADING_SIZES[usize::from((*level).clamp(1, 3) - 1)];
-                let height = px((size * 1.3).round());
-                input
-                    .text_size(px(size))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .line_height(height)
-                    .h(height + px(10.0))
-            }
-            BlockStyle::Code { .. } => input.font_family(cx.theme().mono_font_family.clone()).text_sm(),
-            BlockStyle::Todo { checked: true } => input.text_color(muted),
-            _ => input,
-        };
-
-        let id = row.id;
-        let shell = cx.entity().downgrade();
-        let prefix: Option<AnyElement> = match &row.style {
-            BlockStyle::Bulleted => Some(div().w_4().child("•").into_any_element()),
-            BlockStyle::Numbered(n) => Some(div().min_w_4().child(format!("{n}.")).into_any_element()),
-            BlockStyle::Todo { checked } => Some(
-                Checkbox::new(ElementId::from(SharedString::from(format!("todo-{id}"))))
-                    .checked(*checked)
-                    .on_click(move |_, _, cx| {
-                        let _ = shell.update(cx, |shell, cx| shell.toggle_todo(id, cx));
-                    })
-                    .into_any_element(),
-            ),
-            BlockStyle::Quote => Some(div().w(px(3.0)).h_6().bg(cx.theme().border).into_any_element()),
-            _ => None,
-        };
-        // Inputs can't draw strikethrough, so a done to-do shows as struck-through text until it is
-        // clicked for editing.
-        let done_and_resting =
-            matches!(row.style, BlockStyle::Todo { checked: true }) && self.blocks.focused != Some(id);
-        let body = if done_and_resting {
+    /// List item `item`: the page header (icon and title) first, then one block each. The header is
+    /// part of the list so it scrolls away with the page.
+    fn render_item(&mut self, item: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
+        let content = if item < HEADER_ITEMS {
             div()
-                .flex_1()
-                .h_7()
-                .flex()
-                .items_center()
-                .text_color(muted)
-                .line_through()
-                .child(state.read(cx).value().to_string())
-                .on_mouse_down(
-                    MouseButton::Left,
-                    cx.listener(move |shell, _: &MouseDownEvent, window, cx| {
-                        shell.focus_block(id, window, cx);
-                    }),
-                )
+                .pt_16()
+                .pb_3()
+                .child(self.render_page_header(cx))
                 .into_any_element()
+        } else if let Some(row) = self.blocks.list.row(item).cloned() {
+            self.render_row(&row, window, cx)
         } else {
-            div().flex_1().child(input).into_any_element()
+            div().into_any_element()
         };
-        let line = line.children(prefix).child(body);
-        match row.style {
-            BlockStyle::Code { .. } => line.bg(cx.theme().muted).rounded_md().px_2().into_any_element(),
-            _ => line.into_any_element(),
-        }
+        column(div().py(px(1.0)).child(content)).into_any_element()
     }
 }
 

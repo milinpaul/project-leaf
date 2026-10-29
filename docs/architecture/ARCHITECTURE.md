@@ -60,7 +60,9 @@ the block schema and reading text with formatting (E02-S01), inserting, deleting
 editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
 block's kind and properties (E02-S04). The window can edit a page's blocks with an **interim block editor**
 (E07-S10): one plain text input per block, drawn from `PageEditor`'s rows in `leaf-editor`, with Enter, Backspace,
-Tab and Shift+Tab caught before the input sees them. The rich text element (E07-S02) replaces the inputs later;
+Tab and Shift+Tab caught before the input sees them. The page is a **virtual list** (E07-S01, ADR 0035): only the rows
+on screen are laid out and given inputs, and each frame's rows are compared with the last to re-measure or splice just
+what changed, so a 10,000-block page scrolls smoothly. The rich text element (E07-S02) replaces the inputs later;
 `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
 the editor wires Cmd+Z to it in E04-S08. The editor's caret (E04-S02) moves by
