@@ -224,6 +224,7 @@ mod cover;
 mod found;
 mod header;
 mod ime;
+mod link_popover;
 mod markers;
 mod page_keys;
 mod page_list;

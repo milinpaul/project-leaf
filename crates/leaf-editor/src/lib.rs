@@ -21,6 +21,7 @@ mod fuzzy;
 mod history;
 mod input;
 mod keys;
+mod link;
 mod page_editor;
 mod search_bar;
 mod selection;
@@ -40,6 +41,7 @@ pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as 
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
+pub use link::openable_url;
 pub use page_editor::{Backspace, Caret, PageEditor};
 pub use search_bar::{
     BlockMatch, Destination, ExcerptRow, Marked, PageRow, SEARCH_DELAY_MS, SearchBar, SearchHit, SearchKey,

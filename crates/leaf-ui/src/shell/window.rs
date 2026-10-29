@@ -34,9 +34,7 @@ impl Shell {
                     );
                 match shortcut_action(Shortcut::ModK, text_selected) {
                     ShortcutAction::OpenSearch => shell.open_search(window, cx),
-                    // The link popover is E07-S07; until then Cmd/Ctrl+K over selected text does nothing,
-                    // rather than opening search over the selection.
-                    ShortcutAction::Link => {}
+                    ShortcutAction::Link => shell.open_link_popover(window, cx),
                 }
             }))
             .on_action(cx.listener(|_, _: &ToggleSidebar, _, cx| {

@@ -51,7 +51,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 - **Inline marks:** bold, italic, strikethrough, inline code, link.
 - **Slash menu** (`/`): insert or convert blocks, fuzzy filtered.
 - **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`.
-- **Inline shortcuts:** `Cmd/Ctrl+B/I/E`, `Cmd/Ctrl+Shift+S` (strike), `Cmd/Ctrl+K` with text selected (link; without a selection it opens search).
+- **Inline shortcuts:** `Cmd/Ctrl+B/I/E`, `Cmd/Ctrl+Shift+S` (strike), `Cmd/Ctrl+K` with text selected (link; without a selection it opens search). `Cmd/Ctrl+click` on a link opens it in the browser.
 - **Block handle** (⋮⋮) on hover: drag to reorder or nest; menu with Turn into, Duplicate, Move up, Move down, Delete (each with an icon); `Cmd/Ctrl+/` opens the menu from the keyboard.
 - **Nesting:** `Tab` / `Shift+Tab` indent and outdent.
 - **Selection:** within a block and across blocks (Shift+arrows, mouse drag). `Cmd/Ctrl+A` once selects the block's text, twice selects all blocks.
