@@ -199,6 +199,12 @@ fn the_sidebar_workspace_menu_switches_workspace(cx: &mut TestAppContext) {
     cx.simulate_keystrokes("down down down enter");
     cx.run_until_parked();
     let open = app.read_with(cx, |app, _| app.open_path.clone());
-    assert_eq!(open, Some(home), "{:?}", message(&app, cx));
+    // Compare resolved paths: on macOS the temp folder /var/... is a link to /private/var/...
+    assert_eq!(
+        open.map(|p| std::fs::canonicalize(p).unwrap()),
+        Some(std::fs::canonicalize(&home).unwrap()),
+        "{:?}",
+        message(&app, cx)
+    );
     let _ = std::fs::remove_dir_all(dir);
 }
