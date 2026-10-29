@@ -359,7 +359,6 @@ impl Shell {
                 let size = theme::HEADING_SIZES[usize::from((*level).clamp(1, 3) - 1)];
                 let height = px((size * 1.3).round());
                 input
-                    .font_family(theme::HEADING_FONT)
                     .text_size(px(size))
                     .font_weight(FontWeight::SEMIBOLD)
                     .line_height(height)

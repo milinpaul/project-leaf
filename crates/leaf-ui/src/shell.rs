@@ -175,15 +175,14 @@ impl Render for Shell {
             .pt_16()
             .gap_3();
         let column = if self.editor.selected().is_some() {
-            // The title reads as the page's heading, not a form field: no box, large, in the serif.
+            // The title reads as the page's heading, not a form field: no box, large and bold.
             column
                 .child(
                     Input::new(&self.title)
                         .appearance(false)
                         .focus_bordered(false)
-                        .font_family(theme::HEADING_FONT)
                         .text_size(px(theme::TITLE_SIZE))
-                        .font_weight(FontWeight::SEMIBOLD)
+                        .font_weight(FontWeight::BOLD)
                         // The input's own height and line height fit body text; size them to the heading.
                         .line_height(rems(2.75))
                         .h(rems(3.25))

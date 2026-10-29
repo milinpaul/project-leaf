@@ -1,7 +1,7 @@
 use gpui::TestAppContext;
 use gpui_component::theme::{Theme, ThemeMode};
 
-use super::{DARK, FONTS, HEADING_FONT, LIGHT, Palette, UI_FONT, config, mode_named};
+use super::{DARK, FONTS, LIGHT, Palette, UI_FONT, config, mode_named};
 
 /// Reads `#RRGGBB` as 0-1 channels.
 fn rgb(hex: &str) -> [f64; 3] {
@@ -158,7 +158,6 @@ fn bundled_fonts_provide_the_families_the_theme_names() {
             .count()
     };
     assert_eq!(has(UI_FONT), 5, "regular, italic, semibold, bold and bold italic");
-    assert_eq!(has(HEADING_FONT), 1);
 }
 
 #[gpui::test]

@@ -14,11 +14,9 @@ use std::rc::Rc;
 use gpui::{App, Subscription, Window};
 use gpui_component::theme::{Theme, ThemeConfig, ThemeConfigColors, ThemeMode};
 
-/// The interface and body text face, bundled so Leaf looks the same on every OS.
+/// The one typeface for everything (interface, text, titles and headings), bundled so Leaf looks the
+/// same on every OS. One family keeps the page calm; hierarchy comes from size and weight.
 pub const UI_FONT: &str = "Inter";
-
-/// The face for page titles and headings: a serif gives pages a warm, bookish voice.
-pub const HEADING_FONT: &str = "Source Serif 4 Display";
 
 /// Body text size in pixels. Comfortable for long writing, Phase 0's goal.
 pub const BODY_SIZE: f32 = 16.0;
@@ -27,9 +25,9 @@ pub const BODY_SIZE: f32 = 16.0;
 pub const LINE_HEIGHT: f32 = 1.6;
 
 /// Page title, then heading 1 to 3, in pixels.
-pub const TITLE_SIZE: f32 = 36.0;
+pub const TITLE_SIZE: f32 = 32.0;
 /// Heading sizes, largest first: heading 1, 2 and 3.
-pub const HEADING_SIZES: [f32; 3] = [28.0, 23.0, 19.0];
+pub const HEADING_SIZES: [f32; 3] = [26.0, 21.0, 18.0];
 
 /// Corner radius of buttons, menus, selected rows and code blocks: soft but crisp.
 pub const RADIUS: usize = 6;
@@ -113,15 +111,14 @@ pub const DARK: Palette = Palette {
     accent_soft: "#1E3A2E",
 };
 
-/// The bundled font files, embedded so Leaf needs nothing installed. Both families are under the SIL
-/// Open Font License; the licences sit next to the files.
-const FONTS: [&[u8]; 6] = [
+/// The bundled font files, embedded so Leaf needs nothing installed. Inter is under the SIL Open Font
+/// License; the licence sits next to the files.
+const FONTS: [&[u8]; 5] = [
     include_bytes!("../assets/fonts/Inter-Regular.ttf"),
     include_bytes!("../assets/fonts/Inter-Italic.ttf"),
     include_bytes!("../assets/fonts/Inter-SemiBold.ttf"),
     include_bytes!("../assets/fonts/Inter-Bold.ttf"),
     include_bytes!("../assets/fonts/Inter-BoldItalic.ttf"),
-    include_bytes!("../assets/fonts/SourceSerif4Display-Semibold.ttf"),
 ];
 
 /// Loads the fonts and installs Leaf's light and dark themes, following the system appearance (or
