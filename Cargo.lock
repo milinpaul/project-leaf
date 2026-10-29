@@ -3809,6 +3809,7 @@ dependencies = [
  "gpui-pre",
  "gpui-pre-platform",
  "image",
+ "leaf-store",
  "leaf-ui",
 ]
 
@@ -3871,6 +3872,8 @@ dependencies = [
  "leaf-model",
  "proptest",
  "rusqlite",
+ "serde",
+ "serde_json",
  "thiserror 2.0.21",
  "tracing",
 ]

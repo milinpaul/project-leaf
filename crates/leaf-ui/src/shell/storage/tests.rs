@@ -19,7 +19,7 @@ fn open_window<'a>(
     path: &Path,
     cx: &'a mut TestAppContext,
 ) -> (gpui::Entity<Shell>, &'a mut VisualTestContext) {
-    cx.update(crate::init);
+    cx.update(|cx| crate::init(None, cx));
     let folder = leaf_store::Workspace::open_or_create(path).unwrap();
     let (storage, workspace) = Storage::open(folder).unwrap();
     let (shell, cx) = cx.add_window_view(|window, cx| Shell::with_storage(storage, workspace, window, cx));

@@ -9,6 +9,8 @@
 //! written by any version of Leaf can be brought up to date, and a file from a newer Leaf is
 //! refused instead of being damaged.
 //!
+//! App-wide settings (window size, sidebar width) live outside any workspace, in [`settings`].
+//!
 //! A workspace on disk is a folder ([`Workspace`]):
 //!
 //! ```text
@@ -26,6 +28,7 @@ mod autosave;
 mod docs;
 mod error;
 pub mod migrations;
+pub mod settings;
 mod store;
 mod versions;
 mod workspace;
@@ -34,6 +37,7 @@ pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
 pub use docs::{DocKey, Document, Recovered, Savable};
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;
+pub use settings::{AppSettings, Appearance, DisplayArea, WindowFrame};
 pub use store::Store;
 pub use versions::SavedVersion;
 pub use workspace::Workspace;

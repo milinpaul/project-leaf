@@ -45,3 +45,4 @@ Records cover two kinds of decision:
 | [0026](0026-slash-menu.md) | Slash menu: the query is page text; a small built-in fuzzy filter | Feature | Accepted |
 | [0027](0027-leaf-visual-identity.md) | Leaf's visual identity: warm paper, Inter throughout, green used sparingly | Feature | Accepted |
 | [0028](0028-block-actions-and-duplicate.md) | Block actions follow the selection; Duplicate is a model command that copies everything | Feature | Accepted |
+| [0029](0029-app-settings-and-settings-dialog.md) | App settings in one JSON file; a Settings dialog over the page | Feature | Accepted |

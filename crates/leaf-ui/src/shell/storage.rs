@@ -54,6 +54,11 @@ impl Storage {
         Ok((storage, workspace))
     }
 
+    /// The workspace folder.
+    pub fn root(&self) -> &std::path::Path {
+        self.folder.root()
+    }
+
     /// The saved blocks of `page`, or `None` for a page never saved (a new one).
     fn load_page(&self, page: PageId) -> Result<Option<PageDoc>, StoreError> {
         self.folder.store().load(DocKey::Page(page))
@@ -73,9 +78,10 @@ impl Shell {
         })
         .detach();
         self.subscriptions
-            .push(cx.observe_window_activation(window, |shell, window, _| {
+            .push(cx.observe_window_activation(window, |shell, window, cx| {
                 if !window.is_window_active() {
                     shell.save(true);
+                    crate::settings::save(cx);
                 }
             }));
         self.subscriptions.push(cx.on_app_quit(|shell, _| {

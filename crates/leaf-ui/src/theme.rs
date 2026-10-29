@@ -13,6 +13,9 @@ use std::rc::Rc;
 
 use gpui::{App, Subscription, Window};
 use gpui_component::theme::{Theme, ThemeConfig, ThemeConfigColors, ThemeMode};
+use leaf_store::Appearance;
+
+use crate::settings;
 
 /// The one typeface for everything (interface, text, titles and headings), bundled so Leaf looks the
 /// same on every OS. One family keeps the page calm; hierarchy comes from size and weight.
@@ -121,9 +124,9 @@ const FONTS: [&[u8]; 5] = [
     include_bytes!("../assets/fonts/Inter-BoldItalic.ttf"),
 ];
 
-/// Loads the fonts and installs Leaf's light and dark themes, following the system appearance (or
-/// `LEAF_APPEARANCE=light|dark`, used to take screenshots of either). Call once at startup, after
-/// gpui-component is set up.
+/// Loads the fonts and installs Leaf's light and dark themes, in the appearance the owner chose in
+/// Settings (following the system by default; `LEAF_APPEARANCE=light|dark` overrides both, for
+/// screenshots). Call once at startup, after gpui-component and the settings are set up.
 pub fn init(cx: &mut App) {
     let fonts = FONTS.iter().map(|bytes| Cow::Borrowed(*bytes)).collect();
     if let Err(err) = cx.text_system().add_fonts(fonts) {
@@ -136,15 +139,28 @@ pub fn init(cx: &mut App) {
     apply(None, cx);
 }
 
-/// Keeps `window` in step with the system: when the OS switches between light and dark, so does Leaf.
+/// Keeps `window` in step with the system: when the OS switches between light and dark, so does Leaf
+/// (unless the owner chose light or dark in Settings).
 /// Keep the subscription for as long as the window lives.
 pub fn follow_system(window: &Window) -> Subscription {
     window.observe_window_appearance(|window, cx| apply(Some(window), cx))
 }
 
-/// Switches to the forced mode, or the window's (or system's) appearance.
+/// Chooses light, dark or following the OS (the Settings dialog), remembers it and applies it now.
+pub fn set_appearance(appearance: Appearance, window: &mut Window, cx: &mut App) {
+    settings::update(cx, |settings| settings.set_appearance(appearance));
+    apply(Some(window), cx);
+}
+
+/// Switches to `LEAF_APPEARANCE` if set, else the owner's choice in the settings, else the window's (or
+/// system's) appearance.
 fn apply(window: Option<&mut Window>, cx: &mut App) {
-    match forced_mode() {
+    let chosen = match settings::get(cx).appearance() {
+        Appearance::Light => Some(ThemeMode::Light),
+        Appearance::Dark => Some(ThemeMode::Dark),
+        Appearance::System => None,
+    };
+    match forced_mode().or(chosen) {
         Some(mode) => Theme::change(mode, window, cx),
         None => Theme::sync_system_appearance(window, cx),
     }
