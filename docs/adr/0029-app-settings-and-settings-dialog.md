@@ -1,4 +1,4 @@
-# 0028. App settings in one JSON file; a Settings dialog over the page
+# 0029. App settings in one JSON file; a Settings dialog over the page
 
 - **Status:** Accepted
 - **Type:** Feature

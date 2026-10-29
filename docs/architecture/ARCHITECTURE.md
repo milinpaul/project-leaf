@@ -75,11 +75,12 @@ across blocks, or whole blocks (Cmd/Ctrl+A twice); typing or a key over it is st
 or, with just a caret, for the next typed text (ADR 0022). Undo puts back the selection from just before a change and redo the one right
 after it (E04-S08, ADR 0023). Typing a Markdown shortcut at the start of a block (`# `, `- `, `[] `, …) converts
 it, as an undo step of its own (E05-S01, ADR 0025). Typing `/` at the start of a word opens the slash menu (`PageEditor::slash_menu`),
-which filters block types by the typed query and converts the block or adds one below (E05-S02, ADR 0026). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+which filters block types by the typed query and converts the block or adds one below (E05-S02, ADR 0026). The block menu's Turn into, Duplicate and Delete (`PageEditor::block_action`) act on
+the selection when the block is part of it, as one undo step each (E05-S03, ADR 0028). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
 through those commands (E06-S07).
 
 **Window, sidebar and Settings (E06-S02).** At startup `leaf-app` loads the app settings (`settings.json` in the
-OS's settings folder; format in `leaf_store::settings`, ADR 0028) and opens the window where it was, if that is still
+OS's settings folder; format in `leaf_store::settings`, ADR 0029) and opens the window where it was, if that is still
 on a screen. The sidebar is resizable and can be hidden (Cmd/Ctrl+\\); its width, its visibility and the window
 frame are written back on blur and quit. A cog at the foot of the sidebar (or Cmd/Ctrl+,) opens the Settings dialog:
 Appearance (System / Light / Dark), Workspace (its folder) and About. Menus and shortcuts live in `leaf_ui::menus`.
