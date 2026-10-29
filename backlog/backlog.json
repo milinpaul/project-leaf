@@ -3562,7 +3562,12 @@
       ],
       "plan": "- Draw `crates/leaf-app/resources/icon.svg` (macOS grid: 824 px tile on 1024 canvas). `scripts/icons.py` (`just icons`)\n  renders PNG files with `resvg`, `Leaf.icns` with `iconutil`, writes `leaf.ico` directly. Outputs are committed.\n- macOS: `scripts/macos_app.py` wraps the binary in `Leaf.app` (Info.plist + icns); `just run` launches from it.\n- Windows: `build.rs` + `leaf.rc` embed icon resource 1 via `embed-resource` (GPUI loads id 1).\n- Linux: `app_id` + X11 window icon (`image`, PNG only); `.desktop` entry named after the app ID.\n- Tests: `leaf-app/tests/icon.rs` checks sizes, ICO/ICNS structure and that the app ID matches everywhere.\n- Risk: Windows/Linux can't be run here; run the full CI matrix on the branch.",
       "path": "backlog/stories/E08-S05.md",
-      "prs": [],
+      "prs": [
+        {
+          "url": "https://github.com/milinpaul/project-leaf/pull/33",
+          "number": 33
+        }
+      ],
       "waiting_on": [],
       "ready": false,
       "progress": 0.67
