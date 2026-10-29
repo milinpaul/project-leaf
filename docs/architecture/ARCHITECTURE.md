@@ -78,6 +78,12 @@ document; each page's blocks load from disk the first time the page is opened. A
 due. Window blur, quit (Cmd+Q / Ctrl+Q, or the app menu) and window close save everything at once. If the folder
 can't be opened (another Leaf has it open, it is damaged), the window shows why instead of the editor.
 
+**App icon and identity (E08-S05).** `crates/leaf-app/resources/` holds the icon: `icon.svg` is the master, and
+`just icons` generates the PNG files, `Leaf.icns` and `leaf.ico` from it (committed, so builds need no image tools). On
+macOS `just run` launches Leaf from a `Leaf.app` bundle so the Dock shows its icon; on Windows `build.rs` builds the
+icon into `leaf.exe`; on Linux the window carries the `app_id` `io.github.milinpaul.Leaf` and, on X11, the icon
+itself (ADR 0018).
+
 1. **You press a key.** GPUI delivers it to `leaf-ui`, which forwards it untouched to `leaf-editor`.
 2. **The editor decides what it means.** For example, Enter in the middle of a paragraph means "split this
    block here". It produces a `Command` such as `SplitBlock { id, pos }`.
