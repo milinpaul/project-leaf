@@ -1,6 +1,7 @@
 //! The built-in cover images: where each one lives among the app's assets, and their bytes.
 //!
-//! Covers are bundled SVG files drawn with GPUI's `img()`, which renders SVG in full colour (ADR 0045).
+//! Covers are bundled image files drawn with GPUI's `img()`: SVG for the hand-built ones, WebP for ones made with
+//! an image model (Travel), which `img()` decodes by the file extension (ADR 0045).
 //! Which covers exist, and what a page's stored cover means, is `leaf_editor::BuiltinCover`'s business.
 
 use std::borrow::Cow;
@@ -16,7 +17,7 @@ pub fn asset_path(cover: BuiltinCover) -> &'static str {
         BuiltinCover::Ocean => "covers/ocean.svg",
         BuiltinCover::Paper => "covers/paper.svg",
         BuiltinCover::Night => "covers/night.svg",
-        BuiltinCover::Travel => "covers/travel.svg",
+        BuiltinCover::Travel => "covers/travel.webp",
     }
 }
 
@@ -28,7 +29,7 @@ pub(crate) fn load(path: &str) -> Option<Cow<'static, [u8]>> {
         "covers/ocean.svg" => include_bytes!("../assets/covers/ocean.svg"),
         "covers/paper.svg" => include_bytes!("../assets/covers/paper.svg"),
         "covers/night.svg" => include_bytes!("../assets/covers/night.svg"),
-        "covers/travel.svg" => include_bytes!("../assets/covers/travel.svg"),
+        "covers/travel.webp" => include_bytes!("../assets/covers/travel.webp"),
         _ => return None,
     };
     Some(Cow::Borrowed(bytes))
@@ -39,13 +40,29 @@ mod tests {
     use leaf_editor::BuiltinCover;
 
     #[test]
-    fn every_built_in_cover_has_an_svg_image() {
+    fn every_built_in_cover_has_an_image_img_can_draw() {
         for &cover in BuiltinCover::ALL {
             let path = super::asset_path(cover);
-            assert_eq!(path, format!("covers/{}.svg", cover.name()));
             let bytes = super::load(path).unwrap_or_else(|| panic!("{path} is not bundled"));
-            assert!(bytes.starts_with(b"<svg"), "{path} is an SVG file");
+            let svg = path == format!("covers/{}.svg", cover.name()) && bytes.starts_with(b"<svg");
+            // A WebP file is a RIFF container whose form type is "WEBP".
+            let webp = path == format!("covers/{}.webp", cover.name())
+                && bytes.starts_with(b"RIFF")
+                && bytes.get(8..12) == Some(b"WEBP".as_slice());
+            assert!(svg || webp, "{path} is an SVG or WebP file named after the cover");
         }
         assert!(super::load("covers/none.svg").is_none());
+    }
+
+    #[test]
+    fn every_cover_stays_small() {
+        for &cover in BuiltinCover::ALL {
+            let path = super::asset_path(cover);
+            let size = super::load(path).map_or(0, |bytes| bytes.len());
+            assert!(
+                size < 100 * 1024,
+                "{path} is {size} bytes; keep each cover under 100 KB"
+            );
+        }
     }
 }
