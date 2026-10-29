@@ -1,0 +1,9 @@
+---
+source: crates/leaf-editor/src/search_bar/tests.rs
+expression: render(&bar)
+---
+> · Recipes
+  · Garden plan  —  Projects
+  · Projects
+  · Leaf app  —  Projects
+  · Journal
