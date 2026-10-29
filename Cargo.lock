@@ -3856,6 +3856,16 @@ name = "leaf-export"
 version = "0.1.0"
 
 [[package]]
+name = "leaf-fixtures"
+version = "0.1.0"
+dependencies = [
+ "leaf-core",
+ "leaf-model",
+ "leaf-store",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "leaf-model"
 version = "0.1.0"
 dependencies = [

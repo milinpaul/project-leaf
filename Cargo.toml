@@ -15,6 +15,7 @@ leaf-editor = { path = "crates/leaf-editor" }
 leaf-store = { path = "crates/leaf-store" }
 leaf-export = { path = "crates/leaf-export" }
 leaf-search = { path = "crates/leaf-search" }
+leaf-fixtures = { path = "crates/leaf-fixtures" }
 leaf-ui = { path = "crates/leaf-ui" }
 # UI: gpui-component pins gpui exactly (published as `gpui-pre`), so we pin both to the same pair.
 # Upgrade them together, deliberately. See docs/adr for the spike findings.

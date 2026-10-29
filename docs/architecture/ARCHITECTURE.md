@@ -42,10 +42,11 @@ the screen stays thin.
 | `leaf-store` | Saves and loads documents in a SQLite file; autosave and crash recovery. | Know about the screen. |
 | `leaf-export` | Markdown import/export (Phase 1). | Touch files or the screen. |
 | `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR 0019). | Hold data that exists nowhere else. |
+| `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR 0054). Test support only. | Be used by the app. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. Holds Leaf's look (colours, bundled fonts, sizes) in one `theme` module (ADR 0027). | Contain editing logic. |
 | `leaf-app` | The program itself: starts up, opens windows, connects the crates. | Contain logic that a testable crate could hold. |
 
-The first six are **core crates**. They never depend on GPUI or `leaf-ui`; a test
+The first six are **core crates**. They, and `leaf-fixtures`, never depend on GPUI or `leaf-ui`; a test
 (`crates/leaf-app/tests/architecture.rs`) fails if one does. `leaf-core`, `leaf-model`, `leaf-editor` and
 `leaf-export` also build for WebAssembly, which keeps a web version possible later.
 
