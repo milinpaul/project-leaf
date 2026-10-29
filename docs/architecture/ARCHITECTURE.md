@@ -74,7 +74,11 @@ it the keyboard while open, and `Cmd/Ctrl+/` opens it for the caret's block. Dra
 returns where the line goes (a gap between rows and a depth), and `drop_blocks` moves the blocks there as one undo step.
 `shell/block_drag.rs` (E07-S05, ADR 0050) uses GPUI's drag: a click on the handle still opens the menu, pressing and
 moving starts a drag with a preview of the block's first line, each row records where it was drawn, the line is drawn at
-the answer's depth, the dragged rows fade, and holding near the page's top or bottom edge scrolls it. The **slash menu** is drawn as a popover
+the answer's depth, the dragged rows fade, and holding near the page's top or bottom edge scrolls it. `Cmd/Ctrl+K` over
+selected text opens the **link popover** (E07-S07, ADR 0052, `shell/link_popover.rs`): an address field under the
+selection, filled in when the selection is already one link, with Open and Remove; Enter saves through
+`PageEditor::set_link`. `Cmd/Ctrl+click` on a link opens it; `leaf_editor::openable_url` decides which addresses the
+system may open. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR 0043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
 The page keeps the keyboard, so typing filters and the editor's keys drive it; the mouse highlights and picks. `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);

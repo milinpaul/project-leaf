@@ -68,3 +68,4 @@ Records cover two kinds of decision:
 | [0049](0049-dragging-blocks.md) | Dragging blocks: drops land in a gap between rows, at a depth picked by the pointer's x | Feature | Accepted |
 | [0050](0050-block-drag-visuals.md) | Block drag visuals: GPUI's drag, a line at the drop's depth, faded rows, scrolling at the edges | Feature | Accepted |
 | [0051](0051-inserting-images.md) | Inserting images: the editor places the block, the UI fetches the picture | Feature | Accepted |
+| [0052](0052-link-popover.md) | Link popover: an address box under the selection; only web and mail addresses are opened | Feature | Accepted |
