@@ -70,7 +70,8 @@ is anchored to the text, so edits before it, undo and other devices' changes car
 `ReplaceText` command; an input method's draft is kept in the editor and only the committed text reaches the page
 (ADR 0017). Enter, Backspace, Delete and Tab (E04-S05) go through `PageEditor::press`, which applies the
 "Editor behaviour" rules at the caret; each press is one undo step, and a divider or image next to the caret is
-selected rather than merged (ADR 0020). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+selected rather than merged (ADR 0020). A selection (E04-S06) is either text between the caret and a tail anchor, possibly
+across blocks, or whole blocks (Cmd/Ctrl+A twice); typing or a key over it is still one undo step (ADR 0021). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
 through those commands (E06-S07).
 
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or

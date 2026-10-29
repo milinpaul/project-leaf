@@ -33,6 +33,8 @@ pub struct PageEditor {
     pub(crate) caret: Option<Tracked>,
     /// The input method's draft while a composition is going on.
     pub(crate) composing: Option<Composing>,
+    /// Whole blocks selected (block selection mode), in reading order; `None` outside the mode.
+    pub(crate) blocks: Option<Vec<BlockId>>,
 }
 
 impl PageEditor {
@@ -44,6 +46,7 @@ impl PageEditor {
             view: PageView::default(),
             caret: None,
             composing: None,
+            blocks: None,
         }
     }
 
@@ -195,7 +198,7 @@ impl PageEditor {
             .copied())
     }
 
-    fn order(&self) -> Result<Vec<BlockId>, EditorError> {
+    pub(crate) fn order(&self) -> Result<Vec<BlockId>, EditorError> {
         Ok(self.rows()?.into_iter().map(|row| row.id).collect())
     }
 

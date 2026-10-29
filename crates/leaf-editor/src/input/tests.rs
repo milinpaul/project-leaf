@@ -66,11 +66,11 @@ fn typing_inserts_at_the_caret_and_moves_it_along() {
 fn typing_replaces_the_selection_in_one_undo_step() {
     let (mut editor, ids) = page(&[para("hello world")]);
     editor.select(ids[0], 6..11).unwrap();
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 6..11)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 6..11)));
     assert_eq!(editor.insert_text("there").unwrap(), Some(at(ids[0], 11)));
     assert_eq!(text(&editor, ids[0]), "hello there");
     assert_eq!(
-        editor.selection().unwrap(),
+        editor.text_range().unwrap(),
         None,
         "typing collapses the selection"
     );
@@ -90,7 +90,7 @@ fn a_selection_snaps_to_whole_characters_and_follows_edits() {
     let family = "👨\u{200d}👩\u{200d}👧"; // 5 scalars
     let (mut editor, ids) = page(&[para(&format!("a{family}b"))]);
     editor.select(ids[0], 2..7).unwrap();
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 1..7)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 1..7)));
     editor
         .doc
         .apply(PageCommand::InsertText {
@@ -99,7 +99,7 @@ fn a_selection_snaps_to_whole_characters_and_follows_edits() {
             text: ">>".into(),
         })
         .unwrap();
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 3..9)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 3..9)));
 }
 
 #[test]
@@ -107,9 +107,9 @@ fn moving_the_caret_drops_the_selection_and_an_empty_one_is_none() {
     let (mut editor, ids) = page(&[para("hello")]);
     editor.select(ids[0], 1..4).unwrap();
     editor.move_caret(Motion::Left).unwrap();
-    assert_eq!(editor.selection().unwrap(), None);
+    assert_eq!(editor.text_range().unwrap(), None);
     editor.select(ids[0], 2..2).unwrap();
-    assert_eq!(editor.selection().unwrap(), None);
+    assert_eq!(editor.text_range().unwrap(), None);
     assert_eq!(editor.caret().unwrap(), Some(at(ids[0], 2)));
 }
 
@@ -120,7 +120,7 @@ fn a_selection_backwards_reads_forwards() {
     editor
         .select(ids[0], std::ops::Range { start: 4, end: 1 })
         .unwrap();
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 1..4)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 1..4)));
     assert_eq!(editor.caret().unwrap(), Some(at(ids[0], 1)));
 }
 
@@ -135,7 +135,7 @@ fn a_selection_whose_other_end_vanished_is_no_selection() {
             range: 0..5,
         })
         .unwrap();
-    assert_eq!(editor.selection().unwrap(), None);
+    assert_eq!(editor.text_range().unwrap(), None);
 }
 
 #[test]
@@ -181,16 +181,16 @@ fn an_empty_composition_never_deletes_the_selection() {
     editor.set_preedit("x", 1);
     editor.set_preedit("", 0);
     assert_eq!(editor.preedit().unwrap(), None);
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 0..4)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 0..4)));
 
     editor.set_preedit("x", 1);
     editor.commit_preedit("").unwrap();
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 0..4)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 0..4)));
 
     editor.set_preedit("x", 1);
     editor.cancel_preedit();
     assert_eq!(editor.preedit().unwrap(), None);
-    assert_eq!(editor.selection().unwrap(), Some(range(ids[0], 0..4)));
+    assert_eq!(editor.text_range().unwrap(), Some(range(ids[0], 0..4)));
     assert_eq!(text(&editor, ids[0]), "keep me");
     assert!(!editor.doc().has_unsaved_changes());
 }

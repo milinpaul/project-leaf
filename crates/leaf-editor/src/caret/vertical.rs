@@ -48,6 +48,7 @@ impl PageEditor {
         let Some(caret) = self.caret()? else {
             return Ok(None);
         };
+        self.blocks = None;
         let block = caret.block;
         let x = self
             .caret
