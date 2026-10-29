@@ -1,5 +1,5 @@
-//! The shell's link to a workspace folder on disk: loading pages when first opened, and running the
-//! autosave timer.
+//! The shell's link to a workspace folder on disk: loading pages when first opened, running the
+//! autosave timer, and telling the search indexer when something was saved.
 //!
 //! All saving decisions live in `leaf-store`'s `Autosave` (tested there with a fake clock). This
 //! only supplies the clock, the timer and the list of open documents.
@@ -9,9 +9,12 @@ use std::time::Duration;
 use gpui::{Context, Window};
 use leaf_core::PageId;
 use leaf_model::{PageDoc, Workspace};
+use leaf_search::SearchWorker;
 use leaf_store::{Autosave, DocKey, Savable, StoreError, Workspace as Folder};
 
 use super::{Shell, now_ms, report};
+
+mod search_source;
 
 /// How often the autosave timer checks for due saves. Small next to the 300 ms delay, so a change
 /// is on disk well within the spec's one second.
@@ -21,6 +24,9 @@ const TICK: Duration = Duration::from_millis(100);
 pub struct Storage {
     folder: Folder,
     autosave: Autosave,
+    /// Keeps the search index current on its own thread; `None` if it couldn't start (search is
+    /// then unavailable, editing is not affected).
+    search: Option<SearchWorker>,
 }
 
 impl Storage {
@@ -30,9 +36,20 @@ impl Storage {
             .store()
             .load::<Workspace>(DocKey::Workspace)?
             .unwrap_or_default();
+        let search = match folder.reader() {
+            Ok(reader) => Some(SearchWorker::start(
+                folder.root().to_owned(),
+                search_source::StoreSource(reader),
+            )),
+            Err(err) => {
+                report("could not start search", err);
+                None
+            }
+        };
         let storage = Self {
             folder,
             autosave: Autosave::default(),
+            search,
         };
         Ok((storage, workspace))
     }
@@ -84,8 +101,14 @@ impl Shell {
         } else {
             storage.autosave.tick(store, &docs, now_ms())
         };
-        if let Err(err) = result {
-            report("could not save", err);
+        match result {
+            Ok(0) => {}
+            Ok(_) => {
+                if let Some(search) = &storage.search {
+                    search.poke(); // never blocks: indexing runs on its own thread
+                }
+            }
+            Err(err) => report("could not save", err),
         }
     }
 

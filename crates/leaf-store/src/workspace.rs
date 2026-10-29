@@ -83,6 +83,13 @@ impl Workspace {
         &mut self.store
     }
 
+    /// A second connection to this workspace's database, for a reader on another thread such as
+    /// the search indexer. Write-ahead logging lets it read while autosave writes; it never needs
+    /// the lock, which this workspace already holds.
+    pub fn reader(&self) -> Result<Store, StoreError> {
+        Store::open(&self.root.join(DATABASE))
+    }
+
     /// Takes the lock first, so a second app can't touch the database at all, then makes sure the
     /// subfolders exist (a user may have deleted an empty one) and opens the database.
     fn open_folder(path: &Path) -> Result<Self, StoreError> {

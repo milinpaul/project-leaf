@@ -1,49 +1,29 @@
 //! Opening, recreating and writing the search index file (E11-S01).
 
+mod common;
+
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::path::Path;
+
+use common::TempDir;
 
 use leaf_core::{BlockId, PageId};
 use leaf_search::{
-    BlockText, INDEX_FILE, INDEX_VERSION, IndexState, PageText, SEARCH_DIR, SearchError, SearchIndex,
+    BlockText, INDEX_VERSION, IndexState, IndexedPage, PageText, PageVersion, SEARCH_DIR, SearchError,
+    SearchIndex, Searcher,
 };
 use rusqlite::Connection;
-
-/// A fresh, empty directory for one test, removed when dropped. Saves a `tempfile` dependency.
-struct TempDir(PathBuf);
-
-impl TempDir {
-    fn new() -> Self {
-        static NEXT: AtomicUsize = AtomicUsize::new(0);
-        let dir = std::env::temp_dir().join(format!(
-            "leaf-search-{}-{}",
-            std::process::id(),
-            NEXT.fetch_add(1, Ordering::Relaxed)
-        ));
-        let _ = fs::remove_dir_all(&dir);
-        if let Err(err) = fs::create_dir_all(&dir) {
-            panic!("can't create {}: {err}", dir.display());
-        }
-        Self(dir)
-    }
-
-    fn index_path(&self) -> PathBuf {
-        self.0.join(SEARCH_DIR).join(INDEX_FILE)
-    }
-}
-
-impl Drop for TempDir {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
 
 fn open(dir: &TempDir) -> (SearchIndex, IndexState) {
     match SearchIndex::open(&dir.0) {
         Ok(opened) => opened,
         Err(err) => panic!("open failed: {err}"),
     }
+}
+
+/// Indexes `text` as if from a page's first save.
+fn put(index: &mut SearchIndex, text: &PageText) -> Result<(), SearchError> {
+    index.index_page(text, PageVersion::default())
 }
 
 fn page(title: &str, texts: &[&str]) -> PageText {
@@ -103,9 +83,7 @@ fn assert_consistent(path: &Path) {
 fn bundled_sqlite_has_fts5_ignoring_case_and_accents_with_prefixes() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
-    index
-        .index_page(&page("Café plans", &["Résumé for the PROJECT"]))
-        .unwrap();
+    put(&mut index, &page("Café plans", &["Résumé for the PROJECT"])).unwrap();
 
     let path = dir.index_path();
     assert_eq!(block_hits(&path, "resume"), 1);
@@ -134,7 +112,7 @@ fn a_new_index_is_created_and_needs_a_rebuild() {
 fn an_index_marked_complete_reopens_current_with_its_rows() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
-    index.index_page(&page("Notes", &["kept across opens"])).unwrap();
+    put(&mut index, &page("Notes", &["kept across opens"])).unwrap();
     index.mark_complete().unwrap();
     drop(index);
 
@@ -147,7 +125,7 @@ fn an_index_marked_complete_reopens_current_with_its_rows() {
 fn an_interrupted_rebuild_needs_another() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
-    index.index_page(&page("Half", &["done"])).unwrap();
+    put(&mut index, &page("Half", &["done"])).unwrap();
     drop(index);
 
     let (_index, state) = open(&dir);
@@ -166,7 +144,7 @@ fn a_damaged_file_is_replaced_by_an_empty_index() {
 
     let (mut index, state) = open(&dir);
     assert_eq!(state, IndexState::NeedsRebuild);
-    index.index_page(&page("Fresh", &["works again"])).unwrap();
+    put(&mut index, &page("Fresh", &["works again"])).unwrap();
     assert_eq!(block_hits(&path, "works"), 1);
 }
 
@@ -174,7 +152,7 @@ fn a_damaged_file_is_replaced_by_an_empty_index() {
 fn an_index_of_another_version_is_replaced() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
-    index.index_page(&page("Old", &["from an older index"])).unwrap();
+    put(&mut index, &page("Old", &["from an older index"])).unwrap();
     index.mark_complete().unwrap();
     drop(index);
     let older = (INDEX_VERSION - 1).to_string();
@@ -192,11 +170,11 @@ fn indexing_a_page_again_replaces_its_rows() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
     let mut notes = page("Draft", &["first words", "more first"]);
-    index.index_page(&notes).unwrap();
+    put(&mut index, &notes).unwrap();
     notes.title = "Final".to_owned();
     notes.blocks.truncate(1);
     notes.blocks[0].text = "second words".to_owned();
-    index.index_page(&notes).unwrap();
+    put(&mut index, &notes).unwrap();
 
     let path = dir.index_path();
     assert_eq!(block_hits(&path, "first"), 0);
@@ -212,8 +190,8 @@ fn removing_a_page_leaves_the_others() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
     let gone = page("Gone", &["shared word"]);
-    index.index_page(&gone).unwrap();
-    index.index_page(&page("Stays", &["shared word"])).unwrap();
+    put(&mut index, &gone).unwrap();
+    put(&mut index, &page("Stays", &["shared word"])).unwrap();
 
     index.remove_page(gone.page).unwrap();
     index.remove_page(PageId::new()).unwrap();
@@ -229,7 +207,7 @@ fn removing_a_page_leaves_the_others() {
 fn clearing_empties_the_index_and_asks_for_a_rebuild() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
-    index.index_page(&page("One", &["alpha"])).unwrap();
+    put(&mut index, &page("One", &["alpha"])).unwrap();
     index.mark_complete().unwrap();
     index.clear().unwrap();
     drop(index);
@@ -247,7 +225,7 @@ fn a_failed_index_page_keeps_the_previous_rows() {
     let dir = TempDir::new();
     let (mut index, _) = open(&dir);
     let mut notes = page("Before", &["original text"]);
-    index.index_page(&notes).unwrap();
+    put(&mut index, &notes).unwrap();
     raw(&dir.index_path())
         .execute_batch(
             "CREATE TRIGGER refuse BEFORE INSERT ON blocks WHEN new.text = 'boom'
@@ -262,7 +240,7 @@ fn a_failed_index_page_keeps_the_previous_rows() {
         kind: "code".to_owned(),
         text: "boom".to_owned(),
     });
-    let err = index.index_page(&notes).unwrap_err();
+    let err = put(&mut index, &notes).unwrap_err();
     assert!(matches!(err, SearchError::Sqlite(_)));
     assert!(err.to_string().contains("refused"));
 
@@ -279,4 +257,83 @@ fn a_file_where_the_search_folder_should_be_is_an_io_error() {
     let err = SearchIndex::open(&dir.0).unwrap_err();
     assert!(matches!(err, SearchError::Io(_)));
     assert!(err.to_string().starts_with("search index file system error"));
+}
+
+#[test]
+fn indexed_pages_report_title_and_version() {
+    let dir = TempDir::new();
+    let (mut index, _) = open(&dir);
+    let notes = page("Notes", &["body"]);
+    let version = PageVersion {
+        saved_at: 1_700,
+        seq: 42,
+    };
+    index.index_page(&notes, version).unwrap();
+
+    let pages = index.indexed_pages().unwrap();
+    assert_eq!(pages.len(), 1);
+    assert_eq!(
+        pages[&notes.page],
+        IndexedPage {
+            title: "Notes".to_owned(),
+            version
+        }
+    );
+
+    raw(&dir.index_path())
+        .execute(
+            "INSERT INTO pages (page_id, title, saved_at, saved_seq) VALUES ('junk', 'x', 0, 0)",
+            [],
+        )
+        .unwrap();
+    assert_eq!(
+        index.indexed_pages().unwrap().len(),
+        1,
+        "unparseable IDs are left out"
+    );
+}
+
+#[test]
+fn recreating_resets_the_tables_and_starts_empty() {
+    let dir = TempDir::new();
+    let (mut index, _) = open(&dir);
+    put(&mut index, &page("Gone", &["soon"])).unwrap();
+    index.mark_complete().unwrap();
+    raw(&dir.index_path())
+        .execute_batch("DROP TABLE blocks_fts;")
+        .unwrap();
+    assert!(index.search("soon").is_err(), "the damage is real");
+
+    let searcher = Searcher::open(&dir.0).unwrap(); // as the search bar keeps one open
+    index.recreate().unwrap();
+    assert!(index.indexed_pages().unwrap().is_empty());
+    put(&mut index, &page("Back", &["working"])).unwrap();
+    assert_eq!(index.search("working").unwrap().len(), 1);
+    assert_eq!(
+        searcher.search("working").unwrap().len(),
+        1,
+        "an open reader keeps working"
+    );
+    drop(index);
+    assert_eq!(
+        open(&dir).1,
+        IndexState::NeedsRebuild,
+        "a recreated index is due a rebuild"
+    );
+}
+
+#[test]
+fn recreating_replaces_a_file_that_is_no_longer_a_database() {
+    let dir = TempDir::new();
+    let (mut index, _) = open(&dir);
+    put(&mut index, &page("Gone", &["soon"])).unwrap();
+    fs::write(dir.index_path(), vec![b'x'; 8192]).unwrap();
+
+    index.recreate().unwrap();
+    put(&mut index, &page("Back", &["working"])).unwrap();
+    assert_eq!(index.search("working").unwrap().len(), 1);
+    assert!(
+        index.search("soon").unwrap().is_empty(),
+        "the old rows went with the old file"
+    );
 }

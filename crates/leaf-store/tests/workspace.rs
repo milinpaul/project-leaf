@@ -149,3 +149,23 @@ fn open_or_create_makes_a_missing_workspace_and_reopens_an_existing_one() {
     ));
     drop(first);
 }
+
+#[test]
+fn a_reader_sees_what_the_workspace_saves() {
+    let dir = TempDir::new();
+    let mut ws = Workspace::create(&dir.0.join("w.leaf")).unwrap();
+    let reader = ws.reader().unwrap();
+    assert!(reader.saved_versions().unwrap().is_empty());
+
+    ws.store_mut()
+        .save(leaf_store::DocKey::Workspace, &leaf_model::Workspace::new(), 7)
+        .unwrap();
+    let versions = reader.saved_versions().unwrap();
+    assert_eq!(versions[&leaf_store::DocKey::Workspace].saved_at, 7);
+    assert!(
+        reader
+            .load::<leaf_model::Workspace>(leaf_store::DocKey::Workspace)
+            .unwrap()
+            .is_some()
+    );
+}

@@ -24,12 +24,7 @@ pub fn page_text(
     if workspace.is_in_trash(page)? {
         return Ok(None);
     }
-    let meta = workspace.page(page)?;
-    let title = if meta.title.trim().is_empty() {
-        UNTITLED.to_owned()
-    } else {
-        meta.title
-    };
+    let title = title(workspace, page)?;
 
     let mut blocks = Vec::new();
     // Depth-first, children before later siblings: a stack holding siblings in reverse.
@@ -44,4 +39,14 @@ pub fn page_text(
         stack.extend(doc.children(block)?.into_iter().rev());
     }
     Ok(Some(PageText { page, title, blocks }))
+}
+
+/// The title `page` is indexed under: as typed, or [`UNTITLED`] if blank.
+pub(crate) fn title(workspace: &Workspace, page: PageId) -> Result<String, SearchError> {
+    let title = workspace.page(page)?.title;
+    Ok(if title.trim().is_empty() {
+        UNTITLED.to_owned()
+    } else {
+        title
+    })
 }
