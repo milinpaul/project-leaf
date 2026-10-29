@@ -3,13 +3,14 @@
 //! The first save of a document writes a full snapshot. Every later save appends one small Loro
 //! update holding all commits since the previous save, so a save costs about as much as the edit,
 //! not the page. Loading reads the snapshot, then the updates in the order they were saved.
-//! Folding updates back into a fresh snapshot is compaction (E03-S05).
+//! Once a document has collected more than [`crate::COMPACT_AFTER`] updates, the save folds them back
+//! into a fresh snapshot (compaction, E03-S05).
 
 use std::fmt;
 
 use leaf_core::PageId;
 use leaf_model::{ModelError, PageDoc, Workspace};
-use rusqlite::{OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, params};
 
 use crate::{Store, StoreError};
 
@@ -128,6 +129,11 @@ impl Store {
             return Ok(false);
         }
         doc.mark_saved();
+        // The save itself succeeded; a compaction that fails leaves the saved updates in place, so
+        // it is only logged, and tried again on the next save.
+        if let Err(err) = self.compact(key) {
+            tracing::warn!(doc = %key, %err, "could not compact the saved updates");
+        }
         Ok(true)
     }
 
@@ -192,28 +198,30 @@ impl Store {
 
     /// The snapshot and every update for `id`, oldest update first.
     pub(crate) fn read(&self, id: &str) -> Result<Option<Saved>, StoreError> {
-        let snapshot: Option<Vec<u8>> = self
-            .conn
-            .query_row("SELECT snapshot FROM docs WHERE doc_id = ?1", [id], |row| {
-                row.get(0)
-            })
-            .optional()?;
-        let Some(snapshot) = snapshot else {
-            return Ok(None);
-        };
-        let mut stmt = self
-            .conn
-            .prepare_cached("SELECT seq, data FROM doc_updates WHERE doc_id = ?1 ORDER BY seq")?;
-        let rows: Vec<(i64, Vec<u8>)> = stmt
-            .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))?
-            .collect::<Result<_, _>>()?;
-        let (seqs, updates) = rows.into_iter().unzip();
-        Ok(Some(Saved {
-            snapshot,
-            updates,
-            seqs,
-        }))
+        read(&self.conn, id)
     }
+}
+
+/// [`Store::read`] on any connection, so compaction can read inside its transaction.
+pub(crate) fn read(conn: &Connection, id: &str) -> Result<Option<Saved>, StoreError> {
+    let snapshot: Option<Vec<u8>> = conn
+        .query_row("SELECT snapshot FROM docs WHERE doc_id = ?1", [id], |row| {
+            row.get(0)
+        })
+        .optional()?;
+    let Some(snapshot) = snapshot else {
+        return Ok(None);
+    };
+    let mut stmt = conn.prepare_cached("SELECT seq, data FROM doc_updates WHERE doc_id = ?1 ORDER BY seq")?;
+    let rows: Vec<(i64, Vec<u8>)> = stmt
+        .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<Result<_, _>>()?;
+    let (seqs, updates) = rows.into_iter().unzip();
+    Ok(Some(Saved {
+        snapshot,
+        updates,
+        seqs,
+    }))
 }
 
 #[cfg(test)]

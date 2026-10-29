@@ -173,7 +173,8 @@ itself (ADR 0018).
 5. **The change is saved.** The document hands `leaf-store` one small update with everything changed since the last
    save (`unsaved_changes`), which is appended to the SQLite file; then the document is marked saved. `Autosave`
    decides when: at most 300 ms after the first unsaved change, and at once on blur or quit, so a crash loses at
-   most about a second of typing.
+   most about a second of typing. When a document has collected more than 200 updates, that save also folds them
+   into one fresh snapshot, in one transaction, so loading never replays a long tail (`Store::compact`, ADR 0048).
 
 6. **Search catches up.** When autosave wrote something, the window pokes the search indexer (`SearchWorker`
    in `leaf-search`), which runs on its own thread so typing never waits for it. It asks the store which
