@@ -3855,6 +3855,8 @@ name = "leaf-search"
 version = "0.1.0"
 dependencies = [
  "leaf-core",
+ "leaf-model",
+ "loro",
  "rusqlite",
  "thiserror 2.0.21",
  "tracing",

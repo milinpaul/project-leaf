@@ -15,4 +15,8 @@ pub enum SearchError {
     /// Creating the `search/` folder or deleting a damaged index file failed.
     #[error("search index file system error: {0}")]
     Io(#[from] std::io::Error),
+
+    /// A page couldn't be read while extracting its text (a block or page missing mid-read).
+    #[error("search could not read a page: {0}")]
+    Model(#[from] leaf_model::ModelError),
 }
