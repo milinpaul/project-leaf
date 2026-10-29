@@ -73,6 +73,12 @@ impl Workspace {
         &self.root
     }
 
+    /// Where this workspace keeps its [`ViewState`](crate::ViewState) (`view.json`).
+    #[must_use]
+    pub fn view_state_path(&self) -> PathBuf {
+        self.root.join(crate::VIEW_STATE)
+    }
+
     /// The workspace's database.
     pub fn store(&self) -> &Store {
         &self.store

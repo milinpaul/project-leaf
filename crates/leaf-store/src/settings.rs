@@ -5,13 +5,12 @@
 //! missing, unreadable or damaged file never stops Leaf from starting; it starts with defaults
 //! instead. Fields this version doesn't know (written by a newer Leaf) are kept on save.
 
-use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::StoreError;
+use crate::{StoreError, json_file};
 
 /// The settings file's name inside Leaf's settings folder.
 pub const SETTINGS_FILE: &str = "settings.json";
@@ -97,41 +96,14 @@ impl AppSettings {
     /// overwritten) and replaced by defaults.
     #[must_use]
     pub fn load(path: &Path) -> Self {
-        let text = match fs::read_to_string(path) {
-            Ok(text) => text,
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Self::default(),
-            Err(err) => {
-                tracing::warn!(%err, path = %path.display(), "could not read the settings; using defaults");
-                return Self::default();
-            }
-        };
-        match serde_json::from_str(&text) {
-            Ok(settings) => settings,
-            Err(err) => {
-                tracing::warn!(%err, path = %path.display(), "the settings file is damaged; using defaults");
-                let mut aside = path.as_os_str().to_owned();
-                aside.push(".bad");
-                if let Err(err) = fs::rename(path, &aside) {
-                    tracing::warn!(%err, "could not move the damaged settings file aside");
-                }
-                Self::default()
-            }
-        }
+        json_file::load_or_default(path, "settings")
     }
 
     /// Writes the settings to `path`, creating its folder if needed. Writes a temporary file and then
     /// renames it over the old one, so a crash mid-save leaves either the old or the new settings, never
     /// half a file.
     pub fn save(&self, path: &Path) -> Result<(), StoreError> {
-        if let Some(folder) = path.parent() {
-            fs::create_dir_all(folder)?;
-        }
-        let mut temporary = path.as_os_str().to_owned();
-        temporary.push(".tmp");
-        let text = serde_json::to_string_pretty(self).map_err(std::io::Error::other)?;
-        fs::write(&temporary, text)?;
-        fs::rename(&temporary, path)?;
-        Ok(())
+        json_file::save(self, path)
     }
 
     /// The window frame to restore: the saved one if it is a sensible size and still overlaps one of

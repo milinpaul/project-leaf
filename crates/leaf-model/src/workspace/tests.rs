@@ -121,6 +121,34 @@ fn trashed_pages_are_hidden_from_listings_but_still_readable() {
 }
 
 #[test]
+fn parents_and_child_slots_include_the_trash() {
+    let (a, gone, b, inside) = (PageId::new(), PageId::new(), PageId::new(), PageId::new());
+    let ws = load(|tree| {
+        let first = raw_page(tree, None, a, "A");
+        let node = raw_page(tree, None, gone, "Gone");
+        tree.get_meta(node)
+            .unwrap()
+            .insert(keys::TRASHED_AT, 1_i64)
+            .unwrap();
+        raw_page(tree, None, b, "B");
+        raw_page(tree, Some(first), inside, "Inside");
+    })
+    .unwrap();
+    assert_eq!(ws.root_pages().unwrap(), vec![a, b]);
+    assert_eq!(
+        ws.child_slots(None).unwrap(),
+        vec![a, gone, b],
+        "command positions count the trashed page"
+    );
+    assert_eq!(ws.child_slots(Some(a)).unwrap(), vec![inside]);
+    assert_eq!(ws.parent(inside).unwrap(), Some(a));
+    assert_eq!(ws.parent(gone).unwrap(), None);
+    let ghost = PageId::new();
+    assert!(matches!(ws.parent(ghost), Err(ModelError::PageNotFound(p)) if p == ghost));
+    assert!(matches!(ws.child_slots(Some(ghost)), Err(ModelError::PageNotFound(p)) if p == ghost));
+}
+
+#[test]
 fn unknown_pages_are_reported() {
     let ws = Workspace::new();
     let ghost = PageId::new();

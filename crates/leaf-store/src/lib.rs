@@ -19,6 +19,7 @@
 //!   assets/            images, named by content hash
 //!   search/            the search index, rebuildable from the documents
 //!   leaf.lock          locked by the app that has the workspace open (ADR 0009)
+//!   view.json          how the sidebar was left on this computer (expanded pages); not a document
 //! ```
 //!
 //! **Boundaries:** core crate, native only. No GPUI and no `leaf-ui`. Depends only on
@@ -27,10 +28,12 @@
 mod autosave;
 mod docs;
 mod error;
+mod json_file;
 pub mod migrations;
 pub mod settings;
 mod store;
 mod versions;
+mod view_state;
 mod workspace;
 
 pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
@@ -40,4 +43,5 @@ pub use migrations::SCHEMA_VERSION;
 pub use settings::{AppSettings, Appearance, DisplayArea, WindowFrame};
 pub use store::Store;
 pub use versions::SavedVersion;
+pub use view_state::{VIEW_STATE, ViewState};
 pub use workspace::Workspace;

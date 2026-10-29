@@ -1,10 +1,12 @@
 //! Editing the workspace: which page is selected, what the sidebar shows, and the page actions the
 //! sidebar offers. Turns those actions into `WorkspaceCommand`s; never touches Loro itself.
+//!
+//! The page tree itself (rows, expanding, moving, trashing) is in `tree`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use leaf_core::PageId;
-use leaf_model::{ModelError, Outcome, PageDoc, Workspace, WorkspaceCommand};
+use leaf_model::{ModelError, PageDoc, Workspace, WorkspaceCommand};
 
 use crate::PageEditor;
 use thiserror::Error;
@@ -20,7 +22,7 @@ pub enum EditorError {
     Model(#[from] ModelError),
 }
 
-/// One row of the sidebar, ready to draw.
+/// One row of the sidebar's page tree, ready to draw.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SidebarItem {
     /// The page this row opens.
@@ -31,6 +33,12 @@ pub struct SidebarItem {
     pub icon: Option<String>,
     /// Whether this is the page currently open.
     pub selected: bool,
+    /// How deeply the page is nested: 0 for a top-level page.
+    pub depth: usize,
+    /// Whether the page has pages inside it (outside the trash), so the row offers to expand.
+    pub has_children: bool,
+    /// Whether the page's children are listed below it.
+    pub expanded: bool,
 }
 
 /// A workspace being edited in one window, plus that window's selected page.
@@ -39,6 +47,8 @@ pub struct WorkspaceEditor {
     selected: Option<PageId>,
     /// The blocks of each page opened so far (loaded from disk, or new).
     pages: HashMap<PageId, PageEditor>,
+    /// Pages whose children the sidebar lists. View state for this device, not part of the document.
+    expanded: HashSet<PageId>,
 }
 
 impl WorkspaceEditor {
@@ -49,6 +59,7 @@ impl WorkspaceEditor {
             workspace,
             selected: None,
             pages: HashMap::new(),
+            expanded: HashSet::new(),
         }
     }
 
@@ -56,45 +67,6 @@ impl WorkspaceEditor {
     #[must_use]
     pub fn workspace(&self) -> &Workspace {
         &self.workspace
-    }
-
-    /// Top-level pages in order, as sidebar rows. Pages in the trash are hidden by the model.
-    ///
-    /// Nested pages arrive with the full page tree (E06-S03).
-    pub fn sidebar(&self) -> Result<Vec<SidebarItem>, EditorError> {
-        let mut items = Vec::new();
-        for page in self.workspace.root_pages()? {
-            let meta = self.workspace.page(page)?;
-            let label = if meta.title.is_empty() {
-                UNTITLED.to_owned()
-            } else {
-                meta.title
-            };
-            items.push(SidebarItem {
-                page,
-                label,
-                icon: meta.icon,
-                selected: self.selected == Some(page),
-            });
-        }
-        Ok(items)
-    }
-
-    /// Adds an untitled page at the end of the top level and selects it, so the user can type its
-    /// title straight away. `now_ms` is the current time in Unix milliseconds, from the app.
-    pub fn new_page(&mut self, now_ms: i64) -> Result<PageId, EditorError> {
-        let index = self.workspace.root_pages()?.len();
-        let command = WorkspaceCommand::CreatePage {
-            parent: None,
-            index,
-            title: String::new(),
-            created_at: now_ms,
-        };
-        let Outcome::PageCreated(page) = self.workspace.apply(command)? else {
-            unreachable!("CreatePage always reports the page it created");
-        };
-        self.selected = Some(page);
-        Ok(page)
     }
 
     /// Opens `page`. Fails if it is not in the workspace.
@@ -163,10 +135,17 @@ impl WorkspaceEditor {
         }
     }
 
-    /// Renames the open page. Does nothing when no page is open or the title is unchanged, so
-    /// refreshing the title field never records a pointless change (or undo step).
+    /// Renames the open page. Does nothing when no page is open; see [`WorkspaceEditor::rename`].
     pub fn rename_selected(&mut self, title: &str) -> Result<(), EditorError> {
-        let Some(page) = self.selected else { return Ok(()) };
+        match self.selected {
+            Some(page) => self.rename(page, title),
+            None => Ok(()),
+        }
+    }
+
+    /// Renames `page`. Does nothing when the title is unchanged, so refreshing a title field never
+    /// records a pointless change (or undo step).
+    pub fn rename(&mut self, page: PageId, title: &str) -> Result<(), EditorError> {
         if self.workspace.page(page)?.title == title {
             return Ok(());
         }
@@ -177,6 +156,10 @@ impl WorkspaceEditor {
         Ok(())
     }
 }
+
+mod tree;
+
+pub use tree::DropPlace;
 
 #[cfg(test)]
 mod tests;
