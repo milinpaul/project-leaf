@@ -62,8 +62,8 @@
       "goal": "leaf-editor: cursor, selection, input, key rules and undo — all UI-free and fully tested.",
       "path": "backlog/epics/E04.md",
       "story_count": 8,
-      "done_count": 2,
-      "progress": 0.25
+      "done_count": 3,
+      "progress": 0.38
     },
     {
       "id": "E05",
@@ -1883,7 +1883,7 @@
       "id": "E04-S03",
       "title": "Vertical navigation via layout trait",
       "epic": "E04",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "depends_on": [
@@ -1893,7 +1893,7 @@
         "leaf-editor"
       ],
       "assignee": "claude",
-      "updated": "2026-10-28",
+      "updated": "2026-10-29",
       "context": "Up/down across lines and blocks using a `LineLayout` trait the UI implements.",
       "acceptance": [
         {
@@ -2053,10 +2053,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E04-S06.md",
       "prs": [],
-      "waiting_on": [
-        "E04-S03"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
@@ -2975,8 +2973,7 @@
       "path": "backlog/stories/E07-S02.md",
       "prs": [],
       "waiting_on": [
-        "E07-S01",
-        "E04-S03"
+        "E07-S01"
       ],
       "ready": false,
       "progress": 0.0
