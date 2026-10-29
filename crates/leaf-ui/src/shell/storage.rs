@@ -10,7 +10,7 @@ use gpui::{Context, Window};
 use leaf_core::PageId;
 use leaf_model::{PageDoc, Workspace};
 use leaf_search::SearchWorker;
-use leaf_store::{Autosave, DocKey, Savable, StoreError, Workspace as Folder};
+use leaf_store::{Autosave, DocKey, Savable, StoreError, ViewState, Workspace as Folder};
 
 use super::{Shell, now_ms, report};
 
@@ -27,6 +27,8 @@ pub struct Storage {
     /// Keeps the search index current on its own thread; `None` if it couldn't start (search is
     /// then unavailable, editing is not affected).
     search: Option<SearchWorker>,
+    /// How the sidebar was left (expanded pages), as last saved to `view.json`.
+    view: ViewState,
 }
 
 impl Storage {
@@ -46,10 +48,12 @@ impl Storage {
                 None
             }
         };
+        let view = ViewState::load(&folder.view_state_path());
         let storage = Self {
             folder,
             autosave: Autosave::default(),
             search,
+            view,
         };
         Ok((storage, workspace))
     }
@@ -57,6 +61,20 @@ impl Storage {
     /// The workspace folder.
     pub fn root(&self) -> &std::path::Path {
         self.folder.root()
+    }
+
+    /// The pages that were expanded in the sidebar last time.
+    pub(super) fn expanded(&self) -> Vec<PageId> {
+        self.view.expanded()
+    }
+
+    /// Saves the expanded pages to `view.json`, if they changed.
+    pub(super) fn save_expanded(&mut self, pages: &[PageId]) -> Result<(), StoreError> {
+        if self.view.expanded() == pages {
+            return Ok(());
+        }
+        self.view.set_expanded(pages);
+        self.view.save(&self.folder.view_state_path())
     }
 
     /// The saved blocks of `page`, or `None` for a page never saved (a new one).

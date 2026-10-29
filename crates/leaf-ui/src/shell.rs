@@ -15,11 +15,11 @@ use gpui::{
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputEvent, InputState};
 use gpui_component::resizable::{h_resizable, resizable_panel};
-use gpui_component::sidebar::{Sidebar, SidebarFooter, SidebarGroup, SidebarMenu, SidebarMenuItem};
-use gpui_component::{ActiveTheme as _, Icon, v_flex};
+use gpui_component::sidebar::SidebarFooter;
+use gpui_component::{ActiveTheme as _, Icon, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::PageId;
-use leaf_editor::{SidebarItem, UNTITLED, WorkspaceEditor};
+use leaf_editor::{UNTITLED, WorkspaceEditor};
 use leaf_model::Workspace;
 use leaf_store::settings::SIDEBAR_WIDTH_RANGE;
 
@@ -33,6 +33,8 @@ pub struct Shell {
     title: Entity<InputState>,
     /// The open page's block inputs (interim editor, E07-S10).
     blocks: blocks::BlockInputs,
+    /// The sidebar's page tree: rename in progress, drag hint, scroll position.
+    tree: tree::TreeState,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
     storage: Option<Storage>,
     /// Focus for the window itself, so menu actions and shortcuts reach the shell even when no text
@@ -56,7 +58,9 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        let expanded = storage.expanded();
         let mut shell = Self::build(workspace, Some(storage), window, cx);
+        shell.editor.restore_expanded(expanded);
         shell.start_autosave(window, cx);
         shell
     }
@@ -79,6 +83,7 @@ impl Shell {
             editor: WorkspaceEditor::new(workspace),
             title,
             blocks: blocks::BlockInputs::default(),
+            tree: tree::TreeState::default(),
             storage,
             focus,
             subscriptions,
@@ -144,33 +149,10 @@ impl Shell {
             _ => {}
         }
     }
-
-    fn sidebar_row(item: SidebarItem, cx: &mut Context<Self>) -> SidebarMenuItem {
-        let label = match item.icon {
-            Some(icon) => format!("{icon} {}", item.label),
-            None => item.label,
-        };
-        let shell = cx.entity().downgrade();
-        let page = item.page;
-        SidebarMenuItem::new(label)
-            .active(item.selected)
-            .on_click(move |_, window, cx| {
-                // The shell outlives its own sidebar rows; if it is gone the window is closing anyway.
-                let _ = shell.update(cx, |shell, cx| shell.open(page, window, cx));
-            })
-    }
 }
 
 impl Render for Shell {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let items = self.editor.sidebar().unwrap_or_else(|err| {
-            report("could not list pages", err);
-            Vec::new()
-        });
-        let rows: Vec<_> = items
-            .into_iter()
-            .map(|item| Self::sidebar_row(item, cx))
-            .collect();
         let new_page = Button::new("new-page")
             .label("New page")
             .ghost()
@@ -188,11 +170,25 @@ impl Render for Shell {
                     shell.open_settings(Section::Appearance, window, cx);
                 }),
             );
-        let sidebar = Sidebar::new("sidebar")
-            .w_full()
-            .header(new_page)
-            .child(SidebarGroup::new("Pages").child(SidebarMenu::new().children(rows)))
-            .footer(open_settings);
+        let sidebar = v_flex()
+            .id("sidebar")
+            .size_full()
+            .bg(cx.theme().sidebar)
+            .text_color(cx.theme().sidebar_foreground)
+            .border_r_1()
+            .border_color(cx.theme().sidebar_border)
+            .child(h_flex().pt_3().px_3().child(new_page))
+            .child(
+                div()
+                    .px_3()
+                    .pt_4()
+                    .pb_1()
+                    .text_xs()
+                    .text_color(cx.theme().muted_foreground)
+                    .child("Pages"),
+            )
+            .child(v_flex().flex_1().min_h_0().px_2().child(self.render_tree(cx)))
+            .child(open_settings);
 
         // A centred column no wider than a comfortable line, with room above the title.
         let column = v_flex()
@@ -256,6 +252,7 @@ impl Render for Shell {
 
 mod blocks;
 mod storage;
+mod tree;
 mod window;
 
 pub use storage::Storage;

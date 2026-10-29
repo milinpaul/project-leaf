@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 
 use leaf_core::PageId;
-use loro::{ExportMode, LoroDoc, LoroTree, LoroValue, TreeID, UndoManager};
+use loro::{ExportMode, LoroDoc, LoroTree, LoroValue, TreeID, TreeParentId, UndoManager};
 
 use crate::page_meta::{keys, value};
 use crate::saved::{self, SavedVersion};
@@ -124,6 +124,29 @@ impl Workspace {
     pub fn children(&self, page: PageId) -> Result<Vec<PageId>, ModelError> {
         let node = self.node(page)?;
         self.visible(self.tree.children(node).unwrap_or_default())
+    }
+
+    /// The page `page` lives in, or `None` for a top-level page. Answers for pages in the trash too.
+    pub fn parent(&self, page: PageId) -> Result<Option<PageId>, ModelError> {
+        match self.tree.parent(self.node(page)?) {
+            Some(TreeParentId::Node(up)) => Ok(self.index.by_node.get(&up).copied()),
+            _ => Ok(None),
+        }
+    }
+
+    /// Every child of `parent` (or every top-level page for `None`) in order, pages in the trash
+    /// included. Command positions count these slots, so a caller turning a place in a listing into
+    /// an `index` needs them; listings themselves use [`Workspace::root_pages`] and
+    /// [`Workspace::children`].
+    pub fn child_slots(&self, parent: Option<PageId>) -> Result<Vec<PageId>, ModelError> {
+        let nodes = match parent {
+            Some(page) => self.tree.children(self.node(page)?).unwrap_or_default(),
+            None => self.tree.roots(),
+        };
+        Ok(nodes
+            .iter()
+            .filter_map(|node| self.index.by_node.get(node).copied())
+            .collect())
     }
 
     /// Title, icon and dates of `page`.

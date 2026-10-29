@@ -43,7 +43,10 @@ fn new_page_appends_selects_and_shows_untitled() {
             page: second,
             label: UNTITLED.into(),
             icon: None,
-            selected: true
+            selected: true,
+            depth: 0,
+            has_children: false,
+            expanded: false,
         }
     );
     assert!(!items[0].selected);
@@ -219,4 +222,36 @@ fn pages_loaded_from_disk_are_used_and_listed_for_saving() {
         editor.insert_page(PageId::new(), PageDoc::new()),
         Err(EditorError::Model(ModelError::PageNotFound(_)))
     ));
+}
+
+#[test]
+fn a_new_page_goes_last_even_when_trashed_pages_follow_the_last_visible_one() {
+    // Positions count trashed pages, so appending at the visible count lands among them.
+    let mut workspace = Workspace::new();
+    let create = |workspace: &mut Workspace, index| match workspace
+        .apply(WorkspaceCommand::CreatePage {
+            parent: None,
+            index,
+            title: String::new(),
+            created_at: NOW,
+        })
+        .unwrap()
+    {
+        leaf_model::Outcome::PageCreated(page) => page,
+        other => panic!("unexpected {other:?}"),
+    };
+    let a = create(&mut workspace, 0);
+    let binned = create(&mut workspace, 1);
+    let b = create(&mut workspace, 2);
+    workspace
+        .apply(WorkspaceCommand::TrashPage {
+            page: binned,
+            at: NOW,
+        })
+        .unwrap();
+
+    let mut editor = WorkspaceEditor::new(workspace);
+    let new = editor.new_page(NOW).unwrap();
+    let order: Vec<PageId> = editor.sidebar().unwrap().into_iter().map(|i| i.page).collect();
+    assert_eq!(order, vec![a, b, new]);
 }

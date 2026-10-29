@@ -29,4 +29,4 @@ pub use page_editor::{Backspace, Caret, PageEditor};
 pub use selection::{Selection, TextRange};
 pub use slash::{SlashItem, SlashMenu};
 pub use view::{BlockRow, BlockStyle, PageView};
-pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};
+pub use workspace_editor::{DropPlace, EditorError, SidebarItem, UNTITLED, WorkspaceEditor};
