@@ -70,3 +70,4 @@ Records cover two kinds of decision:
 | [0051](0051-inserting-images.md) | Inserting images: the editor places the block, the UI fetches the picture | Feature | Accepted |
 | [0052](0052-link-popover.md) | Link popover: an address box under the selection; only web and mail addresses are opened | Feature | Accepted |
 | [0053](0053-drawing-images.md) | Drawing images: natural size shrunk to fit, resized by a handle, saved once | Feature | Accepted |
+| [0054](0054-code-blocks.md) | Code blocks: a language picker storing fence names, Tab indents lines with four spaces | Feature | Accepted |

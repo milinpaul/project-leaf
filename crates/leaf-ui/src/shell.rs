@@ -226,6 +226,7 @@ mod header;
 mod image;
 mod image_row;
 mod ime;
+mod language_picker;
 mod link_popover;
 mod markers;
 mod page_keys;

@@ -61,7 +61,15 @@ impl Shell {
         let body = self.render_rich_text(row, &look, highlight.as_ref(), caret, window, cx);
         let line = line.children(prefix).child(body);
         match &row.style {
-            BlockStyle::Code { .. } => line.bg(cx.theme().muted).rounded_md().px_2().into_any_element(),
+            BlockStyle::Code { language } => {
+                let label = self.render_language_label(id, language, cx);
+                line.relative()
+                    .bg(cx.theme().muted)
+                    .rounded_md()
+                    .px_2()
+                    .child(label)
+                    .into_any_element()
+            }
             _ => line.into_any_element(),
         }
     }

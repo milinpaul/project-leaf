@@ -61,6 +61,8 @@ pub(super) struct PageState {
     pub(super) resize_press: Option<Pixels>,
     /// The link popover, while it is open.
     pub(super) link: Option<super::link_popover::OpenLink>,
+    /// A code block's language picker, while it is open.
+    pub(super) language: Option<super::language_picker::OpenLanguage>,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -224,6 +226,7 @@ impl Shell {
 
         let menu = self.render_block_menu(cx);
         let link = self.render_link_popover(cx);
+        let language = self.render_language_picker(cx);
         let page = v_flex()
             .size_full()
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
@@ -253,6 +256,7 @@ impl Shell {
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
             .children(menu)
             .children(link)
+            .children(language)
             .children(slash);
         let page = Self::with_block_menu_action(page, cx);
         Self::with_page_actions(page, cx).into_any_element()
