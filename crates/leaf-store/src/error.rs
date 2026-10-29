@@ -49,6 +49,11 @@ pub enum StoreError {
     #[error("{} is already open in another Leaf window", .0.display())]
     AlreadyOpen(PathBuf),
 
+    /// A file offered as an image isn't one Leaf recognises (PNG, JPEG, GIF, WebP, BMP, TIFF, AVIF,
+    /// HEIC or SVG). Its type is read from its content, not its name.
+    #[error("not an image Leaf can store")]
+    NotAnImage,
+
     /// Saved bytes couldn't be turned back into a document (or a document into bytes).
     #[error("document error: {0}")]
     Model(#[from] leaf_model::ModelError),

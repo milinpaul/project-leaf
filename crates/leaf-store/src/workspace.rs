@@ -3,6 +3,9 @@
 use std::fs::{self, File, TryLockError};
 use std::path::{Path, PathBuf};
 
+use leaf_core::AssetId;
+
+use crate::assets::{self, Asset, Assets};
 use crate::{Store, StoreError};
 
 mod folders;
@@ -91,6 +94,36 @@ impl Workspace {
     /// The workspace's database, for saving.
     pub fn store_mut(&mut self) -> &mut Store {
         &mut self.store
+    }
+
+    /// Stores the image `bytes` in `assets/`, named by their hash, and records its type and size
+    /// (at `now`, Unix milliseconds). The same image imported twice is stored once, and the first
+    /// record is returned. Anything that isn't an image is refused with [`StoreError::NotAnImage`].
+    pub fn import_asset(&mut self, bytes: &[u8], now: i64) -> Result<Asset, StoreError> {
+        let folder = self.root.join(ASSETS);
+        Assets {
+            folder: &folder,
+            store: &mut self.store,
+        }
+        .import(bytes, now)
+    }
+
+    /// Reads the image file at `source` and imports it ([`Workspace::import_asset`]). The file is
+    /// copied; the original is left where it is.
+    pub fn import_asset_file(&mut self, source: &Path, now: i64) -> Result<Asset, StoreError> {
+        let bytes = fs::read(source)?;
+        self.import_asset(&bytes, now)
+    }
+
+    /// What was recorded about image `id`, if it was imported into this workspace.
+    pub fn asset(&self, id: AssetId) -> Result<Option<Asset>, StoreError> {
+        assets::find(&self.store, id)
+    }
+
+    /// Where image `id`'s file is (or would be) inside this workspace.
+    #[must_use]
+    pub fn asset_path(&self, id: AssetId) -> PathBuf {
+        assets::path_of(&self.root.join(ASSETS), id)
     }
 
     /// A second connection to this workspace's database, for a reader on another thread such as
