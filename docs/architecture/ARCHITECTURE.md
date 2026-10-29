@@ -110,6 +110,13 @@ Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole 
 `leaf_editor::QuickSwitcher`: a snapshot of the live pages with breadcrumbs, matched by `leaf_editor::fuzzy_match` as
 the owner types, recently opened pages first when nothing is typed. Enter or a click opens the page (ADR 0033).
 
+**Search bar model (E11-S05).** `leaf_editor::SearchBar` extends the switcher with full-text results while staying free
+of SQLite: it matches titles at once and, after a 150 ms pause in typing, asks the app for a search
+(`due(now)` → `SearchRequest { id, query }`). The app runs it against `leaf_search` and hands the hits back as plain
+`SearchHit`s (`deliver(id, hits)`); hits for any but the newest query are dropped. Rows are grouped by page (title
+matches first, matching blocks under each page), and Enter gives the page and block to open (ADR 0042). The UI is
+E11-S06.
+
 **Page header (E06-S05).** Above the title sits the page's emoji icon, or an "Add icon" button on hover
 (`leaf_ui::shell::header`). Clicking it opens `leaf_ui::icon_picker` in a popover over `leaf_editor::EmojiPicker`
 (emoji from the `emojis` crate, searchable by name, shortcode and group); the choice goes through
