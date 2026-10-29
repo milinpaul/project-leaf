@@ -1,32 +1,44 @@
 //! Tests for the welcome screen's helpers.
 
-use std::path::{Path, PathBuf};
+use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 
 use leaf_store::StoreError;
 
 use super::{open_problem, opened_label, short_path, step};
+
+/// `path` written with this system's separator (`\\` on Windows), as `short_path` shows it.
+fn native(path: &str) -> String {
+    path.replace('/', MAIN_SEPARATOR_STR)
+}
 
 #[test]
 fn paths_show_home_as_a_tilde_and_long_ones_are_shortened() {
     let home = Path::new("/home/sam");
     assert_eq!(
         short_path(Path::new("/home/sam/Documents/Leaf/Work.leaf"), Some(home)),
-        "~/Documents/Leaf/Work.leaf"
+        native("~/Documents/Leaf/Work.leaf")
     );
     assert_eq!(
         short_path(Path::new("/srv/notes/Team.leaf"), Some(home)),
-        "/srv/notes/Team.leaf"
+        native("/srv/notes/Team.leaf")
     );
     assert_eq!(
         short_path(Path::new("/srv/notes/Team.leaf"), None),
-        "/srv/notes/Team.leaf"
+        native("/srv/notes/Team.leaf")
     );
     let long =
         PathBuf::from("/home/sam/Documents/Archive/2026/Clients/Northwind Traders/Projects/Q4 Plans.leaf");
     assert_eq!(
         short_path(&long, Some(home)),
-        "~/Documents/…/Projects/Q4 Plans.leaf"
+        native("~/Documents/…/Projects/Q4 Plans.leaf")
     );
+}
+
+#[test]
+fn a_path_never_mixes_separators() {
+    let shown = short_path(Path::new("/srv/notes/Team.leaf"), None);
+    let other = if MAIN_SEPARATOR_STR == "/" { '\\' } else { '/' };
+    assert!(!shown.contains(other), "{shown}");
 }
 
 #[test]
