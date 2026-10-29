@@ -131,6 +131,9 @@ enum Step {
     Merge {
         block: usize,
     },
+    Duplicate {
+        blocks: Vec<usize>,
+    },
 }
 
 fn text() -> impl Strategy<Value = String> {
@@ -160,6 +163,7 @@ fn step() -> impl Strategy<Value = Step> {
         1 => (n(), n()).prop_map(|(block, prop)| Step::SetProp { block, prop }),
         2 => (n(), n()).prop_map(|(block, pos)| Step::Split { block, pos }),
         2 => n().prop_map(|block| Step::Merge { block }),
+        1 => some().prop_map(|blocks| Step::Duplicate { blocks }),
     ]
 }
 
@@ -277,6 +281,9 @@ fn command(step: Step, page: &PageDoc) -> Option<PageCommand> {
             prop: props()[prop % 6].clone(),
         },
         Step::Merge { block } => PageCommand::MergeIntoPrevious { id: p.block(block)? },
+        Step::Duplicate { blocks } => PageCommand::DuplicateBlocks {
+            ids: p.blocks(blocks),
+        },
         text_step => return text_command(text_step, &p),
     })
 }

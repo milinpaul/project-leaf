@@ -151,6 +151,9 @@ validate, write, commit once; `Unchanged` when nothing would change)
 - `MergeIntoPrevious { id }` (Backspace at start): appends the text, with marks, to the previous block in reading order
   and moves the children there (or into the block's place if it can't hold them); returns `BlockMerged { into, at }`.
   A divider, image or unknown block above is refused with `MergeTargetNotText { target }` so the editor can select it
+- `DuplicateBlocks { ids }` ("Duplicate" in the block menu): copies each outermost listed block, with everything nested
+  in it, right after the original; every stored entry is copied (newer versions' properties, marks and containers
+  included), only IDs are new; returns `BlocksCreated(ids)` (ADR 0028)
 - `Indent { ids }`: each block becomes the last child of the block above it (skipped if there is none, or it can't
   hold children). `Outdent { ids }`: each block moves right after its parent and the blocks that followed it become
   its last children (skipped at the top level, or for a block that can't hold children but has followers). Several

@@ -39,6 +39,7 @@ impl PageDoc {
             }
             PageCommand::SplitBlock { id, pos } => self.split_block(id, pos)?,
             PageCommand::MergeIntoPrevious { id } => self.merge_into_previous(id)?,
+            PageCommand::DuplicateBlocks { ids } => self.duplicate_blocks(&ids)?,
             PageCommand::Indent { ids } => self.indent(&ids)?,
             PageCommand::Outdent { ids } => self.outdent(&ids)?,
         };

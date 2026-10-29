@@ -8,6 +8,7 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
+mod block_actions;
 mod caret;
 mod format;
 mod history;
@@ -20,6 +21,7 @@ mod slash;
 mod view;
 mod workspace_editor;
 
+pub use block_actions::BlockAction;
 pub use caret::{LineLayout, Motion, Vertical};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
