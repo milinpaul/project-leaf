@@ -135,6 +135,13 @@ block at the top, the caret at its start and a tint that fades out (ADR 0046).
 (emoji from the `emojis` crate, searchable by name, shortcode and group); the choice goes through
 `WorkspaceEditor::set_icon` (ADR 0034).
 
+**Inserting images (E05-S07).** "Image" in the slash menu removes the typed `/image` and asks the UI, once, to show
+the file picker (`PageEditor::take_image_request`); a paste from another app brings a screenshot, a copied image or
+a copied image file (`leaf_editor::paste_kind` picks Leaf blocks, then text, then a picture). The UI
+(`leaf_ui::shell::image`) stores the picture in the asset store and calls `PageEditor::insert_image`, which turns an
+empty block into the image or adds it below, with the caret in its caption (ADR 0051). Until E07-S08 draws pictures,
+an image row is a frame with its caption below.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.

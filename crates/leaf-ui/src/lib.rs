@@ -46,6 +46,7 @@ gpui_kit_assets::icon_assets!(
         Heading1,
         Heading2,
         Heading3,
+        Image,
         ImagePlus,
         List,
         ListOrdered,

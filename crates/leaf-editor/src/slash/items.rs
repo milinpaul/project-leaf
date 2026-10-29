@@ -20,17 +20,26 @@ pub struct SlashItem {
     pub label: &'static str,
     /// Other words that find it ("h1", "bullet", "checkbox").
     pub keywords: &'static [&'static str],
-    /// The block it makes.
-    pub kind: BlockKind,
+    /// What choosing it does.
+    pub action: SlashAction,
 }
 
-/// Every entry, in the order the menu shows them with no query. Images come with E05-S07, when there
-/// is a way to pick the file.
+/// What choosing a slash menu entry does.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SlashAction {
+    /// Converts an empty block to this kind, or adds a block of it below.
+    Block(BlockKind),
+    /// Asks for an image file: the UI shows a file picker and gives the stored picture to
+    /// [`PageEditor::insert_image`](crate::PageEditor::insert_image) (E05-S07).
+    Image,
+}
+
+/// Every entry, in the order the menu shows them with no query.
 pub(crate) fn all_items() -> Vec<SlashItem> {
     let item = |label, keywords, kind| SlashItem {
         label,
         keywords,
-        kind,
+        action: SlashAction::Block(kind),
     };
     vec![
         item("Text", &["paragraph", "plain"], BlockKind::Paragraph),
@@ -65,6 +74,11 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             },
         ),
         item("Divider", &["separator", "line", "hr", "---"], BlockKind::Divider),
+        SlashItem {
+            label: "Image",
+            keywords: &["picture", "photo", "img", "upload"],
+            action: SlashAction::Image,
+        },
     ]
 }
 
