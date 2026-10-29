@@ -1,0 +1,121 @@
+//! What the slash menu offers, and how a query picks and orders it.
+//!
+//! The filter is a small fuzzy match, written here rather than taken from a crate: the list is a
+//! dozen entries, and the ranking rules are few enough to state and test (ADR 0026). A query matches
+//! an entry when its letters appear in order in the entry's name or one of its keywords. Better
+//! matches come first:
+//!
+//! 1. the name starts with the query;
+//! 2. a word in the name, or a keyword, starts with the query;
+//! 3. the letters appear in order, with fewer gaps first.
+//!
+//! Ties keep the menu's own order, so the list never jumps around for no reason.
+
+use leaf_model::BlockKind;
+
+/// One entry in the slash menu.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SlashItem {
+    /// What the menu shows.
+    pub label: &'static str,
+    /// Other words that find it ("h1", "bullet", "checkbox").
+    pub keywords: &'static [&'static str],
+    /// The block it makes.
+    pub kind: BlockKind,
+}
+
+/// Every entry, in the order the menu shows them with no query. Images come with E05-S07, when there
+/// is a way to pick the file.
+pub(crate) fn all_items() -> Vec<SlashItem> {
+    let item = |label, keywords, kind| SlashItem {
+        label,
+        keywords,
+        kind,
+    };
+    vec![
+        item("Text", &["paragraph", "plain"], BlockKind::Paragraph),
+        item(
+            "Heading 1",
+            &["h1", "title", "#"],
+            BlockKind::Heading { level: 1 },
+        ),
+        item(
+            "Heading 2",
+            &["h2", "subtitle", "##"],
+            BlockKind::Heading { level: 2 },
+        ),
+        item("Heading 3", &["h3", "###"], BlockKind::Heading { level: 3 }),
+        item(
+            "Bulleted list",
+            &["bullet", "unordered", "ul", "-"],
+            BlockKind::BulletedList,
+        ),
+        item("Numbered list", &["ordered", "ol", "1."], BlockKind::NumberedList),
+        item(
+            "To-do list",
+            &["todo", "checkbox", "task", "[]"],
+            BlockKind::Todo { checked: false },
+        ),
+        item("Quote", &["blockquote", "citation", ">"], BlockKind::Quote),
+        item(
+            "Code",
+            &["snippet", "pre", "```"],
+            BlockKind::Code {
+                language: String::new(),
+            },
+        ),
+        item("Divider", &["separator", "line", "hr", "---"], BlockKind::Divider),
+    ]
+}
+
+/// The entries matching `query`, best first. An empty query matches everything in menu order.
+pub(crate) fn filter(items: &[SlashItem], query: &str) -> Vec<SlashItem> {
+    let query = query.trim().to_lowercase();
+    let mut scored: Vec<(u32, usize, &SlashItem)> = items
+        .iter()
+        .enumerate()
+        .filter_map(|(order, item)| score(item, &query).map(|s| (s, order, item)))
+        .collect();
+    scored.sort_by_key(|&(score, order, _)| (std::cmp::Reverse(score), order));
+    scored.into_iter().map(|(_, _, item)| item.clone()).collect()
+}
+
+/// How well `query` (lowercase) matches the item; `None` if it doesn't. Higher is better.
+fn score(item: &SlashItem, query: &str) -> Option<u32> {
+    if query.is_empty() {
+        return Some(0);
+    }
+    let label = item.label.to_lowercase();
+    if label.starts_with(query) {
+        return Some(3000);
+    }
+    let word_start = label.split([' ', '-']).any(|word| word.starts_with(query))
+        || item.keywords.iter().any(|k| k.starts_with(query));
+    if word_start {
+        return Some(2000);
+    }
+    std::iter::once(label.as_str())
+        .chain(item.keywords.iter().copied())
+        .filter_map(|target| in_order(target, query))
+        .max()
+        .map(|closeness| 1000 + closeness)
+}
+
+/// Whether the query's letters appear in order in `target`; if so, a closeness score that is higher
+/// the fewer letters lie between them (at most 999).
+fn in_order(target: &str, query: &str) -> Option<u32> {
+    let mut gaps = 0u32;
+    let mut rest = target.chars();
+    for wanted in query.chars() {
+        let mut skipped = 0u32;
+        loop {
+            match rest.next() {
+                Some(c) if c == wanted => break,
+                Some(_) => skipped += 1,
+                None => return None,
+            }
+        }
+        gaps += skipped;
+    }
+    Some(999u32.saturating_sub(gaps))
+}

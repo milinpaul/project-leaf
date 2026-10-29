@@ -16,6 +16,7 @@ mod keys;
 mod page_editor;
 mod selection;
 mod shortcuts;
+mod slash;
 mod view;
 mod workspace_editor;
 
@@ -24,5 +25,6 @@ pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use page_editor::{Backspace, Caret, PageEditor};
 pub use selection::{Selection, TextRange};
+pub use slash::{SlashItem, SlashMenu};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{EditorError, SidebarItem, UNTITLED, WorkspaceEditor};

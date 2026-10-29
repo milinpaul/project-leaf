@@ -1,4 +1,4 @@
-# 0026. Leaf's visual identity: warm paper, Inter throughout, green used sparingly
+# 0027. Leaf's visual identity: warm paper, Inter throughout, green used sparingly
 
 - **Status:** Accepted
 - **Type:** Feature
