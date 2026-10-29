@@ -213,7 +213,7 @@ On disk:
 ```
 MyWorkspace.leaf/
   workspace.sqlite
-  assets/<blake3-hash>       # image files
+  assets/<blake3-hash>       # image files, written atomically before their `assets` row (ADR 0047)
   search/index.sqlite        # FTS5 search index (disposable, ADR 0019)
   leaf.lock                  # OS file lock held by the app that has it open (ADR 0009)
   view.json                  # sidebar view state on this computer: expanded pages (not a document, ADR 0031)

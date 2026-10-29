@@ -181,6 +181,11 @@ itself (ADR 0018).
 
 Undo runs the same path backwards: the model reverses the last step and the editor redraws.
 
+**Images (E03-S07).** `Workspace::import_asset` copies an image into `assets/`, named by the BLAKE3 hash of its
+bytes, and records its type (read from its first bytes, not its name) and size in the `assets` table. The file is
+written atomically before its row, and the same picture is stored once (ADR 0047). Image blocks refer to it by
+that hash (`AssetId`).
+
 **Search (E11).** The index is a separate, throwaway SQLite file (ADR 0019). `leaf-search` reads pages through a
 `PageSource` (the UI supplies one over a second `leaf-store` connection, `Workspace::reader`), so it never sees
 unsaved text and can always be rebuilt from disk. On open, a new, damaged or half-built index is rebuilt in the
