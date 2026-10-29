@@ -1,6 +1,6 @@
 //! The built-in cover images: where each one lives among the app's assets, and their bytes.
 //!
-//! Covers are bundled SVG files drawn with GPUI's `img()`, which renders SVG in full colour (ADR 0044).
+//! Covers are bundled SVG files drawn with GPUI's `img()`, which renders SVG in full colour (ADR 0045).
 //! Which covers exist, and what a page's stored cover means, is `leaf_editor::BuiltinCover`'s business.
 
 use std::borrow::Cow;

@@ -2,7 +2,7 @@
 //! is shortened, how the highlight moves through the recent list, and what to tell the owner when a
 //! workspace won't open.
 
-use std::path::{Component, Path};
+use std::path::{Component, MAIN_SEPARATOR_STR, Path};
 
 use leaf_store::StoreError;
 
@@ -24,22 +24,24 @@ pub fn short_path(path: &Path, home: Option<&Path>) -> String {
             _ => None,
         })
         .collect();
+    // The system's own separator throughout (`\` on Windows), so a path never mixes the two.
+    let sep = MAIN_SEPARATOR_STR;
     let root = if prefix.is_empty() {
         path.components()
             .take_while(|part| !matches!(part, Component::Normal(_)))
             .map(|part| part.as_os_str().to_string_lossy().into_owned())
             .collect::<String>()
     } else {
-        format!("{prefix}/")
+        format!("{prefix}{sep}")
     };
-    let full = format!("{root}{}", parts.join("/"));
+    let full = format!("{root}{}", parts.join(sep));
     if full.chars().count() <= MAX_PATH_CHARS || parts.len() <= 3 {
         return full;
     }
     // Keep the first folder and the last two; put an ellipsis in between.
     let first = &parts[0];
-    let tail = parts[parts.len() - 2..].join("/");
-    format!("{root}{first}/…/{tail}")
+    let tail = parts[parts.len() - 2..].join(sep);
+    format!("{root}{first}{sep}…{sep}{tail}")
 }
 
 /// Where the highlight goes when Up (`down` false) or Down is pressed in a list of `len` rows,

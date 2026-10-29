@@ -129,7 +129,7 @@ its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `built
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.
 Built-in covers are SVG files in `crates/leaf-ui/assets/covers/` (`leaf_ui::covers`), drawn with GPUI's `img()`.
 "Add cover" sits beside "Add icon"; "Change cover" opens `leaf_ui::cover_picker` and "Remove" clears it, both through
-`WorkspaceEditor::set_cover` (ADR 0044).
+`WorkspaceEditor::set_cover` (ADR 0045).
 
 **Trash (E06-S06).** The Trash row at the foot of the sidebar opens `leaf_ui::trash_dialog` over
 `leaf_editor::TrashList` (pages trashed on their own, newest first, filterable). Restore and delete forever go through

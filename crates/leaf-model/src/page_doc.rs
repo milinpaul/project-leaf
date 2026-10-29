@@ -298,6 +298,7 @@ pub use undo::{Caret, History, SavedSelection};
 
 mod kind_ops;
 mod nesting;
+mod repair;
 mod split_merge;
 mod text_ops;
 mod undo;

@@ -21,7 +21,7 @@ LoroDoc (workspace)
           "id":         String  # PageId (uuid v7), stable forever
           "title":      String
           "icon":       String? # single emoji
-          "cover":      String? # cover name, e.g. "builtin:dawn"; unknown names kept (ADR 0044)
+          "cover":      String? # cover name, e.g. "builtin:dawn"; unknown names kept (ADR 0045)
           "created_at": i64     # unix ms
           "trashed_at": i64?    # set = in trash (subtree hidden)
 ```
@@ -168,7 +168,8 @@ Positions are Unicode scalar offsets as used by Loro; the editor moves the caret
 boundaries so it never stops inside an emoji or a conjunct. A caret that must follow edits is an `Anchor`
 (`PageDoc::anchor` / `PageDoc::resolve`): a Loro cursor plus the original position, used (clamped) when undo re-created
 the block under a new container (ADR 0015). `PageDoc::import_changes` merges another copy's changes (tests only in
-Phase 0).
+Phase 0), then repairs anything the merge broke (invariants 2–5), the same way on every copy and outside the undo
+history (ADR 0044).
 
 ## Undo / redo
 
@@ -193,7 +194,8 @@ Phase 0).
 `PageDoc::check_invariants()` checks 1–6 and 8 on the raw Loro tree (unknown kinds are exempt from 2 and 3); the
 property test `crates/leaf-model/tests/page_invariants.rs` runs random sequences of every page command and calls it
 after each step (256 cases locally and on PRs, 10,000 in CI on `main`). Invariant 7 is checked by the page undo
-property test (E02-S08).
+property test (E02-S08). Two copies editing at once and swapping changes must end identical with every invariant
+holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that break a rule are repaired (ADR 0044).
 
 1. Every tree node has a `type` in its meta.
 2. `text` exists exactly for text-bearing types.

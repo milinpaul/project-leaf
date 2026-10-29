@@ -4,7 +4,7 @@
 //! block exactly as it was.
 
 use leaf_core::BlockId;
-use loro::TextDelta;
+use loro::{LoroText, TextDelta, TreeID};
 
 use super::PageDoc;
 use crate::block_kind::{KNOWN_PROP_KEYS, keys};
@@ -48,34 +48,47 @@ impl PageDoc {
             _ => {}
         }
         if let Some(text) = text.filter(|_| kind.has_text() && !kind.allows_marks()) {
-            // Code text carries no marks (invariant 5): strip every one, including marks from newer versions.
-            let mut mark_keys: Vec<String> = text
-                .to_delta()
-                .into_iter()
-                .filter_map(|delta| match delta {
-                    TextDelta::Insert { attributes, .. } => attributes,
-                    _ => None,
-                })
-                .flatten()
-                .map(|(key, _)| key)
-                .collect();
-            mark_keys.sort_unstable();
-            mark_keys.dedup();
-            let len = text.len_unicode();
-            for key in mark_keys {
-                text.unmark(0..len, &key)?;
-            }
+            strip_marks(&text)?;
         }
         if !kind.allows_children() {
-            // Children step out to sit right after the block, keeping their order.
-            let mut previous = node;
-            for child in self.tree.children(node).unwrap_or_default() {
-                self.tree.mov_after(child, previous)?;
-                previous = child;
-            }
+            self.lift_children(node)?;
         }
         Ok(PageOutcome::Changed)
     }
+
+    /// Moves `node`'s children out to sit right after it, keeping their order: what happens to the
+    /// children of a block that becomes a kind that can't hold them.
+    pub(super) fn lift_children(&self, node: TreeID) -> Result<bool, ModelError> {
+        let children = self.tree.children(node).unwrap_or_default();
+        let mut previous = node;
+        for &child in &children {
+            self.tree.mov_after(child, previous)?;
+            previous = child;
+        }
+        Ok(!children.is_empty())
+    }
+}
+
+/// Removes every mark from `text`, including marks from newer versions: code text carries none
+/// (invariant 5). Returns whether there were any.
+pub(super) fn strip_marks(text: &LoroText) -> Result<bool, ModelError> {
+    let mut mark_keys: Vec<String> = text
+        .to_delta()
+        .into_iter()
+        .filter_map(|delta| match delta {
+            TextDelta::Insert { attributes, .. } => attributes,
+            _ => None,
+        })
+        .flatten()
+        .map(|(key, _)| key)
+        .collect();
+    mark_keys.sort_unstable();
+    mark_keys.dedup();
+    let len = text.len_unicode();
+    for key in &mark_keys {
+        text.unmark(0..len, key)?;
+    }
+    Ok(!mark_keys.is_empty())
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-# 0044. Page covers: a stored name, drawn from bundled SVG files
+# 0045. Page covers: a stored name, drawn from bundled SVG files
 
 - **Status:** Accepted
 - **Type:** Feature
