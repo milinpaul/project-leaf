@@ -139,8 +139,8 @@
       "goal": "Phase 0 (moved from Phase 1 on 2026-10-29). Full-text search across every page in the workspace, opened with a\nNotion-style `Cmd/Ctrl+K` search bar. SQLite FTS5 in a disposable `search/index.sqlite`; see ADR 0019.",
       "path": "backlog/epics/E11.md",
       "story_count": 7,
-      "done_count": 0,
-      "progress": 0.0
+      "done_count": 1,
+      "progress": 0.14
     },
     {
       "id": "E12",
@@ -3582,7 +3582,7 @@
       "id": "E11-S01",
       "title": "Search index file",
       "epic": "E11",
-      "status": "review",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "depends_on": [
@@ -3678,10 +3678,8 @@
       "plan": "_Filled in by the agent during `planning`._",
       "path": "backlog/stories/E11-S02.md",
       "prs": [],
-      "waiting_on": [
-        "E11-S01"
-      ],
-      "ready": false,
+      "waiting_on": [],
+      "ready": true,
       "progress": 0.0
     },
     {
