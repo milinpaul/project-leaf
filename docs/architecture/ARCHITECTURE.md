@@ -103,7 +103,22 @@ itself (ADR 0018).
    decides when: at most 300 ms after the first unsaved change, and at once on blur or quit, so a crash loses at
    most about a second of typing.
 
+6. **Search catches up.** When autosave wrote something, the window pokes the search indexer (`SearchWorker`
+   in `leaf-search`), which runs on its own thread so typing never waits for it. It asks the store which
+   version of each document is saved (`Store::saved_versions`), compares that and the page titles and trash with
+   what it indexed, and re-reads only the pages that changed into `search/index.sqlite`. An edit is searchable
+   well within a second (ADR 0024).
+
 Undo runs the same path backwards: the model reverses the last step and the editor redraws.
+
+**Search (E11).** The index is a separate, throwaway SQLite file (ADR 0019). `leaf-search` reads pages through a
+`PageSource` (the UI supplies one over a second `leaf-store` connection, `Workspace::reader`), so it never sees
+unsaved text and can always be rebuilt from disk. On open, a new, damaged or half-built index is rebuilt in the
+background, and pages saved but not yet indexed (for example just before a crash) are caught up. Any index error
+is logged and repaired by resetting the index and rebuilding; it never stops editing or saving. Searching
+(`Searcher`, a read-only connection) matches every typed word as a prefix, ignoring case and accents; pages whose
+title matches come first, then the best match, then the most recently edited; each result has highlighted
+excerpts of up to three matching blocks (E11-S03). The search bar that shows them is E11-S05/06.
 
 ## Where things live
 

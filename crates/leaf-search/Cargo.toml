@@ -16,6 +16,7 @@ tracing.workspace = true
 [dev-dependencies]
 # Only to write a block of a kind this version doesn't know, as a newer Leaf would.
 loro.workspace = true
+proptest.workspace = true
 
 [lints]
 workspace = true

@@ -7,7 +7,7 @@
 
 /// Version of the layout below. Bump it on any change: an index with another version is deleted
 /// and rebuilt, which is always safe because it holds nothing that isn't in the documents.
-pub const INDEX_VERSION: u32 = 1;
+pub const INDEX_VERSION: u32 = 2;
 
 /// `meta` key holding [`INDEX_VERSION`].
 pub(crate) const VERSION_KEY: &str = "index_version";
@@ -21,9 +21,11 @@ pub(crate) const CREATE: &str = "
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
 CREATE TABLE pages (
-  id      INTEGER PRIMARY KEY,
-  page_id TEXT NOT NULL UNIQUE,
-  title   TEXT NOT NULL
+  id        INTEGER PRIMARY KEY,
+  page_id   TEXT NOT NULL UNIQUE,
+  title     TEXT NOT NULL,
+  saved_at  INTEGER NOT NULL,  -- PageVersion: when the indexed blocks were saved (ranking)
+  saved_seq INTEGER NOT NULL   -- PageVersion: which save they came from (change detection)
 );
 
 CREATE TABLE blocks (
