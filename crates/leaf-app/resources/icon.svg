@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Leaf app icon. The master artwork: every PNG, .icns and .ico is generated from this file by
+       `just icons`. Layout follows the macOS grid: an 824 px rounded square centred on a 1024 canvas,
+       leaving room for the drop shadow. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4BE3A0"/>
+      <stop offset="0.55" stop-color="#16A970"/>
+      <stop offset="1" stop-color="#0A6B4E"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.3" cy="0.2" r="0.8">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DDF7EA"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+    <filter id="leafShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#04382A" flood-opacity="0.35"/>
+    </filter>
+    <!-- The blade: a lens from the base (330,694) to the tip (726,298), bulging to both sides. -->
+    <path id="blade" d="M 330 694 C 300 520 420 330 726 298 C 694 604 504 724 330 694 Z"/>
+    <!-- The midrib and veins cut out of the blade. The veins are level and start at the midrib, like
+         lines of text on a page; the last one is short, like the end of a paragraph. -->
+    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#FFFFFF"/>
+      <g stroke="#000000" stroke-linecap="round" fill="none">
+        <path d="M 368 656 L 632 392" stroke-width="28"/>
+        <path d="M 580 444 L 648 444" stroke-width="24"/>
+        <path d="M 512 512 L 622 512" stroke-width="24"/>
+        <path d="M 444 580 L 532 580" stroke-width="24"/>
+      </g>
+    </mask>
+  </defs>
+
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)" filter="url(#shadow)"/>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#glow)"/>
+  <rect x="101.5" y="101.5" width="821" height="821" rx="184.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="3"/>
+
+  <g filter="url(#leafShadow)" transform="translate(512 512) scale(1.14) translate(-510 -514)">
+    <!-- Stem -->
+    <path d="M 330 694 Q 300 724 268 742" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" fill="none"/>
+    <use href="#blade" mask="url(#cut)" fill="url(#leaf)"/>
+  </g>
+</svg>

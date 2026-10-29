@@ -33,3 +33,4 @@ Records cover two kinds of decision:
 | [0014](0014-incremental-page-view.md) | Incremental page view from Loro change events | Architecture | Accepted |
 | [0015](0015-caret-anchors-and-grapheme-motion.md) | Carets anchored with Loro cursors, moved by grapheme | Architecture | Accepted |
 | [0016](0016-line-layout-trait.md) | Vertical caret movement through a layout trait | Architecture | Accepted |
+| [0018](0018-app-icon.md) | App icon: one SVG, generated per-OS files, a bundle for `just run` | Feature | Accepted |

@@ -57,9 +57,22 @@ board:
 check: lint test cov deny wasm
     python3 scripts/backlog.py --check
 
+# Launch the app (on macOS from a Leaf.app bundle, so the Dock shows its name and icon)
+[macos]
+run *args:
+    cargo build -p leaf-app
+    python3 scripts/macos_app.py target/debug/leaf-app target/debug
+    target/debug/Leaf.app/Contents/MacOS/Leaf {{args}}
+
 # Launch the app
-run:
-    cargo run -p leaf-app
+[linux]
+[windows]
+run *args:
+    cargo run -p leaf-app -- {{args}}
+
+# Regenerate the app icons from crates/leaf-app/resources/icon.svg (needs resvg; .icns needs macOS)
+icons:
+    python3 scripts/icons.py
 
 # Benchmarks
 bench:
@@ -68,7 +81,7 @@ bench:
 # Install the dev tools once. lefthook is a Go tool, not a crate: install it first with
 # `brew install lefthook` (macOS/Linux) or `scoop install lefthook` (Windows).
 setup:
-    cargo install --locked cargo-nextest cargo-llvm-cov cargo-deny cargo-machete typos-cli just
+    cargo install --locked cargo-nextest cargo-llvm-cov cargo-deny cargo-machete typos-cli just resvg
     rustup target add wasm32-unknown-unknown
     rustup component add llvm-tools-preview
     lefthook install
