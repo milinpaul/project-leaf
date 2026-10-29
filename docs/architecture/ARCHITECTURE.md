@@ -133,8 +133,9 @@ block at the top, the caret at its start and a tint that fades out (ADR 0046).
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.
-Six built-in covers (Dawn, Forest, Ocean, Paper, Night, Travel; E06-S12) are SVG files in
-`crates/leaf-ui/assets/covers/` (`leaf_ui::covers`), drawn with GPUI's `img()`; the band's height follows its width
+Six built-in covers (Dawn, Forest, Ocean, Paper, Night, Travel; E06-S12) are files in
+`crates/leaf-ui/assets/covers/` (`leaf_ui::covers`): SVG, except Travel, a WebP made with an image model (E06-S15).
+GPUI's `img()` draws both; the band's height follows its width
 (3.5:1, 160–320 px) so wide and narrow windows crop little of the picture.
 "Add cover" sits beside "Add icon"; "Change cover" opens `leaf_ui::cover_picker` and "Remove" clears it, both through
 `WorkspaceEditor::set_cover` (ADR 0045).

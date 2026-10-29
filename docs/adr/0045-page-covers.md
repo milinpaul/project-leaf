@@ -29,6 +29,17 @@ may come later. Two questions: how a page stores its cover, and how the app draw
   its limit. Designs keep their key elements in a central safe area, since the edges may be cropped. The icon is
   pulled up half its size to sit on the band's edge. "Add cover" sits beside "Add icon" and shows on hover; "Change
   cover" and "Remove" show on hover over the band. The picker is a popover of thumbnails.
+- **Bitmap covers (E06-S15):** a cover may instead be a WebP file made with an image model, when it is clearly
+  richer than a hand-built SVG. Travel is the first. Recipe: generate at 1536 × 1024 with the prompt in E06-S15;
+  crop the content strip from the vertical centre (aiming for about 4:1); upscale 2× offline (ImageMagick
+  `-filter Lanczos -resize 200% -unsharp 0x1+0.6+0.02`; an AI upscaler such as Real-ESRGAN is better where it can
+  run) so very wide high-resolution windows stay sharp; save as WebP (quality 85). Each cover stays under 100 KB
+  (tested). `img()` picks the decoder from the file extension; GPUI already links the WebP decoder, so no new
+  dependency. Licence: OpenAI's Terms of Use (checked 2026-10-29) say the user owns the output and
+  OpenAI assigns its rights in it, "if any"; other users may get similar output, and AI images may have no copyright
+  protection, so Leaf can ship them but can't stop others using look-alikes. Check the current terms before adding
+  more. Image models don't reliably respect safe areas,
+  so check every bitmap cover in the real app at narrow, normal and very wide widths.
 
 ## Alternatives considered
 
