@@ -98,6 +98,19 @@ impl PageEditor {
         self.slash_menu()
     }
 
+    /// The mouse over entry `index`: highlights it. Returns the menu.
+    pub fn slash_highlight(&mut self, index: usize) -> Result<Option<SlashMenu>, EditorError> {
+        let Some(menu) = self.slash_menu()? else {
+            return Ok(None);
+        };
+        if index < menu.items.len()
+            && let Some(slash) = &mut self.slash
+        {
+            slash.selected = index;
+        }
+        self.slash_menu()
+    }
+
     /// Escape: closes the menu, leaving the typed `/` and query as text.
     pub fn slash_close(&mut self) {
         self.slash = None;

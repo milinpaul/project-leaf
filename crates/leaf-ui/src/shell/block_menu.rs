@@ -67,17 +67,23 @@ pub(super) fn icon_of(entry: &MenuEntry) -> IconName {
         MenuEntry::MoveUp => IconName::ArrowUp,
         MenuEntry::MoveDown => IconName::ArrowDown,
         MenuEntry::Delete => IconName::Trash,
-        MenuEntry::Kind(kind) => match kind {
-            BlockKind::Heading { level: 1 } => IconName::Heading1,
-            BlockKind::Heading { level: 2 } => IconName::Heading2,
-            BlockKind::Heading { .. } => IconName::Heading3,
-            BlockKind::BulletedList => IconName::List,
-            BlockKind::NumberedList => IconName::ListOrdered,
-            BlockKind::Todo { .. } => IconName::SquareCheck,
-            BlockKind::Quote => IconName::TextQuote,
-            BlockKind::Code { .. } => IconName::SquareCode,
-            _ => IconName::Type,
-        },
+        MenuEntry::Kind(kind) => kind_icon(kind),
+    }
+}
+
+/// The icon for a block kind, in the block menu's "Turn into" list and the slash menu.
+pub(super) fn kind_icon(kind: &BlockKind) -> IconName {
+    match kind {
+        BlockKind::Heading { level: 1 } => IconName::Heading1,
+        BlockKind::Heading { level: 2 } => IconName::Heading2,
+        BlockKind::Heading { .. } => IconName::Heading3,
+        BlockKind::BulletedList => IconName::List,
+        BlockKind::NumberedList => IconName::ListOrdered,
+        BlockKind::Todo { .. } => IconName::SquareCheck,
+        BlockKind::Quote => IconName::TextQuote,
+        BlockKind::Code { .. } => IconName::SquareCode,
+        BlockKind::Divider => IconName::Minus,
+        _ => IconName::Type,
     }
 }
 
