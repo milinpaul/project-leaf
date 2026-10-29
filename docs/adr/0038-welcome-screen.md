@@ -26,6 +26,10 @@ can't open, and from File → Switch Workspace…; otherwise Leaf reopens the la
   system has none (a Linux desktop without the portal service), the screen says so and suggests `leaf <folder>`.
 - **Menus.** File → New Workspace… (Shift+Cmd/Ctrl+N), Open Workspace… (Cmd/Ctrl+O), Open Recent (a submenu rebuilt
   whenever the recent list changes; missing workspaces left out) and Switch Workspace… (Shift+Cmd/Ctrl+O).
+- **Sidebar switcher.** The workspace name at the top of the sidebar (with a ⇕ mark) opens a menu of the recent
+  workspaces (the open one ticked), then New workspace…, Open workspace… and All workspaces…. Its items send the
+  same actions as the File menu, from the workspace view's focus, so the app view handles both the same way and the
+  shortcuts show next to them.
 
 ## Alternatives considered
 

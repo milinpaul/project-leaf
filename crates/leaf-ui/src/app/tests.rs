@@ -177,3 +177,28 @@ fn picking_a_folder_that_is_not_a_workspace_explains_or_offers_to_create(cx: &mu
     );
     let _ = std::fs::remove_dir_all(dir);
 }
+
+#[gpui::test]
+fn the_sidebar_workspace_menu_switches_workspace(cx: &mut TestAppContext) {
+    cx.update(|cx| crate::init(None, cx));
+    let dir = temp_dir("sidebar-menu");
+    let (work, home) = (dir.join("Work.leaf"), dir.join("Home.leaf"));
+    make_workspace(&work);
+    make_workspace(&home);
+    cx.update(|cx| settings::update(cx, |s| s.remember_workspace(&home, 1)));
+    let (app, cx) = launch(Some(work.clone()), &dir, cx);
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    let switcher = cx
+        .debug_bounds("workspace-switcher")
+        .expect("the name is a button")
+        .center();
+    cx.simulate_click(switcher, gpui::Modifiers::none());
+    cx.run_until_parked();
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    // The first Down lands on the "Workspaces" heading, the next on Work (this one, ticked), then Home.
+    cx.simulate_keystrokes("down down down enter");
+    cx.run_until_parked();
+    let open = app.read_with(cx, |app, _| app.open_path.clone());
+    assert_eq!(open, Some(home), "{:?}", message(&app, cx));
+    let _ = std::fs::remove_dir_all(dir);
+}

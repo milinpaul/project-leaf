@@ -118,7 +118,8 @@ banner with Restore page and Delete forever.
 **Startup and saving (E03-S08).** `leaf-app` opens a window whose top view (`leaf_ui::AppView`, E06-S09) opens the
 workspace folder given as its first argument, else the one opened last; if there is none (first launch) or it can't
 be opened, it shows the welcome screen (`leaf_ui::welcome`) with the reason, where workspaces are created, opened
-and switched (ADR 0038). Opening a workspace adds it to the recent list in the app settings (ADR 0037). It loads the workspace
+and switched (ADR 0038). The workspace name at the top of the sidebar also opens a menu for switching to a recent
+workspace or making a new one; it sends the same actions as the File menu. Opening a workspace adds it to the recent list in the app settings (ADR 0037). It loads the workspace
 document; each page's blocks load from disk the first time the page is opened. A 100 ms timer in the window calls
 `Autosave::tick` from `leaf-store`, which polls every open document for unsaved changes and saves those that are
 due. Window blur, quit (Cmd+Q / Ctrl+Q, or the app menu) and window close save everything at once. If the folder
