@@ -4,10 +4,12 @@ mod common;
 
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use common::TempDir;
-use leaf_store::settings::{DEFAULT_SIDEBAR_WIDTH, SIDEBAR_WIDTH_RANGE, settings_path, visible_on};
+use leaf_store::settings::{
+    DEFAULT_SIDEBAR_WIDTH, MAX_RECENT_WORKSPACES, SIDEBAR_WIDTH_RANGE, settings_path, visible_on,
+};
 use leaf_store::{AppSettings, Appearance, DisplayArea, WindowFrame};
 
 fn frame(x: f32, y: f32, width: f32, height: f32) -> WindowFrame {
@@ -241,4 +243,93 @@ fn the_appearance_choice_is_saved_and_unknown_values_follow_the_system() {
     let loaded = AppSettings::load(&path);
     assert_eq!(loaded.appearance(), Appearance::System);
     assert_eq!(loaded.sidebar_width(), 300.0, "the rest of the file still loads");
+}
+
+#[test]
+fn opened_workspaces_are_remembered_most_recent_first_without_duplicates() {
+    let dir = TempDir::new();
+    let (a, b) = (dir.0.join("A.leaf"), dir.0.join("B.leaf"));
+    fs::create_dir_all(&a).unwrap();
+    fs::create_dir_all(&b).unwrap();
+    let mut settings = AppSettings::default();
+    assert_eq!(settings.last_workspace(), None);
+
+    settings.remember_workspace(&a, 1);
+    settings.remember_workspace(&b, 2);
+    settings.remember_workspace(&a.join("..").join("A.leaf"), 3); // the same folder, written another way
+    let recent = settings.recent_workspaces(Path::exists);
+    let names: Vec<(&str, i64)> = recent.iter().map(|r| (r.name.as_str(), r.opened_at)).collect();
+    assert_eq!(names, [("A", 3), ("B", 2)]);
+    assert_eq!(settings.last_workspace(), Some(fs::canonicalize(&a).unwrap()));
+
+    let path = dir.0.join("settings.json");
+    settings.save(&path).unwrap();
+    assert_eq!(AppSettings::load(&path), settings, "the list survives a restart");
+}
+
+#[test]
+fn the_list_keeps_the_ten_most_recent() {
+    let mut settings = AppSettings::default();
+    for i in 0..15 {
+        settings.remember_workspace(Path::new(&format!("/nowhere/W{i}.leaf")), i);
+    }
+    let recent = settings.recent_workspaces(|_| true);
+    assert_eq!(recent.len(), MAX_RECENT_WORKSPACES);
+    assert_eq!((recent[0].name.as_str(), recent[9].name.as_str()), ("W14", "W5"));
+}
+
+#[test]
+fn missing_workspaces_are_flagged_and_can_be_removed() {
+    let dir = TempDir::new();
+    let kept = dir.0.join("Kept.leaf");
+    fs::create_dir_all(&kept).unwrap();
+    let gone = dir.0.join("Gone.leaf");
+    let mut settings = AppSettings::default();
+    settings.remember_workspace(&gone, 1);
+    settings.remember_workspace(&kept, 2);
+
+    let flags: Vec<(String, bool)> = settings
+        .recent_workspaces(Path::exists)
+        .into_iter()
+        .map(|r| (r.name, r.missing))
+        .collect();
+    assert_eq!(
+        flags,
+        [("Kept".to_owned(), false), ("Gone".to_owned(), true)],
+        "flagged, not dropped"
+    );
+
+    settings.forget_workspace(&gone);
+    assert_eq!(settings.recent_workspaces(|_| true).len(), 1);
+    assert!(
+        gone.parent().unwrap().exists() && kept.exists(),
+        "no folder is touched"
+    );
+}
+
+#[test]
+fn unreadable_recent_entries_are_skipped_not_fatal() {
+    let dir = TempDir::new();
+    let path = dir.0.join("settings.json");
+    fs::write(
+        &path,
+        r#"{"sidebar_width": 300, "recent_workspaces": [{"path": "/w/A.leaf", "opened_at": 5}, {"path": 7}, "junk"]}"#,
+    )
+    .unwrap();
+    let settings = AppSettings::load(&path);
+    assert_eq!(
+        settings.sidebar_width(),
+        300.0,
+        "the rest of the file still counts"
+    );
+    let names: Vec<String> = settings
+        .recent_workspaces(|_| true)
+        .into_iter()
+        .map(|r| r.name)
+        .collect();
+    assert_eq!(names, ["A"]);
+
+    fs::write(&path, r#"{"recent_workspaces": "not a list"}"#).unwrap();
+    assert!(AppSettings::load(&path).last_workspace().is_none());
+    assert!(path.exists(), "not treated as a damaged file");
 }
