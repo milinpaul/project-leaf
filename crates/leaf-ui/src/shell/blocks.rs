@@ -1,48 +1,49 @@
-//! The interim block editor (E07-S10): the open page's blocks, one plain text input each.
-//!
-//! Draws `BlockRow`s from `leaf-editor` and forwards typing and keys to `PageEditor`, which decides
-//! what they mean. Keys the input would otherwise handle itself (Tab, Backspace in an empty block, the
-//! arrows) are caught in the capture phase on the page area. The rich text element (E07-S02) replaces
-//! the inputs; the editor logic stays.
+//! The open page: a "Turn into" toolbar, then the title and blocks as a virtual list drawn by the rich
+//! text view. The page takes the keyboard itself (E07-S03): keys become editor actions
+//! (`page_keys`), typed text and input-method drafts arrive through the platform's text input
+//! (`ime`), and the mouse places the caret and selects (`rich_text`). Every decision is
+//! `PageEditor`'s; this module only forwards and draws.
 
 use std::collections::HashMap;
 
 use gpui::{
-    AnyElement, AppContext as _, ClickEvent, Context, Entity, InteractiveElement as _, IntoElement,
-    ParentElement, SharedString, Styled, Subscription, Task, Window, div, list, px,
+    AnyElement, ClickEvent, Context, ElementInputHandler, InteractiveElement as _, IntoElement, MouseButton,
+    MouseUpEvent, ParentElement, Pixels, Point, SharedString, Styled, Task, Window, canvas, div, list, px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
-use gpui_component::input::{
-    Backspace as BackspaceKey, IndentInline, InputEvent, InputState, MoveDown, MoveUp, OutdentInline,
-};
 use gpui_component::{h_flex, v_flex};
 use leaf_core::BlockId;
-use leaf_editor::{Backspace, Caret, PageEditor};
-use leaf_model::BlockKind;
+use leaf_editor::{PageEditor, Preedit};
+use leaf_model::{BlockKind, Caret};
 
 use super::column;
 use super::page_list::{HEADER_ITEMS, PageList};
 use super::rich_text::{Highlight, PaintedLayout, highlights};
 use super::{Shell, report};
 
-/// The block inputs of the open page and which one has focus.
+/// What the page needs between frames.
 #[derive(Default)]
-pub(super) struct BlockInputs {
-    pub(super) inputs: HashMap<BlockId, Entity<InputState>>,
-    subscriptions: HashMap<BlockId, Subscription>,
-    pub(super) focused: Option<BlockId>,
+pub(super) struct PageState {
     /// The page's rows as a virtual list: only those on screen are laid out.
     pub(super) list: PageList,
-    /// How the rows drawn as text were laid out in the last frame, for Up/Down and clicks.
+    /// How the rows were laid out in the last frame, for Up/Down, clicks and input methods.
     pub(super) painted: PaintedLayout,
     /// The editor's selection, per row, as of this frame.
     pub(super) highlights: HashMap<BlockId, Highlight>,
-    /// The editor's caret as of this frame.
+    /// The editor's caret as of this frame, when the page has the keyboard.
     pub(super) caret: Option<Caret>,
+    /// The input method's draft as of this frame, drawn underlined at the caret.
+    pub(super) draft: Option<Preedit>,
     /// Whether the caret is in the visible half of its blink.
     pub(super) caret_on: bool,
-    /// Toggles `caret_on` while a caret is drawn by the text view; dropped (stopped) otherwise.
+    /// Toggles `caret_on` while a caret is drawn; dropped (stopped) otherwise.
     blink: Option<Task<()>>,
+    /// Where a mouse drag started, while the button is down.
+    pub(super) drag: Option<Caret>,
+    /// Where the block menu's top-left corner goes, set when it opens.
+    pub(super) menu_at: Point<Pixels>,
+    /// The block whose menu is open as of this frame, so its handle stays shown.
+    pub(super) menu_block: Option<BlockId>,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -67,81 +68,18 @@ fn toolbar_kinds() -> [(&'static str, BlockKind); 9] {
 
 impl Shell {
     /// The open page's editor, reporting (and hiding) errors so the window stays usable.
-    fn page(&mut self) -> Option<&mut PageEditor> {
+    pub(super) fn page(&mut self) -> Option<&mut PageEditor> {
         self.editor.open_page().unwrap_or_else(|err| {
             report("could not open the page's blocks", err);
             None
         })
     }
 
-    /// The block that currently has the keyboard, if any.
-    #[must_use]
-    pub fn focused_block(&self) -> Option<BlockId> {
-        self.blocks.focused
-    }
-
-    /// The input for `id`, created and wired up the first time it is needed.
-    pub(super) fn block_input(
-        &mut self,
-        id: BlockId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<InputState> {
-        if let Some(input) = self.blocks.inputs.get(&id) {
-            return input.clone();
-        }
-        let input = cx.new(|cx| InputState::new(window, cx).placeholder("Write something…"));
-        let subscription = cx.subscribe_in(&input, window, move |shell, input, event, window, cx| {
-            shell.on_block_event(id, input, event, window, cx);
-        });
-        self.blocks.inputs.insert(id, input.clone());
-        self.blocks.subscriptions.insert(id, subscription);
-        input
-    }
-
-    /// Puts the keyboard in `id`'s input.
-    pub fn focus_block(&mut self, id: BlockId, window: &mut Window, cx: &mut Context<Self>) {
-        let text = self
-            .page()
-            .and_then(|page| page.doc().plain_text(id).ok().flatten())
-            .unwrap_or_default();
-        let input = self.block_input(id, window, cx);
-        input.update(cx, |input, cx| {
-            if input.value() != text {
-                input.set_value(text, window, cx);
-            }
-            input.focus(window, cx);
-        });
-        self.blocks.focused = Some(id);
-        // The block may be scrolled out of view (arrow keys, Enter at the bottom of the screen).
-        self.blocks.list.reveal(id);
-        cx.notify();
-    }
-
-    /// Sets a block's input to the model's text without emitting change events.
-    fn sync_input(&mut self, id: BlockId, window: &mut Window, cx: &mut Context<Self>) {
-        let text = self
-            .page()
-            .and_then(|page| page.doc().plain_text(id).ok().flatten())
-            .unwrap_or_default();
-        if let Some(input) = self.blocks.inputs.get(&id) {
-            input.update(cx, |input, cx| {
-                if input.value() != text {
-                    input.set_value(text, window, cx);
-                }
-            });
-        }
-    }
-
-    /// Focuses a block and puts the text cursor at `caret.at` (a Unicode scalar position).
-    pub(super) fn focus_caret(&mut self, caret: Caret, window: &mut Window, cx: &mut Context<Self>) {
-        self.focus_block(caret.block, window, cx);
-        if let Some(input) = self.blocks.inputs.get(&caret.block) {
-            input.update(cx, |input, cx| {
-                let byte = byte_offset(&input.value(), caret.at);
-                input.set_selected_range(byte..byte, cx);
-            });
-        }
+    /// The block holding the caret, if the page has one.
+    pub fn caret_block(&mut self) -> Option<BlockId> {
+        self.page()
+            .and_then(|page| page.caret().ok().flatten())
+            .map(|c| c.block)
     }
 
     /// How many blocks the open page has, as last drawn.
@@ -157,128 +95,45 @@ impl Shell {
         cx.notify();
     }
 
-    /// Focuses the open page's first block, so a freshly opened page is ready for typing.
+    /// Gives the page the keyboard with the caret at `caret`, scrolled into view.
+    pub fn focus_page_at(&mut self, caret: Caret, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(Err(err)) = self.page().map(|page| page.set_caret(caret)) {
+            report("could not place the caret", err);
+        }
+        self.focus_page(window, cx);
+    }
+
+    /// Gives the page the keyboard, keeping the caret and selection where they are.
+    pub fn focus_page(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        window.focus(&self.page_focus, cx);
+        self.reveal_caret();
+        cx.notify();
+    }
+
+    /// Scrolls so the caret's block is on screen.
+    pub(super) fn reveal_caret(&mut self) {
+        if let Some(block) = self.caret_block() {
+            self.blocks.list.reveal(block);
+        }
+    }
+
+    /// Puts the caret at the start of the open page's first block, so a fresh page is ready for typing.
     pub(super) fn focus_first_block(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let first = self.page().and_then(|page| page.ensure_block().ok());
-        if let Some(first) = first {
-            self.focus_block(first, window, cx);
+        if let Some(block) = first {
+            self.focus_page_at(Caret { block, at: 0 }, window, cx);
         }
     }
 
-    fn on_block_event(
-        &mut self,
-        id: BlockId,
-        input: &Entity<InputState>,
-        event: &InputEvent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        match event {
-            InputEvent::Change => {
-                let text = input.read(cx).value().to_string();
-                if let Some(Err(err)) = self.page().map(|page| page.set_text(id, &text)) {
-                    report("could not edit the block", err);
-                }
-                cx.notify();
-            }
-            InputEvent::PressEnter { .. } => {
-                let at = {
-                    let input = input.read(cx);
-                    char_offset(&input.value(), input.cursor())
-                };
-                match self.page().map(|page| page.enter_at(id, at)) {
-                    Some(Ok(caret)) => {
-                        // The split shortened this block. Refresh its input now: it may still report a
-                        // late change with its old text, which would otherwise undo the split.
-                        self.sync_input(id, window, cx);
-                        self.focus_caret(caret, window, cx);
-                    }
-                    Some(Err(err)) => report("could not split the block", err),
-                    None => {}
-                }
-            }
-            InputEvent::Focus => self.blocks.focused = Some(id),
-            InputEvent::Blur => {}
-        }
-    }
-
-    /// Backspace with the cursor at the very start of a block (and nothing selected) is a block
-    /// action; anywhere else it is an ordinary backspace for the input.
-    fn on_backspace(&mut self, _: &BackspaceKey, window: &mut Window, cx: &mut Context<Self>) {
-        let Some(id) = self.blocks.focused else { return };
-        let at_start = self.blocks.inputs.get(&id).is_some_and(|input| {
-            let input = input.read(cx);
-            input.cursor() == 0 && input.selected_range().is_empty()
-        });
-        if !at_start {
-            return;
-        }
-        match self.page().map(|page| page.backspace_at_start(id)) {
-            Some(Ok(Backspace::Moved(caret))) => {
-                cx.stop_propagation();
-                self.focus_caret(caret, window, cx);
-            }
-            // Selecting a divider or image arrives with block selection (E04-S06); for now, do nothing.
-            Some(Ok(Backspace::Select(_))) => cx.stop_propagation(),
-            Some(Ok(Backspace::Nothing)) | None => {}
-            Some(Err(err)) => report("could not merge the block", err),
-        }
-    }
-
-    fn on_indent(&mut self, _: &IndentInline, window: &mut Window, cx: &mut Context<Self>) {
-        cx.stop_propagation();
-        self.with_focused(window, cx, PageEditor::indent, "could not indent");
-    }
-
-    fn on_outdent(&mut self, _: &OutdentInline, window: &mut Window, cx: &mut Context<Self>) {
-        cx.stop_propagation();
-        self.with_focused(window, cx, PageEditor::outdent, "could not outdent");
-    }
-
-    fn on_move_up(&mut self, _: &MoveUp, window: &mut Window, cx: &mut Context<Self>) {
-        self.move_focus(window, cx, PageEditor::previous);
-    }
-
-    fn on_move_down(&mut self, _: &MoveDown, window: &mut Window, cx: &mut Context<Self>) {
-        self.move_focus(window, cx, PageEditor::next);
-    }
-
-    fn move_focus(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-        neighbour: impl Fn(&PageEditor, BlockId) -> Result<Option<BlockId>, leaf_editor::EditorError>,
-    ) {
-        let Some(id) = self.blocks.focused else { return };
-        if let Some(Ok(Some(target))) = self.page().map(|page| neighbour(page, id)) {
-            cx.stop_propagation();
-            self.focus_block(target, window, cx);
-        }
-    }
-
-    /// Runs an editor action on the focused block, then keeps the keyboard there.
-    fn with_focused(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-        action: impl FnOnce(&mut PageEditor, BlockId) -> Result<(), leaf_editor::EditorError>,
-        failure: &str,
-    ) {
-        let Some(id) = self.blocks.focused else { return };
-        if let Some(Err(err)) = self.page().map(|page| action(page, id)) {
-            report(failure, err);
-        }
-        self.focus_block(id, window, cx);
-    }
-
-    /// Applies a toolbar kind to the focused block.
+    /// Applies a toolbar kind to the caret's block, or every block a selection touches.
     pub fn turn_focused_into(&mut self, kind: BlockKind, window: &mut Window, cx: &mut Context<Self>) {
-        self.with_focused(
-            window,
-            cx,
-            |page, id| page.turn_into(id, kind),
-            "could not change the block",
-        );
+        if let Some(block) = self.caret_block() {
+            let action = leaf_editor::BlockAction::TurnInto(kind);
+            if let Some(Err(err)) = self.page().map(|page| page.block_action(block, action)) {
+                report("could not change the block", err);
+            }
+        }
+        self.focus_page(window, cx);
     }
 
     /// Ticks or unticks a to-do.
@@ -290,8 +145,8 @@ impl Shell {
     }
 
     /// The open page: the "Turn into" toolbar, then the title and blocks as a virtual list that
-    /// scrolls. Only the rows on screen are built, so only they get text inputs.
-    pub(super) fn render_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
+    /// scrolls. Only the rows on screen are built.
+    pub(super) fn render_page(&mut self, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         // Only blocks that changed since the last frame are re-read (E04-S01).
         let rows = match self.page().map(|page| page.view().map(<[_]>::to_vec)) {
             Some(Ok(rows)) => rows,
@@ -301,18 +156,21 @@ impl Shell {
             }
             None => Vec::new(),
         };
-        // Drop inputs of blocks that are gone (deleted, or another page's).
-        let live: std::collections::HashSet<BlockId> = rows.iter().map(|row| row.id).collect();
-        self.blocks.inputs.retain(|id, _| live.contains(id));
-        self.blocks.subscriptions.retain(|id, _| live.contains(id));
-        // The editor's selection and caret, drawn by the text view in the rows it draws.
-        let (selection, caret) = match self.page() {
-            Some(page) => (page.selection().ok().flatten(), page.caret().ok().flatten()),
-            None => (None, None),
+        // The caret, selection and draft are drawn only while the page has the keyboard.
+        let focused = self.page_focus.is_focused(window);
+        let (selection, caret, draft) = match self.page() {
+            Some(page) if focused => (
+                page.selection().ok().flatten(),
+                page.caret().ok().flatten(),
+                page.preedit().ok().flatten(),
+            ),
+            Some(page) => (page.selection().ok().flatten(), None, None),
+            None => (None, None, None),
         };
         self.blocks.highlights = highlights(&rows, selection.as_ref());
         self.blocks.caret = caret;
-        self.blink_while(caret.is_some_and(|c| Some(c.block) != self.blocks.focused), cx);
+        self.blocks.draft = draft;
+        self.blink_while(caret.is_some(), cx);
         self.blocks.painted.clear();
         self.blocks.list.sync(self.editor.selected(), rows);
 
@@ -327,22 +185,48 @@ impl Shell {
                     }))
             }));
         let rows = list(self.blocks.list.state.clone(), cx.processor(Self::render_item)).size_full();
+        // The platform's text input (typing, input methods, the emoji picker) reaches the page
+        // through this handler while the page has the keyboard.
+        let shell = cx.entity();
+        let focus = self.page_focus.clone();
+        let input = canvas(
+            |_, _, _| {},
+            move |bounds, (), window, cx| {
+                window.handle_input(&focus, ElementInputHandler::new(bounds, shell), cx);
+            },
+        )
+        .absolute()
+        .top_0()
+        .left_0()
+        .size_full();
 
-        v_flex()
+        let menu = self.render_block_menu(cx);
+        let page = v_flex()
             .size_full()
-            .capture_action(cx.listener(Self::on_backspace))
-            .capture_action(cx.listener(Self::on_indent))
-            .capture_action(cx.listener(Self::on_outdent))
-            .capture_action(cx.listener(Self::on_move_up))
-            .capture_action(cx.listener(Self::on_move_down))
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
             .children(
                 self.render_trash_banner(cx)
                     .map(|banner| column(div().pt_4().child(banner))),
             )
             .child(column(div().pt_2().pb_1().child(toolbar)))
-            .child(rows)
-            .into_any_element()
+            .child(
+                div()
+                    .relative()
+                    .flex_1()
+                    .size_full()
+                    .track_focus(&self.page_focus)
+                    .key_context(super::page_keys::CONTEXT)
+                    .on_mouse_up(
+                        MouseButton::Left,
+                        cx.listener(|shell, _: &MouseUpEvent, _, _| shell.blocks.drag = None),
+                    )
+                    .child(input)
+                    .child(rows),
+            )
+            // Outside the page's key context, so keys reach the menu and not the page while it is open.
+            .children(menu);
+        let page = Self::with_block_menu_action(page, cx);
+        Self::with_page_actions(page, cx).into_any_element()
     }
 
     /// Keeps the caret blinking while `showing`; stops the timer otherwise. The caret starts visible.
@@ -371,6 +255,12 @@ impl Shell {
         }
     }
 
+    /// Shows the caret solidly for a moment after it moves or text changes, as text editors do.
+    pub(super) fn restart_blink(&mut self) {
+        self.blocks.blink = None;
+        self.blocks.caret_on = true;
+    }
+
     /// List item `item`: the page header (icon and title) first, then one block each. The header is
     /// part of the list so it scrolls away with the page.
     fn render_item(&mut self, item: usize, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
@@ -381,23 +271,17 @@ impl Shell {
                 .child(self.render_page_header(cx))
                 .into_any_element()
         } else if let Some(row) = self.blocks.list.row(item).cloned() {
-            self.render_row(&row, window, cx)
+            let (left, top) = super::block_row::handle_place(&row);
+            let handle = self.render_handle(row.id, left, top, cx);
+            div()
+                .relative()
+                .group(super::block_menu::ROW_GROUP)
+                .child(self.render_row(&row, window, cx))
+                .child(handle)
+                .into_any_element()
         } else {
             div().into_any_element()
         };
         column(div().py(px(1.0)).child(content)).into_any_element()
     }
-}
-
-/// Converts a Unicode scalar position to a UTF-8 byte offset in `text` (inputs count bytes).
-fn byte_offset(text: &str, chars: usize) -> usize {
-    text.char_indices()
-        .nth(chars)
-        .map_or(text.len(), |(byte, _)| byte)
-}
-
-/// Converts a UTF-8 byte offset from an input to a Unicode scalar position (the model counts characters).
-fn char_offset(text: &str, byte: usize) -> usize {
-    text.get(..byte)
-        .map_or_else(|| text.chars().count(), |head| head.chars().count())
 }

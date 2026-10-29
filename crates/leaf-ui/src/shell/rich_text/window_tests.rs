@@ -25,8 +25,6 @@ fn open(cx: &mut TestAppContext) -> (gpui::Entity<Shell>, &mut VisualTestContext
         page.set_text(last, "after").unwrap();
         long
     });
-    // Nothing is being typed in a block, so every row is drawn by the text view.
-    shell.update(cx, |shell, _| shell.blocks.focused = None);
     cx.update(|window, cx| window.draw(cx).clear(cx));
     (shell, cx, block)
 }
@@ -102,9 +100,11 @@ fn the_caret_blinks_while_the_text_view_draws_it(cx: &mut TestAppContext) {
     };
     // No caret yet: nothing blinks.
     assert!(on(&shell, cx));
-    shell.update(cx, |shell, _| {
-        let page = shell.editor.open_page().unwrap().unwrap();
-        page.set_caret(Caret { block, at: 4 }).unwrap();
+    // The caret is drawn while the page has the keyboard.
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.focus_page_at(Caret { block, at: 4 }, window, cx);
+        });
     });
     cx.update(|window, cx| window.draw(cx).clear(cx));
     assert!(on(&shell, cx), "it starts visible");
@@ -114,8 +114,8 @@ fn the_caret_blinks_while_the_text_view_draws_it(cx: &mut TestAppContext) {
     cx.executor().advance_clock(std::time::Duration::from_millis(540));
     cx.run_until_parked();
     assert!(on(&shell, cx), "and shows again");
-    // Typing in the block's input takes over: the text view stops drawing (and blinking) a caret.
-    shell.update(cx, |shell, _| shell.blocks.focused = Some(block));
+    // The keyboard moves to the title: the page stops drawing (and blinking) its caret.
+    cx.update(|window, cx| shell.update(cx, |shell, cx| shell.focus_title(window, cx)));
     cx.update(|window, cx| window.draw(cx).clear(cx));
     cx.executor().advance_clock(std::time::Duration::from_millis(540));
     cx.run_until_parked();

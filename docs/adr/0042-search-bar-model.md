@@ -1,4 +1,4 @@
-# 0040. Search bar model: titles at once, full text after a pause, stale results dropped by id
+# 0042. Search bar model: titles at once, full text after a pause, stale results dropped by id
 
 - **Status:** Accepted
 - **Type:** Feature

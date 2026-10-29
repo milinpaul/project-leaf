@@ -52,7 +52,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 - **Slash menu** (`/`): insert or convert blocks, fuzzy filtered.
 - **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`.
 - **Inline shortcuts:** `Cmd/Ctrl+B/I/E`, `Cmd/Ctrl+Shift+S` (strike), `Cmd/Ctrl+K` with text selected (link; without a selection it opens search).
-- **Block handle** (⋮⋮) on hover: drag to reorder or nest; menu with Turn into, Duplicate, Delete.
+- **Block handle** (⋮⋮) on hover: drag to reorder or nest; menu with Turn into, Duplicate, Move up, Move down, Delete (each with an icon); `Cmd/Ctrl+/` opens the menu from the keyboard.
 - **Nesting:** `Tab` / `Shift+Tab` indent and outdent.
 - **Selection:** within a block and across blocks (Shift+arrows, mouse drag). `Cmd/Ctrl+A` once selects the block's text, twice selects all blocks.
 - **Clipboard:** copy/cut/paste rich blocks inside the app; paste plain text and markdown from outside.
@@ -73,6 +73,8 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
   - Database as a full page and inline inside a page.
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
+- **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
+  Fetching previews is Leaf's first network access and is opt-in, off by default (E15).
 - Trash: restore and permanent delete.
 
 ## Phase 2

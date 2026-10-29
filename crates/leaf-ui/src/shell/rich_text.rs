@@ -6,8 +6,8 @@
 //! selection is drawn as a background on the selected pieces, so it sits under the glyphs. An overlay
 //! painted after the text records the measured layout (for [`PaintedLayout`]) and draws the caret.
 //!
-//! Until typing moves into this element (E07-S03), the block being typed in still uses a text input;
-//! clicking any other block switches it to the input with the cursor where the click landed.
+//! The mouse places the caret (shift extends the selection), drags select, a double click selects a
+//! word and a triple click the block's text. An input method's draft is drawn underlined in place.
 
 mod painted_layout;
 mod pieces;
@@ -15,12 +15,12 @@ mod pieces;
 mod window_tests;
 
 pub(super) use painted_layout::PaintedLayout;
-pub(super) use pieces::{Highlight, highlights};
+pub(super) use pieces::{Highlight, highlights, with_draft};
 
 use gpui::{
     AnyElement, Context, FontStyle, FontWeight, Hsla, InteractiveElement as _, IntoElement, MouseButton,
-    MouseDownEvent, ParentElement, Pixels, SharedString, StrikethroughStyle, Styled, StyledText, TextRun,
-    UnderlineStyle, Window, canvas, div, fill, px, size,
+    MouseDownEvent, MouseMoveEvent, ParentElement, Pixels, SharedString, StrikethroughStyle, Styled,
+    StyledText, TextRun, UnderlineStyle, Window, canvas, div, fill, px, size,
 };
 use gpui_component::ActiveTheme as _;
 use leaf_editor::BlockRow;
@@ -58,20 +58,31 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let id = row.id;
-        let text = row.text.clone().unwrap_or_default();
-        let spans = row.spans.clone().unwrap_or_else(|| {
+        let real_spans = row.spans.clone().unwrap_or_else(|| {
             vec![TextSpan {
-                text: text.clone(),
+                text: row.text.clone().unwrap_or_default(),
                 marks: Marks::default(),
             }]
         });
+        // An input method's draft shows in place of what it will replace, underlined; the selection it
+        // covers is hidden meanwhile.
+        let draft = self.blocks.draft.as_ref().filter(|d| d.at.block == id);
+        let (spans, draft_range, caret, highlight) = match draft {
+            Some(draft) => {
+                let (spans, range) = with_draft(&real_spans, &draft.at.range, &draft.text);
+                let at = range.start + draft.cursor;
+                (spans, Some(range), Some(at), None)
+            }
+            None => (real_spans, None, caret, highlight),
+        };
+        let text: String = spans.iter().map(|s| s.text.as_str()).collect();
         let len = text.chars().count();
         let selected = match highlight {
             Some(Highlight::Text(range)) => Some(range.clone()),
             Some(Highlight::Whole) => Some(0..len),
             None => None,
         };
-        let runs: Vec<TextRun> = pieces(&spans, selected.as_ref())
+        let runs: Vec<TextRun> = pieces(&spans, selected.as_ref(), draft_range.as_ref())
             .iter()
             .map(|piece| Self::run(piece, look, window, cx))
             .collect();
@@ -118,16 +129,79 @@ impl Shell {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |shell, event: &MouseDownEvent, window, cx| {
-                    // Typing happens in the block's input for now: switch to it, cursor at the click.
-                    let at = shell.blocks.painted.offset_at(id, event.position).unwrap_or(len);
-                    shell.focus_caret(Caret { block: id, at }, window, cx);
+                    shell.on_text_mouse_down(id, len, event, window, cx);
                 }),
-            );
+            )
+            .on_mouse_move(cx.listener(move |shell, event: &MouseMoveEvent, window, cx| {
+                shell.on_text_drag(id, event, window, cx);
+            }));
         let block = match look.size {
             Some(size) => block.text_size(size),
             None => block,
         };
         block.into_any_element()
+    }
+
+    /// A click in `block`'s text: the caret goes there (shift: the selection extends there); a double
+    /// click selects the word, a triple click the block's text. A drag starts from here.
+    fn on_text_mouse_down(
+        &mut self,
+        block: leaf_core::BlockId,
+        len: usize,
+        event: &MouseDownEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let at = self
+            .blocks
+            .painted
+            .offset_at(block, event.position)
+            .unwrap_or(len);
+        let here = Caret { block, at };
+        let Some(page) = self.page() else { return };
+        let result = match event.click_count {
+            2 => page.select_word_at(here).map(|_| ()),
+            n if n >= 3 => page.select_block_text(block).map(|_| ()),
+            _ if event.modifiers.shift => match page.selection().ok().flatten() {
+                Some(leaf_editor::Selection::Text { start, end }) => {
+                    let caret = page.caret().ok().flatten();
+                    let tail = if caret == Some(start) { end } else { start };
+                    page.select_between(tail, here)
+                }
+                _ => match page.caret().ok().flatten() {
+                    Some(from) => page.select_between(from, here),
+                    None => page.set_caret(here).map(|_| ()),
+                },
+            },
+            _ => page.set_caret(here).map(|_| ()),
+        };
+        if let Err(err) = result {
+            super::report("could not place the caret", err);
+        }
+        self.blocks.drag = (event.click_count <= 1 && !event.modifiers.shift).then_some(here);
+        self.focus_page(window, cx);
+        self.restart_blink();
+    }
+
+    /// Dragging over `block`'s text with the button down selects from where the drag started.
+    fn on_text_drag(
+        &mut self,
+        block: leaf_core::BlockId,
+        event: &MouseMoveEvent,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if event.pressed_button != Some(MouseButton::Left) {
+            return;
+        }
+        let Some(from) = self.blocks.drag else { return };
+        let Some(at) = self.blocks.painted.offset_at(block, event.position) else {
+            return;
+        };
+        if let Some(page) = self.page() {
+            let _ = page.select_between(from, Caret { block, at });
+        }
+        cx.notify();
     }
 
     /// The text run for one piece: the block's look, then the piece's own formatting.
@@ -161,16 +235,25 @@ impl Shell {
         } else {
             None
         };
+        let underline = if piece.draft {
+            Some(UnderlineStyle {
+                thickness: px(1.0),
+                color: None,
+                wavy: false,
+            })
+        } else {
+            marks.link.as_ref().map(|_| UnderlineStyle {
+                thickness: px(1.0),
+                color: Some(theme.link),
+                wavy: false,
+            })
+        };
         TextRun {
             len: piece.bytes.len(),
             font,
             color,
             background_color: background,
-            underline: marks.link.as_ref().map(|_| UnderlineStyle {
-                thickness: px(1.0),
-                color: Some(theme.link),
-                wavy: false,
-            }),
+            underline,
             strikethrough: (marks.strike || look.done).then_some(StrikethroughStyle {
                 thickness: px(1.0),
                 color: None,

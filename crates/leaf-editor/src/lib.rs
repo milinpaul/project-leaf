@@ -10,6 +10,7 @@
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
 mod block_actions;
+mod block_menu;
 mod caret;
 mod clipboard;
 mod emoji_picker;
@@ -28,6 +29,7 @@ mod view;
 mod workspace_editor;
 
 pub use block_actions::BlockAction;
+pub use block_menu::{BlockMenu, MenuEntry, MenuItem, MenuKey, turn_into_kinds};
 pub use caret::{LineLayout, Motion, Vertical};
 pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};

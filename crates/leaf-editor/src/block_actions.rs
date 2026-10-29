@@ -22,6 +22,11 @@ pub enum BlockAction {
     Duplicate,
     /// Delete the blocks with everything nested in them.
     Delete,
+    /// Move the blocks, with everything nested in them, one place up among their siblings. Nothing
+    /// happens when they are already first, or don't share a parent ([`PageEditor::can_move`]).
+    MoveUp,
+    /// Move the blocks one place down among their siblings; the mirror of [`BlockAction::MoveUp`].
+    MoveDown,
 }
 
 impl PageEditor {
@@ -86,10 +91,77 @@ impl PageEditor {
                     self.select_blocks(&copies)?;
                 }
             }
+            BlockAction::MoveUp | BlockAction::MoveDown => {
+                let up = action == BlockAction::MoveUp;
+                if let Some((new_parent, index)) = self.move_place(&targets, up)? {
+                    self.doc.apply(PageCommand::MoveBlocks {
+                        ids: targets,
+                        new_parent,
+                        index,
+                    })?;
+                }
+            }
             BlockAction::Delete => {}
         }
         self.finish()?;
         self.caret()
+    }
+
+    /// Whether Move up (`up`) or Move down from `block`'s menu would do anything, to grey out the
+    /// menu entry.
+    pub fn can_move(&mut self, block: BlockId, up: bool) -> Result<bool, EditorError> {
+        let targets = self.action_targets(block)?;
+        Ok(self.move_place(&targets, up)?.is_some())
+    }
+
+    /// Where `MoveBlocks` should put `targets` to move them one place up or down: past the sibling
+    /// before the first of them, or after the one after the last. `None` at the edge, or when the
+    /// outermost targets have different parents (there is no single "one place" for them then).
+    fn move_place(
+        &self,
+        targets: &[BlockId],
+        up: bool,
+    ) -> Result<Option<(Option<BlockId>, usize)>, EditorError> {
+        let mut roots = Vec::new();
+        for &target in targets {
+            let nested = match self.doc.parent(target)? {
+                Some(parent) => self.covered_by(parent, targets)?,
+                None => false,
+            };
+            if !nested {
+                roots.push(target);
+            }
+        }
+        let Some(&first) = roots.first() else {
+            return Ok(None);
+        };
+        let parent = self.doc.parent(first)?;
+        for &root in &roots {
+            if self.doc.parent(root)? != parent {
+                return Ok(None);
+            }
+        }
+        let siblings = match parent {
+            Some(parent) => self.doc.children(parent)?,
+            None => self.doc.root_blocks(),
+        };
+        let positions: Vec<usize> = siblings
+            .iter()
+            .enumerate()
+            .filter(|(_, b)| roots.contains(b))
+            .map(|(i, _)| i)
+            .collect();
+        let (Some(&top), Some(&bottom)) = (positions.first(), positions.last()) else {
+            return Ok(None);
+        };
+        // `MoveBlocks` counts the destination index without the moved blocks themselves.
+        Ok(if up {
+            top.checked_sub(1).map(|index| (parent, index))
+        } else if bottom + 1 < siblings.len() {
+            Some((parent, bottom + 2 - positions.len()))
+        } else {
+            None
+        })
     }
 
     /// Whether `block` is one of `blocks` or nested inside one.
@@ -106,4 +178,4 @@ impl PageEditor {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

@@ -65,6 +65,18 @@ impl PaintedLayout {
         Some(self.nearest_on_line(block, &tops, line, position.x))
     }
 
+    /// Where the caret at `offset` in `block` is drawn (its top) and how tall it is, if painted.
+    pub(in crate::shell) fn caret_bounds(
+        &self,
+        block: BlockId,
+        offset: usize,
+    ) -> Option<(gpui::Point<Pixels>, Pixels)> {
+        let rows = self.0.borrow();
+        let row = rows.get(&block)?;
+        let at = row.layout.position_for_index(byte_of(&row.text, offset))?;
+        Some((at, row.layout.line_height()))
+    }
+
     /// Every character boundary of `block` with where it is drawn.
     fn positions(&self, block: BlockId) -> Vec<(usize, gpui::Point<Pixels>)> {
         let rows = self.0.borrow();

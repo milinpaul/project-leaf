@@ -26,8 +26,12 @@ pub struct Shell {
     editor: WorkspaceEditor,
     /// Title field of the open page. Typing in it renames the page.
     title: Entity<InputState>,
-    /// The open page's block inputs (interim editor, E07-S10).
-    blocks: blocks::BlockInputs,
+    /// The open page's list, painted layout, caret and drag state.
+    blocks: blocks::PageState,
+    /// The page's keyboard focus: while it has it, keys and typed text go to the page.
+    page_focus: FocusHandle,
+    /// The block menu's keyboard focus, while it is open.
+    menu_focus: FocusHandle,
     /// The sidebar's page tree: rename in progress, drag hint, scroll position.
     tree: tree::TreeState,
     /// The page icon picker while it is open, and its events.
@@ -79,7 +83,9 @@ impl Shell {
         Self {
             editor: WorkspaceEditor::new(workspace),
             title,
-            blocks: blocks::BlockInputs::default(),
+            blocks: blocks::PageState::default(),
+            page_focus: cx.focus_handle(),
+            menu_focus: cx.focus_handle(),
             tree: tree::TreeState::default(),
             icon_picker: None,
             storage,
@@ -119,6 +125,12 @@ impl Shell {
         }
     }
 
+    /// Puts the keyboard in the page title.
+    pub(super) fn focus_title(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.title.update(cx, |input, cx| input.focus(window, cx));
+        cx.notify();
+    }
+
     /// Loads the open page's title into the title field and focuses it. `set_value` does not emit
     /// change events, so this never records a rename.
     fn show_selected(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -156,11 +168,11 @@ impl Shell {
 }
 
 impl Render for Shell {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let sidebar = self.render_sidebar(cx);
 
         let page = if self.editor.selected().is_some() {
-            self.render_page(cx)
+            self.render_page(window, cx)
         } else {
             column(
                 div()
@@ -201,10 +213,13 @@ impl Render for Shell {
     }
 }
 
+mod block_menu;
 mod block_row;
 mod blocks;
 mod header;
+mod ime;
 mod markers;
+mod page_keys;
 mod page_list;
 #[cfg(test)]
 mod page_list_window_tests;
@@ -215,6 +230,7 @@ mod trash;
 mod tree;
 mod window;
 
+pub(crate) use page_keys::bind as bind_page_keys;
 pub use storage::Storage;
 
 impl Drop for Shell {
@@ -342,7 +358,7 @@ mod tests {
         cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
         cx.simulate_keystrokes("enter");
         cx.simulate_input("Keep");
-        let first = shell.read_with(cx, |shell, _| shell.focused_block().unwrap());
+        let first = shell.update(cx, |shell, _| shell.caret_block().unwrap());
         cx.simulate_keystrokes("enter");
         cx.update(|window, cx| window.draw(cx).clear(cx));
         assert_eq!(blocks(&shell, cx).len(), 2);
@@ -350,7 +366,7 @@ mod tests {
         cx.simulate_keystrokes("backspace");
         cx.update(|window, cx| window.draw(cx).clear(cx));
         assert_eq!(blocks(&shell, cx), vec![(0, "Keep".into())]);
-        assert_eq!(shell.read_with(cx, |shell, _| shell.focused_block()), Some(first));
+        assert_eq!(shell.update(cx, |shell, _| shell.caret_block()), Some(first));
         cx.simulate_keystrokes("backspace");
         assert_eq!(
             blocks(&shell, cx),
