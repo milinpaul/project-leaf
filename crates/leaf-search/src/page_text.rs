@@ -16,6 +16,18 @@ pub struct PageText {
     pub blocks: Vec<BlockText>,
 }
 
+/// Which save of a page the indexed rows came from, as `leaf_store::SavedVersion` reports it.
+///
+/// Stored with the rows, so the index can tell which pages changed since it last read them
+/// without the editor reporting anything (ADR 0024).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct PageVersion {
+    /// When the page was last saved, in Unix milliseconds: ties in ranking go to the newer page.
+    pub saved_at: i64,
+    /// The store's sequence number for that save; only ever grows, so it detects every change.
+    pub seq: i64,
+}
+
 /// The plain text of one block.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockText {

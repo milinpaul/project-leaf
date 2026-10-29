@@ -19,4 +19,8 @@ pub enum SearchError {
     /// A page couldn't be read while extracting its text (a block or page missing mid-read).
     #[error("search could not read a page: {0}")]
     Model(#[from] leaf_model::ModelError),
+
+    /// The saved documents couldn't be read (see [`crate::PageSource`]).
+    #[error("search could not read the saved pages: {0}")]
+    Source(crate::SourceError),
 }

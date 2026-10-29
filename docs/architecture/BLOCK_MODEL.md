@@ -178,7 +178,7 @@ Phase 0).
   a paragraph) wraps them in `PageDoc::as_one_step`, a Loro undo group, so it is still one undo step (ADR 0020).
 - An automatic change right after typing (a Markdown shortcut converting `# ` into a heading) uses
   `PageDoc::as_separate_step`: one step that never merges with the typing before or after it, so undo gives back the
-  typed characters (ADR 0024).
+  typed characters (ADR 0025).
 - `PageEditor::undo`/`redo` restore the whole selection, not just the caret.
 
 ## Invariants (checked in tests after every command)

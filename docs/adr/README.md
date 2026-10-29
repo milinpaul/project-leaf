@@ -40,4 +40,5 @@ Records cover two kinds of decision:
 | [0021](0021-selection-model.md) | Selection: text between two anchors, or whole blocks | Architecture | Accepted |
 | [0022](0022-mark-toggles-and-links.md) | Mark toggles decided over the whole selection; caret toggles wait for typing | Feature | Accepted |
 | [0023](0023-undo-restores-selection.md) | Undo restores the selection before an edit; redo the one right after | Architecture | Accepted |
-| [0024](0024-markdown-shortcuts.md) | Markdown shortcuts fire on typing and undo separately | Feature | Accepted |
+| [0024](0024-search-index-reconciles-with-saved-versions.md) | The search index reconciles with saved versions on a background thread | Architecture | Accepted |
+| [0025](0025-markdown-shortcuts.md) | Markdown shortcuts fire on typing and undo separately | Feature | Accepted |

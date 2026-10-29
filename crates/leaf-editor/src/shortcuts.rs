@@ -4,7 +4,7 @@
 //! The shortcut fires when the typing completes one of these exactly, with nothing else before the
 //! caret; text after the caret stays and becomes the converted block's text. The conversion is an undo
 //! step of its own, separate from the typing: undo right after it gives back the typed characters as
-//! plain text, in case the user meant them literally (ADR 0024).
+//! plain text, in case the user meant them literally (ADR 0025).
 
 use leaf_model::{BlockKind, Caret, PageCommand};
 

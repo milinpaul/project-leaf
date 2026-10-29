@@ -27,6 +27,7 @@ mod docs;
 mod error;
 pub mod migrations;
 mod store;
+mod versions;
 mod workspace;
 
 pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
@@ -34,4 +35,5 @@ pub use docs::{DocKey, Document, Recovered, Savable};
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;
 pub use store::Store;
+pub use versions::SavedVersion;
 pub use workspace::Workspace;

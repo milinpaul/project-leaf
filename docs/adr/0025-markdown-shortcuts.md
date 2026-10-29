@@ -1,4 +1,4 @@
-# 0024. Markdown shortcuts fire on typing and undo separately
+# 0025. Markdown shortcuts fire on typing and undo separately
 
 - **Status:** Accepted
 - **Type:** Feature

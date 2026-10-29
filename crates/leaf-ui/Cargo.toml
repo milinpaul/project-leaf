@@ -13,6 +13,7 @@ gpui-kit-assets.workspace = true
 leaf-core.workspace = true
 leaf-editor.workspace = true
 leaf-model.workspace = true
+leaf-search.workspace = true
 leaf-store.workspace = true
 
 [dev-dependencies]
