@@ -48,8 +48,7 @@ impl PageEditor {
         if kind == MarkKind::Link && !all {
             return Ok(());
         }
-        let caret = self.caret()?;
-        self.doc.set_caret(caret);
+        self.begin()?;
         self.doc.as_one_step(|doc| -> Result<(), EditorError> {
             for TextRange { block, range } in ranges {
                 let command = if all {
@@ -68,7 +67,8 @@ impl PageEditor {
                 doc.apply(command)?;
             }
             Ok(())
-        })
+        })?;
+        self.finish()
     }
 
     /// Cmd/Ctrl+K's popover saved an address. Over a selection, links all of it to `href`; with just a
@@ -81,8 +81,7 @@ impl PageEditor {
         let Some(ranges) = self.link_or_selection()? else {
             return Ok(());
         };
-        let caret = self.caret()?;
-        self.doc.set_caret(caret);
+        self.begin()?;
         self.doc.as_one_step(|doc| -> Result<(), EditorError> {
             for TextRange { block, range } in ranges {
                 doc.apply(PageCommand::SetMark {
@@ -92,7 +91,8 @@ impl PageEditor {
                 })?;
             }
             Ok(())
-        })
+        })?;
+        self.finish()
     }
 
     /// Removes the link from the selection, or from the whole link the caret is in. One undo step.
@@ -100,8 +100,7 @@ impl PageEditor {
         let Some(ranges) = self.link_or_selection()? else {
             return Ok(());
         };
-        let caret = self.caret()?;
-        self.doc.set_caret(caret);
+        self.begin()?;
         self.doc.as_one_step(|doc| -> Result<(), EditorError> {
             for TextRange { block, range } in ranges {
                 doc.apply(PageCommand::RemoveMark {
@@ -111,7 +110,8 @@ impl PageEditor {
                 })?;
             }
             Ok(())
-        })
+        })?;
+        self.finish()
     }
 
     /// The link the caret is in, with its whole extent and address, for the link popover. `None`

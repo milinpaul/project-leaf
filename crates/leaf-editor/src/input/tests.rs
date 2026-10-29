@@ -1,7 +1,7 @@
 //! Tests for typing and input-method composition (E04-S04).
 
 use leaf_core::BlockId;
-use leaf_model::{BlockKind, Caret, History, PageCommand, PageDoc, PageOutcome};
+use leaf_model::{BlockKind, Caret, History, PageCommand, PageDoc, PageOutcome, SavedSelection};
 
 use super::{Preedit, TextRange};
 use crate::{Motion, PageEditor};
@@ -78,9 +78,12 @@ fn typing_replaces_the_selection_in_one_undo_step() {
     assert_eq!(
         editor.doc.undo().unwrap(),
         History::Done {
-            caret: Some(at(ids[0], 11))
+            selection: Some(SavedSelection {
+                tail: Some(at(ids[0], 6)),
+                ..SavedSelection::at(at(ids[0], 11))
+            })
         },
-        "the caret as it was before typing: the selection's end"
+        "the selection as it was before typing, caret at its end"
     );
     assert_eq!(text(&editor, ids[0]), "hello world");
 }

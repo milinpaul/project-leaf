@@ -10,6 +10,7 @@
 
 mod caret;
 mod format;
+mod history;
 mod input;
 mod keys;
 mod page_editor;

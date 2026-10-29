@@ -3,7 +3,7 @@
 //! Arrow keys are tested in `caret/vertical`; paste comes with E05-S06.
 
 use leaf_core::{AssetId, BlockId};
-use leaf_model::{BlockKind, Caret, History, Mark, PageCommand, PageDoc, PageOutcome};
+use leaf_model::{BlockKind, Caret, History, Mark, PageCommand, PageDoc, PageOutcome, SavedSelection};
 
 use super::{Key, KeyOutcome};
 use crate::PageEditor;
@@ -87,7 +87,9 @@ fn press_and_undo(editor: &mut PageEditor, caret: Caret, key: Key) -> KeyOutcome
     if after != before {
         assert_eq!(
             editor.doc.undo().unwrap(),
-            History::Done { caret: Some(caret) },
+            History::Done {
+                selection: Some(SavedSelection::at(caret))
+            },
             "{key:?}: one undo step, back to the caret before the key"
         );
         assert_eq!(outline(editor), before, "{key:?}: undo restores the page");
@@ -294,7 +296,7 @@ fn row_deleting_a_block_deletes_its_children_in_one_undo_step() {
     assert_eq!(
         editor.doc.undo().unwrap(),
         History::Done {
-            caret: Some(at(ids[1], 2))
+            selection: Some(SavedSelection::at(at(ids[1], 2)))
         }
     );
     assert_eq!(outline(&editor), before);
