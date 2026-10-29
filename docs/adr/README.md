@@ -59,3 +59,4 @@ Records cover two kinds of decision:
 | [0040](0040-page-takes-the-keyboard.md) | The page takes the keyboard: actions for keys, the platform text input for typing and input methods | Architecture | Accepted |
 | [0041](0041-block-handle-menu.md) | The block menu is editor state; Move up/down move among siblings | Feature | Accepted |
 | [0042](0042-search-bar-model.md) | Search bar model: titles at once, full text after a pause, stale results dropped by id | Feature | Accepted |
+| [0043](0043-slash-menu-popover.md) | The slash popover keeps the page's keyboard and opens above the line near the bottom edge | Feature | Accepted |

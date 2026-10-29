@@ -171,6 +171,8 @@ impl Shell {
         self.blocks.caret = caret;
         self.blocks.draft = draft;
         self.blink_while(caret.is_some(), cx);
+        // Placed by where the `/` was drawn last frame: this frame's layout is only known once painted.
+        let slash = self.render_slash_popover(window, cx);
         self.blocks.painted.clear();
         self.blocks.list.sync(self.editor.selected(), rows);
 
@@ -224,7 +226,8 @@ impl Shell {
                     .child(rows),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
-            .children(menu);
+            .children(menu)
+            .children(slash);
         let page = Self::with_block_menu_action(page, cx);
         Self::with_page_actions(page, cx).into_any_element()
     }

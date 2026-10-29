@@ -46,6 +46,7 @@ gpui_kit_assets::icon_assets!(
         Heading3,
         List,
         ListOrdered,
+        Minus,
         PencilLine,
         Repeat,
         RotateCcw,
