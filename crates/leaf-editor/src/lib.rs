@@ -15,6 +15,7 @@ mod input;
 mod keys;
 mod page_editor;
 mod selection;
+mod shortcuts;
 mod view;
 mod workspace_editor;
 

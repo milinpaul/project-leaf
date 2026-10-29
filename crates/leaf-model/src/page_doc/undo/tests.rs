@@ -437,3 +437,53 @@ fn recording_after_an_action_that_changed_nothing_leaves_the_last_step_alone() {
     page.undo().unwrap();
     assert_eq!(page.redo().unwrap().caret(), Some(Caret { block: id, at: 3 }));
 }
+
+#[test]
+fn a_separate_step_merges_with_neither_the_typing_before_nor_after_it() {
+    let mut page = fresh();
+    let id = add(&mut page, None, BlockKind::Paragraph, "");
+    let mut page = PageDoc::from_bytes(&page.to_bytes().unwrap()).unwrap();
+    page.set_undo_merge_interval(60_000);
+    let typed = |page: &mut PageDoc, pos, text: &str| {
+        page.apply(PageCommand::InsertText {
+            id,
+            pos,
+            text: text.into(),
+        })
+        .unwrap();
+    };
+    typed(&mut page, 0, "#");
+    typed(&mut page, 1, " ");
+    page.as_separate_step(|page| {
+        page.apply(PageCommand::DeleteText { id, range: 0..2 })?;
+        page.apply(PageCommand::SetBlockKind {
+            id,
+            kind: BlockKind::Heading { level: 1 },
+        })
+    })
+    .unwrap();
+    typed(&mut page, 0, "T");
+    typed(&mut page, 1, "o");
+
+    page.undo().unwrap();
+    assert_eq!(
+        page.plain_text(id).unwrap().as_deref(),
+        Some(""),
+        "the typing after, as one step"
+    );
+    assert_eq!(page.kind(id).unwrap(), BlockKind::Heading { level: 1 });
+    page.undo().unwrap();
+    assert_eq!(
+        page.plain_text(id).unwrap().as_deref(),
+        Some("# "),
+        "the conversion alone"
+    );
+    assert_eq!(page.kind(id).unwrap(), BlockKind::Paragraph);
+    page.undo().unwrap();
+    assert_eq!(
+        page.plain_text(id).unwrap().as_deref(),
+        Some(""),
+        "the typing before"
+    );
+    assert_eq!(page.undo().unwrap(), History::Nothing);
+}

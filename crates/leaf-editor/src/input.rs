@@ -34,7 +34,8 @@ pub(crate) struct Composing {
 
 impl PageEditor {
     /// Types `text`: replaces the selection, or inserts at the caret, as one undo step, and puts
-    /// the caret after it. A selection across blocks is deleted first (joining what is left), in the
+    /// the caret after it. If that completes a Markdown shortcut at the start of the block (`# `,
+    /// `- `, …), the block is converted, as an undo step of its own. A selection across blocks is deleted first (joining what is left), in the
     /// same step. Empty text, no caret, a block without text (a divider), or whole blocks selected
     /// change nothing.
     pub fn insert_text(&mut self, text: &str) -> Result<Option<Caret>, EditorError> {
@@ -75,7 +76,7 @@ impl PageEditor {
             self.carry_pending(pending, after);
         }
         self.finish()?;
-        Ok(Some(after))
+        Ok(Some(self.markdown_shortcut(after)?.unwrap_or(after)))
     }
 
     /// The input method's draft changed. `cursor` is its own cursor inside `text`, in Unicode

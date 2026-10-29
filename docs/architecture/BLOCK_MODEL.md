@@ -176,6 +176,9 @@ Phase 0).
 - Each command commits once, so it is one undo step. Continuous typing is grouped with the manager's merge interval (~500 ms).
 - A key that needs several commands (Enter over a selection: delete, then split; leaving a code block: trim, then add
   a paragraph) wraps them in `PageDoc::as_one_step`, a Loro undo group, so it is still one undo step (ADR 0020).
+- An automatic change right after typing (a Markdown shortcut converting `# ` into a heading) uses
+  `PageDoc::as_separate_step`: one step that never merges with the typing before or after it, so undo gives back the
+  typed characters (ADR 0024).
 - `PageEditor::undo`/`redo` restore the whole selection, not just the caret.
 
 ## Invariants (checked in tests after every command)
