@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use gpui::{
     AnyElement, AppContext as _, ClickEvent, Context, Entity, InteractiveElement as _, IntoElement,
-    ParentElement, SharedString, Styled, Subscription, Window, div, list, px,
+    ParentElement, SharedString, Styled, Subscription, Task, Window, div, list, px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{
@@ -22,6 +22,7 @@ use leaf_model::BlockKind;
 
 use super::column;
 use super::page_list::{HEADER_ITEMS, PageList};
+use super::rich_text::{Highlight, PaintedLayout, highlights};
 use super::{Shell, report};
 
 /// The block inputs of the open page and which one has focus.
@@ -32,6 +33,16 @@ pub(super) struct BlockInputs {
     pub(super) focused: Option<BlockId>,
     /// The page's rows as a virtual list: only those on screen are laid out.
     pub(super) list: PageList,
+    /// How the rows drawn as text were laid out in the last frame, for Up/Down and clicks.
+    pub(super) painted: PaintedLayout,
+    /// The editor's selection, per row, as of this frame.
+    pub(super) highlights: HashMap<BlockId, Highlight>,
+    /// The editor's caret as of this frame.
+    pub(super) caret: Option<Caret>,
+    /// Whether the caret is in the visible half of its blink.
+    pub(super) caret_on: bool,
+    /// Toggles `caret_on` while a caret is drawn by the text view; dropped (stopped) otherwise.
+    blink: Option<Task<()>>,
 }
 
 /// The "Turn into" toolbar: label and the kind each button applies.
@@ -123,7 +134,7 @@ impl Shell {
     }
 
     /// Focuses a block and puts the text cursor at `caret.at` (a Unicode scalar position).
-    fn focus_caret(&mut self, caret: Caret, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn focus_caret(&mut self, caret: Caret, window: &mut Window, cx: &mut Context<Self>) {
         self.focus_block(caret.block, window, cx);
         if let Some(input) = self.blocks.inputs.get(&caret.block) {
             input.update(cx, |input, cx| {
@@ -294,6 +305,15 @@ impl Shell {
         let live: std::collections::HashSet<BlockId> = rows.iter().map(|row| row.id).collect();
         self.blocks.inputs.retain(|id, _| live.contains(id));
         self.blocks.subscriptions.retain(|id, _| live.contains(id));
+        // The editor's selection and caret, drawn by the text view in the rows it draws.
+        let (selection, caret) = match self.page() {
+            Some(page) => (page.selection().ok().flatten(), page.caret().ok().flatten()),
+            None => (None, None),
+        };
+        self.blocks.highlights = highlights(&rows, selection.as_ref());
+        self.blocks.caret = caret;
+        self.blink_while(caret.is_some_and(|c| Some(c.block) != self.blocks.focused), cx);
+        self.blocks.painted.clear();
         self.blocks.list.sync(self.editor.selected(), rows);
 
         let toolbar = h_flex()
@@ -323,6 +343,32 @@ impl Shell {
             .child(column(div().pt_2().pb_1().child(toolbar)))
             .child(rows)
             .into_any_element()
+    }
+
+    /// Keeps the caret blinking while `showing`; stops the timer otherwise. The caret starts visible.
+    fn blink_while(&mut self, showing: bool, cx: &mut Context<Self>) {
+        if !showing {
+            self.blocks.blink = None;
+            self.blocks.caret_on = true;
+            return;
+        }
+        if self.blocks.blink.is_none() {
+            self.blocks.caret_on = true;
+            self.blocks.blink = Some(cx.spawn(async move |shell, cx| {
+                loop {
+                    cx.background_executor()
+                        .timer(std::time::Duration::from_millis(530))
+                        .await;
+                    let toggled = shell.update(cx, |shell, cx| {
+                        shell.blocks.caret_on = !shell.blocks.caret_on;
+                        cx.notify();
+                    });
+                    if toggled.is_err() {
+                        break;
+                    }
+                }
+            }));
+        }
     }
 
     /// List item `item`: the page header (icon and title) first, then one block each. The header is

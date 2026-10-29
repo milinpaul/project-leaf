@@ -7,7 +7,9 @@
 //! ```
 //!
 //! Opens the workspace's first page. With `first block`, scrolls so that block (counted from 0) is
-//! at the top. With `dark`, uses the dark appearance. With `bench`, also scrolls through the
+//! at the top. With `dark`, uses the dark appearance. `caret=B:C` puts the caret at character C of
+//! block B; `select=B:C-B:C` selects from one to the other (blocks and characters counted from 0).
+//! With `bench`, also scrolls through the
 //! page, timing how long each frame takes to lay out and paint, and prints the results.
 
 fn main() {
@@ -45,6 +47,12 @@ mod mac {
         let scroll: Option<usize> = rest.iter().find_map(|a| a.parse().ok());
         let dark = rest.iter().any(|a| a == "dark");
         let bench = rest.iter().any(|a| a == "bench");
+        let place = |prefix: &str| {
+            rest.iter()
+                .find_map(|a| a.strip_prefix(prefix).map(str::to_owned))
+        };
+        let caret_arg = place("caret=");
+        let select_arg = place("select=");
 
         let platform = gpui_platform::current_platform(false);
         let mut cx = VisualTestAppContext::with_asset_source(platform, Arc::new(leaf_ui::assets()));
@@ -75,6 +83,24 @@ mod mac {
                 }
                 if let Some(block) = scroll {
                     shell.scroll_page_to(block, cx);
+                }
+                if let Some(page) = shell.editor_mut().open_page().ok().flatten() {
+                    let rows = page.rows().unwrap_or_default();
+                    let caret = |spec: &str| -> Option<leaf_model::Caret> {
+                        let (block, at) = spec.split_once(':')?;
+                        Some(leaf_model::Caret {
+                            block: rows.get(block.parse::<usize>().ok()?)?.id,
+                            at: at.parse().ok()?,
+                        })
+                    };
+                    if let Some(at) = caret_arg.as_deref().and_then(caret) {
+                        let _ = page.set_caret(at);
+                    }
+                    if let Some((from, to)) = select_arg.as_deref().and_then(|s| s.split_once('-'))
+                        && let (Some(from), Some(to)) = (caret(from), caret(to))
+                    {
+                        let _ = page.select_between(from, to);
+                    }
                 }
             });
         })?;

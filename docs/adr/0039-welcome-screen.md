@@ -1,4 +1,4 @@
-# 0038. Welcome screen: one window that switches between the welcome screen and a workspace
+# 0039. Welcome screen: one window that switches between the welcome screen and a workspace
 
 - **Status:** Accepted
 - **Type:** Feature
