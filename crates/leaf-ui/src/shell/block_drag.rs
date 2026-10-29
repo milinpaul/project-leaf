@@ -102,6 +102,11 @@ impl DrawnRows {
         .into_any_element()
     }
 
+    /// Where `block`'s row was drawn in the last frame, if it was.
+    pub(super) fn bounds_of(&self, block: BlockId) -> Option<Bounds<Pixels>> {
+        self.0.borrow().iter().find(|(b, _)| *b == block).map(|(_, b)| *b)
+    }
+
     /// The rows top to bottom as the editor wants them, and where top-level text starts.
     fn boxes(&self) -> (Vec<RowBox>, f32) {
         let mut rows = self.0.borrow().clone();
