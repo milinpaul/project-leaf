@@ -216,6 +216,7 @@ impl Render for Shell {
     }
 }
 
+mod block_drag;
 mod block_menu;
 mod block_row;
 mod blocks;
