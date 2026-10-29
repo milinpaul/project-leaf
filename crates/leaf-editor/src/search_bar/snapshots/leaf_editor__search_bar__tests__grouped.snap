@@ -1,0 +1,10 @@
+---
+source: crates/leaf-editor/src/search_bar/tests.rs
+expression: render(&bar)
+---
+> · [Garden] plan  —  Projects
+  · Journal  (opens at block)
+      planted tomatoes in the [garden] today
+      …raised [garden] beds
+  · Recipes  (opens at block)
+      [garden] soup

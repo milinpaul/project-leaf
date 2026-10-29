@@ -3,7 +3,7 @@
 //! Opening takes a snapshot of the live pages (titles, icons and where each one lives) in one walk of
 //! the tree, so typing only re-scores titles and never reads the document. With nothing typed it lists
 //! recently opened pages first. Everything is keyboard driven: the UI forwards typing, Up/Down and Enter.
-//! The search bar (E11-S05) extends this with full-text results.
+//! The search bar ([`crate::SearchBar`]) builds on this, adding full-text results.
 
 use std::ops::Range;
 
@@ -122,6 +122,15 @@ impl QuickSwitcher {
     #[must_use]
     pub fn chosen(&self) -> Option<PageId> {
         self.results.get(self.selected).map(|result| result.page)
+    }
+
+    /// `page`'s row with nothing highlighted, if it is a live page: how the search bar shows a page
+    /// that only the full-text index found.
+    pub(crate) fn describe(&self, page: PageId) -> Option<SwitcherResult> {
+        self.entries
+            .iter()
+            .find(|entry| entry.page == page)
+            .map(|entry| result(entry, Vec::new()))
     }
 
     fn refresh(&mut self) {

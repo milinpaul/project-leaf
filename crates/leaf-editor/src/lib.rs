@@ -1,4 +1,5 @@
-//! UI-free editor logic: cursor, selection, key handling, slash menu and clipboard.
+//! UI-free editor logic: cursor, selection, key handling, slash menu, clipboard, quick switcher and
+//! search bar.
 //!
 //! The editor turns key presses and mouse actions into model `Command`s, and turns documents into
 //! view models that the UI only has to draw. All editing behaviour lives here as plain Rust so it
@@ -18,6 +19,7 @@ mod history;
 mod input;
 mod keys;
 mod page_editor;
+mod search_bar;
 mod selection;
 mod shortcuts;
 mod slash;
@@ -33,6 +35,10 @@ pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use page_editor::{Backspace, Caret, PageEditor};
+pub use search_bar::{
+    BlockMatch, Destination, ExcerptRow, Marked, PageRow, SEARCH_DELAY_MS, SearchBar, SearchHit, SearchKey,
+    SearchOutcome, SearchRequest, SearchRow, Shortcut, ShortcutAction, shortcut_action,
+};
 pub use selection::{Selection, TextRange};
 pub use slash::{SlashItem, SlashMenu};
 pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
