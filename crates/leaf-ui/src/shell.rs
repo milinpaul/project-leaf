@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use gpui::{
     AppContext as _, ClickEvent, Context, Entity, FontWeight, IntoElement, ParentElement, Render, Styled,
-    Subscription, Window, div, rems,
+    Subscription, Window, div, px, rems,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputEvent, InputState};
@@ -18,6 +18,8 @@ use gpui_component::{ActiveTheme as _, h_flex, v_flex};
 use leaf_core::PageId;
 use leaf_editor::{SidebarItem, UNTITLED, WorkspaceEditor};
 use leaf_model::Workspace;
+
+use crate::theme;
 
 /// Top-level view of a Leaf window.
 pub struct Shell {
@@ -58,7 +60,10 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> Self {
         let title = cx.new(|cx| InputState::new(window, cx).placeholder(UNTITLED));
-        let subscriptions = vec![cx.subscribe_in(&title, window, Self::on_title_event)];
+        let subscriptions = vec![
+            cx.subscribe_in(&title, window, Self::on_title_event),
+            crate::theme::follow_system(window),
+        ];
         Self {
             editor: WorkspaceEditor::new(workspace),
             title,
@@ -162,28 +167,36 @@ impl Render for Shell {
             .header(new_page)
             .child(SidebarGroup::new("Pages").child(SidebarMenu::new().children(rows)));
 
-        let page = v_flex().flex_1().h_full().p_6().gap_3();
-        let page = if self.editor.selected().is_some() {
-            // The title reads as the page's heading 1, not a form field: no box, large and bold.
-            page.child(
-                Input::new(&self.title)
-                    .appearance(false)
-                    .focus_bordered(false)
-                    .text_3xl()
-                    .font_weight(FontWeight::BOLD)
-                    // The input's own height and line height fit body text; size them to the heading.
-                    .h_12()
-                    .line_height(rems(2.25))
-                    .px_0(),
-            )
-            .child(self.render_blocks(window, cx))
+        // A centred column no wider than a comfortable line, with room above the title.
+        let column = v_flex()
+            .w_full()
+            .max_w(px(theme::READING_WIDTH))
+            .px_10()
+            .pt_16()
+            .gap_3();
+        let column = if self.editor.selected().is_some() {
+            // The title reads as the page's heading, not a form field: no box, large and bold.
+            column
+                .child(
+                    Input::new(&self.title)
+                        .appearance(false)
+                        .focus_bordered(false)
+                        .text_size(px(theme::TITLE_SIZE))
+                        .font_weight(FontWeight::BOLD)
+                        // The input's own height and line height fit body text; size them to the heading.
+                        .line_height(rems(2.75))
+                        .h(rems(3.25))
+                        .px_0(),
+                )
+                .child(self.render_blocks(window, cx))
         } else {
-            page.child(
+            column.child(
                 div()
                     .text_color(cx.theme().muted_foreground)
                     .child("Create a page with New page."),
             )
         };
+        let page = v_flex().flex_1().h_full().items_center().child(column);
         h_flex()
             .size_full()
             .items_start()

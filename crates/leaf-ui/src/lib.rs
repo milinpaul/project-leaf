@@ -1,4 +1,5 @@
-//! GPUI components and theme that draw Leaf's view models and forward input events.
+//! GPUI components and theme that draw Leaf's view models and forward input events. Leaf's look
+//! (colours, fonts, sizes) lives in [`theme`].
 //!
 //! This crate renders and nothing more: editing decisions belong in `leaf-editor`. It also wraps
 //! every `gpui-component` widget the app uses, so a future change of UI framework touches only
@@ -9,6 +10,7 @@
 
 mod notice;
 mod shell;
+pub mod theme;
 
 use std::path::Path;
 
@@ -25,9 +27,11 @@ pub fn assets() -> impl gpui::AssetSource {
     gpui_kit_assets::Assets
 }
 
-/// Sets up themes and widgets. Call once at startup, before opening any window.
+/// Sets up widgets, Leaf's fonts and its light and dark themes. Call once at startup, before opening
+/// any window.
 pub fn init(cx: &mut App) {
     gpui_component::init(cx);
+    theme::init(cx);
 }
 
 /// Builds the root view of a Leaf window: the shell wrapped in gpui-component's `Root`, which

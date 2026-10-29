@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use gpui::{
     AnyElement, AppContext as _, ClickEvent, Context, ElementId, Entity, FontWeight, InteractiveElement as _,
     IntoElement, MouseButton, MouseDownEvent, ParentElement, SharedString, Styled, Subscription, Window, div,
-    px, rems,
+    px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::checkbox::Checkbox;
@@ -23,6 +23,7 @@ use leaf_editor::{Backspace, BlockRow, BlockStyle, Caret, PageEditor};
 use leaf_model::BlockKind;
 
 use super::{Shell, report};
+use crate::theme;
 
 /// Indent per nesting level.
 const INDENT_PX: f32 = 24.0;
@@ -310,7 +311,18 @@ impl Shell {
 
     fn render_row(&mut self, row: BlockRow, window: &mut Window, cx: &mut Context<Self>) -> AnyElement {
         let indent = px(INDENT_PX * f32::from(u16::try_from(row.depth).unwrap_or(u16::MAX)));
-        let line = h_flex().w_full().items_center().gap_2().pl(indent);
+        // Headings get room above them, so a page reads as sections rather than a wall of lines.
+        let space_above = match row.style {
+            BlockStyle::Heading(1) => px(18.0),
+            BlockStyle::Heading(_) => px(12.0),
+            _ => px(0.0),
+        };
+        let line = h_flex()
+            .w_full()
+            .items_center()
+            .gap_2()
+            .pl(indent)
+            .pt(space_above);
         let Some(text) = row.text else {
             let placeholder = match &row.style {
                 BlockStyle::Divider => {
@@ -344,15 +356,13 @@ impl Shell {
         let muted = cx.theme().muted_foreground;
         let input = match &row.style {
             BlockStyle::Heading(level) => {
-                let (input, height) = match level {
-                    1 => (input.text_3xl(), rems(2.25)),
-                    2 => (input.text_2xl(), rems(2.0)),
-                    _ => (input.text_xl(), rems(1.75)),
-                };
+                let size = theme::HEADING_SIZES[usize::from((*level).clamp(1, 3) - 1)];
+                let height = px((size * 1.3).round());
                 input
-                    .font_weight(FontWeight::BOLD)
+                    .text_size(px(size))
+                    .font_weight(FontWeight::SEMIBOLD)
                     .line_height(height)
-                    .h(height + rems(0.5))
+                    .h(height + px(10.0))
             }
             BlockStyle::Code { .. } => input.font_family(cx.theme().mono_font_family.clone()).text_sm(),
             BlockStyle::Todo { checked: true } => input.text_color(muted),
