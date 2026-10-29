@@ -10,6 +10,7 @@
 use leaf_model::{Caret, PageCommand};
 
 use crate::caret::motion;
+use crate::format::apply_pending;
 use crate::selection::delete_span;
 use crate::{EditorError, PageEditor, TextRange};
 
@@ -46,29 +47,34 @@ impl PageEditor {
         // Undo puts the caret back where it was before the typing.
         self.doc.set_caret(Some(caret));
         let (start, end) = self.text_selection()?.unwrap_or((caret, caret));
-        if start.block == end.block {
-            self.doc.apply(PageCommand::ReplaceText {
-                id: start.block,
-                range: start.at..end.at,
-                text: text.to_owned(),
-            })?;
-        } else {
-            let order = self.order()?;
-            self.doc.as_one_step(|doc| -> Result<(), EditorError> {
+        let pending = self.pending_at(caret).unwrap_or_default();
+        let typed = text.chars().count();
+        let order = self.order()?;
+        self.doc.as_one_step(|doc| -> Result<(), EditorError> {
+            if start.block == end.block {
+                doc.apply(PageCommand::ReplaceText {
+                    id: start.block,
+                    range: start.at..end.at,
+                    text: text.to_owned(),
+                })?;
+            } else {
                 let at = delete_span(doc, &order, start, end)?;
                 doc.apply(PageCommand::InsertText {
                     id: at.block,
                     pos: at.at,
                     text: text.to_owned(),
                 })?;
-                Ok(())
-            })?;
-        }
-        let after = Caret {
-            at: start.at + text.chars().count(),
+            }
+            apply_pending(doc, start.block, start.at..start.at + typed, &pending)
+        })?;
+        let after = self.set_caret(Caret {
+            at: start.at + typed,
             ..start
-        };
-        self.set_caret(after).map(Some)
+        })?;
+        if !pending.is_empty() {
+            self.carry_pending(pending, after);
+        }
+        Ok(Some(after))
     }
 
     /// The input method's draft changed. `cursor` is its own cursor inside `text`, in Unicode

@@ -9,6 +9,7 @@
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
 mod caret;
+mod format;
 mod input;
 mod keys;
 mod page_editor;
