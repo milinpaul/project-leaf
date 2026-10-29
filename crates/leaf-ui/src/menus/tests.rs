@@ -1,6 +1,6 @@
 use gpui::{Action, MenuItem};
 
-use super::{CloseWindow, NewPage, OpenSettings, Quit, ToggleSidebar, key_bindings, menus};
+use super::{CloseWindow, NewPage, OpenSettings, QuickSwitch, Quit, ToggleSidebar, key_bindings, menus};
 
 /// The menus' titles and their items' labels, separators left out.
 fn outline() -> Vec<(String, Vec<String>)> {
@@ -31,7 +31,7 @@ fn the_standard_menus_are_there() {
     };
     assert_eq!(titles, expected);
     assert_eq!(outline[0].1, ["About Leaf", "Settings…", "Quit Leaf"]);
-    assert_eq!(outline[1].1, ["New Page", "Close Window"]);
+    assert_eq!(outline[1].1, ["New Page", "Go to Page…", "Close Window"]);
     assert_eq!(
         outline[2].1,
         ["Undo", "Redo", "Cut", "Copy", "Paste", "Select All"]
@@ -62,6 +62,7 @@ fn app_actions_have_their_standard_shortcuts() {
         (&Quit as &dyn Action, "q"),
         (&OpenSettings, ","),
         (&NewPage, "n"),
+        (&QuickSwitch, "p"),
         (&CloseWindow, "w"),
         (&ToggleSidebar, "\\"),
     ] {
