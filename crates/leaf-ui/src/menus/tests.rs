@@ -1,7 +1,7 @@
 use gpui::{Action, MenuItem};
 
 use super::{
-    CloseWindow, NewPage, OpenRecent, OpenSettings, OpenWorkspace, QuickSwitch, Quit, ToggleSidebar,
+    CloseWindow, NewPage, OpenRecent, OpenSettings, OpenWorkspace, Quit, Search, SearchOrLink, ToggleSidebar,
     key_bindings, menus,
 };
 
@@ -38,7 +38,7 @@ fn the_standard_menus_are_there() {
         outline[1].1,
         [
             "New Page",
-            "Go to Page…",
+            "Search…",
             "New Workspace…",
             "Open Workspace…",
             "Switch Workspace…",
@@ -75,7 +75,8 @@ fn app_actions_have_their_standard_shortcuts() {
         (&Quit as &dyn Action, "q"),
         (&OpenSettings, ","),
         (&NewPage, "n"),
-        (&QuickSwitch, "p"),
+        (&Search, "p"),
+        (&SearchOrLink, "k"),
         (&OpenWorkspace, "o"),
         (&CloseWindow, "w"),
         (&ToggleSidebar, "\\"),
