@@ -35,7 +35,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 ### Workspace and pages
 - Create or open a workspace (a local directory).
 - Sidebar page tree: nested pages, expand/collapse, create, rename, move (drag), reorder, delete to trash, restore.
-- Page has a title, an optional emoji icon and an optional cover (five built-in covers to start).
+- Page has a title, an optional emoji icon and an optional cover (six built-in covers to start).
 - Quick switcher (`Cmd/Ctrl+P`): fuzzy search by page title.
 
 ### Search
