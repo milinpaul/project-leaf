@@ -254,7 +254,11 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 - **Autosave (`Autosave`):** each document is saved at most 300 ms after its *first* unsaved change (a throttle,
   so steady typing can't postpone it), and everything pending is saved on blur/quit. The policy takes the time
   as an argument and runs no timer itself; the app does (ADR 0011).
-- **Compaction:** when a doc has > 200 updates, write a fresh snapshot and delete them, in one transaction.
+- **Compaction (`Store::compact`, ADR 0048):** the save that takes a doc past 200 updates folds them into a fresh
+  snapshot (`leaf_model::fold_saved`, bytes only, so unknown data and history are kept) and deletes them, in one
+  transaction; the doc's last-saved time is unchanged. A failed compaction is logged and leaves everything as it
+  was; the next save tries again. An update that can't be read, or one waiting for a lost one, stops compaction,
+  so it is never folded away (ADR 0012).
 - **Saving (`Store::save`):** a document's first save writes its snapshot; each later save appends one update with
   every commit since the previous save (`unsaved_changes` / `mark_saved` on `Workspace` and `PageDoc`). Nothing is
   written when nothing changed. Keys: `workspace` or the page's `PageId` (ADR 0010).

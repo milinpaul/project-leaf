@@ -72,3 +72,24 @@ pub(crate) fn import_each(
         .map(|(i, _)| i)
         .collect())
 }
+
+/// Folds a saved snapshot and the updates saved after it into one new snapshot of exactly the same
+/// document, history included, so it keeps merging with copies elsewhere (compaction, E03-S05).
+///
+/// Works on bytes alone, for pages and the workspace alike, and never looks inside: data from a
+/// newer Leaf is carried over untouched. Returns `None` when an update is waiting for a change that
+/// isn't saved (a lost row): folding then would drop it, so the saved form must stay as it is. A
+/// damaged update is an error, for the same reason.
+pub fn fold_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Option<Vec<u8>>, ModelError> {
+    let doc = LoroDoc::new();
+    if doc.import(snapshot)?.pending.is_some() {
+        return Ok(None);
+    }
+    if !updates.is_empty() && doc.import_batch(updates)?.pending.is_some() {
+        return Ok(None);
+    }
+    Ok(Some(doc.export(ExportMode::Snapshot)?))
+}
+
+#[cfg(test)]
+mod tests;
