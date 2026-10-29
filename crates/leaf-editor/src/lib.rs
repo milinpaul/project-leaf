@@ -1,5 +1,5 @@
-//! UI-free editor logic: cursor, selection, key handling, slash menu, clipboard, quick switcher and
-//! search bar.
+//! UI-free editor logic: cursor, selection, key handling, slash menu, block menu, dragging blocks,
+//! clipboard, quick switcher and search bar.
 //!
 //! The editor turns key presses and mouse actions into model `Command`s, and turns documents into
 //! view models that the UI only has to draw. All editing behaviour lives here as plain Rust so it
@@ -14,6 +14,7 @@ mod block_menu;
 mod caret;
 mod clipboard;
 mod cover;
+mod drag;
 mod emoji_picker;
 mod format;
 mod fuzzy;
@@ -34,6 +35,7 @@ pub use block_menu::{BlockMenu, MenuEntry, MenuItem, MenuKey, turn_into_kinds};
 pub use caret::{LineLayout, Motion, Vertical};
 pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use cover::{BuiltinCover, PageCover};
+pub use drag::{BlockDrop, RowBox};
 pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use input::Preedit;
