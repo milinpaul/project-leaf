@@ -8,9 +8,14 @@ publish.workspace = true
 
 [dependencies]
 leaf-core.workspace = true
+leaf-model.workspace = true
 rusqlite.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+# Only to write a block of a kind this version doesn't know, as a newer Leaf would.
+loro.workspace = true
 
 [lints]
 workspace = true

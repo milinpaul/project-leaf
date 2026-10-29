@@ -37,7 +37,7 @@ deny:
 wasm:
     cargo check --locked --target wasm32-unknown-unknown -p leaf-core -p leaf-model -p leaf-editor
 
-# Validate backlog and regenerate backlog.json
+# Validate backlog and regenerate backlog.json (local only, gitignored)
 backlog:
     python3 scripts/backlog.py
 
@@ -56,6 +56,7 @@ board:
 # Everything CI runs (run before declaring work done)
 check: lint test cov deny wasm
     python3 scripts/backlog.py --check
+    python3 -m unittest discover -s scripts -p 'test_*.py'
 
 # Launch the app (on macOS from a Leaf.app bundle, so the Dock shows its name and icon)
 [macos]

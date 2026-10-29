@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Backlog tool: validates backlog/*.md and generates backlog/backlog.json.
 
-The markdown files are the source of truth. backlog.json is generated for the
-control panel and must never be edited by hand.
+The markdown files are the source of truth. backlog.json and board.html are
+generated locally and gitignored: committing them made every two PRs that
+touched stories conflict (E00-S09). Never edit them by hand.
 
 Usage:
   python3 scripts/backlog.py            # validate + write backlog.json
-  python3 scripts/backlog.py --check    # validate + fail if backlog.json is stale (CI)
+  python3 scripts/backlog.py --check    # validate only, write nothing (CI)
   python3 scripts/backlog.py next       # print the next ready story for an agent
   python3 scripts/backlog.py summary    # counts per status
   python3 scripts/backlog.py session    # context summary (used by the SessionStart hook)
@@ -367,10 +368,7 @@ def main(argv: list[str]) -> int:
         print(session_summary(data))
         return 0
     if "--check" in argv:
-        current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-        if current != render(data):
-            print("backlog.json is stale: run `just backlog`", file=sys.stderr)
-            return 1
+        # load() above already failed on anything invalid; nothing is written.
         print("backlog OK")
         return 0
     if "next" in argv:

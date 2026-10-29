@@ -12,7 +12,7 @@ Read these before any work: `docs/product/PRODUCT_SPEC.md` (what and why), `docs
 
 All work is tied to a story in `backlog/`. Use the **backlog skill** for every backlog action: choosing work, claiming,
 planning, status changes, PRs, merges and new stories. Do this housekeeping yourself without being asked; the owner never
-runs backlog commands. Hooks regenerate `backlog.json` and `board.html` automatically.
+runs backlog commands. Hooks regenerate `backlog.json` and `board.html` automatically (local files, not committed).
 
 ## Commands
 
