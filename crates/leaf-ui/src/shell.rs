@@ -94,6 +94,12 @@ impl Shell {
         &self.editor
     }
 
+    /// The editor behind this window, for tools and tests that script the page (the screenshot tool
+    /// places the caret and selection with it).
+    pub fn editor_mut(&mut self) -> &mut WorkspaceEditor {
+        &mut self.editor
+    }
+
     /// "New page": creates an untitled page, opens it, and puts the cursor in its title.
     pub fn new_page(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         match self.editor.new_page(now_ms()) {
@@ -202,6 +208,7 @@ mod markers;
 mod page_list;
 #[cfg(test)]
 mod page_list_window_tests;
+mod rich_text;
 mod sidebar;
 mod storage;
 mod tree;

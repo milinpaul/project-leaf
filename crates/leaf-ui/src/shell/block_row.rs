@@ -1,15 +1,17 @@
-//! One block row of the page: indentation, list marker or checkbox, and the text input (interim
-//! editor, E07-S10; the rich text element replaces the input in E07-S02).
+//! One block row of the page: indentation, list marker or checkbox, then the text, drawn with its
+//! formatting (E07-S02). The block being typed in shows a text input instead, until typing moves into
+//! the text view (E07-S03).
 
 use gpui::{
-    AnyElement, Context, ElementId, FontWeight, InteractiveElement as _, IntoElement, MouseButton,
-    MouseDownEvent, ParentElement, SharedString, Styled, Window, div, px,
+    AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, SharedString, Styled, Window,
+    div, px,
 };
 use gpui_component::checkbox::Checkbox;
 use gpui_component::input::Input;
 use gpui_component::{ActiveTheme as _, h_flex};
 use leaf_editor::{BlockRow, BlockStyle};
 
+use super::rich_text::Look;
 use super::{Shell, markers};
 use crate::theme;
 
@@ -54,64 +56,61 @@ impl Shell {
                 .into_any_element();
         };
 
-        let state = self.block_input(row.id, window, cx);
-        state.update(cx, |input, cx| {
-            if input.value() != text {
-                input.set_value(text, window, cx);
-            }
-        });
-        // Body rows are 28px: the input's default height is sized for form fields, which spaces blocks too far apart.
-        let input = Input::new(&state)
-            .appearance(false)
-            .focus_bordered(false)
-            .px_0()
-            .h_7();
-        let muted = cx.theme().muted_foreground;
-        let input = match &row.style {
-            BlockStyle::Heading(level) => {
-                let size = theme::HEADING_SIZES[usize::from((*level).clamp(1, 3) - 1)];
-                let height = px((size * 1.3).round());
-                input
-                    .text_size(px(size))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .line_height(height)
-                    .h(height + px(10.0))
-            }
-            BlockStyle::Code { .. } => input.font_family(cx.theme().mono_font_family.clone()).text_sm(),
-            BlockStyle::Todo { checked: true } => input.text_color(muted),
-            _ => input,
-        };
-
         let id = row.id;
         let prefix = Self::marker(row, cx);
-        // Inputs can't draw strikethrough, so a done to-do shows as struck-through text until it is
-        // clicked for editing.
-        let done_and_resting =
-            matches!(row.style, BlockStyle::Todo { checked: true }) && self.blocks.focused != Some(id);
-        let body = if done_and_resting {
-            div()
-                .flex_1()
-                .h_7()
-                .flex()
-                .items_center()
-                .text_color(muted)
-                .line_through()
-                .child(state.read(cx).value().to_string())
-                .on_mouse_down(
-                    MouseButton::Left,
-                    cx.listener(move |shell, _: &MouseDownEvent, window, cx| {
-                        shell.focus_block(id, window, cx);
-                    }),
-                )
-                .into_any_element()
+        let look = look_of(&row.style);
+        let body = if self.blocks.focused == Some(id) {
+            self.render_row_input(row, &text, &look, window, cx)
         } else {
-            div().flex_1().child(input).into_any_element()
+            let highlight = self.blocks.highlights.get(&id).cloned();
+            let caret = self.blocks.caret.filter(|c| c.block == id).map(|c| c.at);
+            self.render_rich_text(row, &look, highlight.as_ref(), caret, window, cx)
         };
         let line = line.children(prefix).child(body);
         match &row.style {
             BlockStyle::Code { .. } => line.bg(cx.theme().muted).rounded_md().px_2().into_any_element(),
             _ => line.into_any_element(),
         }
+    }
+
+    /// The block being typed in: a text input styled like the text view it stands in for (interim,
+    /// until typing moves into the text view in E07-S03).
+    fn render_row_input(
+        &mut self,
+        row: &BlockRow,
+        text: &str,
+        look: &Look,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let state = self.block_input(row.id, window, cx);
+        state.update(cx, |input, cx| {
+            if input.value() != text {
+                input.set_value(text.to_owned(), window, cx);
+            }
+        });
+        let input = Input::new(&state)
+            .appearance(false)
+            .focus_bordered(false)
+            .px_0()
+            .line_height(look.line_height)
+            .h(look.line_height + look.pad * 2.0)
+            .font_weight(look.weight);
+        let input = match look.size {
+            Some(size) => input.text_size(size),
+            None => input,
+        };
+        let input = if look.mono {
+            input.font_family(cx.theme().mono_font_family.clone())
+        } else {
+            input
+        };
+        let input = if look.done {
+            input.text_color(cx.theme().muted_foreground)
+        } else {
+            input
+        };
+        div().flex_1().min_w_0().child(input).into_any_element()
     }
 
     /// What sits before a row's text: its list marker, checkbox or quote bar.
@@ -137,5 +136,38 @@ impl Shell {
             BlockStyle::Quote => Some(div().w(px(3.0)).h_6().bg(cx.theme().border).into_any_element()),
             _ => None,
         }
+    }
+}
+
+/// How a block kind's text looks as a whole. One-line rows come out 28 px tall, as the inputs were.
+fn look_of(style: &BlockStyle) -> Look {
+    let body = Look {
+        size: None,
+        line_height: px(24.0),
+        pad: px(2.0),
+        weight: FontWeight::NORMAL,
+        mono: false,
+        done: false,
+    };
+    match style {
+        BlockStyle::Heading(level) => {
+            let size = theme::HEADING_SIZES[usize::from((*level).clamp(1, 3) - 1)];
+            Look {
+                size: Some(px(size)),
+                line_height: px((size * 1.3).round()),
+                pad: px(5.0),
+                weight: FontWeight::SEMIBOLD,
+                ..body
+            }
+        }
+        BlockStyle::Code { .. } => Look {
+            size: Some(px(14.0)),
+            line_height: px(22.0),
+            pad: px(3.0),
+            mono: true,
+            ..body
+        },
+        BlockStyle::Todo { checked: true } => Look { done: true, ..body },
+        _ => body,
     }
 }

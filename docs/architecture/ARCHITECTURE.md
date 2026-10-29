@@ -62,7 +62,10 @@ block's kind and properties (E02-S04). The window can edit a page's blocks with 
 (E07-S10): one plain text input per block, drawn from `PageEditor`'s rows in `leaf-editor`, with Enter, Backspace,
 Tab and Shift+Tab caught before the input sees them. The page is a **virtual list** (E07-S01, ADR 0035): only the rows
 on screen are laid out and given inputs, and each frame's rows are compared with the last to re-measure or splice just
-what changed, so a 10,000-block page scrolls smoothly. The rich text element (E07-S02) replaces the inputs later;
+what changed, so a 10,000-block page scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR 0037):
+GPUI `StyledText` runs carry the marks, the selection is a run background, an overlay draws the blinking caret and
+records the painted layout, which answers the editor's `LineLayout` for Up/Down. The block being typed in keeps its
+input until E07-S03. The rich text element (E07-S02) replaces the inputs later;
 `PageEditor`'s rules stay. Enter splits a block at the cursor and Backspace at the start merges it into the block
 above (E02-S05), keeping formatting on both sides. Pages have their own undo and redo, carrying the caret with each step (E02-S08);
 the editor wires Cmd+Z to it in E04-S08. The editor's caret (E04-S02) moves by
