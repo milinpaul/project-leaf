@@ -73,6 +73,8 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
   - Database as a full page and inline inside a page.
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
+- **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
+  Fetching previews is Leaf's first network access and is opt-in, off by default (E15).
 - Trash: restore and permanent delete.
 
 ## Phase 2
