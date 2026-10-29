@@ -27,6 +27,7 @@
 
 mod assets;
 mod autosave;
+mod compaction;
 mod docs;
 mod error;
 mod json_file;
@@ -39,6 +40,7 @@ mod workspace;
 
 pub use assets::{Asset, image_mime};
 pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
+pub use compaction::COMPACT_AFTER;
 pub use docs::{DocKey, Document, Recovered, Savable};
 pub use error::StoreError;
 pub use migrations::SCHEMA_VERSION;

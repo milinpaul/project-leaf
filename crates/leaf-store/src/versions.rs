@@ -17,8 +17,9 @@ pub struct SavedVersion {
     /// When it was last saved, in Unix milliseconds. Used for "most recently edited", not for
     /// change detection: two saves can share a millisecond.
     pub saved_at: i64,
-    /// The highest update sequence number saved for it, or 0 for a snapshot alone. Sequence numbers
-    /// only ever grow, so any later save changes this.
+    /// The highest update sequence number saved for it, or 0 for a snapshot alone (also right after
+    /// compaction folded the updates away, which changes the version but not the document). Sequence
+    /// numbers are never reused, so any later save changes this.
     pub seq: i64,
 }
 

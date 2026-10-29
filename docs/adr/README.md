@@ -64,3 +64,4 @@ Records cover two kinds of decision:
 | [0045](0045-page-covers.md) | Page covers: a stored name, drawn from bundled SVG files | Feature | Accepted |
 | [0046](0046-search-bar-ui.md) | Search bar UI: one popup for Cmd/Ctrl+K and P, searched off the UI thread, results opened in place | Feature | Accepted |
 | [0047](0047-asset-store.md) | Asset store: images named by hash, type read from content, file before row | Architecture | Accepted |
+| [0048](0048-compaction.md) | Compaction: the save past 200 updates folds them into a fresh snapshot, in one transaction | Architecture | Accepted |
