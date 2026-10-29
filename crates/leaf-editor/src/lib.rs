@@ -11,6 +11,7 @@
 mod block_actions;
 mod caret;
 mod clipboard;
+mod emoji_picker;
 mod format;
 mod fuzzy;
 mod history;
@@ -27,6 +28,7 @@ mod workspace_editor;
 pub use block_actions::BlockAction;
 pub use caret::{LineLayout, Motion, Vertical};
 pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
+pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
