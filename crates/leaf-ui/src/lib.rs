@@ -74,6 +74,7 @@ pub fn init(settings_path: Option<std::path::PathBuf>, cx: &mut App) {
     gpui_component::init(cx);
     settings::init(settings_path, cx);
     theme::init(cx);
+    shell::bind_page_keys(cx);
 }
 
 /// Builds the root view of a Leaf window: the shell wrapped in gpui-component's `Root`, which

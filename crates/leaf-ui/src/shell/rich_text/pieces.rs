@@ -71,23 +71,30 @@ pub(in crate::shell) struct Piece {
     pub marks: Marks,
     /// Whether it is inside the selection.
     pub selected: bool,
+    /// Whether it is an input method's draft (drawn underlined, not yet in the page).
+    pub draft: bool,
 }
 
-/// Splits a row's runs where the selection starts and ends, so each piece has one look.
-pub(in crate::shell) fn pieces(spans: &[TextSpan], selected: Option<&Range<usize>>) -> Vec<Piece> {
+/// Splits a row's runs where the selection and the draft start and end, so each piece has one look.
+pub(in crate::shell) fn pieces(
+    spans: &[TextSpan],
+    selected: Option<&Range<usize>>,
+    draft: Option<&Range<usize>>,
+) -> Vec<Piece> {
     let mut out = Vec::new();
     let (mut chars, mut bytes) = (0, 0);
+    let inside = |range: Option<&Range<usize>>, at: usize| range.is_some_and(|r| r.start <= at && at < r.end);
     for span in spans {
-        let mut cuts: Vec<usize> = vec![0];
         let len = span.text.chars().count();
-        if let Some(sel) = selected {
-            for edge in [sel.start, sel.end] {
+        let mut cuts: Vec<usize> = vec![0, len];
+        for range in [selected, draft].into_iter().flatten() {
+            for edge in [range.start, range.end] {
                 if edge > chars && edge < chars + len {
                     cuts.push(edge - chars);
                 }
             }
         }
-        cuts.push(len);
+        cuts.sort_unstable();
         cuts.dedup();
         for pair in cuts.windows(2) {
             let (from, to) = (pair[0], pair[1]);
@@ -98,17 +105,80 @@ pub(in crate::shell) fn pieces(spans: &[TextSpan], selected: Option<&Range<usize
                 .take(to - from)
                 .map(char::len_utf8)
                 .sum();
-            let middle = chars + from;
+            let first = chars + from;
             out.push(Piece {
                 bytes: bytes..bytes + width,
                 marks: span.marks.clone(),
-                selected: selected.is_some_and(|sel| sel.start <= middle && middle < sel.end),
+                selected: inside(selected, first),
+                draft: inside(draft, first),
             });
             bytes += width;
         }
         chars += len;
     }
     out
+}
+
+/// A row's runs with an input method's draft shown in place of `covered` (the selection it will
+/// replace, or an empty range at the caret). Returns the runs and where the draft sits, in characters.
+pub(in crate::shell) fn with_draft(
+    spans: &[TextSpan],
+    covered: &Range<usize>,
+    draft: &str,
+) -> (Vec<TextSpan>, Range<usize>) {
+    let mut out = Vec::new();
+    let mut chars = 0;
+    let mut placed = false;
+    let draft_span = TextSpan {
+        text: draft.to_owned(),
+        marks: Marks::default(),
+    };
+    for span in spans {
+        let len = span.text.chars().count();
+        let (start, end) = (chars, chars + len);
+        let keep_before: String = span
+            .text
+            .chars()
+            .take(covered.start.saturating_sub(start).min(len))
+            .collect();
+        let keep_after: String = span
+            .text
+            .chars()
+            .skip(covered.end.saturating_sub(start).min(len))
+            .collect();
+        if end <= covered.start {
+            out.push(span.clone());
+        } else if start >= covered.end {
+            if !placed {
+                out.push(draft_span.clone());
+                placed = true;
+            }
+            out.push(span.clone());
+        } else {
+            if !keep_before.is_empty() {
+                out.push(TextSpan {
+                    text: keep_before,
+                    marks: span.marks.clone(),
+                });
+            }
+            if !placed {
+                out.push(draft_span.clone());
+                placed = true;
+            }
+            if !keep_after.is_empty() {
+                out.push(TextSpan {
+                    text: keep_after,
+                    marks: span.marks.clone(),
+                });
+            }
+        }
+        chars = end;
+    }
+    if !placed {
+        out.push(draft_span);
+    }
+    let len = draft.chars().count();
+    (out, covered.start..covered.start + len)
 }
 
 /// The UTF-8 byte offset of character `chars` in `text` (the end if past it).
