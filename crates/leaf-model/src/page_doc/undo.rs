@@ -96,6 +96,23 @@ impl PageDoc {
         self.undo.set_merge_interval(ms);
     }
 
+    /// Runs `steps`, which apply several commands, as **one** undo step. For edits a user sees as one
+    /// action but that take more than one command: Enter over a selection deletes it and splits the
+    /// block; leaving a code block trims its empty lines and adds a paragraph. Each command is still
+    /// its own commit, so saving and other devices see them as usual.
+    ///
+    /// If a step fails, the commands before it stay applied (commands check their input before
+    /// writing, so none is half done), and undo still reverts them together.
+    pub fn as_one_step<T, E: From<ModelError>>(
+        &mut self,
+        steps: impl FnOnce(&mut Self) -> Result<T, E>,
+    ) -> Result<T, E> {
+        self.undo.group_start().map_err(ModelError::from)?;
+        let result = steps(self);
+        self.undo.group_end();
+        result
+    }
+
     fn take_restored(&self) -> Option<Caret> {
         self.carets.restored.lock().ok().and_then(|mut slot| slot.take())
     }

@@ -68,7 +68,9 @@ whole characters as a reader sees them (an emoji, a Hindi syllable), jumps by wo
 is anchored to the text, so edits before it, undo and other devices' changes carry it along (ADR 0015). Up and Down
 (E04-S03) ask the UI where lines wrap through the `LineLayout` trait and keep the caret's column (ADR 0016). Typing (E04-S04) replaces the selection with one
 `ReplaceText` command; an input method's draft is kept in the editor and only the committed text reaches the page
-(ADR 0017). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
+(ADR 0017). Enter, Backspace, Delete and Tab (E04-S05) go through `PageEditor::press`, which applies the
+"Editor behaviour" rules at the caret; each press is one undo step, and a divider or image next to the caret is
+selected rather than merged (ADR 0020). The window's sidebar lists real pages (`WorkspaceEditor` in `leaf-editor`): "New page" and typing a title go
 through those commands (E06-S07).
 
 **Startup and saving (E03-S08).** `leaf-app` opens the workspace folder given as its first argument, or
