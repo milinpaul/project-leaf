@@ -101,7 +101,10 @@ fn deleting_a_page_for_good_removes_its_document_from_disk(cx: &mut TestAppConte
     let page = shell.read_with(cx, |shell, _| shell.editor().selected().unwrap());
     cx.update(|_, cx| shell.update(cx, |shell, _| shell.save(true)));
     let store = leaf_store::Store::open(&path.join("workspace.sqlite")).unwrap();
-    assert!(store.load::<PageDoc>(DocKey::Page(page)).unwrap().is_some(), "saved first");
+    assert!(
+        store.load::<PageDoc>(DocKey::Page(page)).unwrap().is_some(),
+        "saved first"
+    );
 
     cx.update(|_, cx| {
         shell.update(cx, |shell, cx| {
@@ -109,8 +112,14 @@ fn deleting_a_page_for_good_removes_its_document_from_disk(cx: &mut TestAppConte
             shell.delete_page_forever(page, cx);
         });
     });
-    assert!(store.load::<PageDoc>(DocKey::Page(page)).unwrap().is_none(), "its blocks are gone");
+    assert!(
+        store.load::<PageDoc>(DocKey::Page(page)).unwrap().is_none(),
+        "its blocks are gone"
+    );
     let workspace: Workspace = store.load(DocKey::Workspace).unwrap().unwrap();
-    assert!(!workspace.contains(page), "and the saved page tree no longer lists it");
+    assert!(
+        !workspace.contains(page),
+        "and the saved page tree no longer lists it"
+    );
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }

@@ -3,8 +3,7 @@
 //! `WorkspaceEditor`; the Trash dialog itself is `crate::trash_dialog`.
 
 use gpui::{
-    AnyElement, ClickEvent, Context, InteractiveElement as _, IntoElement, ParentElement, Styled, Window,
-    div, px,
+    AnyElement, ClickEvent, Context, InteractiveElement as _, IntoElement, ParentElement, Styled, Window, div,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
@@ -87,7 +86,6 @@ impl Shell {
                 .child(div().flex_1().child("This page is in the trash."))
                 .child(restore)
                 .child(delete)
-                .mb(px(8.0))
                 .into_any_element(),
         )
     }

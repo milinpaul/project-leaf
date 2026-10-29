@@ -7,7 +7,6 @@ use gpui::{
     MouseDownEvent, ParentElement, SharedString, Styled, div, px,
 };
 use gpui_component::button::{Button, ButtonVariants as _};
-use gpui_component::sidebar::SidebarFooter;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 
@@ -132,31 +131,45 @@ impl Shell {
             .into_any_element()
     }
 
-    /// Trash and Settings, at the foot of the sidebar out of the way of the pages, as quiet rows.
+    /// Trash and Settings, at the foot of the sidebar out of the way of the pages: two quiet rows, as
+    /// compact as the page rows above them.
     fn render_footer(cx: &mut Context<Self>) -> AnyElement {
-        let trash = SidebarFooter::new()
-            .debug_selector(|| "open-trash".into())
-            .w_full()
+        let trash = Self::footer_row("open-trash", IconName::Trash, "Trash", cx).on_mouse_down(
+            MouseButton::Left,
+            cx.listener(|shell, _: &MouseDownEvent, window, cx| shell.open_trash(window, cx)),
+        );
+        let settings = Self::footer_row("open-settings", IconName::Settings, "Settings", cx).on_mouse_down(
+            MouseButton::Left,
+            cx.listener(|shell, _: &MouseDownEvent, window, cx| {
+                shell.open_settings(Section::Appearance, window, cx);
+            }),
+        );
+        v_flex()
+            .px_2()
+            .pb_2()
+            .child(trash)
+            .child(settings)
+            .into_any_element()
+    }
+
+    /// One foot row: icon and label, highlighted under the pointer.
+    fn footer_row(
+        id: &'static str,
+        icon: IconName,
+        label: &'static str,
+        cx: &mut Context<Self>,
+    ) -> gpui::Stateful<gpui::Div> {
+        let (hover, radius) = (cx.theme().sidebar_accent, cx.theme().radius);
+        h_flex()
+            .id(id)
+            .debug_selector(move || id.to_owned())
+            .h(px(30.0))
+            .px_2()
             .gap_2()
+            .rounded(radius)
             .text_sm()
-            .child(Icon::new(IconName::Trash))
-            .child("Trash")
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|shell, _: &MouseDownEvent, window, cx| shell.open_trash(window, cx)),
-            );
-        let settings = SidebarFooter::new()
-            .w_full()
-            .gap_2()
-            .text_sm()
-            .child(Icon::new(IconName::Settings))
-            .child("Settings")
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|shell, _: &MouseDownEvent, window, cx| {
-                    shell.open_settings(Section::Appearance, window, cx);
-                }),
-            );
-        v_flex().child(trash).child(settings).into_any_element()
+            .hover(|style| style.bg(hover.opacity(0.6)))
+            .child(Icon::new(icon).small())
+            .child(label)
     }
 }
