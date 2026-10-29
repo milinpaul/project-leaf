@@ -24,7 +24,7 @@ Small teams later, with cloud sync.
 
 ## Platforms
 
-macOS, Windows, Linux (desktop). Mobile and web are later phases.
+macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the web editor in Phase 3; mobile later.
 
 ---
 
@@ -75,10 +75,19 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 - Markdown export (page and workspace) and import.
 - Trash: restore and permanent delete.
 
-## Phase 2+
+## Phase 2
 
 Board, calendar and gallery views; relations and rollups; toggles, callouts, columns; templates; graph view;
-cloud sync and team workspaces; web client; MCP server; mobile; P2P collaboration (maybe).
+cloud sync and team workspaces; read-only web viewer (E13); MCP server.
+
+## Phase 3
+
+Full web editor (E14), kept in sync with the desktop app through a Leaf sync server backed by Postgres.
+The desktop app stays offline-first on SQLite. Web comes before mobile.
+
+## Later
+
+Mobile; P2P collaboration (maybe).
 
 ---
 
