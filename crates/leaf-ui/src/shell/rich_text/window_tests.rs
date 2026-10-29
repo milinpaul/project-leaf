@@ -1,0 +1,123 @@
+//! The text view in a (test) window: its painted layout answers the editor's line questions
+//! consistently with what was drawn, and Up/Down move between the painted lines (E07-S02).
+
+use gpui::{TestAppContext, VisualTestContext};
+use leaf_editor::{LineLayout, Vertical};
+use leaf_model::Caret;
+
+use crate::shell::Shell;
+
+const LONG: &str = "Leaf keeps every page on your own computer, saves as you type, and never asks for an \
+account. This sentence is long on purpose, so that it wraps onto several lines in the page column, which \
+lets the test compare the editor's idea of lines with the lines that were actually painted.";
+
+fn open(cx: &mut TestAppContext) -> (gpui::Entity<Shell>, &mut VisualTestContext, leaf_core::BlockId) {
+    cx.update(|cx| crate::init(None, cx));
+    let (shell, cx) = cx.add_window_view(Shell::new);
+    cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+    let block = shell.update(cx, |shell, _| {
+        let page = shell.editor.open_page().unwrap().unwrap();
+        let first = page.ensure_block().unwrap();
+        page.set_text(first, "short").unwrap();
+        let long = page.enter(first).unwrap();
+        page.set_text(long, LONG).unwrap();
+        let last = page.enter(long).unwrap();
+        page.set_text(last, "after").unwrap();
+        long
+    });
+    // Nothing is being typed in a block, so every row is drawn by the text view.
+    shell.update(cx, |shell, _| shell.blocks.focused = None);
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    (shell, cx, block)
+}
+
+#[gpui::test]
+fn the_painted_layout_wraps_and_round_trips_every_position(cx: &mut TestAppContext) {
+    let (shell, cx, block) = open(cx);
+    let painted = shell.read_with(cx, |shell, _| shell.blocks.painted.clone());
+    let lines = painted.line_count(block);
+    assert!(lines > 1, "the long paragraph wraps: {lines} line(s)");
+
+    let len = LONG.chars().count();
+    let mut last_line = 0;
+    for offset in 0..=len {
+        let line = painted.line_of(block, offset);
+        assert!(
+            line >= last_line && line < lines,
+            "lines run in order: {offset} on {line}"
+        );
+        last_line = line;
+        let x = painted.offset_to_x(block, offset);
+        assert_eq!(
+            painted.x_to_offset(block, line, x),
+            offset,
+            "offset {offset} -> x {x} on line {line} -> back"
+        );
+    }
+    assert_eq!(last_line, lines - 1, "the end is on the last line");
+}
+
+#[gpui::test]
+fn up_and_down_move_between_the_painted_lines(cx: &mut TestAppContext) {
+    let (shell, cx, block) = open(cx);
+    let painted = shell.read_with(cx, |shell, _| shell.blocks.painted.clone());
+    let lines = painted.line_count(block);
+    shell.update(cx, |shell, _| {
+        let page = shell.editor.open_page().unwrap().unwrap();
+        page.set_caret(Caret { block, at: 3 }).unwrap();
+        let rows = page.rows().unwrap();
+        // Down through each wrapped line of the paragraph, then into the next block.
+        for line in 1..lines {
+            let caret = page.move_vertically(Vertical::Down, &painted).unwrap().unwrap();
+            assert_eq!((caret.block, painted.line_of(block, caret.at)), (block, line));
+        }
+        let below = page.move_vertically(Vertical::Down, &painted).unwrap().unwrap();
+        assert_eq!(below.block, rows[2].id, "past the last line: the next block");
+        // And back up into the paragraph's last line.
+        let up = page.move_vertically(Vertical::Up, &painted).unwrap().unwrap();
+        assert_eq!((up.block, painted.line_of(block, up.at)), (block, lines - 1));
+    });
+}
+
+#[gpui::test]
+fn blocks_not_on_screen_answer_as_one_line(cx: &mut TestAppContext) {
+    let (shell, cx, _) = open(cx);
+    let painted = shell.read_with(cx, |shell, _| shell.blocks.painted.clone());
+    let elsewhere = leaf_core::BlockId::new();
+    assert_eq!(painted.line_count(elsewhere), 1);
+    assert_eq!(painted.line_of(elsewhere, 5), 0);
+    assert!(painted.offset_to_x(elsewhere, 5).abs() < f32::EPSILON);
+    assert_eq!(painted.x_to_offset(elsewhere, 0, 100.0), 0);
+    assert_eq!(
+        painted.offset_at(elsewhere, gpui::point(gpui::px(1.0), gpui::px(1.0))),
+        None
+    );
+}
+
+#[gpui::test]
+fn the_caret_blinks_while_the_text_view_draws_it(cx: &mut TestAppContext) {
+    let (shell, cx, block) = open(cx);
+    let on = |shell: &gpui::Entity<Shell>, cx: &mut VisualTestContext| {
+        shell.read_with(cx, |shell, _| shell.blocks.caret_on)
+    };
+    // No caret yet: nothing blinks.
+    assert!(on(&shell, cx));
+    shell.update(cx, |shell, _| {
+        let page = shell.editor.open_page().unwrap().unwrap();
+        page.set_caret(Caret { block, at: 4 }).unwrap();
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    assert!(on(&shell, cx), "it starts visible");
+    cx.executor().advance_clock(std::time::Duration::from_millis(540));
+    cx.run_until_parked();
+    assert!(!on(&shell, cx), "then hides");
+    cx.executor().advance_clock(std::time::Duration::from_millis(540));
+    cx.run_until_parked();
+    assert!(on(&shell, cx), "and shows again");
+    // Typing in the block's input takes over: the text view stops drawing (and blinking) a caret.
+    shell.update(cx, |shell, _| shell.blocks.focused = Some(block));
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    cx.executor().advance_clock(std::time::Duration::from_millis(540));
+    cx.run_until_parked();
+    assert!(on(&shell, cx), "stopped, left visible");
+}

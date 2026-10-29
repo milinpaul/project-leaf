@@ -42,13 +42,13 @@ fn a_ten_thousand_block_page_builds_only_the_rows_on_screen(cx: &mut TestAppCont
     let (shell, cx) = open_shell(cx);
     big_page(&shell, cx, BLOCKS);
     draw(cx);
-    let (items, inputs) = shell.read_with(cx, |shell, _| {
-        (shell.blocks.list.state.item_count(), shell.blocks.inputs.len())
+    let (items, painted) = shell.read_with(cx, |shell, _| {
+        (shell.blocks.list.state.item_count(), shell.blocks.painted.len())
     });
     assert_eq!(items, BLOCKS + 1, "the title plus every block is in the list");
     assert!(
-        inputs > 0 && inputs < 150,
-        "only the rows on screen (plus a little overdraw) were built: {inputs}"
+        painted > 0 && painted < 150,
+        "only the rows on screen (plus a little overdraw) were laid out: {painted}"
     );
 
     // Scroll to the middle: rows there get built, and still only a screenful.
@@ -59,15 +59,12 @@ fn a_ten_thousand_block_page_builds_only_the_rows_on_screen(cx: &mut TestAppCont
         });
     });
     draw(cx);
-    let (built_middle, inputs) = shell.read_with(cx, |shell, _| {
+    let (built_middle, painted) = shell.read_with(cx, |shell, _| {
         let middle = shell.blocks.list.rows[5_000].id;
-        (
-            shell.blocks.inputs.contains_key(&middle),
-            shell.blocks.inputs.len(),
-        )
+        (shell.blocks.painted.contains(middle), shell.blocks.painted.len())
     });
     assert!(built_middle, "the row scrolled to is on screen");
-    assert!(inputs < 300, "rows built so far stay few: {inputs}");
+    assert!(painted < 150, "still only a screenful: {painted}");
 }
 
 #[gpui::test]
