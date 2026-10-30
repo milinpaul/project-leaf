@@ -1,4 +1,4 @@
-//! The ⋮⋮ handle and block menu in a (test) window (E07-S04, E17-S03).
+//! The ⋮⋮ handle and block menu in a (test) window (E07-S04, E17-S03, E17-S07).
 
 use std::time::Duration;
 
@@ -197,6 +197,41 @@ fn hovering_turn_into_opens_the_list_and_a_diagonal_path_into_it_keeps_it(cx: &m
     assert!(kinds_open(cx), "a click opens it");
     click(cx, "block-menu-0");
     assert!(kinds_open(cx), "a second click keeps it open");
+}
+
+#[gpui::test]
+fn near_the_bottom_the_menu_opens_above_and_stays_put_while_turn_into_opens(cx: &mut TestAppContext) {
+    let (shell, cx, ids) = open(cx, &["a", "b", "c"]);
+    let window = cx.update(|window, _| window.viewport_size());
+    // As if the handle sat 60 px above the window's bottom edge.
+    let (top, bottom) = (window.height - gpui::px(60.0), window.height - gpui::px(40.0));
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.open_block_menu(ids[1], gpui::point(gpui::px(300.0), bottom), top, window, cx);
+        });
+    });
+    draw(cx);
+    let menu = cx.debug_bounds("block-menu").unwrap();
+    assert!(
+        menu.bottom() <= top,
+        "no room below: the menu opens above the handle"
+    );
+
+    hover(cx, "block-menu-0", 200);
+    assert!(kinds_open(cx));
+    assert_eq!(
+        cx.debug_bounds("block-menu").unwrap(),
+        menu,
+        "the menu didn't move"
+    );
+    let list = cx.debug_bounds("block-menu-kinds").unwrap();
+    assert!(list.bottom() <= window.height, "the list fits in the window");
+    assert!(list.left() >= menu.right(), "beside the menu, not over it");
+
+    // A click in the list chooses, rather than counting as a click outside the menu.
+    click(cx, "block-menu-kinds-2");
+    let kind = shell.update(cx, |shell, _| shell.page().unwrap().doc().kind(ids[1]).unwrap());
+    assert_eq!(kind, leaf_model::BlockKind::Heading { level: 2 });
 }
 
 #[test]

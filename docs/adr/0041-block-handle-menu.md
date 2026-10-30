@@ -23,6 +23,11 @@ and tests could not drive it without a window.
   (`HoverChange`), and the UI waits (150 ms to open, 300 ms to close) before calling `settle_hover`, which acts on
   wherever the pointer is by then. So passing over "Turn into" doesn't flash the list open, and a diagonal path into
   the list across Duplicate or Move up keeps it open. A click on "Turn into" opens the list (it no longer toggles).
+- **The menu stays where it opened** (amended in E17-S07). The menu and the "Turn into" list are placed separately
+  before they are drawn (`shell/menu_place.rs`): the menu below its handle, or above it when there is no room below;
+  the list beside the "Turn into" row, moved up only as far as it must to stay in the window, scrolling when taller
+  than the window, and on the menu's left at the window's right edge. Before, both were one box pushed back inside
+  the window, so opening the tall list near the bottom made the whole menu jump up.
 - **Move up / Move down** are new `BlockAction`s. They move the action's blocks (one block, or the selection) one
   place among their siblings with the existing `MoveBlocks` command, children included. At the first or last sibling,
   or when the selected blocks have different parents, nothing happens and the entry is greyed out. Moving never

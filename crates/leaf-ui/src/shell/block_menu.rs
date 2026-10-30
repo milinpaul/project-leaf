@@ -6,9 +6,9 @@ use std::time::Duration;
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, App, AppContext as _, ClickEvent, Context, InteractiveElement, IntoElement, KeyBinding,
-    MouseButton, MouseDownEvent, ParentElement, Pixels, Point, SharedString, StatefulInteractiveElement as _,
-    Styled, Window, actions, anchored, deferred, div, point, px,
+    AnyElement, App, AppContext as _, Bounds, ClickEvent, Context, InteractiveElement, IntoElement,
+    KeyBinding, MouseButton, MouseDownEvent, ParentElement, Pixels, Point, SharedString,
+    StatefulInteractiveElement as _, Styled, Window, actions, anchored, deferred, div, point, px, size,
 };
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
@@ -17,7 +17,7 @@ use leaf_editor::{BlockMenu, HoverChange, MenuEntry, MenuItem, MenuKey};
 use leaf_model::BlockKind;
 
 use super::block_drag::{DragPreview, DraggedBlock};
-use super::{Shell, report};
+use super::{Shell, menu_place, report};
 
 /// The menu's key context, active while it has the keyboard.
 const CONTEXT: &str = "LeafBlockMenu";
@@ -32,6 +32,22 @@ const OPEN_DELAY: Duration = Duration::from_millis(150);
 /// How long the pointer rests on another entry before an open "Turn into" list closes: long enough to
 /// cross a row or two diagonally on the way into the list (E17-S03).
 const CLOSE_DELAY: Duration = Duration::from_millis(300);
+
+/// Both lists' width, and one entry's height plus the list's padding and border: the lists' sizes are
+/// known before they are drawn, so they can be placed to fit (E17-S07).
+const MENU_WIDTH_PX: f32 = 220.0;
+const ROW_PX: f32 = 30.0;
+const CHROME_PX: f32 = 10.0;
+
+/// How tall a list of `rows` entries is.
+fn list_height(rows: usize) -> Pixels {
+    px(ROW_PX) * row_offset(rows) + px(CHROME_PX)
+}
+
+/// `rows` as a multiplier for pixel sizes.
+fn row_offset(rows: usize) -> f32 {
+    f32::from(u16::try_from(rows).unwrap_or(u16::MAX))
+}
 
 /// The handle's square, and how far left of the row's text it sits.
 const HANDLE_PX: f32 = 20.0;
@@ -110,6 +126,7 @@ impl Shell {
         &mut self,
         block: BlockId,
         at: Point<Pixels>,
+        top: Pixels,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -117,6 +134,7 @@ impl Shell {
             report("could not open the block menu", err);
         }
         self.blocks.menu_at = at;
+        self.blocks.menu_top = top;
         window.focus(&self.menu_focus, cx);
         cx.notify();
     }
@@ -131,11 +149,16 @@ impl Shell {
     /// Opens the menu for `block` under its handle, as drawn in the last frame. Also used by the
     /// screenshot tool.
     pub fn open_block_menu_beside(&mut self, block: BlockId, window: &mut Window, cx: &mut Context<Self>) {
-        let at = self.blocks.painted.caret_bounds(block, 0).map_or_else(
-            || point(px(0.0), px(0.0)),
-            |(origin, height)| point(origin.x - px(HANDLE_PX + HANDLE_GAP_PX), origin.y + height),
+        let (at, top) = self.blocks.painted.caret_bounds(block, 0).map_or_else(
+            || (point(px(0.0), px(0.0)), px(0.0)),
+            |(origin, height)| {
+                (
+                    point(origin.x - px(HANDLE_PX + HANDLE_GAP_PX), origin.y + height),
+                    origin.y,
+                )
+            },
         );
-        self.open_block_menu(block, at, window, cx);
+        self.open_block_menu(block, at, top, window, cx);
     }
 
     /// A key while the menu is open; the page gets the keyboard back once the menu closes.
@@ -238,8 +261,9 @@ impl Shell {
             // A click opens the menu; pressing and moving drags the block instead (E07-S05).
             .on_click(cx.listener(move |shell, event: &ClickEvent, window, cx| {
                 let at = event.position();
+                let top = at.y - px(HANDLE_PX / 2.0);
                 let at = point(at.x - px(HANDLE_PX / 2.0), at.y + px(HANDLE_PX / 2.0));
-                shell.open_block_menu(block, at, window, cx);
+                shell.open_block_menu(block, at, top, window, cx);
             }))
             .on_drag(DraggedBlock(block), move |dragged, _, _, cx| {
                 let preview = shell.update(cx, |shell, cx| shell.start_block_drag(dragged.0, cx));
@@ -248,20 +272,28 @@ impl Shell {
             .into_any_element()
     }
 
-    /// The open menu, floating over the page: the main entries, and the "Turn into" list beside them
-    /// while it is open.
-    pub(super) fn render_block_menu(&mut self, cx: &mut Context<Self>) -> Option<AnyElement> {
+    /// The open menu, floating over the page, and the "Turn into" list beside it while that is open.
+    /// Both are placed before drawing (`menu_place`), so the menu stays where it opened whatever the
+    /// list does (E17-S07).
+    pub(super) fn render_block_menu(&mut self, window: &Window, cx: &mut Context<Self>) -> AnyElement {
         let menu = self.block_menu();
         self.blocks.menu_block = menu.as_ref().map(|m| m.block);
-        let menu = menu?;
-        let main = Self::render_menu_list("block-menu", &menu.items, menu.selected, true, cx);
-        let kinds = menu
-            .kinds
-            .as_ref()
-            .map(|(kinds, at)| Self::render_menu_list("block-menu-kinds", kinds, *at, false, cx));
-        let panel = h_flex()
-            .items_start()
-            .gap_1()
+        self.blocks.menu_list = None;
+        let Some(menu) = menu else {
+            return div().into_any_element();
+        };
+        let viewport = window.viewport_size();
+        let main_size = size(px(MENU_WIDTH_PX), list_height(menu.items.len()));
+        let origin = menu_place::menu_origin(
+            self.blocks.menu_at.x,
+            self.blocks.menu_top,
+            self.blocks.menu_at.y,
+            main_size,
+            viewport,
+        );
+        let main = Self::render_menu_list("block-menu", &menu.items, menu.selected, true, None, cx);
+        let panel = div()
+            .w(px(MENU_WIDTH_PX))
             .track_focus(&self.menu_focus)
             .key_context(CONTEXT)
             .on_action(cx.listener(|s, _: &MenuUp, w, cx| s.menu_key(MenuKey::Up, w, cx)))
@@ -270,19 +302,42 @@ impl Shell {
             .on_action(cx.listener(|s, _: &MenuRight, w, cx| s.menu_key(MenuKey::Right, w, cx)))
             .on_action(cx.listener(|s, _: &MenuEnter, w, cx| s.menu_key(MenuKey::Enter, w, cx)))
             .on_action(cx.listener(|s, _: &MenuEscape, w, cx| s.menu_key(MenuKey::Escape, w, cx)))
-            .on_mouse_down_out(cx.listener(|shell, _: &MouseDownEvent, _, cx| shell.menu_dismiss(cx)))
-            .child(main)
-            .children(kinds);
-        Some(
-            deferred(
-                anchored()
-                    .position(self.blocks.menu_at)
-                    .snap_to_window_with_margin(px(8.0))
-                    .child(panel),
-            )
-            .with_priority(1)
-            .into_any_element(),
-        )
+            .on_mouse_down_out(cx.listener(|shell, event: &MouseDownEvent, _, cx| {
+                // The list floats apart from the menu; a click in it isn't a click outside.
+                if !shell
+                    .blocks
+                    .menu_list
+                    .is_some_and(|list| list.contains(&event.position))
+                {
+                    shell.menu_dismiss(cx);
+                }
+            }))
+            .child(main);
+        let kinds = menu.kinds.as_ref().map(|(kinds, at)| {
+            let row = menu
+                .items
+                .iter()
+                .position(|item| item.entry == MenuEntry::TurnInto)
+                .unwrap_or(0);
+            let row_top = origin.y + px(CHROME_PX / 2.0) + px(ROW_PX) * row_offset(row);
+            let menu_bounds = Bounds::new(origin, main_size);
+            let wanted = size(px(MENU_WIDTH_PX), list_height(kinds.len()));
+            let bounds = menu_place::list_bounds(menu_bounds, row_top, wanted, viewport);
+            self.blocks.menu_list = Some(bounds);
+            let list = Self::render_menu_list(
+                "block-menu-kinds",
+                kinds,
+                *at,
+                false,
+                Some(bounds.size.height),
+                cx,
+            );
+            deferred(anchored().position(bounds.origin).child(list)).with_priority(2)
+        });
+        div()
+            .child(deferred(anchored().position(origin).child(panel)).with_priority(1))
+            .children(kinds)
+            .into_any_element()
     }
 
     /// One list of entries with icons; the highlighted one shaded, greyed-out ones dimmed.
@@ -291,6 +346,7 @@ impl Shell {
         items: &[MenuItem],
         selected: usize,
         main: bool,
+        max_height: Option<Pixels>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let theme = cx.theme();
@@ -300,7 +356,8 @@ impl Shell {
         v_flex()
             .id(id)
             .debug_selector(move || id.into())
-            .min_w(px(200.0))
+            .w(px(MENU_WIDTH_PX))
+            .when_some(max_height, |list, height| list.max_h(height).overflow_y_scroll())
             .p_1()
             .bg(bg)
             .border_1()
