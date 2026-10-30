@@ -53,6 +53,10 @@ pub(super) struct PageState {
     pub(super) menu_block: Option<BlockId>,
     /// The pause before the block menu's "Turn into" list opens or closes under the pointer.
     pub(super) menu_hover: Option<Task<()>>,
+    /// A mouse-wheel glide in progress (E17-S01).
+    pub(super) wheel: super::smooth_scroll::WheelGlide,
+    /// Scrolling while a text selection is dragged near an edge (E17-S02).
+    pub(super) select_scroll: super::select_scroll::SelectScroll,
     /// The block a search result opened at, tinted for a moment.
     pub(super) flash: super::found::Flash,
     /// Where each row was drawn in the last frame, for dropping dragged blocks.
@@ -226,6 +230,8 @@ impl Shell {
                     .on_drag_move(cx.listener(Self::on_image_resize_move))
                     .on_drop(cx.listener(Self::on_image_resize_drop))
                     .child(input)
+                    .child(Self::wheel_glide_layer(cx))
+                    .child(Self::select_scroll_layer(cx))
                     .child(rows),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.

@@ -20,12 +20,14 @@ use leaf_editor::{BlockDrop, BlockRow, RowBox};
 use super::block_row::INDENT_PX;
 use super::{Shell, report};
 
-/// How close to the page's top or bottom edge the pointer must be to scroll, and the fastest
-/// scroll, in pixels per tick.
-const EDGE_PX: f32 = 48.0;
-const MAX_SCROLL_PX: f32 = 18.0;
+/// How close to the page's top or bottom edge the pointer must be to scroll, and the scroll at the
+/// edge, in pixels per tick. Past the edge it keeps speeding up, to `PAST_EDGE_FACTOR` times as fast.
+/// Shared with drag-selecting text (`select_scroll`).
+pub(super) const EDGE_PX: f32 = 48.0;
+pub(super) const MAX_SCROLL_PX: f32 = 18.0;
+const PAST_EDGE_FACTOR: f32 = 3.0;
 /// How often the page scrolls while the pointer rests near an edge.
-const SCROLL_TICK: Duration = Duration::from_millis(16);
+pub(super) const SCROLL_TICK: Duration = Duration::from_millis(16);
 /// How much of the first line of the first dragged block's text the preview shows.
 const PREVIEW_CHARS: usize = 60;
 
@@ -107,6 +109,23 @@ impl DrawnRows {
         self.0.borrow().iter().find(|(b, _)| *b == block).map(|(_, b)| *b)
     }
 
+    /// The last row drawn starting at or above `y` that `accept`s, or else the first that does: the
+    /// row a pointer at that height is over, skipping rows without text.
+    pub(super) fn row_at(&self, y: Pixels, accept: impl Fn(BlockId) -> bool) -> Option<BlockId> {
+        let mut rows = self.0.borrow().clone();
+        rows.sort_by(|a, b| f32::from(a.1.top()).total_cmp(&f32::from(b.1.top())));
+        let mut usable = rows.into_iter().filter(|(block, _)| accept(*block));
+        let first = usable.next()?;
+        let mut found = first.0;
+        for (block, bounds) in std::iter::once(first).chain(usable) {
+            if bounds.top() > y {
+                break;
+            }
+            found = block;
+        }
+        Some(found)
+    }
+
     /// The rows top to bottom as the editor wants them, and where top-level text starts.
     fn boxes(&self) -> (Vec<RowBox>, f32) {
         let mut rows = self.0.borrow().clone();
@@ -142,9 +161,16 @@ pub(super) struct BlockDrag {
 }
 
 /// How fast to scroll for a pointer at `y` over a page from `top` to `bottom`: faster the closer it
-/// is to the edge, nothing away from them.
+/// is to the edge and further still past it (E17-S02), nothing away from them.
 pub(super) fn scroll_speed(y: f32, top: f32, bottom: f32) -> f32 {
-    let into = |depth: f32| (EDGE_PX - depth.max(0.0)).max(0.0) / EDGE_PX * MAX_SCROLL_PX;
+    let into = |depth: f32| {
+        if depth >= 0.0 {
+            (EDGE_PX - depth).max(0.0) / EDGE_PX * MAX_SCROLL_PX
+        } else {
+            let past = (-depth / (2.0 * EDGE_PX)).min(1.0);
+            MAX_SCROLL_PX * (1.0 + past * (PAST_EDGE_FACTOR - 1.0))
+        }
+    };
     if y < top + EDGE_PX {
         -into(y - top)
     } else if y > bottom - EDGE_PX {
