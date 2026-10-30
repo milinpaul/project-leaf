@@ -81,6 +81,7 @@ fn reads_page_meta_with_and_without_optional_fields() {
             title: "Plain".into(),
             icon: None,
             cover: None,
+            full_width: false,
             created_at: 1_700_000_000_000,
             edited_at: 1_700_000_000_000,
             trashed_at: None
@@ -230,7 +231,7 @@ type Damage = fn(&loro::LoroMap);
 
 #[test]
 fn page_meta_with_wrong_or_missing_fields_is_an_error() {
-    let cases: [(&str, Damage); 7] = [
+    let cases: [(&str, Damage); 8] = [
         ("title", |m| {
             m.delete(keys::TITLE).unwrap();
         }),
@@ -242,6 +243,9 @@ fn page_meta_with_wrong_or_missing_fields_is_an_error() {
         }),
         ("cover", |m| {
             m.insert(keys::COVER, 3_i64).unwrap();
+        }),
+        ("full_width", |m| {
+            m.insert(keys::FULL_WIDTH, "wide").unwrap();
         }),
         ("created_at", |m| {
             m.delete(keys::CREATED_AT).unwrap();

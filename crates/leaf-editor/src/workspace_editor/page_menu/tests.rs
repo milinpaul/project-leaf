@@ -26,16 +26,21 @@ fn the_top_bar_and_the_sidebar_offer_the_same_actions_in_the_same_order() {
         [
             PageAction::ToggleFavourite,
             PageAction::Rename,
+            PageAction::ToggleFullWidth,
             PageAction::MoveToTrash
         ]
     );
     let side = actions(&editor, page, MenuPlace::Sidebar);
     assert_eq!(
-        side[0],
-        PageAction::AddInside,
-        "the sidebar can also add a page inside"
+        side,
+        [
+            PageAction::AddInside,
+            PageAction::ToggleFavourite,
+            PageAction::Rename,
+            PageAction::MoveToTrash
+        ],
+        "the sidebar can also add a page inside; the width is chosen where the page is open"
     );
-    assert_eq!(&side[1..], top.as_slice());
 }
 
 #[test]
@@ -126,4 +131,35 @@ fn trashing_a_page_that_isnt_open_leaves_the_open_page_alone() {
     editor.select(open).unwrap();
     assert_eq!(editor.trash_and_open_next(other, NOW).unwrap(), None);
     assert_eq!(editor.selected(), Some(open));
+}
+
+#[test]
+fn full_width_is_a_switch_showing_the_pages_width() {
+    let mut editor = WorkspaceEditor::new(Workspace::new());
+    let page = editor.new_page(NOW).unwrap();
+    let width = |editor: &WorkspaceEditor| {
+        let menu = editor.page_menu(page, MenuPlace::TopBar, NOW, 0).unwrap();
+        let entry = menu
+            .entries
+            .into_iter()
+            .find(|entry| entry.action == PageAction::ToggleFullWidth)
+            .unwrap();
+        assert_eq!(
+            (entry.label, entry.icon, entry.separated),
+            ("Full width", PageMenuIcon::FullWidth, true)
+        );
+        entry.switch
+    };
+    assert_eq!(width(&editor), Some(false));
+    editor.set_full_width(page, true).unwrap();
+    assert_eq!(width(&editor), Some(true));
+    let other = editor.page_menu(page, MenuPlace::TopBar, NOW, 0).unwrap();
+    assert!(
+        other
+            .entries
+            .iter()
+            .filter(|entry| entry.action != PageAction::ToggleFullWidth)
+            .all(|entry| entry.switch.is_none()),
+        "only the width is a switch"
+    );
 }

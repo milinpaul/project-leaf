@@ -258,6 +258,7 @@ impl WorkspaceEditor {
 mod breadcrumb;
 mod favourites;
 mod page_menu;
+mod page_width;
 mod trash;
 mod tree;
 

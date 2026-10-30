@@ -55,6 +55,7 @@ gpui_kit_assets::icon_assets!(
         ListOrdered,
         Menu,
         Minus,
+        MoveHorizontal,
         PanelLeft,
         PencilLine,
         Repeat,

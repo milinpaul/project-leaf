@@ -61,6 +61,19 @@ impl Workspace {
                 }
                 Outcome::Changed
             }
+            WorkspaceCommand::SetPageFullWidth { page, full_width } => {
+                let node = self.node(page)?;
+                if self.page(page)?.full_width != full_width {
+                    let meta = self.tree.get_meta(node)?;
+                    // Off is the default, so it is stored as no key at all, like a missing cover.
+                    if full_width {
+                        meta.insert(keys::FULL_WIDTH, true)?;
+                    } else {
+                        meta.delete(keys::FULL_WIDTH)?;
+                    }
+                }
+                Outcome::Changed
+            }
             WorkspaceCommand::MovePage {
                 page,
                 new_parent,
@@ -165,3 +178,5 @@ mod cover_tests;
 mod edited_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod width_tests;

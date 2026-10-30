@@ -35,6 +35,12 @@ the page sits, when it was last edited, a star for Favourites and a `⋯` menu. 
   the sidebar it edits the row. Move to Trash opens the nearest page still there (its parent, the page after, the
   one before, or the first page; `trash_and_open_next`) and shows a "Moved to Trash" notice whose Undo restores the
   page and reopens it. Workspace changes have no Cmd+Z yet, so the notice is the undo.
+- **Full width** (amended in E18-S06): a top-bar-only entry with a switch (`PageMenuEntry::switch`), like Notion's.
+  It is a setting of the page, `full_width` in its meta in the workspace doc (`SetPageFullWidth`; stored only while
+  on, so older pages read as off), so it is saved and will sync. On, the title and blocks drop the 720 px reading
+  cap and fill the page area within its side margins; the cover is unchanged. It changes layout, not words, so it
+  doesn't move the edited time. Kept per page rather than as an app setting because some pages (tables, wide code)
+  want room and others read better narrow.
 
 ## Alternatives considered
 

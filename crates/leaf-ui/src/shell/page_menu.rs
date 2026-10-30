@@ -9,6 +9,7 @@ use gpui::{
 use gpui_component::button::ButtonVariants as _;
 use gpui_component::menu::{PopupMenu, PopupMenuItem};
 use gpui_component::notification::Notification;
+use gpui_component::switch::Switch;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, WindowExt as _, h_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::PageId;
@@ -71,9 +72,16 @@ pub(super) fn page_menu(
     menu
 }
 
-/// One entry: icon and label (red when it takes something away), and its shortcut if it has one.
+/// One entry: icon and label (red when it takes something away), its shortcut if it has one, and a
+/// switch if it turns something on or off.
 fn row(entry: &PageMenuEntry) -> PopupMenuItem {
-    let (icon, label, danger, shortcut) = (icon_of(entry.icon), entry.label, entry.danger, entry.shortcut);
+    let (icon, label, danger, shortcut, switch) = (
+        icon_of(entry.icon),
+        entry.label,
+        entry.danger,
+        entry.shortcut,
+        entry.switch,
+    );
     PopupMenuItem::element(move |_, cx| {
         let theme = cx.theme();
         let (text, icon_colour) = if danger {
@@ -82,6 +90,7 @@ fn row(entry: &PageMenuEntry) -> PopupMenuItem {
             (theme.popover_foreground, theme.muted_foreground)
         };
         h_flex()
+            .debug_selector(move || format!("page-menu-{label}"))
             .w_full()
             .h(px(ROW_HEIGHT))
             .cursor_pointer()
@@ -96,6 +105,8 @@ fn row(entry: &PageMenuEntry) -> PopupMenuItem {
                     .text_color(theme.muted_foreground)
                     .child(keys)
             }))
+            // Only shows the state: a click anywhere on the row flips it, through the row's action.
+            .children(switch.map(|on| Switch::new(label).checked(on).small()))
             .into_any_element()
     })
 }
@@ -107,6 +118,7 @@ fn icon_of(icon: PageMenuIcon) -> IconName {
         PageMenuIcon::Star => IconName::Star,
         PageMenuIcon::StarOff => IconName::StarOff,
         PageMenuIcon::Rename => IconName::PencilLine,
+        PageMenuIcon::FullWidth => IconName::MoveHorizontal,
         PageMenuIcon::Trash => IconName::Trash,
     }
 }
@@ -133,8 +145,26 @@ impl Shell {
                 cx.notify();
             }
             PageAction::Rename => self.start_rename(page, window, cx),
+            PageAction::ToggleFullWidth => self.toggle_full_width(page, cx),
             PageAction::MoveToTrash => self.trash_from_menu(page, window, cx),
         }
+    }
+
+    /// Switches `page` between the reading column and the whole width; the page relayouts on the next
+    /// frame.
+    fn toggle_full_width(&mut self, page: PageId, cx: &mut Context<Self>) {
+        let on = self.editor.is_full_width(page).is_ok_and(|on| !on);
+        if let Err(err) = self.editor.set_full_width(page, on) {
+            report("could not change the page's width", err);
+        }
+        cx.notify();
+    }
+
+    /// Whether the open page uses the whole width, for laying out its rows.
+    pub(super) fn full_width(&self) -> bool {
+        self.editor
+            .selected()
+            .is_some_and(|page| self.editor.is_full_width(page).unwrap_or(false))
     }
 
     /// Moves `page` to the trash, opens the nearest page still there if it was open, and offers to
@@ -191,3 +221,5 @@ struct TrashNotice;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod width_tests;

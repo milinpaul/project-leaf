@@ -17,6 +17,8 @@ pub enum PageAction {
     ToggleFavourite,
     /// Edit the title.
     Rename,
+    /// Switch the page between the reading column and the whole width (top bar only).
+    ToggleFullWidth,
     /// Move the page, with everything inside it, to the trash.
     MoveToTrash,
 }
@@ -32,6 +34,8 @@ pub enum PageMenuIcon {
     StarOff,
     /// A pencil.
     Rename,
+    /// Arrows pointing out to both sides.
+    FullWidth,
     /// A bin.
     Trash,
 }
@@ -62,6 +66,9 @@ pub struct PageMenuEntry {
     pub enabled: bool,
     /// Whether a line separates it from the entry above.
     pub separated: bool,
+    /// For an entry that turns something on or off: whether it is on now, so the UI can draw a switch.
+    /// `None` for an entry that just does something.
+    pub switch: Option<bool>,
 }
 
 /// A page's menu: its entries, then lines of information under them.
@@ -93,6 +100,7 @@ impl WorkspaceEditor {
             danger: false,
             enabled: true,
             separated: false,
+            switch: None,
         };
         let mut entries = Vec::new();
         if place == MenuPlace::Sidebar {
@@ -112,6 +120,14 @@ impl WorkspaceEditor {
             )
         });
         entries.push(entry(PageAction::Rename, "Rename", PageMenuIcon::Rename));
+        // How the open page is laid out: only where the page is open, like Notion.
+        if place == MenuPlace::TopBar {
+            entries.push(PageMenuEntry {
+                separated: true,
+                switch: Some(meta.full_width),
+                ..entry(PageAction::ToggleFullWidth, "Full width", PageMenuIcon::FullWidth)
+            });
+        }
         entries.push(PageMenuEntry {
             danger: true,
             separated: true,
