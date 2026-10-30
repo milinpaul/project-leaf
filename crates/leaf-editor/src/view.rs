@@ -48,6 +48,25 @@ pub enum BlockStyle {
         /// Description for screen readers.
         alt: String,
     },
+    /// A simple table (E16). The row holds no text; its cells follow it in the rows, row by row, one
+    /// level deeper. The table's row blocks themselves aren't listed.
+    Table {
+        /// Whether the first row is a header row.
+        header_row: bool,
+        /// How many rows.
+        rows: usize,
+        /// How many columns: the longest row (rows are only uneven after merging another copy).
+        columns: usize,
+    },
+    /// One cell of the table above it, with its text as the row's text.
+    TableCell {
+        /// Its row, from 0.
+        row: usize,
+        /// Its column, from 0.
+        column: usize,
+        /// Whether it is in the table's header row.
+        header: bool,
+    },
     /// A kind from a newer version, drawn read-only.
     Unknown {
         /// The stored type name.
@@ -69,10 +88,16 @@ impl BlockStyle {
             BlockKind::Divider => Self::Divider,
             BlockKind::Image { asset, width, alt } => Self::Image { asset, width, alt },
             BlockKind::Unknown { type_name } => Self::Unknown { type_name },
-            // Drawn as a read-only placeholder until the table UI (E16-S03); its rows and cells aren't
-            // listed.
-            table @ (BlockKind::Table { .. } | BlockKind::TableRow | BlockKind::TableCell) => Self::Unknown {
-                type_name: table.type_name().to_owned(),
+            // Placed by the walk, which knows the grid; these are only what a table part reads as alone.
+            BlockKind::Table { header_row } => Self::Table {
+                header_row,
+                rows: 0,
+                columns: 0,
+            },
+            BlockKind::TableRow | BlockKind::TableCell => Self::TableCell {
+                row: 0,
+                column: 0,
+                header: false,
             },
         }
     }
@@ -174,7 +199,12 @@ impl PageView {
         for id in changes.blocks {
             if let (Some(&at), Some(content)) = (self.position.get(&id), self.content.get(&id)) {
                 let row = &mut self.rows[at];
+                let style = row.style.clone();
                 *row = content.row(id, row.depth, numbered(&row.style));
+                // Where a cell sits in its grid didn't change (that would be a structure change).
+                if matches!(style, BlockStyle::Table { .. } | BlockStyle::TableCell { .. }) {
+                    row.style = style;
+                }
             }
         }
         Ok(())
@@ -214,11 +244,54 @@ impl PageView {
             } else {
                 0
             };
-            let table = matches!(content.kind, BlockKind::Table { .. });
             rows.push(content.row(id, depth, number));
             seen.insert(id);
-            if !table {
+            if let BlockKind::Table { header_row } = content.kind {
+                self.walk_table(doc, id, header_row, depth, rows, seen)?;
+            } else {
                 self.walk(doc, doc.children(id)?, depth + 1, rows, seen)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl PageView {
+    /// Lists a table's cells after its row, row by row, and gives the table row the grid's size.
+    fn walk_table(
+        &mut self,
+        doc: &PageDoc,
+        table: BlockId,
+        header_row: bool,
+        depth: usize,
+        rows: &mut Vec<BlockRow>,
+        seen: &mut HashSet<BlockId>,
+    ) -> Result<(), ModelError> {
+        let grid = doc.table_cells(table)?;
+        if let Some(row) = rows.last_mut() {
+            row.style = BlockStyle::Table {
+                header_row,
+                rows: grid.len(),
+                columns: grid.iter().map(Vec::len).max().unwrap_or(0),
+            };
+        }
+        for (r, cells) in grid.into_iter().enumerate() {
+            for (column, id) in cells.into_iter().enumerate() {
+                let content = match self.content.entry(id) {
+                    Entry::Occupied(cached) => cached.into_mut(),
+                    Entry::Vacant(slot) => {
+                        self.reads += 1;
+                        slot.insert(Content::read(doc, id)?)
+                    }
+                };
+                let mut row = content.row(id, depth + 1, 0);
+                row.style = BlockStyle::TableCell {
+                    row: r,
+                    column,
+                    header: header_row && r == 0,
+                };
+                rows.push(row);
+                seen.insert(id);
             }
         }
         Ok(())

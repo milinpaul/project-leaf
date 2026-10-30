@@ -70,6 +70,26 @@ fn selected_blocks_cover_everything_nested_in_them() {
     assert_eq!(covered, vec![true, true, true, false, true]);
 }
 
+#[test]
+fn selected_cells_are_covered_whole() {
+    let rows = vec![
+        row(0, None),
+        row(1, Some("a")),
+        row(1, Some("b")),
+        row(1, Some("c")),
+    ];
+    let lit = highlights(
+        &rows,
+        Some(&Selection::Cells {
+            table: rows[0].id,
+            cells: vec![rows[1].id, rows[3].id],
+        }),
+    );
+    assert_eq!(lit.get(&rows[1].id), Some(&Highlight::Whole));
+    assert_eq!(lit.get(&rows[3].id), Some(&Highlight::Whole));
+    assert!(!lit.contains_key(&rows[2].id) && !lit.contains_key(&rows[0].id));
+}
+
 fn span(text: &str, bold: bool) -> TextSpan {
     TextSpan {
         text: text.into(),

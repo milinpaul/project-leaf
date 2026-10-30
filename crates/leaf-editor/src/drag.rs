@@ -75,8 +75,22 @@ impl PageEditor {
             return Ok(None);
         };
         let row_kept = outline.rows.get(before).is_some_and(|(b, _)| *b == row.block);
-        let gap = before + usize::from(below_row && row_kept);
-        let above = gap.checked_sub(1).and_then(|i| outline.rows.get(i)).copied();
+        let mut gap = before + usize::from(below_row && row_kept);
+        // Nothing goes between a table's cells: a drop there lands right after the table, which the
+        // row above then stands for (its cells are listed one level deeper than it).
+        while let Some(&(cell, _)) = outline.rows.get(gap) {
+            if !self.doc.kind(cell)?.is_table_part() {
+                break;
+            }
+            gap += 1;
+        }
+        let above = match gap.checked_sub(1).and_then(|i| outline.rows.get(i)).copied() {
+            Some((cell, depth)) => match crate::table::table_of(&self.doc, cell)? {
+                Some(table) => Some((table, depth.saturating_sub(1))),
+                None => Some((cell, depth)),
+            },
+            None => None,
+        };
         let next_depth = outline.rows.get(gap).map_or(0, |&(_, depth)| depth);
         let (lowest, deepest) = match above {
             None => (0, 0),

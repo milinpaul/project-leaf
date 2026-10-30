@@ -34,6 +34,14 @@ pub enum Selection {
     },
     /// Whole blocks, each with everything nested in it, in reading order.
     Blocks(Vec<BlockId>),
+    /// Whole cells of one table: a text selection from one cell into another covers the rectangle
+    /// of cells between them (E16-S02). The caret and the other end stay in the two corner cells.
+    Cells {
+        /// The table.
+        table: BlockId,
+        /// The cells, row by row.
+        cells: Vec<BlockId>,
+    },
 }
 
 impl PageEditor {
@@ -148,9 +156,15 @@ impl PageEditor {
             let left: Vec<BlockId> = blocks.iter().copied().filter(|&b| self.doc.contains(b)).collect();
             return Ok((!left.is_empty()).then_some(Selection::Blocks(left)));
         }
-        Ok(self
-            .text_selection()?
-            .map(|(start, end)| Selection::Text { start, end }))
+        let Some((start, end)) = self.text_selection()? else {
+            return Ok(None);
+        };
+        if start.block != end.block
+            && let Some((table, cells)) = crate::table::cell_rect(&self.doc, start.block, end.block)?
+        {
+            return Ok(Some(Selection::Cells { table, cells }));
+        }
+        Ok(Some(Selection::Text { start, end }))
     }
 
     /// The selected text as (start, end) in reading order, if any text is selected.
@@ -241,6 +255,14 @@ pub(crate) fn delete_span(
         clear(doc, start.block, start.at..end.at)?;
         return Ok(start);
     }
+    // Inside one table: the cells between empty. Reaching into or out of a table: the table goes whole.
+    if let Some((_, cells)) = crate::table::cell_rect(doc, start.block, end.block)? {
+        return Ok(crate::table::clear_cells(doc, &cells)?.unwrap_or(start));
+    }
+    let (start_table, end_table) = (table_of(doc, start.block)?, table_of(doc, end.block)?);
+    if start_table.is_some() || end_table.is_some() {
+        return delete_around_tables(doc, order, start, end, start_table, end_table);
+    }
     let mut holders = Vec::new();
     let mut parent = doc.parent(end.block)?;
     while let Some(p) = parent {
@@ -248,7 +270,12 @@ pub(crate) fn delete_span(
         parent = doc.parent(p)?;
     }
     let position = |b: BlockId| order.iter().position(|&x| x == b).unwrap_or(0);
-    let between = &order[position(start.block) + 1..position(end.block)];
+    // A table in between goes whole, so its cells aren't listed on their own.
+    let between: Vec<BlockId> = order[position(start.block) + 1..position(end.block)]
+        .iter()
+        .copied()
+        .filter(|&b| table_of(doc, b).is_ok_and(|table| table.is_none()))
+        .collect();
     let (lifted, doomed): (Vec<BlockId>, Vec<BlockId>) =
         between.iter().copied().partition(|b| holders.contains(b));
 
@@ -276,6 +303,79 @@ pub(crate) fn delete_span(
         }
     }
     Ok(start)
+}
+
+/// Deletes a selection with an end inside a table and the other outside it (or in another table).
+/// Each table holding an end goes whole, with the blocks between; text outside a table is trimmed,
+/// and nothing is joined. The caret goes to the start's place, or where the end's text now starts.
+fn delete_around_tables(
+    doc: &mut PageDoc,
+    order: &[BlockId],
+    start: Caret,
+    end: Caret,
+    start_table: Option<BlockId>,
+    end_table: Option<BlockId>,
+) -> Result<Caret, EditorError> {
+    let position = |b: BlockId| order.iter().position(|&x| x == b).unwrap_or(0);
+    let mut holders = Vec::new();
+    let mut parent = doc.parent(end_table.unwrap_or(end.block))?;
+    while let Some(p) = parent {
+        holders.push(p);
+        parent = doc.parent(p)?;
+    }
+    let mut doomed: Vec<BlockId> = start_table.into_iter().chain(end_table).collect();
+    for &block in &order[position(start.block) + 1..position(end.block)] {
+        let whole = table_of(doc, block)?.is_none() && !holders.contains(&block);
+        if whole && !doomed.contains(&block) {
+            doomed.push(block);
+        }
+    }
+    let len = |doc: &PageDoc, id| -> Result<usize, EditorError> {
+        Ok(doc.plain_text(id)?.map_or(0, |t| t.chars().count()))
+    };
+    if start_table.is_none() {
+        let start_len = len(doc, start.block)?;
+        if start.at < start_len {
+            doc.apply(PageCommand::DeleteText {
+                id: start.block,
+                range: start.at..start_len,
+            })?;
+        }
+    }
+    if end_table.is_none() && end.at > 0 {
+        doc.apply(PageCommand::DeleteText {
+            id: end.block,
+            range: 0..end.at,
+        })?;
+    }
+    doc.apply(PageCommand::DeleteBlocks { ids: doomed })?;
+    if start_table.is_none() {
+        return Ok(start);
+    }
+    if end_table.is_none() {
+        return Ok(Caret {
+            block: end.block,
+            at: 0,
+        });
+    }
+    // Both ends were in tables: the nearest text after them, else before, else a new paragraph.
+    let after = order[position(end.block)..].iter();
+    let before = order[..position(start.block)].iter().rev();
+    for &block in after.chain(before) {
+        if doc.contains(block) && doc.plain_text(block)?.is_some() && table_of(doc, block)?.is_none() {
+            return Ok(Caret { block, at: 0 });
+        }
+    }
+    let index = doc.root_blocks().len();
+    let block = crate::page_editor::insert_block(doc, None, index, BlockKind::Paragraph)?;
+    Ok(Caret { block, at: 0 })
+}
+
+fn table_of(doc: &PageDoc, block: BlockId) -> Result<Option<BlockId>, EditorError> {
+    if !doc.contains(block) {
+        return Ok(None);
+    }
+    crate::table::table_of(doc, block)
 }
 
 #[cfg(test)]

@@ -238,3 +238,30 @@ fn when_the_caret_block_is_deleted_the_caret_goes_to_the_nearest_text_above() {
     assert_eq!(editor.caret().unwrap(), None, "an empty page");
     assert_eq!(editor.move_caret(Left).unwrap(), None);
 }
+
+#[test]
+fn arrow_keys_stay_quick_in_a_very_long_block() {
+    use std::time::{Duration, Instant};
+
+    // About as long as a pasted meeting transcript: one paragraph of ~38,000 characters (E17-S09).
+    let text = "so the partner maps their fields and then we review it. ".repeat(680);
+    let (mut editor, ids) = page(&[(BlockKind::Paragraph, &text)]);
+    editor
+        .set_caret(Caret {
+            block: ids[0],
+            at: 20_000,
+        })
+        .unwrap();
+    let started = Instant::now();
+    for _ in 0..200 {
+        editor.move_caret(Left).unwrap();
+    }
+    for _ in 0..20 {
+        editor.move_caret(WordLeft).unwrap();
+    }
+    let took = started.elapsed();
+    // 200 characters left, then 20 words left (each word plus its space or full stop).
+    assert_eq!(editor.caret().unwrap().unwrap().at, 19_698);
+    // Generous for a debug build on a slow machine: before E17-S09 the Left presses alone took ~4 s.
+    assert!(took < Duration::from_secs(2), "220 key presses took {took:?}");
+}

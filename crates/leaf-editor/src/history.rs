@@ -47,6 +47,12 @@ impl PageEditor {
                 saved.tail = Some(if caret == start { end } else { start });
             }
             Some(Selection::Blocks(blocks)) => saved.blocks = blocks,
+            // Cells are kept as the text selection between their corners, which gives them back.
+            Some(Selection::Cells { .. }) => {
+                if let Some((start, end)) = self.text_selection()? {
+                    saved.tail = Some(if caret == start { end } else { start });
+                }
+            }
             None => {}
         }
         Ok(Some(saved))

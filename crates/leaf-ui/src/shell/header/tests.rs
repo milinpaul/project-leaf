@@ -142,8 +142,8 @@ fn add_cover_opens_the_picker_and_a_thumbnail_sets_the_cover(cx: &mut TestAppCon
     assert!(cx.debug_bounds("page-cover").is_none(), "no band without a cover");
     click(cx, "add-cover");
     assert!(cover_picker_open(&shell, cx));
-    click(cx, "cover-dawn");
-    assert_eq!(cover(&shell, cx), Some(PageCover::Builtin(BuiltinCover::Dawn)));
+    click(cx, "cover-sage");
+    assert_eq!(cover(&shell, cx), Some(PageCover::Builtin(BuiltinCover::Sage)));
     assert!(!cover_picker_open(&shell, cx), "picking closes the picker");
 
     let band = cx.debug_bounds("page-cover").expect("the cover band is drawn");
@@ -165,7 +165,7 @@ fn the_icon_overlaps_the_cover_and_remove_takes_the_cover_away(cx: &mut TestAppC
     click(cx, "add-icon");
     click(cx, "emoji-😀");
     click(cx, "add-cover");
-    click(cx, "cover-dawn");
+    click(cx, "cover-sage");
 
     let band = cx.debug_bounds("page-cover").unwrap();
     let icon = cx.debug_bounds("page-icon").unwrap();
@@ -183,7 +183,7 @@ fn the_icon_overlaps_the_cover_and_remove_takes_the_cover_away(cx: &mut TestAppC
 fn change_cover_reopens_the_picker_and_escape_closes_it(cx: &mut TestAppContext) {
     let (shell, cx) = open_window(cx);
     click(cx, "add-cover");
-    click(cx, "cover-dawn");
+    click(cx, "cover-sage");
 
     click(cx, "change-cover");
     assert!(cover_picker_open(&shell, cx));
@@ -193,24 +193,60 @@ fn change_cover_reopens_the_picker_and_escape_closes_it(cx: &mut TestAppContext)
     assert!(cover(&shell, cx).is_some(), "and changes nothing");
 }
 
+/// A cover's thumbnail selector in the picker. Selectors must be `'static`; leaking a few short strings
+/// in a test is fine.
+fn thumb(cover: leaf_editor::BuiltinCover) -> &'static str {
+    format!("cover-{}", cover.name()).leak()
+}
+
 #[gpui::test]
-fn the_picker_offers_every_built_in_cover(cx: &mut TestAppContext) {
-    use leaf_editor::{BuiltinCover, PageCover};
+fn the_picker_offers_every_built_in_cover_four_to_a_row(cx: &mut TestAppContext) {
+    use leaf_editor::{BuiltinCover, CoverSection, PageCover};
 
     let (shell, cx) = open_window(cx);
     click(cx, "add-cover");
-    for selector in [
-        "cover-dawn",
-        "cover-forest",
-        "cover-ocean",
-        "cover-paper",
-        "cover-night",
-        "cover-travel",
-    ] {
+    for cover in BuiltinCover::ALL {
+        let selector = thumb(*cover);
         assert!(cx.debug_bounds(selector).is_some(), "{selector} is offered");
     }
-    click(cx, "cover-night");
-    assert_eq!(cover(&shell, cx), Some(PageCover::Builtin(BuiltinCover::Night)));
+    let tops: Vec<f32> = CoverSection::ColourAndGradient
+        .covers()
+        .take(5)
+        .map(|cover| f32::from(cx.debug_bounds(thumb(cover)).unwrap().top()))
+        .collect();
+    assert!(
+        tops[..4].iter().all(|top| (top - tops[0]).abs() < 0.5),
+        "the first four share a row: {tops:?}"
+    );
+    assert!(tops[4] > tops[0], "the fifth starts the next row: {tops:?}");
+    let first_picture = cx.debug_bounds("cover-dawn").unwrap();
+    let last_colour = cx.debug_bounds("cover-haze").unwrap();
+    assert!(
+        first_picture.top() > last_colour.bottom(),
+        "illustrations come after colours and gradients"
+    );
+    click(cx, "cover-twilight");
+    assert_eq!(
+        cover(&shell, cx),
+        Some(PageCover::Builtin(BuiltinCover::Twilight))
+    );
+}
+
+#[gpui::test]
+fn remove_in_the_picker_shows_only_with_a_cover_and_takes_it_away(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    click(cx, "add-cover");
+    assert!(
+        cx.debug_bounds("cover-picker-remove").is_none(),
+        "nothing to remove yet"
+    );
+    click(cx, "cover-lagoon");
+
+    click(cx, "change-cover");
+    click(cx, "cover-picker-remove");
+    assert_eq!(cover(&shell, cx), None);
+    assert!(!cover_picker_open(&shell, cx), "removing closes the picker");
+    assert!(cx.debug_bounds("page-cover").is_none());
 }
 
 #[gpui::test]

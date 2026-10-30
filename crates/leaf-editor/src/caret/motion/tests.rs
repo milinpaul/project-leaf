@@ -138,3 +138,108 @@ proptest! {
         prop_assert!(word_right(&text, at) >= at && word_left(&text, at) <= at);
     }
 }
+
+/// The motions as they were before E17-S09, segmenting the whole text from its start: the local
+/// versions must agree with them everywhere.
+mod whole_text {
+    use unicode_segmentation::UnicodeSegmentation;
+
+    fn boundaries(text: &str) -> Vec<usize> {
+        std::iter::once(0)
+            .chain(text.graphemes(true).scan(0, |pos, g| {
+                *pos += g.chars().count();
+                Some(*pos)
+            }))
+            .collect()
+    }
+
+    pub fn snap(text: &str, at: usize) -> usize {
+        boundaries(text)
+            .into_iter()
+            .take_while(|&b| b <= at)
+            .last()
+            .unwrap_or(0)
+    }
+
+    pub fn next(text: &str, at: usize) -> usize {
+        boundaries(text)
+            .into_iter()
+            .find(|&b| b > at)
+            .unwrap_or_else(|| text.chars().count())
+    }
+
+    pub fn previous(text: &str, at: usize) -> usize {
+        boundaries(text)
+            .into_iter()
+            .take_while(|&b| b < at)
+            .last()
+            .unwrap_or(0)
+    }
+
+    fn words(text: &str) -> Vec<std::ops::Range<usize>> {
+        let (mut pos, mut out) = (0, Vec::new());
+        for segment in text.split_word_bounds() {
+            let len = segment.chars().count();
+            if segment.chars().any(char::is_alphanumeric) {
+                out.push(pos..pos + len);
+            }
+            pos += len;
+        }
+        out
+    }
+
+    pub fn word_right(text: &str, at: usize) -> usize {
+        words(text)
+            .into_iter()
+            .find(|w| w.end > at)
+            .map_or_else(|| text.chars().count(), |w| w.end)
+    }
+
+    pub fn word_left(text: &str, at: usize) -> usize {
+        words(text)
+            .into_iter()
+            .rev()
+            .find(|w| w.start < at)
+            .map_or(0, |w| w.start)
+    }
+}
+
+/// Like `tricky_text`, longer and with lone regional indicators, digits with points and apostrophes too.
+fn trickier_text() -> impl Strategy<Value = String> {
+    let pieces = prop::sample::select(vec![
+        "a",
+        "Z",
+        " ",
+        "  ",
+        ".",
+        ",",
+        "'",
+        "3.14",
+        "e\u{301}",
+        "👨\u{200d}👩\u{200d}👧",
+        "🇮",
+        "🇳",
+        "🇮🇳",
+        "👍🏽",
+        "क्ष",
+        "नमस्ते",
+        "東京",
+        "\n",
+        "-",
+        "don't",
+    ]);
+    prop::collection::vec(pieces, 0..40).prop_map(|parts| parts.concat())
+}
+
+proptest! {
+    #[test]
+    fn local_motions_agree_with_whole_text_segmentation(text in trickier_text(), seed in 0usize..1000) {
+        let len = text.chars().count();
+        let at = if len == 0 { 0 } else { seed % (len + 2) };
+        prop_assert_eq!(snap(&text, at), whole_text::snap(&text, at), "snap {} in {:?}", at, text);
+        prop_assert_eq!(next_grapheme(&text, at), whole_text::next(&text, at), "next {} in {:?}", at, text);
+        prop_assert_eq!(previous_grapheme(&text, at), whole_text::previous(&text, at), "previous {} in {:?}", at, text);
+        prop_assert_eq!(word_right(&text, at), whole_text::word_right(&text, at), "word right {} in {:?}", at, text);
+        prop_assert_eq!(word_left(&text, at), whole_text::word_left(&text, at), "word left {} in {:?}", at, text);
+    }
+}
