@@ -7,7 +7,7 @@
 use leaf_core::PageId;
 use loro::{LoroValue, TreeParentId};
 
-use super::Workspace;
+use super::{Workspace, undo};
 use crate::page_meta::keys;
 use crate::{ModelError, Outcome, WorkspaceCommand};
 
@@ -67,6 +67,16 @@ impl Workspace {
                 index,
             } => self.move_page(page, new_parent, index)?,
             WorkspaceCommand::TrashPage { page, at } => self.trash_page(page, at)?,
+            WorkspaceCommand::MarkEdited { page, at } => {
+                let node = self.node(page)?;
+                if self.page(page)?.edited_at != at {
+                    self.tree
+                        .get_meta(node)?
+                        .insert(keys::EDITED_AT, LoroValue::I64(at))?;
+                    self.doc.set_next_commit_origin(undo::EDITED_ORIGIN);
+                }
+                Outcome::Changed
+            }
             WorkspaceCommand::RestorePage { page } => self.restore_page(page)?,
             WorkspaceCommand::DeletePagePermanently { page } => self.delete_page(page)?,
         };
@@ -101,6 +111,7 @@ impl Workspace {
         meta.insert(keys::ID, page.to_string())?;
         meta.insert(keys::TITLE, title)?;
         meta.insert(keys::CREATED_AT, LoroValue::I64(created_at))?;
+        meta.insert(keys::EDITED_AT, LoroValue::I64(created_at))?;
         self.index.insert(page, node);
         Ok(Outcome::PageCreated(page))
     }
@@ -148,5 +159,7 @@ impl Workspace {
 
 #[cfg(test)]
 mod cover_tests;
+#[cfg(test)]
+mod edited_tests;
 #[cfg(test)]
 mod tests;

@@ -54,6 +54,8 @@ pub struct WorkspaceEditor {
     expanded: HashSet<PageId>,
     /// Pages opened in this window, most recent first, for the quick switcher.
     recent: Vec<PageId>,
+    /// Pages whose title, icon or cover changed since the last [`WorkspaceEditor::stamp_edits`].
+    retitled: HashSet<PageId>,
 }
 
 impl WorkspaceEditor {
@@ -66,6 +68,7 @@ impl WorkspaceEditor {
             pages: HashMap::new(),
             expanded: HashSet::new(),
             recent: Vec::new(),
+            retitled: HashSet::new(),
         }
     }
 
@@ -110,6 +113,7 @@ impl WorkspaceEditor {
             std::collections::hash_map::Entry::Vacant(entry) => {
                 let mut editor = PageEditor::new(PageDoc::new());
                 editor.ensure_block()?;
+                editor.doc().mark_stamped(); // a page to type in isn't an edit yet
                 entry.insert(editor)
             }
         };
@@ -126,7 +130,35 @@ impl WorkspaceEditor {
         if let std::collections::hash_map::Entry::Vacant(entry) = self.pages.entry(page) {
             let mut editor = PageEditor::new(doc);
             editor.ensure_block()?;
+            editor.doc().mark_stamped(); // opening a page isn't editing it
             entry.insert(editor);
+        }
+        Ok(())
+    }
+
+    /// Records the edited time of every page that changed since the last call: its blocks (including
+    /// undo and redo), title, icon or cover. The UI calls it from its save timer, before saving, so the
+    /// recorded time is within a tick of the change. Each page gets its own commit that undo skips
+    /// (ADR 0059).
+    pub fn stamp_edits(&mut self, now: i64) -> Result<(), EditorError> {
+        let mut edited: Vec<PageId> = self.retitled.drain().collect();
+        edited.extend(
+            self.pages
+                .iter()
+                .filter(|(_, editor)| editor.doc().has_unstamped_edits())
+                .map(|(page, _)| *page),
+        );
+        edited.sort_unstable();
+        edited.dedup();
+        for page in edited {
+            // A page deleted for good since it changed has nothing left to stamp.
+            if self.workspace.contains(page) {
+                self.workspace
+                    .apply(WorkspaceCommand::MarkEdited { page, at: now })?;
+            }
+            if let Some(editor) = self.pages.get(&page) {
+                editor.doc().mark_stamped();
+            }
         }
         Ok(())
     }
@@ -174,6 +206,7 @@ impl WorkspaceEditor {
             page,
             icon: icon.map(str::to_owned),
         })?;
+        self.retitled.insert(page);
         Ok(())
     }
 
@@ -194,6 +227,7 @@ impl WorkspaceEditor {
         }
         self.workspace
             .apply(WorkspaceCommand::SetPageCover { page, cover })?;
+        self.retitled.insert(page);
         Ok(())
     }
 
@@ -216,6 +250,7 @@ impl WorkspaceEditor {
             page,
             title: title.to_owned(),
         })?;
+        self.retitled.insert(page);
         Ok(())
     }
 }
@@ -226,5 +261,7 @@ mod tree;
 pub use trash::{TrashItem, TrashList, trashed_ago};
 pub use tree::DropPlace;
 
+#[cfg(test)]
+mod edited_tests;
 #[cfg(test)]
 mod tests;

@@ -30,6 +30,8 @@ pub struct PageDoc {
     index: BlockIndex,
     undo: UndoManager,
     saved: SavedVersion,
+    /// The version last recorded as the page's edited time (ADR 0059). Same bookkeeping as `saved`.
+    stamped: SavedVersion,
     pending: Arc<std::sync::Mutex<changes::Pending>>,
     _events: loro::Subscription,
     carets: Arc<undo::CaretSlots>,
@@ -52,6 +54,7 @@ impl PageDoc {
         let carets = Arc::new(undo::CaretSlots::default());
         let undo = undo::manager(&doc, &carets);
         let saved = SavedVersion::of(&doc);
+        let stamped = SavedVersion::of(&doc);
         let pending = Arc::default();
         let events = changes::watch(&doc, &pending);
         Self {
@@ -60,6 +63,7 @@ impl PageDoc {
             index: BlockIndex::default(),
             undo,
             saved,
+            stamped,
             pending,
             _events: events,
             carets,
@@ -99,6 +103,7 @@ impl PageDoc {
         let carets = Arc::new(undo::CaretSlots::default());
         let undo = undo::manager(&doc, &carets);
         let saved = SavedVersion::of(&doc);
+        let stamped = SavedVersion::of(&doc);
         // Watching starts after the load, so loading itself isn't reported as a change.
         let pending = Arc::default();
         let events = changes::watch(&doc, &pending);
@@ -108,6 +113,7 @@ impl PageDoc {
             index,
             undo,
             saved,
+            stamped,
             pending,
             _events: events,
             carets,
@@ -137,6 +143,19 @@ impl PageDoc {
     #[must_use]
     pub fn has_unsaved_changes(&self) -> bool {
         self.saved.is_behind(&self.doc)
+    }
+
+    /// Whether the blocks changed since the last [`PageDoc::mark_stamped`] (or load), so the page's
+    /// edited time needs recording. Undo and redo count: they change the page too.
+    #[must_use]
+    pub fn has_unstamped_edits(&self) -> bool {
+        self.stamped.is_behind(&self.doc)
+    }
+
+    /// Records that the page's edited time now covers every change so far. Like
+    /// [`PageDoc::mark_saved`], it changes no content.
+    pub fn mark_stamped(&self) {
+        self.stamped.update(&self.doc);
     }
 
     /// Top-level blocks, in order.

@@ -55,6 +55,14 @@ fn switching_away_saves_everything_to_the_folder(cx: &mut TestAppContext) {
     assert_eq!(texts, vec!["buy milk"]);
     let unsaved = shell.read_with(cx, |shell, _| shell.editor().workspace().has_unsaved_changes());
     assert!(!unsaved, "everything was saved");
+    // Saving recorded when the page was edited, and that time went to disk too (E18-S01).
+    let (edited_at, unstamped) = shell.read_with(cx, |shell, _| {
+        let editor = shell.editor();
+        let unstamped = editor.page_editor(page).unwrap().doc().has_unstamped_edits();
+        (editor.workspace().page(page).unwrap().edited_at, unstamped)
+    });
+    assert!(!unstamped, "the typing was stamped before saving");
+    assert_eq!(workspace.page(page).unwrap().edited_at, edited_at);
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
 

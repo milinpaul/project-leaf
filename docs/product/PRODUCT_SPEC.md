@@ -77,6 +77,10 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 - **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
   Fetching previews is Leaf's first network access and is opt-in, off by default (E15).
 - Trash: restore and permanent delete.
+- **Page top bar** (E18): the page's place (breadcrumb), when it was last edited, a Favourites star and a `⋯` menu.
+  The edited time counts changes to the blocks (undo and redo included), title, icon and cover, not opening,
+  moving, trashing or starring. Shown as "Edited just now" (under a minute), "Edited 3 minutes ago", "Edited 2
+  hours ago" or "Edited 100 days ago" (always days after the first day), with the exact date and time on hover.
 
 ## Phase 2
 

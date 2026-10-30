@@ -82,6 +82,7 @@ fn reads_page_meta_with_and_without_optional_fields() {
             icon: None,
             cover: None,
             created_at: 1_700_000_000_000,
+            edited_at: 1_700_000_000_000,
             trashed_at: None
         }
     );

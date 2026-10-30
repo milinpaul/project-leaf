@@ -23,6 +23,7 @@ LoroDoc (workspace)
           "icon":       String? # single emoji
           "cover":      String? # cover name, e.g. "builtin:dawn"; unknown names kept (ADR 0045)
           "created_at": i64     # unix ms
+          "edited_at":  i64?    # unix ms, last change to blocks/title/icon/cover; missing = created_at (ADR 0059)
           "trashed_at": i64?    # set = in trash (subtree hidden)
 ```
 
@@ -119,6 +120,9 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
   trash can't be moved until restored.
 - `RestorePage { page }`: clears `trashed_at`; if the page it lived in is itself in the trash, the page moves to the
   end of the top level so it doesn't stay hidden
+- `MarkEdited { page, at }`: sets `edited_at`. The editor applies it after a page's blocks, title, icon or cover
+  change (`WorkspaceEditor::stamp_edits`), as its own commit with origin `leaf:edited`, which workspace undo skips:
+  undo is an edit too, so it never restores an older time (ADR 0059)
 - `DeletePagePermanently { page }`: only for pages in the trash; deletes the subtree and returns every deleted
   `PageId` (`Outcome::PagesDeleted`) so storage can drop their page docs
 - A command that would change nothing (same title, same icon, same position) writes nothing and returns
