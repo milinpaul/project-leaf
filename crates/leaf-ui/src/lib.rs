@@ -65,6 +65,7 @@ gpui_kit_assets::icon_assets!(
         SquarePen,
         Star,
         StarFill,
+        StarOff,
         TextQuote,
         Trash,
         Type

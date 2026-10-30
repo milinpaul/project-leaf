@@ -1,6 +1,6 @@
 //! The thin bar across the top of the open page (E18-S03), like Notion's: on the left where the page
 //! sits (its parent pages, then its own icon and title, each opening its page); on the right when it
-//! was last edited, a star for Favourites, and the `⋯` page menu. While the sidebar is hidden, its ☰
+//! was last edited, a star for Favourites, and the `⋯` page menu (`page_menu`). While the sidebar is hidden, its ☰
 //! reopen button sits at the bar's left end. The breadcrumb and the words come from `leaf-editor`
 //! (`WorkspaceEditor::breadcrumb`, `edited_ago`); this module only draws them.
 
@@ -13,13 +13,14 @@ use gpui::{
     StatefulInteractiveElement as _, Styled, div, px,
 };
 use gpui_component::button::ButtonVariants as _;
-use gpui_component::menu::{DropdownMenu as _, PopupMenuItem};
+use gpui_component::menu::DropdownMenu as _;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::PageId;
-use leaf_editor::{Crumb, edited_ago, edited_on};
+use leaf_editor::{Crumb, MenuPlace, edited_ago, edited_on};
 
+use super::page_menu::page_menu;
 use super::{Shell, now_ms, report};
 use crate::settings;
 
@@ -71,7 +72,7 @@ impl Shell {
             .child(Self::render_crumbs(&crumbs, cx))
             .child(self.render_edited(page, cx))
             .child(self.render_star(page, cx))
-            .child(self.render_more(page, cx))
+            .child(Self::render_more(page, cx))
             .into_any_element()
     }
 
@@ -183,10 +184,8 @@ impl Shell {
             .into_any_element()
     }
 
-    /// The `⋯` page menu. For now it offers Favourites; rename, move to trash and more follow
-    /// (E18-S04).
-    fn render_more(&self, page: PageId, cx: &mut Context<Self>) -> AnyElement {
-        let on = self.editor.is_favourite(page);
+    /// The `⋯` page menu: the editor's page menu for the top bar (E18-S04).
+    fn render_more(page: PageId, cx: &mut Context<Self>) -> AnyElement {
         let shell = cx.entity().downgrade();
         crate::theme::button("page-menu")
             .debug_selector(|| "page-menu".into())
@@ -194,17 +193,7 @@ impl Shell {
             .ghost()
             .small()
             .tooltip("More")
-            .dropdown_menu(move |menu, _, _| {
-                let shell = shell.clone();
-                let label = if on {
-                    "Remove from Favourites"
-                } else {
-                    "Add to Favourites"
-                };
-                menu.item(PopupMenuItem::new(label).on_click(move |_, _, cx| {
-                    let _ = shell.update(cx, |shell, cx| shell.toggle_favourite(page, cx));
-                }))
-            })
+            .dropdown_menu(move |menu, _, cx| page_menu(menu, &shell, page, MenuPlace::TopBar, cx))
             .into_any_element()
     }
 
@@ -220,7 +209,7 @@ impl Shell {
 
 /// The local time zone's offset from UTC at `at` (Unix milliseconds), in minutes, for the exact time
 /// on hover. UTC if the time can't be read.
-fn local_offset_minutes(at: i64) -> i32 {
+pub(super) fn local_offset_minutes(at: i64) -> i32 {
     Local
         .timestamp_millis_opt(at)
         .single()

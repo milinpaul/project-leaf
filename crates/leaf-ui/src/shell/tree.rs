@@ -140,6 +140,16 @@ impl Shell {
     /// "Move to Trash": hides `page` and everything inside it. If the open page went with it, the
     /// window shows no page.
     pub fn trash_page(&mut self, page: PageId, cx: &mut Context<Self>) {
+        self.end_rename_of(page);
+        if let Err(err) = self.editor.trash(page, now_ms()) {
+            report("could not move the page to the trash", err);
+        }
+        cx.notify();
+    }
+
+    /// Drops an inline rename of `page`, if one is open, without keeping what was typed: the page is
+    /// going away.
+    pub(super) fn end_rename_of(&mut self, page: PageId) {
         if self
             .tree
             .renaming
@@ -148,10 +158,6 @@ impl Shell {
         {
             self.tree.renaming = None;
         }
-        if let Err(err) = self.editor.trash(page, now_ms()) {
-            report("could not move the page to the trash", err);
-        }
-        cx.notify();
     }
 
     /// Drops a dragged `page` at `place`.

@@ -5,18 +5,19 @@ use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, AppContext as _, Context, DragMoveEvent, Hsla, InteractiveElement as _, IntoElement,
     KeyDownEvent, MouseButton, MouseDownEvent, ParentElement, Pixels, SharedString,
-    StatefulInteractiveElement as _, Styled, WeakEntity, div, px,
+    StatefulInteractiveElement as _, Styled, div, px,
 };
 use gpui_component::input::Input;
-use gpui_component::menu::{ContextMenuExt as _, PopupMenu, PopupMenuItem};
+use gpui_component::menu::ContextMenuExt as _;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::PageId;
-use leaf_editor::{DropPlace, SidebarItem};
+use leaf_editor::{DropPlace, MenuPlace, SidebarItem};
 
 use super::DraggedPage;
 use crate::shell::Shell;
+use crate::shell::page_menu::page_menu;
 
 /// Height of a row, in pixels. Fixed, so the list can draw only the rows on screen.
 const ROW_HEIGHT: f32 = 30.0;
@@ -122,7 +123,7 @@ impl Shell {
                 }
                 cx.stop_propagation(); // not also a drop on the space below the tree
             }))
-            .context_menu(move |menu, _, _| page_menu(menu, &shell, page))
+            .context_menu(move |menu, _, cx| page_menu(menu, &shell, page, MenuPlace::Sidebar, cx))
             .into_any_element()
     }
 
@@ -240,55 +241,6 @@ impl Shell {
             _ => None,
         }
     }
-}
-
-/// The row's right-click menu: roomy rows with an icon each, and the one that removes the page in red.
-fn page_menu(menu: PopupMenu, shell: &WeakEntity<Shell>, page: PageId) -> PopupMenu {
-    let (inside, rename, trash) = (shell.clone(), shell.clone(), shell.clone());
-    // The shell outlives its rows; if it is gone the window is closing anyway.
-    menu.min_w(px(MENU_WIDTH))
-        .item(
-            menu_row(IconName::Plus, "Add page inside", false).on_click(move |_, window, cx| {
-                let _ = inside.update(cx, |shell, cx| shell.new_page_inside(page, window, cx));
-            }),
-        )
-        .item(
-            menu_row(IconName::PencilLine, "Rename", false).on_click(move |_, window, cx| {
-                let _ = rename.update(cx, |shell, cx| shell.start_rename(page, window, cx));
-            }),
-        )
-        .separator()
-        .item(
-            menu_row(IconName::Trash, "Move to Trash", true).on_click(move |_, _, cx| {
-                let _ = trash.update(cx, |shell, cx| shell.trash_page(page, cx));
-            }),
-        )
-}
-
-/// Width of the right-click menu, in pixels: room for the labels without crowding them.
-const MENU_WIDTH: f32 = 200.0;
-
-/// Height of a right-click menu row, in pixels; taller than the widget's default for an easier target.
-const MENU_ROW_HEIGHT: f32 = 32.0;
-
-/// One right-click menu row: icon and label, both red when it removes something.
-fn menu_row(icon: IconName, label: &'static str, danger: bool) -> PopupMenuItem {
-    PopupMenuItem::element(move |_, cx| {
-        let theme = cx.theme();
-        let (text, icon_colour) = if danger {
-            (theme.danger, theme.danger)
-        } else {
-            (theme.popover_foreground, theme.muted_foreground)
-        };
-        h_flex()
-            .h(px(MENU_ROW_HEIGHT))
-            .cursor_pointer()
-            .px_1()
-            .gap_2p5()
-            .text_color(text)
-            .child(Icon::new(icon).small().text_color(icon_colour))
-            .child(label)
-    })
 }
 
 /// A 2 px accent line across a row, placed by the caller.

@@ -12,7 +12,7 @@
 //! - `dark`: the dark appearance. `nosidebar`: the sidebar hidden, as `Cmd/Ctrl+\` leaves it.
 //! - `deep`: open the deepest page under the first one (its first child, and so on), for a breadcrumb.
 //!   `star`: add the open page to Favourites. `cover=NAME`: give it the built-in cover NAME (`sage`,
-//!   `lagoon`, …).
+//!   `lagoon`, …). `pagemenu`: then open the top bar's `⋯` page menu.
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
 //! - `language=B`: open code block B's language picker.
@@ -58,6 +58,9 @@ mod mac {
 
     type Error = Box<dyn std::error::Error>;
 
+    /// The window's width, in points.
+    const WIDTH: f32 = 1280.0;
+
     /// What the command line asked for.
     #[allow(clippy::struct_excessive_bools, reason = "independent command-line switches")]
     struct Options {
@@ -69,6 +72,7 @@ mod mac {
         deep: bool,
         star: bool,
         cover: Option<String>,
+        pagemenu: bool,
         bench: bool,
         caret: Option<String>,
         select: Option<String>,
@@ -81,7 +85,7 @@ mod mac {
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [cover=NAME] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [cover=NAME] [pagemenu] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -100,6 +104,7 @@ mod mac {
             deep: rest.iter().any(|a| a == "deep"),
             star: rest.iter().any(|a| a == "star"),
             cover: value("cover="),
+            pagemenu: rest.iter().any(|a| a == "pagemenu"),
             bench: rest.iter().any(|a| a == "bench"),
             link: rest.iter().any(|a| a == "link"),
             language: value("language="),
@@ -121,7 +126,7 @@ mod mac {
         let (storage, workspace) = Storage::open(leaf_store::Workspace::open(Path::new(&options.folder))?)?;
         let made: Rc<RefCell<Option<Entity<Shell>>>> = Rc::default();
         let keep = made.clone();
-        let window = cx.open_offscreen_window(size(px(1280.0), px(800.0)), move |window, cx| {
+        let window = cx.open_offscreen_window(size(px(WIDTH), px(800.0)), move |window, cx| {
             let shell = cx.new(|cx| Shell::with_storage(storage, workspace, window, cx));
             *keep.borrow_mut() = Some(shell.clone());
             cx.new(|cx| Root::new(shell, window, cx))
@@ -271,6 +276,9 @@ mod mac {
         if let Some(spec) = &options.drag {
             drag(cx, window, shell, spec)?;
         }
+        if options.pagemenu {
+            click(cx, window, point(px(WIDTH - PAGE_MENU_FROM_RIGHT), px(22.0)))?;
+        }
         Ok(())
     }
 
@@ -327,6 +335,21 @@ mod mac {
             draw(cx, window)?;
         }
         Ok(())
+    }
+
+    /// Where the top bar's `⋯` button sits, from the window's right edge.
+    const PAGE_MENU_FROM_RIGHT: f32 = 21.0;
+
+    /// A left click at `at`, then a redraw.
+    fn click(
+        cx: &mut VisualTestAppContext,
+        window: AnyWindowHandle,
+        at: gpui::Point<gpui::Pixels>,
+    ) -> Result<(), Error> {
+        draw(cx, window)?;
+        cx.simulate_mouse_down(window, at, MouseButton::Left, Modifiers::none());
+        cx.simulate_mouse_up(window, at, MouseButton::Left, Modifiers::none());
+        draw(cx, window)
     }
 
     /// Draws explicitly (off screen, nothing asks for frames). Two frames: the list measures rows on
