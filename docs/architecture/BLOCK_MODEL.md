@@ -323,7 +323,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | code | fenced block with language |
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
-| table | Markdown table (E16-S04; until then each cell's text on its own line) |
+| table | GitHub-style Markdown table, first row as the header; `\|` for a pipe and `<br>` for a line break in a cell |
 
 Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR 0032); plain lines become paragraphs.
 

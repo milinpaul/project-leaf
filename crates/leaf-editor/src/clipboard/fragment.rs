@@ -158,6 +158,11 @@ enum WireKind {
         width: Option<f64>,
         alt: String,
     },
+    Table {
+        header_row: bool,
+    },
+    TableRow,
+    TableCell,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -190,12 +195,12 @@ impl WireBlock {
                 width: *width,
                 alt: alt.clone(),
             },
-            // Tables can't be pasted until E16-S04 builds them from the clipboard; left out like
-            // blocks from a newer version.
-            BlockKind::Unknown { .. }
-            | BlockKind::Table { .. }
-            | BlockKind::TableRow
-            | BlockKind::TableCell => return None,
+            BlockKind::Table { header_row } => WireKind::Table {
+                header_row: *header_row,
+            },
+            BlockKind::TableRow => WireKind::TableRow,
+            BlockKind::TableCell => WireKind::TableCell,
+            BlockKind::Unknown { .. } => return None,
         };
         Some(Self {
             kind,
@@ -215,6 +220,9 @@ impl WireBlock {
             WireKind::Code { language } => BlockKind::Code { language },
             WireKind::Divider => BlockKind::Divider,
             WireKind::Image { asset, width, alt } => BlockKind::Image { asset, width, alt },
+            WireKind::Table { header_row } => BlockKind::Table { header_row },
+            WireKind::TableRow => BlockKind::TableRow,
+            WireKind::TableCell => BlockKind::TableCell,
         };
         Some(FragmentBlock {
             kind,
