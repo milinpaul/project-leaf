@@ -212,3 +212,25 @@ fn turning_a_task_into_another_kind_drops_its_fields() {
     assert!(meta.get(keys::DUE).is_none(), "no stale date left on the to-do");
     assert_eq!(page.plain_text(id).unwrap().as_deref(), Some("Water the plants"));
 }
+
+#[test]
+fn splitting_a_task_starts_the_next_one_with_its_priority() {
+    let mut page = PageDoc::new();
+    let id = insert(&mut page, task(), "Book flightsBook hotel");
+    set(&mut page, id, BlockProp::TaskDue(Some(date("2026-11-20")))).unwrap();
+    set(&mut page, id, BlockProp::TaskPriority(Some(Priority::High))).unwrap();
+    set(&mut page, id, BlockProp::TaskDone(true)).unwrap();
+    let PageOutcome::BlockCreated(next) = page.apply(PageCommand::SplitBlock { id, pos: 12 }).unwrap() else {
+        panic!("a new block");
+    };
+    assert_eq!(
+        page.kind(next).unwrap(),
+        BlockKind::Task {
+            done: false,
+            due: None,
+            time: None,
+            priority: Some(Priority::High),
+        }
+    );
+    assert_eq!(page.plain_text(next).unwrap().as_deref(), Some("Book hotel"));
+}

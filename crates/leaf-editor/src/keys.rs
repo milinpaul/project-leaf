@@ -21,7 +21,7 @@ use crate::{EditorError, PageEditor, Selection, TextRange};
 pub enum Key {
     /// Enter: split the block, or a newline in code.
     Enter,
-    /// Cmd+Enter (Ctrl+Enter elsewhere): leave a code block.
+    /// Cmd+Enter (Ctrl+Enter elsewhere): leave a code block, or tick a to-do or action item off and on.
     ModEnter,
     /// Backspace: delete backwards; at a block's start, convert or merge it.
     Backspace,
@@ -233,6 +233,11 @@ impl PageEditor {
                     text: "\n".into(),
                 })?;
                 Caret { block, at: at + 1 }
+            }
+            // Ticks the box, as in Notion (E19-S02); the caret stays.
+            BlockKind::Todo { .. } | BlockKind::Task { .. } if modified => {
+                self.toggle_checked(block)?;
+                caret
             }
             _ if modified => caret,
             // A caption isn't split: Enter adds a paragraph below the image.

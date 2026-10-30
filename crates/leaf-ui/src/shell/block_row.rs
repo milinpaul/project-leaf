@@ -124,7 +124,8 @@ impl Shell {
                     .child(markers::number(*n, row.depth))
                     .into_any_element(),
             ),
-            BlockStyle::Todo { checked } => Some(
+            // An action item uses the to-do box until it gets its own look (E19-S03).
+            BlockStyle::Todo { checked } | BlockStyle::Task { done: checked, .. } => Some(
                 Checkbox::new(ElementId::from(SharedString::from(format!("todo-{id}"))))
                     .checked(*checked)
                     .cursor_pointer()
@@ -192,7 +193,9 @@ fn look_of(style: &BlockStyle) -> Look {
             mono: true,
             ..body
         },
-        BlockStyle::Todo { checked: true } => Look { done: true, ..body },
+        BlockStyle::Todo { checked: true } | BlockStyle::Task { done: true, .. } => {
+            Look { done: true, ..body }
+        }
         _ => body,
     }
 }

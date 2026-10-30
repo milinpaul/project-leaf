@@ -34,6 +34,7 @@ mod slash;
 mod switcher;
 mod table;
 mod table_edit;
+mod task_due;
 mod view;
 mod workspace_editor;
 
@@ -63,6 +64,7 @@ pub use selection::{Selection, TextRange};
 pub use slash::{SlashAction, SlashItem, SlashMenu};
 pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
 pub use table_edit::TableEdit;
+pub use task_due::{due_label, is_overdue};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
     Crumb, DropPlace, EditorError, MAX_CRUMBS, MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon,

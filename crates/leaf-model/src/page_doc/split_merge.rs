@@ -23,6 +23,13 @@ impl PageDoc {
         let new_kind = match self.kind(id)? {
             kind @ (BlockKind::BulletedList | BlockKind::NumberedList) => kind,
             BlockKind::Todo { .. } => BlockKind::Todo { checked: false },
+            // The next action item: not done, no date yet, the same priority (E19-S02).
+            BlockKind::Task { priority, .. } => BlockKind::Task {
+                done: false,
+                due: None,
+                time: None,
+                priority,
+            },
             _ => BlockKind::Paragraph,
         };
         let node = self.node(id)?;

@@ -73,6 +73,15 @@ fn each_shortcut_converts_the_block_and_removes_what_was_typed() {
         ("1. ", BlockKind::NumberedList),
         ("12. ", BlockKind::NumberedList),
         ("[] ", BlockKind::Todo { checked: false }),
+        (
+            "[!] ",
+            BlockKind::Task {
+                done: false,
+                due: None,
+                time: None,
+                priority: None,
+            },
+        ),
         ("> ", BlockKind::Quote),
         ("```", code()),
     ];

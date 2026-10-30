@@ -9,7 +9,7 @@ use super::{Key, KeyOutcome};
 use crate::PageEditor;
 
 /// Builds a page from `(depth, kind, text)` rows, loaded from bytes so building it can't be undone.
-fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
+pub(super) fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
     let mut doc = PageDoc::new();
     let mut ids: Vec<BlockId> = Vec::new();
     let mut parents: Vec<BlockId> = Vec::new();
@@ -50,12 +50,12 @@ fn code(text: &str) -> (usize, BlockKind, &str) {
     )
 }
 
-fn at(block: BlockId, at: usize) -> Caret {
+pub(super) fn at(block: BlockId, at: usize) -> Caret {
     Caret { block, at }
 }
 
 /// The page as (depth, kind, text) rows, to compare whole outcomes at once.
-fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, String)> {
+pub(super) fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, String)> {
     editor
         .rows()
         .unwrap()
@@ -70,16 +70,16 @@ fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, String)> {
         .collect()
 }
 
-fn row(depth: usize, kind: BlockKind, text: &str) -> (usize, BlockKind, String) {
+pub(super) fn row(depth: usize, kind: BlockKind, text: &str) -> (usize, BlockKind, String) {
     (depth, kind, text.into())
 }
 
-fn press(editor: &mut PageEditor, key: Key) -> KeyOutcome {
+pub(super) fn press(editor: &mut PageEditor, key: Key) -> KeyOutcome {
     editor.press(key).unwrap()
 }
 
 /// Presses `key` with the caret at `caret`, then checks undo restores the page and the caret.
-fn press_and_undo(editor: &mut PageEditor, caret: Caret, key: Key) -> KeyOutcome {
+pub(super) fn press_and_undo(editor: &mut PageEditor, caret: Caret, key: Key) -> KeyOutcome {
     editor.set_caret(caret).unwrap();
     let before = outline(editor);
     let outcome = press(editor, key);
@@ -534,3 +534,5 @@ fn enter_on_a_divider_adds_a_paragraph_below() {
     );
     assert_eq!(below.at, 0);
 }
+
+mod tasks;

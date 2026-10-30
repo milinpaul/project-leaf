@@ -155,7 +155,7 @@ fn deleting_the_slash_or_moving_away_closes_it() {
 #[test]
 fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
     let items = all_items();
-    assert_eq!(labels(&filter(&items, "")).len(), 12);
+    assert_eq!(labels(&filter(&items, "")).len(), 13);
     assert_eq!(
         labels(&filter(&items, "h")),
         vec![
@@ -193,7 +193,7 @@ fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
     assert_eq!(&hd[..3], ["Heading 1", "Heading 2", "Heading 3"]);
     assert_eq!(
         labels(&filter(&items, "  co ")),
-        vec!["Code", "To-do list", "Quote"],
+        vec!["Code", "Action item", "To-do list", "Quote"],
         "spaces around the query are ignored; \"checkbox\" and \"citation\" match loosely"
     );
 }
@@ -326,7 +326,7 @@ fn a_click_applies_any_entry_and_nothing_happens_without_a_menu() {
     assert_eq!(editor.slash_apply(None).unwrap(), None);
     type_keys(&mut editor, "/");
     assert_eq!(editor.slash_apply(Some(99)).unwrap(), None, "no such entry");
-    assert_eq!(editor.slash_apply(Some(7)).unwrap(), Some(at(id, 0)));
+    assert_eq!(editor.slash_apply(Some(8)).unwrap(), Some(at(id, 0)));
     assert_eq!(outline(&editor), vec![(BlockKind::Quote, String::new())]);
 }
 

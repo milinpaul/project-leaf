@@ -30,6 +30,19 @@ pub enum BlockStyle {
         /// Whether it is ticked.
         checked: bool,
     },
+    /// An action item (E19). Only its stored fields: the date's words and whether it is overdue
+    /// depend on today, so they are worked out when drawing ([`crate::due_label`],
+    /// [`crate::is_overdue`]), never cached in the row.
+    Task {
+        /// Whether it is done.
+        done: bool,
+        /// The day it is due.
+        due: Option<leaf_model::DueDate>,
+        /// The time of day it is due.
+        time: Option<leaf_model::DueTime>,
+        /// How important it is.
+        priority: Option<leaf_model::Priority>,
+    },
     /// A quotation.
     Quote,
     /// Code, shown in a monospace font.
@@ -83,8 +96,17 @@ impl BlockStyle {
             BlockKind::BulletedList => Self::Bulleted,
             BlockKind::NumberedList => Self::Numbered(number),
             BlockKind::Todo { checked } => Self::Todo { checked },
-            // Drawn as a to-do until action items get their own look (E19-S02, E19-S03).
-            BlockKind::Task { done, .. } => Self::Todo { checked: done },
+            BlockKind::Task {
+                done,
+                due,
+                time,
+                priority,
+            } => Self::Task {
+                done,
+                due,
+                time,
+                priority,
+            },
             BlockKind::Quote => Self::Quote,
             BlockKind::Code { language } => Self::Code { language },
             BlockKind::Divider => Self::Divider,
