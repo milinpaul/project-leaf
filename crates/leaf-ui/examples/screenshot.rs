@@ -145,6 +145,22 @@ mod mac {
         Ok(())
     }
 
+    /// Stars the open page and gives it a cover, as the options ask.
+    fn dress(shell: &mut Shell, page: leaf_core::PageId, options: &Options) {
+        if options.star {
+            let _ = shell.editor_mut().set_favourite(page, true);
+        }
+        let cover = options.cover.as_deref().and_then(|name| {
+            leaf_editor::BuiltinCover::ALL
+                .iter()
+                .copied()
+                .find(|c| c.name() == name)
+        });
+        if let Some(cover) = cover {
+            let _ = shell.editor_mut().set_cover(page, Some(cover));
+        }
+    }
+
     /// The first page in the sidebar, or with `deep` its first child's first child and so on.
     fn first_page(shell: &Shell, deep: bool) -> Option<leaf_core::PageId> {
         let workspace = shell.editor().workspace();
@@ -174,18 +190,7 @@ mod mac {
                 }
                 if let Some(page) = first_page(shell, options.deep) {
                     shell.open(page, window, cx);
-                    if options.star {
-                        let _ = shell.editor_mut().set_favourite(page, true);
-                    }
-                    let cover = options.cover.as_deref().and_then(|name| {
-                        leaf_editor::BuiltinCover::ALL
-                            .iter()
-                            .copied()
-                            .find(|c| c.name() == name)
-                    });
-                    if let Some(cover) = cover {
-                        let _ = shell.editor_mut().set_cover(page, Some(cover));
-                    }
+                    dress(shell, page, options);
                 }
                 if let Some(block) = options.scroll {
                     shell.scroll_page_to(block, cx);
