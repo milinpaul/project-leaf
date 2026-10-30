@@ -7,7 +7,7 @@ use leaf_model::{BlockKind, Caret, Mark, Marks, PageCommand, PageDoc, PageOutcom
 use super::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 use crate::PageEditor;
 
-fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
+pub(super) fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
     let mut doc = PageDoc::new();
     let mut ids: Vec<BlockId> = Vec::new();
     let mut parents: Vec<BlockId> = Vec::new();
@@ -34,16 +34,16 @@ fn page(blocks: &[(usize, BlockKind, &str)]) -> (PageEditor, Vec<BlockId>) {
     (PageEditor::new(doc), ids)
 }
 
-fn p(depth: usize, text: &str) -> (usize, BlockKind, &str) {
+pub(super) fn p(depth: usize, text: &str) -> (usize, BlockKind, &str) {
     (depth, BlockKind::Paragraph, text)
 }
 
-fn at(block: BlockId, at: usize) -> Caret {
+pub(super) fn at(block: BlockId, at: usize) -> Caret {
     Caret { block, at }
 }
 
 /// (depth, kind, formatted text) per block in reading order: the page without IDs.
-fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, Vec<TextSpan>)> {
+pub(super) fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, Vec<TextSpan>)> {
     editor
         .rows()
         .unwrap()
@@ -58,7 +58,7 @@ fn outline(editor: &PageEditor) -> Vec<(usize, BlockKind, Vec<TextSpan>)> {
         .collect()
 }
 
-fn texts(editor: &PageEditor) -> Vec<String> {
+pub(super) fn texts(editor: &PageEditor) -> Vec<String> {
     editor
         .rows()
         .unwrap()
@@ -67,14 +67,14 @@ fn texts(editor: &PageEditor) -> Vec<String> {
         .collect()
 }
 
-fn plain(text: &str) -> TextSpan {
+pub(super) fn plain(text: &str) -> TextSpan {
     TextSpan {
         text: text.into(),
         marks: Marks::default(),
     }
 }
 
-fn bold(text: &str) -> TextSpan {
+pub(super) fn bold(text: &str) -> TextSpan {
     TextSpan {
         text: text.into(),
         marks: Marks {
@@ -84,7 +84,7 @@ fn bold(text: &str) -> TextSpan {
     }
 }
 
-fn mark(editor: &mut PageEditor, id: BlockId, range: std::ops::Range<usize>, mark: Mark) {
+pub(super) fn mark(editor: &mut PageEditor, id: BlockId, range: std::ops::Range<usize>, mark: Mark) {
     editor
         .doc
         .apply(PageCommand::SetMark { id, range, mark })
@@ -448,3 +448,5 @@ fn empty_fragments_and_no_caret_change_nothing() {
     );
     assert_eq!(texts(&editor), vec!["a"]);
 }
+
+mod whole_blocks;

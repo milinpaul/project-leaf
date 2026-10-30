@@ -3977,6 +3977,7 @@ dependencies = [
 name = "leaf-ui"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "gpui-component",
  "gpui-kit-assets",
  "gpui-pre",

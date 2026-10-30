@@ -10,6 +10,9 @@
 //!
 //! - `N` (a number): scroll so block N (counted from 0) is at the top.
 //! - `dark`: the dark appearance. `nosidebar`: the sidebar hidden, as `Cmd/Ctrl+\` leaves it.
+//! - `deep`: open the deepest page under the first one (its first child, and so on), for a breadcrumb.
+//!   `star`: add the open page to Favourites. `cover=NAME`: give it the built-in cover NAME (`sage`,
+//!   `lagoon`, …).
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
 //! - `language=B`: open code block B's language picker.
@@ -63,6 +66,9 @@ mod mac {
         scroll: Option<usize>,
         dark: bool,
         nosidebar: bool,
+        deep: bool,
+        star: bool,
+        cover: Option<String>,
         bench: bool,
         caret: Option<String>,
         select: Option<String>,
@@ -75,7 +81,7 @@ mod mac {
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [cover=NAME] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -91,6 +97,9 @@ mod mac {
             scroll: rest.iter().find_map(|a| a.parse().ok()),
             dark: rest.iter().any(|a| a == "dark"),
             nosidebar: rest.iter().any(|a| a == "nosidebar"),
+            deep: rest.iter().any(|a| a == "deep"),
+            star: rest.iter().any(|a| a == "star"),
+            cover: value("cover="),
             bench: rest.iter().any(|a| a == "bench"),
             link: rest.iter().any(|a| a == "link"),
             language: value("language="),
@@ -136,6 +145,34 @@ mod mac {
         Ok(())
     }
 
+    /// Stars the open page and gives it a cover, as the options ask.
+    fn dress(shell: &mut Shell, page: leaf_core::PageId, options: &Options) {
+        if options.star {
+            let _ = shell.editor_mut().set_favourite(page, true);
+        }
+        let cover = options.cover.as_deref().and_then(|name| {
+            leaf_editor::BuiltinCover::ALL
+                .iter()
+                .copied()
+                .find(|c| c.name() == name)
+        });
+        if let Some(cover) = cover {
+            let _ = shell.editor_mut().set_cover(page, Some(cover));
+        }
+    }
+
+    /// The first page in the sidebar, or with `deep` its first child's first child and so on.
+    fn first_page(shell: &Shell, deep: bool) -> Option<leaf_core::PageId> {
+        let workspace = shell.editor().workspace();
+        let mut page = shell.editor().sidebar().ok()?.first()?.page;
+        if deep {
+            while let Some(child) = workspace.children(page).ok().and_then(|c| c.first().copied()) {
+                page = child;
+            }
+        }
+        Some(page)
+    }
+
     /// Opens the first page and applies the options: scroll, appearance, caret, selection, typing.
     fn prepare(
         cx: &mut VisualTestAppContext,
@@ -151,13 +188,9 @@ mod mac {
                 if options.nosidebar {
                     shell.toggle_sidebar(false, window, cx);
                 }
-                let first = shell
-                    .editor()
-                    .sidebar()
-                    .ok()
-                    .and_then(|items| items.first().map(|i| i.page));
-                if let Some(page) = first {
+                if let Some(page) = first_page(shell, options.deep) {
                     shell.open(page, window, cx);
+                    dress(shell, page, options);
                 }
                 if let Some(block) = options.scroll {
                     shell.scroll_page_to(block, cx);

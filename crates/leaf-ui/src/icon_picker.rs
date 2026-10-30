@@ -1,6 +1,9 @@
 //! The page icon picker: a search field with Random and Remove, over a grid of emoji in sections. It
 //! draws `leaf_editor::EmojiPicker` and tells the shell what was picked; it never changes a page itself.
+//! While the search field has the keyboard, the arrow keys move the highlight through the grid and
+//! Enter picks it (E17-S04); the field keeps typing, Backspace and the rest.
 
+use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable, FontWeight,
     InteractiveElement as _, IntoElement, MouseButton, MouseDownEvent, ParentElement, Render, ScrollStrategy,
@@ -8,9 +11,10 @@ use gpui::{
 };
 use gpui_component::button::ButtonVariants as _;
 use gpui_component::input::{Input, InputEvent, InputState};
+use gpui_component::input::{MoveDown, MoveLeft, MoveRight, MoveUp};
 use gpui_component::{ActiveTheme as _, Disableable as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
-use leaf_editor::{EmojiChoice, EmojiPicker, EmojiSection};
+use leaf_editor::{EmojiChoice, EmojiPicker, EmojiSection, GridMove};
 
 /// Emoji per grid row.
 const COLUMNS: usize = 10;
@@ -30,11 +34,15 @@ pub enum IconPicked {
     Remove,
 }
 
-/// One row of the grid: a section title, or up to [`COLUMNS`] emoji.
+/// One row of the grid: a section title, or up to [`COLUMNS`] emoji of `section` from position `start`.
 #[derive(Debug, Clone)]
 enum Row {
     Title(&'static str),
-    Emojis(Vec<EmojiChoice>),
+    Emojis {
+        section: usize,
+        start: usize,
+        emojis: Vec<EmojiChoice>,
+    },
 }
 
 /// The picker's content, shown in a popover under the page icon.
@@ -62,10 +70,11 @@ impl IconPickerPanel {
                 panel.scroll.scroll_to_item(0, ScrollStrategy::Top);
                 cx.notify();
             }
-            // Enter takes the best match, so "rocket ⏎" is enough.
+            // Enter takes the highlighted emoji: the best match, so "rocket ⏎" is enough, or wherever the
+            // arrows moved it.
             InputEvent::PressEnter { .. } => {
-                if let Some(first) = panel.picker.first() {
-                    cx.emit(IconPicked::Emoji(first.emoji));
+                if let Some(chosen) = panel.picker.highlighted_choice() {
+                    cx.emit(IconPicked::Emoji(chosen.emoji));
                 }
             }
             _ => {}
@@ -81,9 +90,19 @@ impl IconPickerPanel {
         }
     }
 
+    /// An arrow key: moves the highlight and scrolls its row into view.
+    fn move_highlight(&mut self, step: GridMove, cx: &mut Context<Self>) {
+        self.picker.move_highlight(step, COLUMNS);
+        if let Some(row) = self.picker.highlighted().and_then(|at| row_of(&self.rows, at)) {
+            self.scroll.scroll_to_item(row, ScrollStrategy::Nearest);
+        }
+        cx.notify();
+    }
+
     fn render_row(&self, ix: usize, cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
         let (muted, hover, radius) = (theme.muted_foreground, theme.secondary_hover, theme.radius);
+        let highlighted = self.picker.highlighted();
         match self.rows.get(ix) {
             Some(Row::Title(title)) => div()
                 .h(px(CELL))
@@ -94,10 +113,15 @@ impl IconPickerPanel {
                 .text_color(muted)
                 .child(*title)
                 .into_any_element(),
-            Some(Row::Emojis(emojis)) => h_flex()
+            Some(Row::Emojis {
+                section,
+                start,
+                emojis,
+            }) => h_flex()
                 .h(px(CELL))
                 .children(emojis.iter().enumerate().map(|(col, choice)| {
                     let emoji = choice.emoji;
+                    let at = (*section, start + col);
                     div()
                         .id(SharedString::from(format!("emoji-{ix}-{col}")))
                         .debug_selector(move || format!("emoji-{emoji}"))
@@ -107,9 +131,15 @@ impl IconPickerPanel {
                         .justify_center()
                         .rounded(radius)
                         .text_size(px(22.0))
-                        .hover(|style| style.bg(hover))
+                        .when(highlighted == Some(at), |cell| cell.bg(hover))
                         .child(emoji)
                         .cursor_pointer()
+                        .on_mouse_move(cx.listener(move |panel, _, _, cx| {
+                            if panel.picker.highlighted() != Some(at) {
+                                panel.picker.highlight(at.0, at.1);
+                                cx.notify();
+                            }
+                        }))
                         .on_mouse_down(
                             MouseButton::Left,
                             cx.listener(move |_, _: &MouseDownEvent, _, cx| {
@@ -126,16 +156,29 @@ impl IconPickerPanel {
 /// The sections as grid rows: each title, then its emoji in rows of [`COLUMNS`].
 fn rows(sections: &[EmojiSection]) -> Vec<Row> {
     let mut rows = Vec::new();
-    for section in sections {
+    for (index, section) in sections.iter().enumerate() {
         rows.push(Row::Title(section.title));
         rows.extend(
             section
                 .emojis
                 .chunks(COLUMNS)
-                .map(|chunk| Row::Emojis(chunk.to_vec())),
+                .enumerate()
+                .map(|(n, chunk)| Row::Emojis {
+                    section: index,
+                    start: n * COLUMNS,
+                    emojis: chunk.to_vec(),
+                }),
         );
     }
     rows
+}
+
+/// The grid row holding the emoji at (section, position).
+fn row_of(rows: &[Row], (section, at): (usize, usize)) -> Option<usize> {
+    rows.iter().position(|row| {
+        matches!(row, Row::Emojis { section: s, start, emojis }
+            if *s == section && (*start..start + emojis.len()).contains(&at))
+    })
 }
 
 impl Focusable for IconPickerPanel {
@@ -187,6 +230,23 @@ impl Render for IconPickerPanel {
         v_flex()
             .w(px(CELL * 10.0 + 24.0))
             .gap_2()
+            // The search field binds the arrows to its caret; in the picker they move through the grid.
+            .capture_action(cx.listener(|panel, _: &MoveUp, _, cx| {
+                cx.stop_propagation();
+                panel.move_highlight(GridMove::Up, cx);
+            }))
+            .capture_action(cx.listener(|panel, _: &MoveDown, _, cx| {
+                cx.stop_propagation();
+                panel.move_highlight(GridMove::Down, cx);
+            }))
+            .capture_action(cx.listener(|panel, _: &MoveLeft, _, cx| {
+                cx.stop_propagation();
+                panel.move_highlight(GridMove::Left, cx);
+            }))
+            .capture_action(cx.listener(|panel, _: &MoveRight, _, cx| {
+                cx.stop_propagation();
+                panel.move_highlight(GridMove::Right, cx);
+            }))
             .child(
                 h_flex()
                     .gap_1()
@@ -216,7 +276,7 @@ fn seed() -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{COLUMNS, Row, rows};
+    use super::{COLUMNS, Row, row_of, rows};
     use leaf_editor::EmojiPicker;
 
     #[test]
@@ -224,7 +284,14 @@ mod tests {
         let picker = EmojiPicker::new();
         let grid = rows(picker.sections());
         assert!(matches!(grid[0], Row::Title("Smileys & emotion")));
-        assert!(matches!(&grid[1], Row::Emojis(row) if row.len() == COLUMNS));
+        assert!(matches!(&grid[1], Row::Emojis { section: 0, start: 0, emojis } if emojis.len() == COLUMNS));
+        assert_eq!(row_of(&grid, (0, 0)), Some(1));
+        assert_eq!(row_of(&grid, (0, COLUMNS + 3)), Some(2));
+        assert_eq!(
+            row_of(&grid, (1, 0)),
+            grid.iter()
+                .position(|row| matches!(row, Row::Emojis { section: 1, .. }))
+        );
         let titles = grid.iter().filter(|row| matches!(row, Row::Title(_))).count();
         assert_eq!(titles, picker.sections().len());
         assert!(rows(&[]).is_empty());

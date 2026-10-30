@@ -255,10 +255,12 @@ impl WorkspaceEditor {
     }
 }
 
+mod breadcrumb;
 mod favourites;
 mod trash;
 mod tree;
 
+pub use breadcrumb::{Crumb, MAX_CRUMBS};
 pub use trash::{TrashItem, TrashList, trashed_ago};
 pub use tree::DropPlace;
 

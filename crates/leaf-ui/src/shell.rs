@@ -7,6 +7,7 @@
 use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AppContext as _, Context, Entity, FocusHandle, InteractiveElement as _, IntoElement, ParentElement,
     Render, Styled, Subscription, Window, div, px,
@@ -80,6 +81,7 @@ impl Shell {
             crate::theme::follow_system(window),
             Self::track_window(window, cx),
         ];
+        Self::start_edited_clock(cx);
         let focus = cx.focus_handle();
         window.focus(&focus, cx);
         Self {
@@ -174,8 +176,14 @@ impl Render for Shell {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let sidebar = self.render_sidebar(cx);
 
-        let page = if self.editor.selected().is_some() {
-            self.render_page(window, cx)
+        let open = self.editor.selected();
+        let page = if let Some(open) = open {
+            let bar = self.render_top_bar(open, cx);
+            v_flex()
+                .size_full()
+                .child(bar)
+                .child(div().flex_1().min_h_0().child(self.render_page(window, cx)))
+                .into_any_element()
         } else {
             column(
                 div()
@@ -188,11 +196,12 @@ impl Render for Shell {
         let page = v_flex().flex_1().size_full().child(page);
         let layout = settings::get(cx);
         let body = if layout.sidebar_hidden() {
+            // With a page open, the ☰ button sits in its top bar; with none, it floats in the corner.
             div()
                 .relative()
                 .size_full()
                 .child(page)
-                .child(Self::render_reopen_button(cx))
+                .when(open.is_none(), |body| body.child(Self::render_reopen_button(cx)))
                 .into_any_element()
         } else {
             // Dragging the divider resizes the sidebar; the width is remembered for the next launch.
@@ -248,6 +257,7 @@ mod slash_popover;
 mod smooth_scroll;
 mod storage;
 mod table_row;
+mod top_bar;
 mod trash;
 mod tree;
 mod window;

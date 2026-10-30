@@ -44,7 +44,9 @@ pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, 
 pub use cover::{BuiltinCover, CoverSection, PageCover};
 pub use drag::{BlockDrop, RowBox};
 pub use edited::{edited_ago, edited_on};
-pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};
+pub use emoji_picker::{
+    EmojiChoice, EmojiPicker, EmojiSection, GridMove, RESULTS_TITLE as EMOJI_RESULTS_TITLE,
+};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use image::{MIN_IMAGE_WIDTH, PasteKind, image_display_size, paste_kind, resized_image_width};
 pub use input::Preedit;
@@ -61,6 +63,6 @@ pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
 pub use table_edit::TableEdit;
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
-    DropPlace, EditorError, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED, WorkspaceEditor,
-    trashed_ago,
+    Crumb, DropPlace, EditorError, MAX_CRUMBS, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED,
+    WorkspaceEditor, trashed_ago,
 };

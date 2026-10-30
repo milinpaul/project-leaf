@@ -66,6 +66,43 @@ fn searching_and_pressing_enter_sets_the_icon(cx: &mut TestAppContext) {
     assert_eq!(sidebar.as_deref(), Some("🚀"), "the sidebar shows it");
 }
 
+/// The emoji a search shows, in order, as the editor's picker has them.
+fn results(query: &str) -> Vec<&'static str> {
+    let mut picker = leaf_editor::EmojiPicker::new();
+    picker.set_query(query);
+    picker.sections()[0]
+        .emojis
+        .iter()
+        .map(|choice| choice.emoji)
+        .collect()
+}
+
+#[gpui::test]
+fn arrow_keys_move_through_the_results_and_enter_picks(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    click(cx, "add-icon");
+    cx.simulate_input("heart");
+    redraw(cx);
+    let found = results("heart");
+    assert!(found.len() > 12, "enough hearts for two rows: {}", found.len());
+    // Right twice, down a row, left once: the 12th result (row 2, column 2 of 10).
+    cx.simulate_keystrokes("right right down left");
+    redraw(cx);
+    cx.simulate_keystrokes("enter");
+    redraw(cx);
+    assert_eq!(icon(&shell, cx).as_deref(), Some(found[11]));
+    assert!(!picker_open(&shell, cx));
+
+    // Typing still works after the arrows, and a new search starts from its best match again.
+    click(cx, "page-icon");
+    cx.simulate_keystrokes("down");
+    cx.simulate_input("rocket");
+    redraw(cx);
+    cx.simulate_keystrokes("enter");
+    redraw(cx);
+    assert_eq!(icon(&shell, cx).as_deref(), Some("🚀"));
+}
+
 #[gpui::test]
 fn clicking_an_emoji_sets_it_and_remove_takes_it_away(cx: &mut TestAppContext) {
     let (shell, cx) = open_window(cx);
@@ -216,8 +253,14 @@ fn remove_in_the_picker_shows_only_with_a_cover_and_takes_it_away(cx: &mut TestA
 fn the_page_starts_with_its_header_not_a_toolbar(cx: &mut TestAppContext) {
     let (_shell, cx) = open_window(cx);
     let header = cx.debug_bounds("page-header").expect("the header is drawn");
-    // Only the page's top padding sits above the header; the old row of "Turn into" buttons is gone.
-    let top = f32::from(header.top());
-    eprintln!("page header top: {top}");
-    assert!(top < 80.0, "the header starts at the top of the page: {top}");
+    let bar = cx
+        .debug_bounds("top-bar")
+        .expect("the top bar is drawn (E18-S03)");
+    // Only the top bar and the page's top padding sit above the header; the old row of "Turn into"
+    // buttons is gone.
+    let below_bar = f32::from(header.top() - bar.bottom());
+    assert!(
+        (0.0..80.0).contains(&below_bar),
+        "the header starts just under the top bar: {below_bar}"
+    );
 }

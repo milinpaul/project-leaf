@@ -1,6 +1,6 @@
 //! Tests for the page icon picker.
 
-use super::{EmojiPicker, RESULTS_TITLE};
+use super::{EmojiPicker, GridMove, RESULTS_TITLE};
 
 fn found(picker: &EmojiPicker) -> Vec<&'static str> {
     picker
@@ -108,4 +108,76 @@ fn random_picks_a_friendly_emoji_and_depends_only_on_the_seed() {
         (0..200).all(|seed| !flags.contains(EmojiPicker::random(seed).emoji)),
         "no flags or symbols"
     );
+}
+
+#[test]
+fn the_first_emoji_is_highlighted_and_follows_the_search() {
+    let mut picker = EmojiPicker::new();
+    assert_eq!(picker.highlighted(), Some((0, 0)));
+    assert_eq!(picker.highlighted_choice(), picker.first());
+    picker.set_query("rocket");
+    assert_eq!(picker.highlighted_choice().map(|c| c.emoji), Some("🚀"));
+    picker.set_query("zzzzqqq");
+    assert_eq!(picker.highlighted(), None, "nothing shown, nothing highlighted");
+    picker.move_highlight(GridMove::Down, 10);
+    assert_eq!(picker.highlighted(), None);
+}
+
+#[test]
+fn arrows_move_through_the_grid_and_across_sections() {
+    let mut picker = EmojiPicker::new();
+    let len0 = picker.sections()[0].emojis.len();
+    picker.move_highlight(GridMove::Left, 10);
+    assert_eq!(picker.highlighted(), Some((0, 0)), "nothing before the first");
+    picker.move_highlight(GridMove::Up, 10);
+    assert_eq!(picker.highlighted(), Some((0, 0)), "nothing above the first row");
+    picker.move_highlight(GridMove::Right, 10);
+    picker.move_highlight(GridMove::Right, 10);
+    assert_eq!(picker.highlighted(), Some((0, 2)));
+    picker.move_highlight(GridMove::Down, 10);
+    assert_eq!(picker.highlighted(), Some((0, 12)), "one row down, same column");
+    picker.move_highlight(GridMove::Up, 10);
+    assert_eq!(picker.highlighted(), Some((0, 2)));
+
+    // From the last row of a section down into the next one's first row, keeping the column.
+    let last_row = (len0 - 1) / 10 * 10;
+    picker.highlight(0, last_row + 1);
+    picker.move_highlight(GridMove::Down, 10);
+    assert_eq!(picker.highlighted(), Some((1, 1)));
+    // And back up into the last row, same column if it reaches that far.
+    picker.move_highlight(GridMove::Up, 10);
+    assert_eq!(picker.highlighted(), Some((0, (last_row + 1).min(len0 - 1))));
+
+    // Left from a section's first emoji goes to the previous section's last; Right comes back.
+    picker.highlight(1, 0);
+    picker.move_highlight(GridMove::Left, 10);
+    assert_eq!(picker.highlighted(), Some((0, len0 - 1)));
+    picker.move_highlight(GridMove::Right, 10);
+    assert_eq!(picker.highlighted(), Some((1, 0)));
+}
+
+#[test]
+fn down_on_a_row_above_a_short_last_row_lands_on_its_last_emoji() {
+    let mut picker = EmojiPicker::new();
+    let (section, len) = picker
+        .sections()
+        .iter()
+        .enumerate()
+        .map(|(i, s)| (i, s.emojis.len()))
+        .find(|&(_, len)| len % 10 != 0 && len > 10)
+        .unwrap();
+    let last_row = (len - 1) / 10 * 10;
+    picker.highlight(section, last_row - 1);
+    picker.move_highlight(GridMove::Down, 10);
+    assert_eq!(picker.highlighted(), Some((section, len - 1)));
+}
+
+#[test]
+fn the_mouse_highlights_only_real_emoji() {
+    let mut picker = EmojiPicker::new();
+    picker.highlight(1, 3);
+    assert_eq!(picker.highlighted(), Some((1, 3)));
+    picker.highlight(99, 0);
+    picker.highlight(1, 100_000);
+    assert_eq!(picker.highlighted(), Some((1, 3)));
 }
