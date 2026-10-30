@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use leaf_core::PageId;
+use leaf_core::{DatabaseId, PageId};
 
 use crate::{DocKey, Store, StoreError};
 
@@ -59,6 +59,8 @@ impl Store {
 fn parse_key(id: &str) -> Option<DocKey> {
     if id == DocKey::Workspace.to_string() {
         Some(DocKey::Workspace)
+    } else if let Some(database) = id.strip_prefix(crate::docs::DATABASE_PREFIX) {
+        DatabaseId::from_str(database).ok().map(DocKey::Database)
     } else {
         PageId::from_str(id).ok().map(DocKey::Page)
     }

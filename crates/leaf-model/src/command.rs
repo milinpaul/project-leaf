@@ -4,7 +4,7 @@
 //! Loro commit, which later makes it exactly one undo step. Keeping every change in an enum means
 //! each one can be tested, logged and replayed on its own.
 
-use leaf_core::PageId;
+use leaf_core::{DatabaseId, PageId};
 
 /// A change to the workspace doc: the page tree and each page's title, icon, cover, width and trash state.
 ///
@@ -90,6 +90,28 @@ pub enum WorkspaceCommand {
         /// A page that was trashed on its own (listed by `Workspace::trash`).
         page: PageId,
     },
+    /// Adds a page that is a database (Phase 1, ADR 0066), like [`WorkspaceCommand::CreatePage`]. The model
+    /// mints the page's and the database's IDs and returns both in [`Outcome::DatabasePageCreated`]; the
+    /// database's own document is the caller's to create.
+    CreateDatabasePage {
+        /// Page to nest under, or `None` for a top-level page.
+        parent: Option<PageId>,
+        /// Position among the parent's children; equal to the child count appends.
+        index: usize,
+        /// The page's title, which is the database's name.
+        title: String,
+        /// Creation time, Unix milliseconds.
+        created_at: i64,
+    },
+    /// Adds an untitled page for a new row of the database `database_page` is, as its last child, marked as a
+    /// row of that database so the sidebar leaves it out. Reports [`Outcome::PageCreated`]. The row itself is
+    /// added to the database document by the caller (E09-S03).
+    CreateRowPage {
+        /// The database's page.
+        database_page: PageId,
+        /// Creation time, Unix milliseconds.
+        created_at: i64,
+    },
     /// Stars a page: adds it to the end of the favourites (ADR 0060). Already a favourite: nothing
     /// changes. A page in the trash can't be starred.
     AddFavourite {
@@ -121,4 +143,11 @@ pub enum Outcome {
     Unchanged,
     /// These pages were deleted for good: the page asked for and everything inside it, parents first.
     PagesDeleted(Vec<PageId>),
+    /// A database page was created: the page and the database it is.
+    DatabasePageCreated {
+        /// The new page.
+        page: PageId,
+        /// The new database's ID, for its own document.
+        database: DatabaseId,
+    },
 }

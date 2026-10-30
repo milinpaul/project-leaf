@@ -14,11 +14,15 @@ pub const DEFAULT_UNDO_MERGE_MS: i64 = 500;
 /// Origin of the commits that record a page's edited time. Undo skips them (ADR 0059).
 pub(super) const EDITED_ORIGIN: &str = "leaf:edited";
 
+/// Origin of commits made by [`Workspace::apply_unrecorded`]. Undo skips them.
+pub(super) const UNRECORDED_ORIGIN: &str = "leaf:unrecorded";
+
 /// The undo manager every workspace starts with.
 pub(super) fn manager(doc: &LoroDoc) -> UndoManager {
     let mut undo = UndoManager::new(doc);
     undo.set_merge_interval(DEFAULT_UNDO_MERGE_MS);
     undo.add_exclude_origin_prefix(EDITED_ORIGIN);
+    undo.add_exclude_origin_prefix(UNRECORDED_ORIGIN);
     undo
 }
 

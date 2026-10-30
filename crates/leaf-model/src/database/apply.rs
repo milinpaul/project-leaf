@@ -53,6 +53,7 @@ impl Database {
                 self.rows.get_meta(node)?.insert(super::DELETED, true)?;
                 DatabaseOutcome::Done
             }
+            DatabaseCommand::RestoreRow { row } => self.restore_row(row)?,
             DatabaseCommand::SetCell { row, column, value } => self.set_cell(row, column, value.as_ref())?,
             DatabaseCommand::SetSort(sort) => self.set_view(
                 view::keys::SORT,
@@ -266,6 +267,22 @@ impl Database {
             .create_at(TreeParentId::Root, tree_position(&self.rows, &live, index))?;
         self.rows.get_meta(node)?.insert(ID, row.to_string())?;
         self.index.rows.insert(row, node);
+        Ok(DatabaseOutcome::Done)
+    }
+
+    /// Clears a deleted row's mark, leaving it where it was. Fails for a row that is live or never existed.
+    fn restore_row(&mut self, row: PageId) -> Result<DatabaseOutcome, ModelError> {
+        if self.contains_row(row) {
+            return Err(ModelError::DuplicateRow(row));
+        }
+        let node = self
+            .index
+            .rows
+            .by_id
+            .get(&row)
+            .copied()
+            .ok_or(ModelError::RowNotFound(row))?;
+        self.rows.get_meta(node)?.delete(super::DELETED)?;
         Ok(DatabaseOutcome::Done)
     }
 

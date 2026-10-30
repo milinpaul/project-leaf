@@ -4,7 +4,7 @@
 //! commit once. Checking first means a rejected command leaves no half-written changes behind,
 //! which would otherwise be swept into the next command's commit.
 
-use leaf_core::PageId;
+use leaf_core::{DatabaseId, PageId};
 use loro::{LoroValue, TreeParentId};
 
 use super::{Workspace, undo};
@@ -91,6 +91,39 @@ impl Workspace {
                 Outcome::Changed
             }
             WorkspaceCommand::RestorePage { page } => self.restore_page(page)?,
+            WorkspaceCommand::CreateDatabasePage {
+                parent,
+                index,
+                title,
+                created_at,
+            } => {
+                let Outcome::PageCreated(page) = self.create_page(parent, index, &title, created_at)? else {
+                    unreachable!("create_page always reports the page it created");
+                };
+                let database = DatabaseId::new();
+                self.tree
+                    .get_meta(self.node(page)?)?
+                    .insert(keys::DATABASE, database.to_string())?;
+                Outcome::DatabasePageCreated { page, database }
+            }
+            WorkspaceCommand::CreateRowPage {
+                database_page,
+                created_at,
+            } => {
+                let database = self
+                    .page(database_page)?
+                    .database
+                    .ok_or(ModelError::NotADatabasePage(database_page))?;
+                let node = self.node(database_page)?;
+                let index = self.tree.children_num(Some(node)).unwrap_or(0);
+                let outcome = self.create_page(Some(database_page), index, "", created_at)?;
+                if let Outcome::PageCreated(page) = outcome {
+                    self.tree
+                        .get_meta(self.node(page)?)?
+                        .insert(keys::ROW_OF, database.to_string())?;
+                }
+                outcome
+            }
             WorkspaceCommand::DeletePagePermanently { page } => self.delete_page(page)?,
             WorkspaceCommand::AddFavourite { page } => self.add_favourite(page)?,
             WorkspaceCommand::RemoveFavourite { page } => self.remove_favourite(page)?,
@@ -101,6 +134,17 @@ impl Workspace {
             return Ok(Outcome::Unchanged);
         }
         Ok(outcome)
+    }
+
+    /// Applies `command` like [`Workspace::apply`], but outside undo: for bookkeeping that follows another
+    /// document's own undo step, such as a database row's page being created, trashed or restored with the row
+    /// (E09-S03). Undo and redo never revisit it; the other document's undo is the step the person sees.
+    pub fn apply_unrecorded(&mut self, command: WorkspaceCommand) -> Result<Outcome, ModelError> {
+        self.doc.set_next_commit_origin(undo::UNRECORDED_ORIGIN);
+        let outcome = self.apply(command);
+        // A refused command commits nothing; don't leave the origin for the next one.
+        self.doc.set_next_commit_origin("");
+        outcome
     }
 
     fn create_page(
@@ -174,6 +218,8 @@ impl Workspace {
 
 #[cfg(test)]
 mod cover_tests;
+#[cfg(test)]
+mod database_tests;
 #[cfg(test)]
 mod edited_tests;
 #[cfg(test)]

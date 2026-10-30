@@ -113,6 +113,11 @@ pub enum DatabaseCommand {
         /// The row.
         row: PageId,
     },
+    /// Brings a deleted row back where it was, cells and all (its page restored from the Trash, E09-S03).
+    RestoreRow {
+        /// The row.
+        row: PageId,
+    },
     /// Sets a cell, or empties it with `None`. The value must fit the column's type, and options must be the
     /// column's. Columns of an unknown type are read-only.
     SetCell {

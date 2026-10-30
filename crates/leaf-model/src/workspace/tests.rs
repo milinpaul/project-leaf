@@ -84,7 +84,9 @@ fn reads_page_meta_with_and_without_optional_fields() {
             full_width: false,
             created_at: 1_700_000_000_000,
             edited_at: 1_700_000_000_000,
-            trashed_at: None
+            trashed_at: None,
+            database: None,
+            row_of: None,
         }
     );
     let page = ws.page(decorated).unwrap();
