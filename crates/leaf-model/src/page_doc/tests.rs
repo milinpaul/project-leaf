@@ -124,6 +124,31 @@ fn the_kind_table_matches_block_model() {
             ("image", false, true, true),
         ]
     );
+    // Tables: only rows and cells inside, and only through the table commands (ADR 0061).
+    let tables: Vec<(&str, bool, bool, bool, bool)> = [
+        BlockKind::Table { header_row: true },
+        BlockKind::TableRow,
+        BlockKind::TableCell,
+    ]
+    .iter()
+    .map(|k| {
+        (
+            k.type_name(),
+            k.allows_children(),
+            k.has_text(),
+            k.allows_marks(),
+            k.is_table_part(),
+        )
+    })
+    .collect();
+    assert_eq!(
+        tables,
+        vec![
+            ("table", false, false, false, false),
+            ("table_row", false, false, false, true),
+            ("table_cell", false, true, true, true),
+        ]
+    );
     let unknown = BlockKind::Unknown {
         type_name: "kanban".into(),
     };

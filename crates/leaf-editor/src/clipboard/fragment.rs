@@ -190,7 +190,12 @@ impl WireBlock {
                 width: *width,
                 alt: alt.clone(),
             },
-            BlockKind::Unknown { .. } => return None,
+            // Tables can't be pasted until E16-S04 builds them from the clipboard; left out like
+            // blocks from a newer version.
+            BlockKind::Unknown { .. }
+            | BlockKind::Table { .. }
+            | BlockKind::TableRow
+            | BlockKind::TableCell => return None,
         };
         Some(Self {
             kind,
