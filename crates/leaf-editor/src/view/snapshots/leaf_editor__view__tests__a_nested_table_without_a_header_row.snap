@@ -1,0 +1,9 @@
+---
+source: crates/leaf-editor/src/view/tests.rs
+expression: "render(PageView::build(&page).unwrap().rows())"
+---
+Quote "Notes"
+  Table { header_row: false, rows: 1, columns: 3 } 
+    TableCell { row: 0, column: 0, header: false } 
+    TableCell { row: 0, column: 1, header: false } 
+    TableCell { row: 0, column: 2, header: false } "two\nlines"

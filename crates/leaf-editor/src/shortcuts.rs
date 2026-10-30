@@ -43,8 +43,9 @@ impl PageEditor {
     pub(crate) fn markdown_shortcut(&mut self, caret: Caret) -> Result<Option<Caret>, EditorError> {
         let block = caret.block;
         let kind = self.doc.kind(block)?;
-        // Code text and image captions are literal; dividers and unknown kinds have no text to type in.
-        if !kind.allows_marks() || matches!(kind, BlockKind::Image { .. }) {
+        // Code text, image captions and table cells are literal (a cell stays a cell); dividers and
+        // unknown kinds have no text to type in.
+        if !kind.allows_marks() || matches!(kind, BlockKind::Image { .. } | BlockKind::TableCell) {
             return Ok(None);
         }
         let Some(text) = self.doc.plain_text(block)? else {

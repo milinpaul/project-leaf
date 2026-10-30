@@ -112,6 +112,12 @@ Mobile; P2P collaboration (maybe).
 | Arrow up/down at first/last visual line | Move to previous/next block, keeping horizontal position. |
 | Paste multi-line text | Each line becomes a paragraph; markdown syntax is converted. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |
+| `Tab` / `Shift+Tab` in a table cell | Move to the next / previous cell (caret at the end of its text). `Tab` in the last cell adds a row and moves into it. |
+| Arrow keys in a table cell | Move within the cell's text; at its edge, Left/Right go to the neighbouring cell and Up/Down to the cell above/below in the same column. Past the table's edge, to the block before/after it. Coming into a table, Up/Down pick the column under the caret. |
+| `Enter` in a table cell | Line break inside the cell. |
+| `Backspace` at start of a table cell / `Delete` at its end | Nothing (cells never merge). If every cell is empty, `Backspace` deletes the table (one undo step). |
+| `Backspace` / `Delete` next to a table, or with it selected | The table is selected first; pressed again, it is deleted (one undo step). |
+| Selecting from one cell into another | Selects whole cells (the rectangle between them). `Backspace`/`Delete`/typing empty them, copy gives their text, formatting applies to all of it. A selection reaching from outside into a table takes the table whole. |
 
 Numbered list numbers are computed when rendering, never stored.
 

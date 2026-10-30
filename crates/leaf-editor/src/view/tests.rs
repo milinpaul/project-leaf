@@ -370,38 +370,109 @@ proptest! {
     }
 }
 
-#[test]
-fn a_table_shows_as_one_read_only_row_until_the_table_ui() {
-    let mut page = PageDoc::new();
-    let before = add(&mut page, None, BlockKind::Paragraph, "before");
-    let PageOutcome::BlockCreated(table) = page
+fn table(
+    page: &mut PageDoc,
+    parent: Option<BlockId>,
+    rows: usize,
+    columns: usize,
+    header_row: bool,
+) -> BlockId {
+    let index = match parent {
+        Some(p) => page.children(p).unwrap().len(),
+        None => page.root_blocks().len(),
+    };
+    match page
         .apply(PageCommand::InsertTable {
-            parent: None,
-            index: 1,
-            rows: 2,
-            columns: 2,
-            header_row: false,
+            parent,
+            index,
+            rows,
+            columns,
+            header_row,
         })
         .unwrap()
-    else {
-        panic!("expected a table");
-    };
-    let after = add(&mut page, None, BlockKind::Paragraph, "after");
+    {
+        PageOutcome::BlockCreated(id) => id,
+        other => panic!("expected a table, got {other:?}"),
+    }
+}
 
-    let view = PageView::build(&page).unwrap();
-    let rows: Vec<(BlockId, BlockStyle)> = view.rows().iter().map(|r| (r.id, r.style.clone())).collect();
+fn type_in(page: &mut PageDoc, cell: BlockId, text: &str) {
+    page.apply(PageCommand::InsertText {
+        id: cell,
+        pos: 0,
+        text: text.into(),
+    })
+    .unwrap();
+}
+
+#[test]
+fn a_table_lists_its_cells_row_by_row_after_it() {
+    let mut page = PageDoc::new();
+    add(&mut page, None, BlockKind::Paragraph, "Shopping");
+    let t = table(&mut page, None, 3, 2, true);
+    for (r, row) in page.table_cells(t).unwrap().into_iter().enumerate() {
+        for (c, cell) in row.into_iter().enumerate() {
+            let text = [["Item", "Price"], ["Tomatoes", "2.50"], ["Basil", ""]][r][c];
+            type_in(&mut page, cell, text);
+        }
+    }
+    let price = page.table_cells(t).unwrap()[1][1];
+    page.apply(PageCommand::SetMark {
+        id: price,
+        range: 0..4,
+        mark: Mark::Bold,
+    })
+    .unwrap();
+    add(&mut page, None, BlockKind::Paragraph, "after");
+    insta::assert_snapshot!(render(PageView::build(&page).unwrap().rows()));
+}
+
+#[test]
+fn a_nested_table_without_a_header_row() {
+    let mut page = PageDoc::new();
+    let quote = add(&mut page, None, BlockKind::Quote, "Notes");
+    let t = table(&mut page, Some(quote), 1, 3, false);
+    let cell = page.table_cells(t).unwrap()[0][2];
+    type_in(&mut page, cell, "two\nlines");
+    insta::assert_snapshot!(render(PageView::build(&page).unwrap().rows()));
+}
+
+#[test]
+fn typing_in_a_cell_rereads_only_that_cell_and_keeps_its_place() {
+    let mut page = PageDoc::new();
+    let t = table(&mut page, None, 2, 2, true);
+    let mut view = PageView::default();
+    view.refresh(&page).unwrap();
+    let cell = page.table_cells(t).unwrap()[1][0];
+    type_in(&mut page, cell, "x");
+    view.refresh(&page).unwrap();
+    assert_eq!(view.reads, 1);
+    assert_eq!(view.rows(), PageView::build(&page).unwrap().rows());
+    let row = view.rows().iter().find(|r| r.id == cell).unwrap();
     assert_eq!(
-        rows,
-        [
-            (before, BlockStyle::Paragraph),
-            (
-                table,
-                BlockStyle::Unknown {
-                    type_name: "table".into()
-                }
-            ),
-            (after, BlockStyle::Paragraph),
-        ],
-        "its rows and cells aren't listed"
+        row.style,
+        BlockStyle::TableCell {
+            row: 1,
+            column: 0,
+            header: false
+        }
+    );
+
+    page.apply(PageCommand::SetProp {
+        id: t,
+        prop: leaf_model::BlockProp::TableHeaderRow(false),
+    })
+    .unwrap();
+    page.apply(PageCommand::InsertTableColumn { table: t, index: 2 })
+        .unwrap();
+    view.refresh(&page).unwrap();
+    assert_eq!(view.rows(), PageView::build(&page).unwrap().rows());
+    assert_eq!(
+        view.rows()[0].style,
+        BlockStyle::Table {
+            header_row: false,
+            rows: 2,
+            columns: 3
+        }
     );
 }
