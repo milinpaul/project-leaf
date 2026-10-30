@@ -1,6 +1,6 @@
 # 0066. Databases: one Loro document per database, rows as pages
 
-- **Status:** Proposed (spike; accept or change before E09-S02 starts)
+- **Status:** Proposed (spike; the owner answered its open questions on 2026-10-30)
 - **Type:** Architecture
 - **Date:** 2026-10-30
 - **Story:** E09-S01
@@ -50,7 +50,7 @@ LoroDoc (database)
   - Each row is a page in the workspace document: its title is the database's title column, and its body is an ordinary
     page document.
   - The database document holds only order and properties, so a table view never opens 10,000 page documents.
-  - A row's page entry is marked as a row of its database, so the sidebar can leave it out (open question 1).
+  - A row's page entry is marked as a row of its database, so the sidebar leaves it out (the owner's answer 1, below).
 - **A full-page database** is a page whose content is a database. **An inline database** is a `database` block in a page
   that points at a database document; the block holds no data.
 - **Cells whose row or column is gone stay in `cells`**, and readers ignore them:
@@ -120,13 +120,14 @@ E09-S02, if sorting a 10,000-row database while it opens turns out to matter.
   rule for that, as trashing pages already has.
 - **Search indexes row titles and text properties.** Markdown export writes a database as a table, and CSV export is
   natural.
-- **Open questions for the owner, before E09-S02:**
-  1. Do a database's rows show in the sidebar under the database page, or only in the table (as in Notion)?
-  2. Is a text property plain text, or does it keep formatting (bold, links) like a block?
-  3. When a column's type changes, should values convert where they can ("12" becomes 12) and the rest stay hidden but
-     kept? The proposal: convert on display, keep the stored value until it is edited.
-  4. Deleting an inline database block: does the database go to the trash with it, or stay findable on its own?
-  5. Is 10,000 rows the size to design for? Beyond that, the background read becomes noticeable.
+- **The owner's answers (2026-10-30)** to the open questions:
+  1. **Row pages show only in the table** (and in search), not in the sidebar.
+  2. **Text properties are plain text**, last edit wins per cell. URLs have their own type.
+  3. **Changing a column's type converts on display.** Values that fit show converted, and the rest show blank. The
+     stored value is kept until the cell is edited, so changing the type back loses nothing.
+  4. **Deleting an inline database block trashes the database** and its row pages with it; undo or restore brings them
+     back.
+  5. **Design and benchmark for 10,000 rows.**
 - **Plain English:** each database is saved as one file-like document holding its columns, row order and every cell's
   value. Each row is also an ordinary page you can open and write in. Two devices can edit the same database offline,
   and their changes combine sensibly when they sync: different cells both stick, tags add up, and a deleted row or
