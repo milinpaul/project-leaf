@@ -69,6 +69,22 @@ impl Shell {
         let body = self.render_rich_text(row, &look, highlight.as_ref(), caret, window, cx);
         let line = line.children(prefix).child(body);
         match &row.style {
+            // An action item's date chip and priority flag follow its text (E19-S03).
+            BlockStyle::Task {
+                done,
+                due,
+                time,
+                priority,
+            } => {
+                let chips = super::task_row::TaskChips {
+                    done: *done,
+                    due: *due,
+                    time: *time,
+                    priority: *priority,
+                };
+                line.child(self.render_task_chips(id, chips, cx))
+                    .into_any_element()
+            }
             BlockStyle::Code { language } => {
                 let label = self.render_language_label(id, language, cx);
                 line.relative()
@@ -124,8 +140,8 @@ impl Shell {
                     .child(markers::number(*n, row.depth))
                     .into_any_element(),
             ),
-            // An action item uses the to-do box until it gets its own look (E19-S03).
-            BlockStyle::Todo { checked } | BlockStyle::Task { done: checked, .. } => Some(
+            BlockStyle::Task { done, .. } => Some(Self::render_task_check(id, *done, cx)),
+            BlockStyle::Todo { checked } => Some(
                 Checkbox::new(ElementId::from(SharedString::from(format!("todo-{id}"))))
                     .checked(*checked)
                     .cursor_pointer()

@@ -158,6 +158,7 @@ pub(crate) fn bind(cx: &mut App) {
     super::block_menu::bind(cx, CONTEXT, secondary!("/"));
     super::link_popover::bind(cx);
     super::language_picker::bind(cx);
+    super::task_pickers::bind(cx, CONTEXT, secondary!("shift-d"), secondary!("shift-p"));
 }
 
 impl Shell {
