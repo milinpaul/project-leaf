@@ -6,7 +6,7 @@
 use std::fs;
 use std::path::Path;
 
-const CORE_CRATES: [&str; 7] = [
+const CORE_CRATES: [&str; 8] = [
     "leaf-core",
     "leaf-model",
     "leaf-editor",
@@ -14,6 +14,7 @@ const CORE_CRATES: [&str; 7] = [
     "leaf-export",
     "leaf-search",
     "leaf-fixtures",
+    "leaf-bench",
 ];
 const FORBIDDEN: [&str; 2] = ["gpui", "leaf-ui"];
 
