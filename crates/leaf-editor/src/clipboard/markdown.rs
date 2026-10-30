@@ -258,8 +258,10 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
             }
             BlockKind::BulletedList => out.push(format!("{pad}- {text}")),
             BlockKind::NumberedList => out.push(format!("{pad}{number}. {text}")),
-            BlockKind::Todo { checked } => {
-                out.push(format!("{pad}- [{}] {text}", if *checked { "x" } else { " " }));
+            // An action item reads as a to-do line until its date and priority get a Markdown form
+            // (E19-S04).
+            BlockKind::Todo { checked: done } | BlockKind::Task { done, .. } => {
+                out.push(format!("{pad}- [{}] {text}", if *done { "x" } else { " " }));
             }
             BlockKind::Quote => {
                 for line in text.split('\n') {

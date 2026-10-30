@@ -4,10 +4,12 @@
 #![allow(dead_code)] // each test file uses part of this
 
 use leaf_core::{AssetId, BlockId};
-use leaf_model::{BlockKind, BlockProp, Mark, MarkKind, PageCommand, PageDoc, TextSpan};
+use leaf_model::{
+    BlockKind, BlockProp, DueDate, DueTime, Mark, MarkKind, PageCommand, PageDoc, Priority, TextSpan,
+};
 use proptest::prelude::*;
 
-pub(crate) fn kinds() -> [BlockKind; 12] {
+pub(crate) fn kinds() -> [BlockKind; 14] {
     [
         BlockKind::Paragraph,
         BlockKind::Heading { level: 1 },
@@ -26,6 +28,18 @@ pub(crate) fn kinds() -> [BlockKind; 12] {
             asset: AssetId::of(b"img"),
             width: Some(320.0),
             alt: "a".into(),
+        },
+        BlockKind::Task {
+            done: false,
+            due: None,
+            time: None,
+            priority: None,
+        },
+        BlockKind::Task {
+            done: true,
+            due: DueDate::new(2026, 10, 31).ok(),
+            time: DueTime::new(14, 30).ok(),
+            priority: Some(Priority::High),
         },
     ]
 }
@@ -50,7 +64,7 @@ pub(crate) fn mark_kinds() -> [MarkKind; 5] {
     ]
 }
 
-pub(crate) fn props() -> [BlockProp; 8] {
+pub(crate) fn props() -> [BlockProp; 14] {
     [
         BlockProp::TableHeaderRow(true),
         BlockProp::TableHeaderRow(false),
@@ -60,6 +74,12 @@ pub(crate) fn props() -> [BlockProp; 8] {
         BlockProp::Language("python".into()),
         BlockProp::ImageWidth(None),
         BlockProp::ImageAlt("b".into()),
+        BlockProp::TaskDone(true),
+        BlockProp::TaskDue(DueDate::new(2027, 2, 28).ok()),
+        BlockProp::TaskDue(None),
+        BlockProp::TaskTime(DueTime::new(9, 0).ok()),
+        BlockProp::TaskPriority(Some(Priority::Low)),
+        BlockProp::TaskPriority(None),
     ]
 }
 
@@ -261,7 +281,7 @@ pub(crate) fn command(step: Step, page: &PageDoc) -> Option<PageCommand> {
                 || page.root_blocks().len(),
                 |b| page.children(b).map_or(0, |c| c.len()),
             );
-            let kind = kinds()[kind % 12].clone();
+            let kind = kinds()[kind % kinds().len()].clone();
             let text = if kind.has_text() { text } else { String::new() };
             PageCommand::InsertBlock {
                 parent,
@@ -290,11 +310,11 @@ pub(crate) fn command(step: Step, page: &PageDoc) -> Option<PageCommand> {
         },
         Step::SetKind { block, kind } => PageCommand::SetBlockKind {
             id: p.block(block)?,
-            kind: kinds()[kind % 12].clone(),
+            kind: kinds()[kind % kinds().len()].clone(),
         },
         Step::SetProp { block, prop } => PageCommand::SetProp {
             id: p.block(block)?,
-            prop: props()[prop % 8].clone(),
+            prop: props()[prop % props().len()].clone(),
         },
         Step::Merge { block } => PageCommand::MergeIntoPrevious { id: p.block(block)? },
         Step::Duplicate { blocks } => PageCommand::DuplicateBlocks {

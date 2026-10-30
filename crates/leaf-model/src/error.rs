@@ -147,6 +147,18 @@ pub enum ModelError {
         kind: String,
     },
 
+    /// A due date that isn't a real `YYYY-MM-DD` calendar date (E19).
+    #[error("not a date: {0:?}")]
+    InvalidDate(String),
+
+    /// A due time that isn't a real `HH:MM` time of day (E19).
+    #[error("not a time of day: {0:?}")]
+    InvalidTime(String),
+
+    /// An action item can't have a due time without a due date (E19).
+    #[error("a due time needs a due date")]
+    TimeWithoutDate,
+
     /// A link needs an address.
     #[error("a link needs an address")]
     EmptyLink,

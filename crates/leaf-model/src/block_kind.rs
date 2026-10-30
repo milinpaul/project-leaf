@@ -7,8 +7,8 @@
 use leaf_core::AssetId;
 use loro::{LoroMap, LoroValue};
 
-use crate::ModelError;
 use crate::page_meta::value;
+use crate::{DueDate, DueTime, ModelError, Priority};
 
 /// One property of a block, for [`PageCommand::SetProp`](crate::PageCommand::SetProp). Each belongs to
 /// one kind: setting it on another kind is an error rather than a silent no-op.
@@ -26,6 +26,14 @@ pub enum BlockProp {
     ImageAlt(String),
     /// Whether a table's first row is a header row, drawn emphasised.
     TableHeaderRow(bool),
+    /// Ticks an action item off, or back on.
+    TaskDone(bool),
+    /// An action item's due date; `None` clears it, and its time with it.
+    TaskDue(Option<DueDate>),
+    /// An action item's due time; it needs a due date. `None` clears it.
+    TaskTime(Option<DueTime>),
+    /// An action item's priority, or `None` for none.
+    TaskPriority(Option<Priority>),
 }
 
 impl BlockProp {
@@ -39,12 +47,16 @@ impl BlockProp {
             Self::ImageWidth(_) => "image width",
             Self::ImageAlt(_) => "image alt text",
             Self::TableHeaderRow(_) => "header row",
+            Self::TaskDone(_) => "done",
+            Self::TaskDue(_) => "due date",
+            Self::TaskTime(_) => "due time",
+            Self::TaskPriority(_) => "priority",
         }
     }
 }
 
 /// Every known prop key, for removing the ones a new kind no longer uses.
-pub(crate) const KNOWN_PROP_KEYS: [&str; 7] = [
+pub(crate) const KNOWN_PROP_KEYS: [&str; 11] = [
     keys::LEVEL,
     keys::CHECKED,
     keys::LANGUAGE,
@@ -52,6 +64,10 @@ pub(crate) const KNOWN_PROP_KEYS: [&str; 7] = [
     keys::WIDTH,
     keys::ALT,
     keys::HEADER_ROW,
+    keys::DONE,
+    keys::DUE,
+    keys::DUE_TIME,
+    keys::PRIORITY,
 ];
 
 /// Meta and props key names.
@@ -66,6 +82,10 @@ pub(crate) mod keys {
     pub const WIDTH: &str = "width";
     pub const ALT: &str = "alt";
     pub const HEADER_ROW: &str = "header_row";
+    pub const DONE: &str = "done";
+    pub const DUE: &str = "due";
+    pub const DUE_TIME: &str = "due_time";
+    pub const PRIORITY: &str = "priority";
 }
 
 /// What kind of block this is, with its type-specific properties.
@@ -117,6 +137,18 @@ pub enum BlockKind {
     TableRow,
     /// One cell of a table row: text with the usual marks, nothing nested.
     TableCell,
+    /// An action item (E19, ADR 0068): something to do, with an optional due date and time and a
+    /// priority, ticked off when done. Drawn differently from a to-do; notes can nest under it.
+    Task {
+        /// Whether it is done.
+        done: bool,
+        /// The day it is due.
+        due: Option<DueDate>,
+        /// The time of day it is due; only with a due date.
+        time: Option<DueTime>,
+        /// How important it is.
+        priority: Option<Priority>,
+    },
     /// A kind this version of Leaf does not know, probably from a newer version. It is shown as a
     /// read-only placeholder and its data is never rewritten, so nothing is lost.
     Unknown {
@@ -142,6 +174,7 @@ impl BlockKind {
             Self::Table { .. } => "table",
             Self::TableRow => "table_row",
             Self::TableCell => "table_cell",
+            Self::Task { .. } => "task",
             Self::Unknown { type_name } => type_name,
         }
     }
@@ -153,7 +186,12 @@ impl BlockKind {
     pub fn allows_children(&self) -> bool {
         matches!(
             self,
-            Self::Paragraph | Self::BulletedList | Self::NumberedList | Self::Todo { .. } | Self::Quote
+            Self::Paragraph
+                | Self::BulletedList
+                | Self::NumberedList
+                | Self::Todo { .. }
+                | Self::Quote
+                | Self::Task { .. }
         )
     }
 
@@ -205,6 +243,11 @@ impl BlockKind {
             Self::Table { .. } | Self::TableRow | Self::TableCell => Err(ModelError::InvalidKind(
                 "tables are made with InsertTable and reshaped with the table commands".into(),
             )),
+            Self::Task {
+                due: None,
+                time: Some(_),
+                ..
+            } => Err(ModelError::TimeWithoutDate),
             _ => Ok(()),
         }
     }
@@ -217,6 +260,7 @@ impl BlockKind {
             Self::Code { .. } => &[keys::LANGUAGE],
             Self::Image { .. } => &[keys::ASSET, keys::WIDTH, keys::ALT],
             Self::Table { .. } => &[keys::HEADER_ROW],
+            Self::Task { .. } => &[keys::DONE, keys::DUE, keys::DUE_TIME, keys::PRIORITY],
             _ => &[],
         }
     }
@@ -236,6 +280,18 @@ impl BlockKind {
             }
             (Self::Image { asset, width, .. }, BlockProp::ImageAlt(alt)) => Self::Image { asset, width, alt },
             (Self::Table { .. }, BlockProp::TableHeaderRow(header_row)) => Self::Table { header_row },
+            (
+                Self::Task {
+                    done,
+                    due,
+                    time,
+                    priority,
+                },
+                prop @ (BlockProp::TaskDone(_)
+                | BlockProp::TaskDue(_)
+                | BlockProp::TaskTime(_)
+                | BlockProp::TaskPriority(_)),
+            ) => task_with(done, due, time, priority, prop)?,
             (_, prop) => return Err(mismatch(&prop)),
         })
     }
@@ -303,6 +359,7 @@ impl BlockKind {
             },
             "table_row" => Self::TableRow,
             "table_cell" => Self::TableCell,
+            "task" => read_task(meta)?,
             _ => Self::Unknown { type_name },
         })
     }
@@ -328,6 +385,17 @@ impl BlockKind {
                 meta.insert(keys::ALT, alt.as_str())?;
             }
             Self::Table { header_row } => meta.insert(keys::HEADER_ROW, *header_row)?,
+            Self::Task {
+                done,
+                due,
+                time,
+                priority,
+            } => {
+                meta.insert(keys::DONE, *done)?;
+                write_optional(meta, keys::DUE, due.map(|d| d.to_string()))?;
+                write_optional(meta, keys::DUE_TIME, time.map(|t| t.to_string()))?;
+                write_optional(meta, keys::PRIORITY, priority.map(|p| p.as_str().to_owned()))?;
+            }
             // No props to write. Unknown kinds are never created, so never written either.
             Self::Paragraph
             | Self::BulletedList
@@ -340,4 +408,83 @@ impl BlockKind {
         }
         Ok(())
     }
+}
+
+/// Writes `value` under `key`, or removes the key for `None`.
+pub(crate) fn write_optional(meta: &LoroMap, key: &str, value: Option<String>) -> loro::LoroResult<()> {
+    match value {
+        Some(value) => meta.insert(key, value.as_str()),
+        None if meta.get(key).is_some() => meta.delete(key),
+        None => Ok(()),
+    }
+}
+
+/// Reads an action item's props. A missing prop is "not set"; one that is there but unreadable is an
+/// error, as for the other kinds, so it is never quietly overwritten.
+fn read_task(meta: &LoroMap) -> Result<BlockKind, (&'static str, String)> {
+    let prop = |key: &str| value(meta, key);
+    let done = match prop(keys::DONE) {
+        Some(LoroValue::Bool(done)) => done,
+        None => false,
+        Some(_) => return Err((keys::DONE, "is not true or false".into())),
+    };
+    let due: Option<DueDate> = text_prop(keys::DUE, prop(keys::DUE))?;
+    let time: Option<DueTime> = text_prop(keys::DUE_TIME, prop(keys::DUE_TIME))?;
+    let priority: Option<Priority> = text_prop(keys::PRIORITY, prop(keys::PRIORITY))?;
+    if due.is_none() && time.is_some() {
+        return Err((keys::DUE_TIME, "is set without a due date".into()));
+    }
+    Ok(BlockKind::Task {
+        done,
+        due,
+        time,
+        priority,
+    })
+}
+
+/// Reads an optional text prop with `FromStr`; a value that isn't text, or doesn't parse, is an error.
+fn text_prop<T: std::str::FromStr<Err = ModelError>>(
+    key: &'static str,
+    value: Option<LoroValue>,
+) -> Result<Option<T>, (&'static str, String)> {
+    match value {
+        Some(LoroValue::String(text)) => text
+            .parse()
+            .map(Some)
+            .map_err(|e: ModelError| (key, e.to_string())),
+        None => Ok(None),
+        Some(_) => Err((key, "is not text".into())),
+    }
+}
+
+/// A task with one field changed. Clearing the date clears the time: a time on no day means nothing.
+fn task_with(
+    mut done: bool,
+    mut due: Option<DueDate>,
+    mut time: Option<DueTime>,
+    mut priority: Option<Priority>,
+    prop: BlockProp,
+) -> Result<BlockKind, ModelError> {
+    match prop {
+        BlockProp::TaskDone(value) => done = value,
+        BlockProp::TaskDue(value) => {
+            due = value;
+            time = time.filter(|_| due.is_some());
+        }
+        BlockProp::TaskTime(Some(_)) if due.is_none() => return Err(ModelError::TimeWithoutDate),
+        BlockProp::TaskTime(value) => time = value,
+        BlockProp::TaskPriority(value) => priority = value,
+        other => {
+            return Err(ModelError::PropNotForKind {
+                prop: other.name(),
+                kind: "task".to_owned(),
+            });
+        }
+    }
+    Ok(BlockKind::Task {
+        done,
+        due,
+        time,
+        priority,
+    })
 }
