@@ -256,6 +256,7 @@ mod sidebar_toggle;
 mod slash_popover;
 mod smooth_scroll;
 mod storage;
+mod table_row;
 mod top_bar;
 mod trash;
 mod tree;

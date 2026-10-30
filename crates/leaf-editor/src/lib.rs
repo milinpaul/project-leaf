@@ -32,6 +32,7 @@ mod shortcuts;
 mod slash;
 mod switcher;
 mod table;
+mod table_edit;
 mod view;
 mod workspace_editor;
 
@@ -59,6 +60,7 @@ pub use search_bar::{
 pub use selection::{Selection, TextRange};
 pub use slash::{SlashAction, SlashItem, SlashMenu};
 pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
+pub use table_edit::TableEdit;
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
     Crumb, DropPlace, EditorError, MAX_CRUMBS, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED,
