@@ -291,3 +291,48 @@ fn clicking_a_block_under_a_cover_keeps_the_scroll_position(cx: &mut TestAppCont
     let after = shell.read_with(cx, |shell, _| shell.blocks.list.state.logical_scroll_top());
     assert_eq!(after, before, "the page stayed where it was scrolled to");
 }
+
+/// The other side of E17-S06: moving the caret off the bottom of the window still brings the page
+/// along, with or without a cover.
+#[gpui::test]
+fn the_caret_moving_off_screen_still_scrolls_the_page(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 200);
+    shell.update(cx, |shell, _| {
+        let page = shell.editor.selected().unwrap();
+        shell
+            .editor
+            .set_cover(page, Some(leaf_editor::BuiltinCover::Forest))
+            .unwrap();
+    });
+    draw(cx);
+    let first = shell.read_with(cx, |shell, _| shell.blocks.list.rows[0].id);
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.focus_page_at(leaf_model::Caret { block: first, at: 0 }, window, cx);
+        });
+    });
+    draw(cx);
+    for _ in 0..60 {
+        cx.simulate_keystrokes("down");
+        draw(cx);
+    }
+    shell.update(cx, |shell, _| {
+        let caret = shell.caret_block().unwrap();
+        let i = shell
+            .blocks
+            .list
+            .rows
+            .iter()
+            .position(|row| row.id == caret)
+            .unwrap();
+        assert!(i >= 50, "the caret went down the page: block {i}");
+        let state = &shell.blocks.list.state;
+        let row = state.bounds_for_item(1 + i).expect("the caret's row is drawn");
+        let view = state.viewport_bounds();
+        assert!(
+            row.top() >= view.top() && row.bottom() <= view.bottom(),
+            "the caret's row is on screen: {row:?} in {view:?}"
+        );
+    });
+}
