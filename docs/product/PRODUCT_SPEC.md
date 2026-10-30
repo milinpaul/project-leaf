@@ -48,7 +48,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 - Works fully offline; the search index is rebuilt from the pages if it is lost.
 
 ### Block editor
-- **Block types:** paragraph, heading 1–3, bulleted list, numbered list, to-do, quote, code (language label; syntax highlighting optional), divider, image (local file), simple table (a grid of text cells, not a database; E16).
+- **Block types:** paragraph, heading 1–3, bulleted list, numbered list, to-do, quote, code (language label; syntax highlighting optional), divider, image (local file), simple table (a grid of text cells, not a database; E16), action item (a task with a due date, optional time, priority and a round check; overdue dates in red; E19).
 - **Inline marks:** bold, italic, strikethrough, inline code, link.
 - **Slash menu** (`/`): insert or convert blocks, fuzzy filtered.
 - **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`.
