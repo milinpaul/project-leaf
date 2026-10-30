@@ -28,6 +28,9 @@ frame. Blocks differ in height (headings, wrapped paragraphs, code), so a fixed-
   resets the list to the top. The comparison is linear in the number of rows: about a millisecond for 10,000.
 - **Focus follows:** moving the keyboard to a block that is scrolled away (arrows, Enter at the bottom) scrolls it
   into view.
+  A block already on screen never moves the page (amended in E17-S06): `PageList::reveal` checks the row against the
+  view first, because GPUI's `scroll_to_reveal_item` lines a row up with the bottom even when it is visible, and with
+  the top of the window inside a tall first item (a cover above the title) that scrolled to the very top.
 - **Markers by depth**, as in Notion: bullets • ◦ ▪ and numbers 1. a. i., repeating every three levels.
 
 - **Checked with real rendering:** `just screenshot` (`leaf-ui/examples/screenshot.rs`) renders a workspace in an
