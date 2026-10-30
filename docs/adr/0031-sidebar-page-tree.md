@@ -26,6 +26,9 @@ count pages in the trash, the sidebar hides them), and where "which pages are ex
   edit: it isn't undone, doesn't mark the workspace unsaved and (later) won't sync to other devices. The file follows
   the settings file's rules (missing or damaged means defaults, unknown fields kept, atomic writes), now shared in
   `leaf-store`'s `json_file`.
+- **The open page lives there too** (amended in E06-S19): `view.json` also records which page is open, written when
+  another page opens, and the workspace opens on it again next time (`WorkspaceEditor::restore_open_page` skips a
+  page that is gone or in the trash). Like expanded pages it is per computer, never an edit and never synced.
 - **The UI draws only visible rows** with GPUI's `uniform_list` (fixed 30 px rows), replacing gpui-component's
   `Sidebar` list. Inline rename is a text field in the row: Enter or clicking away keeps the title, Escape doesn't.
 

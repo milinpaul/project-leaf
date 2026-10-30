@@ -77,6 +77,20 @@ impl Storage {
         self.view.save(&self.folder.view_state_path())
     }
 
+    /// The page that was open when this workspace was last closed on this computer (E06-S19).
+    pub(super) fn open_page(&self) -> Option<PageId> {
+        self.view.open_page()
+    }
+
+    /// Saves the open page to `view.json`, if it changed, so it opens again next time.
+    pub(super) fn save_open_page(&mut self, page: Option<PageId>) -> Result<(), StoreError> {
+        if self.view.open_page() == page {
+            return Ok(());
+        }
+        self.view.set_open_page(page);
+        self.view.save(&self.folder.view_state_path())
+    }
+
     /// Stores the picture `bytes` in the workspace's `assets/` folder (ADR 0047) and returns its id.
     /// Refused unless the bytes are an image.
     pub(super) fn import_image(&mut self, bytes: &[u8]) -> Result<AssetId, StoreError> {

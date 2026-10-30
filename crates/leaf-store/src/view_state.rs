@@ -1,4 +1,5 @@
-//! A workspace's view state: how its sidebar was left on this computer (which pages were expanded).
+//! A workspace's view state: how it was left on this computer (which sidebar pages were expanded, and
+//! which page was open, E06-S19).
 //!
 //! It lives in the workspace folder as `view.json`, next to the database but outside it, because it
 //! is not part of any document: expanding a page is not an edit, so it is never undone, never
@@ -24,6 +25,10 @@ pub struct ViewState {
     /// rather than losing the whole list.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     expanded: Vec<String>,
+    /// The page that was open, as an ID: opened again next time the workspace opens. Text, like
+    /// `expanded`, so a damaged entry is just ignored.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    open_page: Option<String>,
     /// Fields from a newer Leaf, kept as they were.
     #[serde(flatten)]
     other: Map<String, Value>,
@@ -51,5 +56,16 @@ impl ViewState {
     /// Records the expanded pages.
     pub fn set_expanded(&mut self, pages: &[PageId]) {
         self.expanded = pages.iter().map(ToString::to_string).collect();
+    }
+
+    /// The page that was open last, if one was recorded and it reads as a page ID.
+    #[must_use]
+    pub fn open_page(&self) -> Option<PageId> {
+        self.open_page.as_deref().and_then(|id| id.parse().ok())
+    }
+
+    /// Records the open page (`None` when none is).
+    pub fn set_open_page(&mut self, page: Option<PageId>) {
+        self.open_page = page.map(|page| page.to_string());
     }
 }
