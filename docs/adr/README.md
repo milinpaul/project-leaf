@@ -75,3 +75,4 @@ Records cover two kinds of decision:
 | [0056](0056-performance-benchmarks.md) | Performance benchmarks: divan benches in their own crate, results kept by CI on `main` | Architecture | Accepted |
 | [0057](0057-no-turn-into-toolbar.md) | No "Turn into" toolbar: block types change from the slash menu, the block handle and Markdown | Feature | Accepted |
 | [0058](0058-search-performance.md) | Search performance: rank only the newest matches, pick blocks before excerpts | Architecture | Accepted |
+| [0059](0059-page-edited-time.md) | Page edited time: a field in the workspace doc, stamped by a command undo skips | Feature | Accepted |

@@ -15,6 +15,7 @@ pub(crate) mod keys {
     pub const ICON: &str = "icon";
     pub const COVER: &str = "cover";
     pub const CREATED_AT: &str = "created_at";
+    pub const EDITED_AT: &str = "edited_at";
     pub const TRASHED_AT: &str = "trashed_at";
 }
 
@@ -32,6 +33,9 @@ pub struct PageMeta {
     pub cover: Option<String>,
     /// When the page was created, in Unix milliseconds.
     pub created_at: i64,
+    /// When the page's blocks, title, icon or cover last changed, in Unix milliseconds (ADR 0059).
+    /// Pages written before Leaf recorded it read as their creation time.
+    pub edited_at: i64,
     /// When the page was moved to the trash, in Unix milliseconds. `None` means not in the trash.
     /// A page inside a trashed page is hidden too, even if its own value is `None`.
     pub trashed_at: Option<i64>,
@@ -66,6 +70,11 @@ impl PageMeta {
             Some(_) => return Err(invalid(keys::CREATED_AT, "is not a whole number")),
             None => return Err(invalid(keys::CREATED_AT, "is missing")),
         };
+        let edited_at = match value(meta, keys::EDITED_AT) {
+            Some(LoroValue::I64(ms)) => ms,
+            Some(_) => return Err(invalid(keys::EDITED_AT, "is not a whole number")),
+            None => created_at,
+        };
         let trashed_at = match value(meta, keys::TRASHED_AT) {
             Some(LoroValue::I64(ms)) => Some(ms),
             Some(_) => return Err(invalid(keys::TRASHED_AT, "is not a whole number")),
@@ -77,6 +86,7 @@ impl PageMeta {
             icon,
             cover,
             created_at,
+            edited_at,
             trashed_at,
         })
     }

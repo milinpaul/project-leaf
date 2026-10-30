@@ -128,6 +128,10 @@ impl Shell {
 
     /// Saves what is due (`flush` false, from the timer) or everything unsaved (`flush` true).
     pub(super) fn save(&mut self, flush: bool) {
+        // First, so the edited times go out with the edits they describe.
+        if let Err(err) = self.editor.stamp_edits(now_ms()) {
+            report("could not record when pages were edited", err);
+        }
         let Some(storage) = &mut self.storage else {
             return;
         };

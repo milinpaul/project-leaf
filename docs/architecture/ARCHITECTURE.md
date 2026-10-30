@@ -200,7 +200,9 @@ itself (ADR 0018).
    change events). The editor's `PageView` re-reads only those blocks and re-walks the outline only when blocks
    moved or changed kind, then `leaf-ui` draws the rows. Typing therefore costs one block's read however long
    the page is; the goal is under 16 ms from key press to pixels (ADR 0014).
-5. **The change is saved.** The document hands `leaf-store` one small update with everything changed since the last
+5. **The change is saved.** First the window records when each changed page was edited
+   (`WorkspaceEditor::stamp_edits`, ADR 0059): any page whose blocks changed since the last tick, or whose title,
+   icon or cover changed, gets a `MarkEdited` command in the workspace doc, which undo skips. Then the document hands `leaf-store` one small update with everything changed since the last
    save (`unsaved_changes`), which is appended to the SQLite file; then the document is marked saved. `Autosave`
    decides when: at most 300 ms after the first unsaved change, and at once on blur or quit, so a crash loses at
    most about a second of typing. When a document has collected more than 200 updates, that save also folds them

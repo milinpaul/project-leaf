@@ -67,6 +67,15 @@ pub enum WorkspaceCommand {
         /// When it was trashed, in Unix milliseconds, supplied by the caller.
         at: i64,
     },
+    /// Records that a page's blocks, title, icon or cover just changed (ADR 0059). The editor applies
+    /// it after the change itself, as a separate commit that undo skips: undoing an edit is an edit
+    /// too, so it must never bring back an older time.
+    MarkEdited {
+        /// Page that changed.
+        page: PageId,
+        /// When, in Unix milliseconds, supplied by the caller.
+        at: i64,
+    },
     /// Takes a page out of the trash. If the page it lived in is itself in the trash, it goes to the
     /// end of the top level instead, so it doesn't stay hidden.
     RestorePage {
