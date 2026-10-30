@@ -28,6 +28,10 @@ carry any address, so which ones Leaf opens needed deciding.
   like a web address (`example.com/page`) gets `https://`. Anything else, such as `javascript:`, `file:`, another
   app's scheme or a bare word, is stored as typed but never opened, so a pasted link can't run something on the
   owner's computer.
+- **Pasting an address** (amended in E17-S10): a lone `http(s)://`, `mailto:` or `www.` address pasted from
+  outside Leaf becomes a link whose text is the address, or, over selected text, links that text
+  (`leaf_editor::pasted_link`, then `set_link`). It is stricter than `openable_url` so a pasted `notes.txt` stays
+  text; several words, or a paste into a code block, stay text too. A preview card is bookmarks (E15, Phase 1).
 - Opening a link only asks the system's browser or mail app to show it; Leaf itself makes no network request, so
   Phase 0's no-network rule holds.
 

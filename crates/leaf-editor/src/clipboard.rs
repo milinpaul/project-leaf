@@ -160,6 +160,9 @@ impl PageEditor {
             }
             _ => false,
         };
+        if !into_code && let Some(href) = crate::link::pasted_link(text) {
+            return self.paste_link(text.trim(), &href);
+        }
         let fragment = if into_code {
             Fragment::Text(vec![TextSpan {
                 text: text.replace("\r\n", "\n"),
@@ -169,6 +172,24 @@ impl PageEditor {
             markdown::fragment_from_text(text)
         };
         self.paste(&fragment)
+    }
+
+    /// A lone web address pasted (E17-S10): over selected text it links that text; anywhere else it
+    /// goes in as a link whose text is the address. One undo step either way.
+    fn paste_link(&mut self, text: &str, href: &str) -> Result<Option<Caret>, EditorError> {
+        if let Some(Selection::Text { start, end }) = self.selection()?
+            && start != end
+        {
+            self.set_link(href)?;
+            return self.caret();
+        }
+        self.paste(&Fragment::Text(vec![TextSpan {
+            text: text.to_owned(),
+            marks: leaf_model::Marks {
+                link: Some(href.to_owned()),
+                ..leaf_model::Marks::default()
+            },
+        }]))
     }
 
     /// `block` alone as a fragment: one block with its kind and formatted text, without what is
