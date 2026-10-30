@@ -78,9 +78,11 @@ impl Shell {
                     let ScrollDelta::Lines(lines) = event.delta else {
                         return;
                     };
+                    // Shift+wheel scrolls a wide table sideways instead (E16-S03).
                     if phase != DispatchPhase::Capture
                         || !hitbox.should_handle_scroll(window)
                         || lines.y == 0.0
+                        || event.modifiers.shift
                     {
                         return;
                     }

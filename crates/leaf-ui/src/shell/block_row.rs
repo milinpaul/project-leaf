@@ -36,6 +36,14 @@ impl Shell {
         if let BlockStyle::Image { asset, width, .. } = &row.style {
             return self.render_image_row(row, *asset, *width, window, cx);
         }
+        if let BlockStyle::Table {
+            header_row,
+            rows,
+            columns,
+        } = row.style
+        {
+            return self.render_table(row, header_row, rows, columns, window, cx);
+        }
         if row.text.is_none() {
             let placeholder = match &row.style {
                 BlockStyle::Divider => {
@@ -132,7 +140,7 @@ impl Shell {
 }
 
 /// How far a row's content is indented.
-fn indent_of(row: &BlockRow) -> Pixels {
+pub(super) fn indent_of(row: &BlockRow) -> Pixels {
     px(INDENT_PX * f32::from(u16::try_from(row.depth).unwrap_or(u16::MAX)))
 }
 

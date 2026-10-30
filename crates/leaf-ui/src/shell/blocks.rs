@@ -53,6 +53,8 @@ pub(super) struct PageState {
     pub(super) menu_block: Option<BlockId>,
     /// The pause before the block menu's "Turn into" list opens or closes under the pointer.
     pub(super) menu_hover: Option<Task<()>>,
+    /// Each table's sideways scroll position (E16-S03), kept across frames.
+    pub(super) table_scroll: HashMap<BlockId, gpui::ScrollHandle>,
     /// A mouse-wheel glide in progress (E17-S01).
     pub(super) wheel: super::smooth_scroll::WheelGlide,
     /// Scrolling while a text selection is dragged near an edge (E17-S02).
@@ -289,6 +291,15 @@ impl Shell {
                 .children(band)
                 .child(column(div().pt(top).pb_3().child(header)))
                 .into_any_element();
+        }
+        // A table's cells are drawn in its grid, by the table's row (E16-S03): their own rows are empty.
+        if self
+            .blocks
+            .list
+            .row(item)
+            .is_some_and(|row| matches!(row.style, leaf_editor::BlockStyle::TableCell { .. }))
+        {
+            return div().into_any_element();
         }
         let content = if let Some(row) = self.blocks.list.row(item).cloned() {
             let (left, top) = super::block_row::handle_place(&row);
