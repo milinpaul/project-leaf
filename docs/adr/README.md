@@ -72,3 +72,4 @@ Records cover two kinds of decision:
 | [0053](0053-drawing-images.md) | Drawing images: natural size shrunk to fit, resized by a handle, saved once | Feature | Accepted |
 | [0054](0054-code-blocks.md) | Code blocks: a language picker storing fence names, Tab indents lines with four spaces | Feature | Accepted |
 | [0055](0055-test-fixtures-crate.md) | Large test fixtures: a small crate, built through real commands, fixed by a seed | Architecture | Accepted |
+| [0056](0056-performance-benchmarks.md) | Performance benchmarks: divan benches in their own crate, results kept by CI on `main` | Architecture | Accepted |

@@ -16,6 +16,7 @@ leaf-store = { path = "crates/leaf-store" }
 leaf-export = { path = "crates/leaf-export" }
 leaf-search = { path = "crates/leaf-search" }
 leaf-fixtures = { path = "crates/leaf-fixtures" }
+leaf-bench = { path = "crates/leaf-bench" }
 leaf-ui = { path = "crates/leaf-ui" }
 # UI: gpui-component pins gpui exactly (published as `gpui-pre`), so we pin both to the same pair.
 # Upgrade them together, deliberately. See docs/adr for the spike findings.
@@ -47,6 +48,8 @@ tracing = "0.1"
 proptest = "1"
 insta = "1"
 pretty_assertions = "1"
+# Benchmarks for the performance budgets (E08-S02); dev-only, in leaf-bench.
+divan = "0.1.21"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

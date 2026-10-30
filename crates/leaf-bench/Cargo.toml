@@ -1,0 +1,25 @@
+[package]
+name = "leaf-bench"
+description = "Benchmarks for Leaf's performance budgets, and the setup they share"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+leaf-core.workspace = true
+leaf-model.workspace = true
+leaf-editor.workspace = true
+leaf-store.workspace = true
+leaf-fixtures.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+divan.workspace = true
+
+[[bench]]
+name = "budgets"
+harness = false
+
+[lints]
+workspace = true

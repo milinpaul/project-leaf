@@ -77,6 +77,25 @@ jobs:
       - run: cargo nextest run --workspace --locked
       - run: cargo test --doc --workspace --locked
 
+  bench:
+    name: Benchmarks
+    # Like the test matrix, not on pull requests: the benches take a few minutes. The results table is kept as the
+    # bench-results artifact of each main run, to compare over time. Shared runners are noisy, so this records
+    # numbers and never fails on a budget; the acceptance pass checks budgets on a real laptop.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Run the budget benchmarks
+        run: |
+          set -o pipefail
+          cargo bench -p leaf-bench --locked --bench budgets | tee bench-results.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench-results.txt
+
   wasm:
     name: WASM check (core crates)
     runs-on: ubuntu-latest
