@@ -22,6 +22,7 @@ LoroDoc (workspace)
           "title":      String
           "icon":       String? # single emoji
           "cover":      String? # cover name, e.g. "builtin:dawn"; unknown names kept (ADR 0045)
+          "full_width": bool?   # true = title and blocks use the whole page area; missing = reading column (E18-S06)
           "created_at": i64     # unix ms
           "edited_at":  i64?    # unix ms, last change to blocks/title/icon/cover; missing = created_at (ADR 0059)
           "trashed_at": i64?    # set = in trash (subtree hidden)
@@ -127,7 +128,8 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
 - `CreatePage { parent: Option<PageId>, index, title, created_at }`: the model mints and returns the `PageId`;
   the caller supplies `created_at` (Unix ms) because the model never reads the clock (it must run in WebAssembly)
 - `RenamePage { page, title }`, `SetPageIcon { page, icon: Option<String> }` (`None` clears the icon),
-  `SetPageCover { page, cover: Option<String> }` (`None` clears the cover; any non-empty name is stored)
+  `SetPageCover { page, cover: Option<String> }` (`None` clears the cover; any non-empty name is stored),
+  `SetPageFullWidth { page, full_width }` (off deletes the key; a layout change, so not an edit and no `MarkEdited`)
 - `MovePage { page, new_parent, index }`: `index` is the page's final position among its new siblings, counted
   without the page itself; moving a page into itself or one of its descendants is rejected
 - `TrashPage { page, at }`: sets `trashed_at`; the page stays in place, hidden with everything inside it from

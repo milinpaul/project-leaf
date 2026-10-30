@@ -14,6 +14,7 @@ pub(crate) mod keys {
     pub const TITLE: &str = "title";
     pub const ICON: &str = "icon";
     pub const COVER: &str = "cover";
+    pub const FULL_WIDTH: &str = "full_width";
     pub const CREATED_AT: &str = "created_at";
     pub const EDITED_AT: &str = "edited_at";
     pub const TRASHED_AT: &str = "trashed_at";
@@ -31,6 +32,9 @@ pub struct PageMeta {
     /// The page's cover, by name (for example `builtin:dawn`), if it has one. The model stores any
     /// non-empty name without knowing the catalogue, so a cover from a newer version survives.
     pub cover: Option<String>,
+    /// Whether the page's title and blocks use the page area's whole width rather than the reading
+    /// column (E18-S06). Stored only while on, so pages from before it existed read as off.
+    pub full_width: bool,
     /// When the page was created, in Unix milliseconds.
     pub created_at: i64,
     /// When the page's blocks, title, icon or cover last changed, in Unix milliseconds (ADR 0059).
@@ -65,6 +69,11 @@ impl PageMeta {
             Some(_) => return Err(invalid(keys::COVER, "is not text")),
             None => None,
         };
+        let full_width = match value(meta, keys::FULL_WIDTH) {
+            Some(LoroValue::Bool(on)) => on,
+            Some(_) => return Err(invalid(keys::FULL_WIDTH, "is not true or false")),
+            None => false,
+        };
         let created_at = match value(meta, keys::CREATED_AT) {
             Some(LoroValue::I64(ms)) => ms,
             Some(_) => return Err(invalid(keys::CREATED_AT, "is not a whole number")),
@@ -85,6 +94,7 @@ impl PageMeta {
             title,
             icon,
             cover,
+            full_width,
             created_at,
             edited_at,
             trashed_at,

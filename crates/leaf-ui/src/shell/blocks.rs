@@ -206,6 +206,7 @@ impl Shell {
         .left_0()
         .size_full();
 
+        let full_width = self.full_width();
         let menu = self.render_block_menu(window, cx);
         let link = self.render_link_popover(cx);
         let language = self.render_language_picker(cx);
@@ -214,7 +215,7 @@ impl Shell {
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
             .children(
                 self.render_trash_banner(cx)
-                    .map(|banner| column(div().pt_4().child(banner))),
+                    .map(|banner| column(div().pt_4().child(banner), full_width)),
             )
             .child(
                 div()
@@ -289,7 +290,7 @@ impl Shell {
             return v_flex()
                 .w_full()
                 .children(band)
-                .child(column(div().pt(top).pb_3().child(header)))
+                .child(column(div().pt(top).pb_3().child(header), self.full_width()))
                 .into_any_element();
         }
         // A table's cells are drawn in its grid, by the table's row (E16-S03): their own rows are empty.
@@ -323,6 +324,6 @@ impl Shell {
         } else {
             div().into_any_element()
         };
-        column(div().py(px(1.0)).child(content)).into_any_element()
+        column(div().py(px(1.0)).child(content), self.full_width()).into_any_element()
     }
 }

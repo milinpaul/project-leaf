@@ -12,7 +12,7 @@
 //! - `dark`: the dark appearance. `nosidebar`: the sidebar hidden, as `Cmd/Ctrl+\` leaves it.
 //! - `deep`: open the deepest page under the first one (its first child, and so on), for a breadcrumb.
 //!   `star`: add the open page to Favourites. `cover=NAME`: give it the built-in cover NAME (`sage`,
-//!   `lagoon`, …). `pagemenu`: then open the top bar's `⋯` page menu.
+//!   `lagoon`, …). `wide`: make it full width. `pagemenu`: then open the top bar's `⋯` page menu.
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
 //! - `language=B`: open code block B's language picker.
@@ -71,6 +71,7 @@ mod mac {
         nosidebar: bool,
         deep: bool,
         star: bool,
+        wide: bool,
         cover: Option<String>,
         pagemenu: bool,
         bench: bool,
@@ -85,7 +86,7 @@ mod mac {
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [cover=NAME] [pagemenu] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [wide] [cover=NAME] [pagemenu] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -103,6 +104,7 @@ mod mac {
             nosidebar: rest.iter().any(|a| a == "nosidebar"),
             deep: rest.iter().any(|a| a == "deep"),
             star: rest.iter().any(|a| a == "star"),
+            wide: rest.iter().any(|a| a == "wide"),
             cover: value("cover="),
             pagemenu: rest.iter().any(|a| a == "pagemenu"),
             bench: rest.iter().any(|a| a == "bench"),
@@ -150,8 +152,11 @@ mod mac {
         Ok(())
     }
 
-    /// Stars the open page and gives it a cover, as the options ask.
+    /// Stars the open page, widens it and gives it a cover, as the options ask.
     fn dress(shell: &mut Shell, page: leaf_core::PageId, options: &Options) {
+        if options.wide {
+            let _ = shell.editor_mut().set_full_width(page, true);
+        }
         if options.star {
             let _ = shell.editor_mut().set_favourite(page, true);
         }

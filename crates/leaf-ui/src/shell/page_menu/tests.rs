@@ -10,7 +10,7 @@ use leaf_editor::{MenuPlace, PageAction};
 
 use crate::shell::Shell;
 
-fn open_window(cx: &mut TestAppContext) -> (Entity<Shell>, &mut VisualTestContext) {
+pub(super) fn open_window(cx: &mut TestAppContext) -> (Entity<Shell>, &mut VisualTestContext) {
     cx.update(|cx| crate::init(None, cx));
     let made: Rc<RefCell<Option<Entity<Shell>>>> = Rc::default();
     let keep = made.clone();
@@ -24,12 +24,12 @@ fn open_window(cx: &mut TestAppContext) -> (Entity<Shell>, &mut VisualTestContex
     (shell, cx)
 }
 
-fn draw(cx: &mut VisualTestContext) {
+pub(super) fn draw(cx: &mut VisualTestContext) {
     cx.update(|window, cx| window.draw(cx).clear(cx));
 }
 
 /// A page "Projects" with "Notes" inside, Notes open.
-fn pages(shell: &Entity<Shell>, cx: &mut VisualTestContext) -> (PageId, PageId) {
+pub(super) fn pages(shell: &Entity<Shell>, cx: &mut VisualTestContext) -> (PageId, PageId) {
     let (projects, notes) = shell.update(cx, |shell, _| {
         let editor = shell.editor_mut();
         let projects = editor.new_page(0).unwrap();

@@ -117,7 +117,8 @@ Appearance (System / Light / Dark), Workspace (its folder) and About. Menus and 
 (`WorkspaceEditor::breadcrumb`), "Edited 3 minutes ago" (`edited_ago`, redrawn every 30 seconds; the exact local
 time on hover via `chrono::Local`), the Favourites star and the `⋯` page menu. The page menu's entries come from
 `WorkspaceEditor::page_menu`; `shell::page_menu` draws them for the `⋯` and for the sidebar's right-click menu and
-runs the chosen action (E18-S04).
+runs the chosen action (E18-S04). Its "Full width" switch sets the page's `full_width` (E18-S06); the shell's
+`column` then drops the reading-width cap for that page's header and blocks.
 
 **Sidebar page tree (E06-S03).** The sidebar lists the page tree (`WorkspaceEditor::sidebar` in `leaf-editor`):
 children show under expanded pages, and which pages are expanded is saved in the workspace folder's `view.json`

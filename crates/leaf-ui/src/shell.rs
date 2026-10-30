@@ -193,6 +193,7 @@ impl Render for Shell {
                     .pt_16()
                     .text_color(cx.theme().muted_foreground)
                     .child("Create a page with the + beside Pages."),
+                false,
             )
             .into_any_element()
         };
@@ -277,16 +278,16 @@ impl Drop for Shell {
     }
 }
 
-/// A centred column no wider than a comfortable line of text, with the page's side margins. Every
-/// row of the page sits in one, so the virtual list can scroll the full width of the page area.
-fn column(content: impl IntoElement) -> gpui::Div {
-    div().w_full().flex().justify_center().child(
-        div()
-            .w_full()
-            .max_w(px(theme::READING_WIDTH))
-            .px_10()
-            .child(content),
-    )
+/// A centred column no wider than a comfortable line of text, with the page's side margins; for a
+/// full-width page (E18-S06), the whole page area within those margins. Every row of the page sits
+/// in one, so the virtual list can scroll the full width of the page area.
+fn column(content: impl IntoElement, full_width: bool) -> gpui::Div {
+    let inner = div().w_full().px_10().child(content);
+    div().w_full().flex().justify_center().child(if full_width {
+        inner
+    } else {
+        inner.max_w(px(theme::READING_WIDTH))
+    })
 }
 
 /// Current time in Unix milliseconds. The UI owns the clock so the model never reads it.
