@@ -240,10 +240,12 @@ mod page_list;
 #[cfg(test)]
 mod page_list_window_tests;
 mod rich_text;
+mod select_scroll;
 mod sidebar;
 mod sidebar_search;
 mod sidebar_toggle;
 mod slash_popover;
+mod smooth_scroll;
 mod storage;
 mod trash;
 mod tree;

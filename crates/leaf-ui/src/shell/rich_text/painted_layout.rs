@@ -47,7 +47,6 @@ impl PaintedLayout {
     }
 
     /// Whether `block` was painted as text in the last frame.
-    #[cfg(test)]
     pub(in crate::shell) fn contains(&self, block: BlockId) -> bool {
         self.0.borrow().contains_key(&block)
     }
