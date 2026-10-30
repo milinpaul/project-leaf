@@ -7,8 +7,8 @@
 use std::time::Duration;
 
 use gpui::{Context, Window};
-use leaf_core::{AssetId, PageId};
-use leaf_model::{PageDoc, Workspace};
+use leaf_core::{AssetId, DatabaseId, PageId};
+use leaf_model::{Database, PageDoc, Workspace};
 use leaf_search::SearchWorker;
 use leaf_store::{Autosave, DocKey, Savable, StoreError, ViewState, Workspace as Folder};
 
@@ -113,6 +113,11 @@ impl Storage {
     fn load_page(&self, page: PageId) -> Result<Option<PageDoc>, StoreError> {
         self.folder.store().load(DocKey::Page(page))
     }
+
+    /// The saved database `id`, or `None` for one never saved.
+    fn load_database(&self, id: DatabaseId) -> Result<Option<Database>, StoreError> {
+        self.folder.store().load(DocKey::Database(id))
+    }
 }
 
 impl Shell {
@@ -155,6 +160,11 @@ impl Shell {
                 .loaded_pages()
                 .map(|(page, doc)| (DocKey::Page(page), doc as &dyn Savable)),
         );
+        docs.extend(
+            self.editor
+                .loaded_databases()
+                .map(|(id, db)| (DocKey::Database(id), db as &dyn Savable)),
+        );
         let store = storage.folder.store_mut();
         let result = if flush {
             storage.autosave.flush(store, &docs, now_ms())
@@ -191,6 +201,30 @@ impl Shell {
         }
         if let Some(search) = &storage.search {
             search.poke();
+        }
+    }
+
+    /// Loads the database a row page belongs to, if it isn't loaded yet, so restoring the page from the Trash can
+    /// bring its row back (E09-S03). Does nothing for other pages.
+    pub(super) fn load_row_database(&mut self, page: PageId) {
+        let Some(id) = self
+            .editor
+            .workspace()
+            .page(page)
+            .ok()
+            .and_then(|meta| meta.row_of)
+        else {
+            return;
+        };
+        if self.editor.database(id).is_some() {
+            return;
+        }
+        let Some(storage) = &self.storage else {
+            return;
+        };
+        match storage.load_database(id) {
+            Ok(database) => self.editor.insert_database(id, database.unwrap_or_default()),
+            Err(err) => report("could not load the database", err),
         }
     }
 

@@ -26,6 +26,8 @@ LoroDoc (workspace)
           "created_at": i64     # unix ms
           "edited_at":  i64?    # unix ms, last change to blocks/title/icon/cover; missing = created_at (ADR 0059)
           "trashed_at": i64?    # set = in trash (subtree hidden)
+          "database":   String? # DatabaseId: this page is a database (Phase 1, ADR 0066)
+          "row_of":     String? # DatabaseId: this page is a row of that database; left out of the sidebar
 └── "favourites": LoroMap      # PageId -> position (i64); listed by position, then id (ADR 0060)
 ```
 
@@ -310,7 +312,7 @@ SQLite schema:
 
 ```sql
 CREATE TABLE docs (
-  doc_id      TEXT PRIMARY KEY,   -- 'workspace' or PageId
+  doc_id      TEXT PRIMARY KEY,   -- 'workspace', a PageId, or 'database:' + DatabaseId
   snapshot    BLOB NOT NULL,      -- Loro snapshot
   updated_at  INTEGER NOT NULL
 );

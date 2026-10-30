@@ -25,6 +25,8 @@ impl PageSource for StoreSource {
                 DocKey::Page(page) => {
                     versions.pages.insert(page, version(saved));
                 }
+                // A database's cells aren't indexed yet (E09-S10); its rows are pages and are.
+                DocKey::Database(_) => {}
             }
         }
         Ok(versions)

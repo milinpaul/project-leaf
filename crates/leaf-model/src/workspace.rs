@@ -170,6 +170,19 @@ impl Workspace {
         self.index.by_page.contains_key(&page)
     }
 
+    /// Every page that is a row of `database`, trashed ones included, in no particular order (the database's
+    /// own document orders its rows). Scans the whole workspace, so callers use it for occasional bookkeeping,
+    /// not on every frame.
+    pub fn row_pages(&self, database: leaf_core::DatabaseId) -> Result<Vec<PageId>, ModelError> {
+        let mut rows = Vec::new();
+        for &page in self.index.by_page.keys() {
+            if self.page(page)?.row_of == Some(database) {
+                rows.push(page);
+            }
+        }
+        Ok(rows)
+    }
+
     /// Number of pages, trashed ones included.
     #[must_use]
     pub fn len(&self) -> usize {

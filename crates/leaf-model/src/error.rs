@@ -254,6 +254,10 @@ pub enum ModelError {
         expected: String,
     },
 
+    /// The page is not a database page, so it can't have rows.
+    #[error("page {0} is not a database")]
+    NotADatabasePage(PageId),
+
     /// The column doesn't have select options (it isn't a select or multi-select column).
     #[error("column {0} has no options")]
     NotASelectColumn(ColumnId),
