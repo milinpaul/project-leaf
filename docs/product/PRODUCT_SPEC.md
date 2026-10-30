@@ -144,11 +144,13 @@ Numbered list numbers are computed when rendering, never stored.
 
 ## Phase 0 acceptance checklist
 
+Evidence for each item: [PHASE0_ACCEPTANCE.md](PHASE0_ACCEPTANCE.md).
+
 - [ ] Write and edit a 3,000-word document with mixed blocks without a single editing bug.
-- [ ] Every rule in "Editor behaviour" has an automated test.
-- [ ] Undo/redo restores exact state for every command, including block moves.
+- [x] Every rule in "Editor behaviour" has an automated test.
+- [x] Undo/redo restores exact state for every command, including block moves.
 - [ ] Kill the process mid-typing; reopening shows all text older than 1 s.
-- [ ] Page tree with 500 pages, 6 levels deep, stays smooth.
-- [ ] `Cmd/Ctrl+K` finds a word inside any page of a 5,000-page workspace and jumps to it; results appear in < 50 ms.
+- [x] Page tree with 500 pages, 6 levels deep, stays smooth.
+- [x] `Cmd/Ctrl+K` finds a word inside any page of a 5,000-page workspace and jumps to it; results appear in < 50 ms.
 - [ ] Performance budgets met on a mid-range laptop.
-- [ ] CI green on macOS, Windows, Linux with ≥ 90% coverage on core crates.
+- [x] CI green on macOS, Windows, Linux with ≥ 90% coverage on core crates.
