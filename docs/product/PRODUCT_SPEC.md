@@ -121,6 +121,7 @@ Mobile; P2P collaboration (maybe).
 | `Enter` in a table cell | Line break inside the cell. |
 | `Backspace` at start of a table cell / `Delete` at its end | Nothing (cells never merge). If every cell is empty, `Backspace` deletes the table (one undo step). |
 | `Backspace` / `Delete` next to a table, or with it selected | The table is selected first; pressed again, it is deleted (one undo step). |
+| Text selected (mouse or keyboard), in one block or across blocks | A floating bar appears just above the selection (below it when there is no room): Turn into, Bold, Italic, Strikethrough, Code, Link. A mark button is on when all the selected text has the mark; a click toggles it like its shortcut and keeps the selection. Link opens the link popover; Turn into changes every block the selection touches. No mark buttons in a code block, no Turn into when a selected block can't change kind. The bar goes when the selection collapses, while dragging, or when a menu or the link popover is open. |
 | Selecting from one cell into another | Selects whole cells (the rectangle between them). `Backspace`/`Delete`/typing empty them, copy gives them as a table, formatting applies to all of it. A selection reaching from outside into a table takes the table whole. |
 
 Numbered list numbers are computed when rendering, never stored.

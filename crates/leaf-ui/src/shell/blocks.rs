@@ -73,6 +73,8 @@ pub(super) struct PageState {
     pub(super) resize_press: Option<Pixels>,
     /// The link popover, while it is open.
     pub(super) link: Option<super::link_popover::OpenLink>,
+    /// The floating formatting bar over selected text (E07-S13).
+    pub(super) format_bar: super::format_bar::FormatBarState,
     /// A code block's language picker, while it is open.
     pub(super) language: Option<super::language_picker::OpenLanguage>,
 }
@@ -185,6 +187,7 @@ impl Shell {
         self.blink_while(caret.is_some(), cx);
         // Placed by where the `/` was drawn last frame: this frame's layout is only known once painted.
         let slash = self.render_slash_popover(window, cx);
+        let format_bar = self.render_format_bar(window, cx);
         self.blocks.painted.clear();
         self.blocks.drawn.clear();
         self.end_stale_drag(cx);
@@ -241,7 +244,8 @@ impl Shell {
             .child(menu)
             .children(link)
             .children(language)
-            .children(slash);
+            .children(slash)
+            .children(format_bar);
         let page = Self::with_block_menu_action(page, cx);
         Self::with_page_actions(page, cx).into_any_element()
     }
