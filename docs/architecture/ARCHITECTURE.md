@@ -162,8 +162,12 @@ the right edge resizes it; the width is saved once on release with `PageEditor::
 **Tables (E16-S01).** A simple table is a `table` block holding `table_row` blocks holding `table_cell` blocks
 (`leaf-model`, ADR 0061). Cells are text blocks, so typing, marks, the caret, undo, saving and search work on them
 unchanged; the table commands (`InsertTable`, and insert, delete and move a row or column) are the only way to
-reshape a table, and the general block commands refuse to touch a row or cell on its own. Until the table UI
-(E16-S03) the editor shows a table as a read-only placeholder row.
+reshape a table, and the general block commands refuse to touch a row or cell on its own. In the editor
+(`leaf_editor::table`, E16-S02) the view lists a table's cells right after it, row by row
+(`BlockStyle::Table`, `BlockStyle::TableCell { row, column, header }`); Tab moves between cells (adding a row at
+the end), Enter types a line break, Backspace and Delete never merge cells, Up/Down keep to the column, and a
+selection from one cell into another is `Selection::Cells`, the rectangle between them (ADR 0063). Anything that acts on blocks
+(block menu, drag, nesting, a selection reaching into a table) takes the table whole. Drawing the grid is E16-S03.
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;

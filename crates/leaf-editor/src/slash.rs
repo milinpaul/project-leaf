@@ -198,7 +198,8 @@ impl PageEditor {
             return Ok(());
         }
         let kind = self.doc.kind(caret.block)?;
-        if !kind.allows_marks() || matches!(kind, BlockKind::Image { .. }) {
+        // A cell can't turn into another kind of block, so `/` is just a character there.
+        if !kind.allows_marks() || matches!(kind, BlockKind::Image { .. } | BlockKind::TableCell) {
             return Ok(());
         }
         let text: Vec<char> = self

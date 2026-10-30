@@ -43,6 +43,12 @@ pub(in crate::shell) fn highlights(
                 out.insert(row.id, highlight);
             }
         }
+        // Whole cells of a table (E16-S02); the table UI draws them in their grid (E16-S03).
+        Some(Selection::Cells { cells, .. }) => {
+            for &cell in cells {
+                out.insert(cell, Highlight::Whole);
+            }
+        }
         Some(Selection::Blocks(blocks)) => {
             // A selected block covers everything nested in it: the rows after it that are deeper.
             let mut inside: Option<usize> = None;

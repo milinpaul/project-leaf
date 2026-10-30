@@ -236,6 +236,11 @@ impl PageEditor {
                     pieces.push((block, 0..text_len(&self.doc, block)?));
                 }
             }
+            Some(Selection::Cells { cells, .. }) => {
+                for block in cells {
+                    pieces.push((block, 0..text_len(&self.doc, block)?));
+                }
+            }
         }
         let mut ranges = Vec::new();
         for (block, range) in pieces {
