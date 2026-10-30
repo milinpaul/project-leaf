@@ -2,6 +2,8 @@
 //! every decision live in `leaf_editor::block_menu`; this module draws it, gives it the keyboard while
 //! it is open, and forwards keys, hovers and clicks.
 
+use std::time::Duration;
+
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, App, AppContext as _, ClickEvent, Context, InteractiveElement, IntoElement, KeyBinding,
@@ -11,7 +13,7 @@ use gpui::{
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::BlockId;
-use leaf_editor::{BlockMenu, MenuEntry, MenuItem, MenuKey};
+use leaf_editor::{BlockMenu, HoverChange, MenuEntry, MenuItem, MenuKey};
 use leaf_model::BlockKind;
 
 use super::block_drag::{DragPreview, DraggedBlock};
@@ -22,6 +24,14 @@ const CONTEXT: &str = "LeafBlockMenu";
 
 /// The group every block row belongs to, so its handle shows while the pointer is over the row.
 pub(super) const ROW_GROUP: &str = "leaf-block-row";
+
+/// How long the pointer rests on "Turn into" before its list opens: long enough that passing over it
+/// on the way down the menu doesn't flash the list open.
+const OPEN_DELAY: Duration = Duration::from_millis(150);
+
+/// How long the pointer rests on another entry before an open "Turn into" list closes: long enough to
+/// cross a row or two diagonally on the way into the list (E17-S03).
+const CLOSE_DELAY: Duration = Duration::from_millis(300);
 
 /// The handle's square, and how far left of the row's text it sits.
 const HANDLE_PX: f32 = 20.0;
@@ -132,6 +142,32 @@ impl Shell {
     fn menu_key(&mut self, key: MenuKey, window: &mut Window, cx: &mut Context<Self>) {
         let after = self.page().map(|page| page.block_menu_key(key));
         self.menu_done(after, window, cx);
+    }
+
+    /// The pointer over an entry: highlights it, and opens or closes the "Turn into" list once the
+    /// pointer has rested for a moment (the editor decides which, from where it is by then).
+    fn menu_hover(&mut self, entry: &MenuEntry, cx: &mut Context<Self>) {
+        let change = match self.page().map(|page| page.highlight(entry)) {
+            Some(Ok(change)) => change,
+            Some(Err(err)) => return report("could not highlight the block menu entry", err),
+            None => None,
+        };
+        if let Some(change) = change {
+            let delay = match change {
+                HoverChange::OpenKinds => OPEN_DELAY,
+                HoverChange::CloseKinds => CLOSE_DELAY,
+            };
+            self.blocks.menu_hover = Some(cx.spawn(async move |shell, cx| {
+                cx.background_executor().timer(delay).await;
+                let _ = shell.update(cx, |shell, cx| {
+                    if let Some(Err(err)) = shell.page().map(leaf_editor::PageEditor::settle_hover) {
+                        report("could not update the block menu", err);
+                    }
+                    cx.notify();
+                });
+            }));
+        }
+        cx.notify();
     }
 
     /// A click on an entry.
@@ -304,12 +340,7 @@ impl Shell {
                     .when(item.current, |row| {
                         row.child(Icon::new(IconName::Check).small().text_color(muted))
                     })
-                    .on_mouse_move(cx.listener(move |shell, _, _, cx| {
-                        if let Some(page) = shell.page() {
-                            let _ = page.highlight(&hovered);
-                        }
-                        cx.notify();
-                    }))
+                    .on_mouse_move(cx.listener(move |shell, _, _, cx| shell.menu_hover(&hovered, cx)))
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(move |shell, _: &MouseDownEvent, window, cx| {

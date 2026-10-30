@@ -1,6 +1,10 @@
-//! The ⋮⋮ handle and block menu in a (test) window (E07-S04).
+//! The ⋮⋮ handle and block menu in a (test) window (E07-S04, E17-S03).
 
-use gpui::{Modifiers, MouseButton, MouseDownEvent, MouseUpEvent, TestAppContext, VisualTestContext};
+use std::time::Duration;
+
+use gpui::{
+    Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, TestAppContext, VisualTestContext,
+};
 use leaf_core::BlockId;
 use leaf_model::Caret;
 
@@ -140,6 +144,59 @@ fn the_handle_opens_the_menu_and_clicks_choose(cx: &mut TestAppContext) {
     });
     draw(cx);
     assert!(!menu_open(&shell, cx));
+}
+
+/// Moves the pointer onto the middle of `selector`, then lets `ms` milliseconds pass.
+fn hover(cx: &mut VisualTestContext, selector: &str, ms: u64) {
+    let selector: &'static str = Box::leak(selector.to_owned().into_boxed_str());
+    let at = cx.debug_bounds(selector).unwrap().center();
+    cx.simulate_event(MouseMoveEvent {
+        position: at,
+        pressed_button: None,
+        modifiers: Modifiers::none(),
+    });
+    cx.executor().advance_clock(Duration::from_millis(ms));
+    cx.run_until_parked();
+    draw(cx);
+}
+
+fn kinds_open(cx: &mut VisualTestContext) -> bool {
+    cx.debug_bounds("block-menu-kinds").is_some()
+}
+
+#[gpui::test]
+fn hovering_turn_into_opens_the_list_and_a_diagonal_path_into_it_keeps_it(cx: &mut TestAppContext) {
+    let (shell, cx, ids) = open(cx, &["a", "b", "c"]);
+    click(cx, &format!("block-handle-{}", ids[1]));
+    assert!(menu_open(&shell, cx));
+
+    // Passing over "Turn into" doesn't open it; resting on it does.
+    hover(cx, "block-menu-0", 50);
+    hover(cx, "block-menu-1", 200);
+    assert!(!kinds_open(cx), "passed over, not opened");
+    hover(cx, "block-menu-0", 200);
+    assert!(kinds_open(cx), "opened by resting on Turn into, without a click");
+
+    // Down and across to "Heading 2" (the third kind), over Duplicate and Move up on the way.
+    hover(cx, "block-menu-1", 60);
+    hover(cx, "block-menu-2", 60);
+    hover(cx, "block-menu-kinds-2", 400);
+    assert!(kinds_open(cx), "still open after crossing the other entries");
+    click(cx, "block-menu-kinds-2");
+    assert!(!menu_open(&shell, cx));
+    let kind = shell.update(cx, |shell, _| shell.page().unwrap().doc().kind(ids[1]).unwrap());
+    assert_eq!(kind, leaf_model::BlockKind::Heading { level: 2 });
+
+    // Resting on another entry closes the list; a click on Turn into opens it again and keeps it.
+    click(cx, &format!("block-handle-{}", ids[0]));
+    hover(cx, "block-menu-0", 200);
+    assert!(kinds_open(cx));
+    hover(cx, "block-menu-1", 400);
+    assert!(!kinds_open(cx), "closed after resting on Duplicate");
+    click(cx, "block-menu-0");
+    assert!(kinds_open(cx), "a click opens it");
+    click(cx, "block-menu-0");
+    assert!(kinds_open(cx), "a second click keeps it open");
 }
 
 #[test]
