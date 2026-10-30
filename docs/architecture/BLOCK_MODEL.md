@@ -39,7 +39,7 @@ LoroDoc (page, keyed by PageId)
         meta: LoroMap
           "id":    String      # BlockId (uuid v7), stable forever; see ADR 0006
           "type":  String      # see Block types
-          level, checked, language, asset, width, alt   # type-specific properties, directly in meta (ADR 0007)
+          level, checked, language, asset, width, alt, header_row   # type-specific properties, directly in meta (ADR 0007)
           "text":  LoroText    # present for text-bearing types; create with ensure_mergeable_text
 ```
 
@@ -71,6 +71,17 @@ and rebuilds that index after undo, redo and import.
 | `code` | `language`: String | yes (plain, no marks) | no |
 | `divider` | — | no | no |
 | `image` | `asset`: AssetId (hex), `width`: f64?, `alt`: String | caption | no |
+| `table` | `header_row`: bool | no | `table_row` blocks only (at least one) |
+| `table_row` | — | no | `table_cell` blocks only (at least one) |
+| `table_cell` | — | yes | no |
+
+**Tables (E16, ADR 0061).** A simple table is a `table` block holding `table_row` blocks, each holding `table_cell`
+blocks in column order; a cell is a text block, so its text and marks change with the usual text commands and the
+caret sits in it like in any block. Columns are positions within rows. Rows and cells exist only inside their table
+and change only through the table commands. Commands keep every table a full grid (every row the same length, at
+least one row and one column); merging two copies may leave rows of different lengths (one added a column while the
+other added a row), which is allowed: a missing cell reads as empty, and the next table command evens the rows out.
+A table is not a database (E09): no column types, sorting or filtering, and rows are not pages.
 
 Rust view of the schema (in `leaf-model`):
 
@@ -85,6 +96,9 @@ pub enum BlockKind {
     Code { language: String },
     Divider,
     Image { asset: AssetId, width: Option<f64>, alt: String }, // f64: Loro stores numbers as 64-bit
+    Table { header_row: bool },     // children: TableRow; built with the table commands
+    TableRow,                       // children: TableCell
+    TableCell,                      // text with marks
     Unknown { type_name: String },  // from a newer version: read-only, never rewritten
 }
 ```
@@ -151,8 +165,8 @@ validate, write, commit once; `Unchanged` when nothing would change)
   refused, so no words are lost) and its text container is removed; code strips every mark; a kind that can't hold
   children lets them out right after the block, in order; known props the new kind doesn't use are removed, props
   from newer versions kept; unknown kinds can't be converted
-- `SetProp { id, prop: BlockProp }`: typed (`Checked`, `HeadingLevel`, `Language`, `ImageWidth`, `ImageAlt`), and
-  must belong to the block's kind
+- `SetProp { id, prop: BlockProp }`: typed (`Checked`, `HeadingLevel`, `Language`, `ImageWidth`, `ImageAlt`,
+  `TableHeaderRow`), and must belong to the block's kind
 - `InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets, checked against the
   text length; blocks without text (dividers, unknown kinds) are refused
 - `ReplaceText { id, range, text }`: one commit replacing `range` (typing over a selection, committing an input-method
@@ -173,12 +187,25 @@ validate, write, commit once; `Unchanged` when nothing would change)
   its last children (skipped at the top level, or for a block that can't hold children but has followers). Several
   blocks are handled one at a time in reading order; if none can move, `Unchanged`.
 - `PasteBlocks { after, fragment }`
+- **Tables:** `InsertTable { parent, index, rows, columns, header_row }` (at least 1 × 1; returns the table);
+  `InsertTableRow { table, index }` (returns the row), `DeleteTableRow { table, index }`,
+  `MoveTableRow { table, from, to }`; `InsertTableColumn { table, index }` (returns the new cells, top to bottom),
+  `DeleteTableColumn { table, index }`, `MoveTableColumn { table, from, to }`. Positions count rows or columns;
+  `to` is the final position. Removing the last row or column is refused (`EmptyTable`; delete the table instead).
+  The header row is `SetProp { id: table, prop: TableHeaderRow(bool) }`. Cell text: `InsertText`, `DeleteText`,
+  `ReplaceText`, `SetMark`, `RemoveMark` with the cell's `BlockId`. `PageDoc::table_cells(table)` reads the grid.
+- **Rows and cells are guarded:** `DeleteBlocks`, `MoveBlocks`, `DuplicateBlocks`, `Indent`, `Outdent`,
+  `SetBlockKind`, `SplitBlock` and `MergeIntoPrevious` naming a row or cell are refused (`TablePart`), unless it is
+  inside a listed table, which deletes, moves or duplicates whole. `InsertBlock` and `SetBlockKind` can't make table
+  kinds, a table can't become another kind, and nothing else can be inserted or moved into a table or row.
+  Backspace at the start of the block below a table is refused with `MergeTargetNotText { target: table }`, so the
+  editor selects the table.
 
 Positions are Unicode scalar offsets as used by Loro; the editor moves the caret between grapheme cluster
 boundaries so it never stops inside an emoji or a conjunct. A caret that must follow edits is an `Anchor`
 (`PageDoc::anchor` / `PageDoc::resolve`): a Loro cursor plus the original position, used (clamped) when undo re-created
 the block under a new container (ADR 0015). `PageDoc::import_changes` merges another copy's changes (tests only in
-Phase 0), then repairs anything the merge broke (invariants 2–5), the same way on every copy and outside the undo
+Phase 0), then repairs anything the merge broke (invariants 2–5 and 9), the same way on every copy and outside the undo
 history (ADR 0044).
 
 ## Undo / redo
@@ -201,7 +228,7 @@ history (ADR 0044).
 
 ## Invariants (checked in tests after every command)
 
-`PageDoc::check_invariants()` checks 1–6 and 8 on the raw Loro tree (unknown kinds are exempt from 2 and 3); the
+`PageDoc::check_invariants()` checks 1–6, 8 and 9 on the raw Loro tree (unknown kinds are exempt from 2 and 3); the
 property test `crates/leaf-model/tests/page_invariants.rs` runs random sequences of every page command and calls it
 after each step (256 cases locally and on PRs, 10,000 in CI on `main`). Invariant 7 is checked by the page undo
 property test (E02-S08). Two copies editing at once and swapping changes must end identical with every invariant
@@ -209,12 +236,15 @@ holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that br
 
 1. Every tree node has a `type` in its meta.
 2. `text` exists exactly for text-bearing types.
-3. Types that disallow children have no children.
+3. Types that disallow children have no children; a `table` holds only `table_row`s and a `table_row` only
+   `table_cell`s.
 4. `heading.level` ∈ 1..=3.
 5. `code` text has no marks.
 6. No cycles (guaranteed by LoroTree, still asserted).
 7. Undo of command N restores the exact document state before N, compared by `BlockId` (`TreeID`s may differ).
 8. Every block has an `id` in its meta, and no two blocks in a page share one.
+9. A `table_row` sits in a `table` and a `table_cell` in a `table_row`. (Commands also keep every table a full grid;
+   the page property test checks that, but merges may leave rows uneven, so it is not a state invariant.)
 
 ## Persistence (`leaf-store`)
 
@@ -293,6 +323,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | code | fenced block with language |
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
+| table | Markdown table (E16-S04; until then each cell's text on its own line) |
 
 Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR 0032); plain lines become paragraphs.
 

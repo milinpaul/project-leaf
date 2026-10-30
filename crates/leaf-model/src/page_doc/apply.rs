@@ -33,15 +33,28 @@ impl PageDoc {
             PageCommand::SetMark { id, range, mark } => self.set_mark(id, range, &mark)?,
             PageCommand::RemoveMark { id, range, kind } => self.remove_mark(id, range, kind)?,
             PageCommand::SetBlockKind { id, kind } => self.set_kind(id, &kind)?,
-            PageCommand::SetProp { id, prop } => {
-                let kind = self.kind(id)?.with_prop(prop)?;
-                self.set_kind(id, &kind)?
-            }
+            PageCommand::SetProp { id, prop } => match self.kind(id)?.with_prop(prop)? {
+                BlockKind::Table { header_row } => self.set_header_row(id, header_row)?,
+                kind => self.set_kind(id, &kind)?,
+            },
             PageCommand::SplitBlock { id, pos } => self.split_block(id, pos)?,
             PageCommand::MergeIntoPrevious { id } => self.merge_into_previous(id)?,
             PageCommand::DuplicateBlocks { ids } => self.duplicate_blocks(&ids)?,
             PageCommand::Indent { ids } => self.indent(&ids)?,
             PageCommand::Outdent { ids } => self.outdent(&ids)?,
+            PageCommand::InsertTable {
+                parent,
+                index,
+                rows,
+                columns,
+                header_row,
+            } => self.insert_table(parent, index, rows, columns, header_row)?,
+            PageCommand::InsertTableRow { table, index } => self.insert_table_row(table, index)?,
+            PageCommand::DeleteTableRow { table, index } => self.delete_table_row(table, index)?,
+            PageCommand::MoveTableRow { table, from, to } => self.move_table_row(table, from, to)?,
+            PageCommand::InsertTableColumn { table, index } => self.insert_table_column(table, index)?,
+            PageCommand::DeleteTableColumn { table, index } => self.delete_table_column(table, index)?,
+            PageCommand::MoveTableColumn { table, from, to } => self.move_table_column(table, from, to)?,
         };
         self.doc.commit();
         if self.doc.oplog_vv() != before {
@@ -104,6 +117,7 @@ impl PageDoc {
 
     fn delete_blocks(&mut self, ids: &[BlockId]) -> Result<PageOutcome, ModelError> {
         let roots = self.outermost(ids)?;
+        self.refuse_table_parts(&roots)?;
         if roots.is_empty() {
             return Ok(PageOutcome::Unchanged);
         }
@@ -127,6 +141,7 @@ impl PageDoc {
         index: usize,
     ) -> Result<PageOutcome, ModelError> {
         let roots = self.outermost(ids)?;
+        self.refuse_table_parts(&roots)?;
         let parent_node = self.container_node(new_parent)?;
         if roots.is_empty() {
             return Ok(PageOutcome::Unchanged);
@@ -221,7 +236,7 @@ impl PageDoc {
     }
 
     /// The block at `node` and every block inside it, parents first.
-    fn collect_subtree(&self, node: TreeID, out: &mut Vec<BlockId>) {
+    pub(super) fn collect_subtree(&self, node: TreeID, out: &mut Vec<BlockId>) {
         out.extend(self.index.by_node.get(&node).copied());
         for child in self.tree.children(node).unwrap_or_default() {
             self.collect_subtree(child, out);

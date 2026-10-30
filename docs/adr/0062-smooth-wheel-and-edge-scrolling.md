@@ -1,4 +1,4 @@
-# 0061. Mouse-wheel steps glide; dragging a selection past the page's edge scrolls
+# 0062. Mouse-wheel steps glide; dragging a selection past the page's edge scrolls
 
 - **Status:** Accepted
 - **Type:** Feature

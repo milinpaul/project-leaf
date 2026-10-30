@@ -69,6 +69,11 @@ impl BlockStyle {
             BlockKind::Divider => Self::Divider,
             BlockKind::Image { asset, width, alt } => Self::Image { asset, width, alt },
             BlockKind::Unknown { type_name } => Self::Unknown { type_name },
+            // Drawn as a read-only placeholder until the table UI (E16-S03); its rows and cells aren't
+            // listed.
+            table @ (BlockKind::Table { .. } | BlockKind::TableRow | BlockKind::TableCell) => Self::Unknown {
+                type_name: table.type_name().to_owned(),
+            },
         }
     }
 }
@@ -209,9 +214,12 @@ impl PageView {
             } else {
                 0
             };
+            let table = matches!(content.kind, BlockKind::Table { .. });
             rows.push(content.row(id, depth, number));
             seen.insert(id);
-            self.walk(doc, doc.children(id)?, depth + 1, rows, seen)?;
+            if !table {
+                self.walk(doc, doc.children(id)?, depth + 1, rows, seen)?;
+            }
         }
         Ok(())
     }

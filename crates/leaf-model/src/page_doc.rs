@@ -319,6 +319,7 @@ mod kind_ops;
 mod nesting;
 mod repair;
 mod split_merge;
+mod table_ops;
 mod text_ops;
 mod undo;
 

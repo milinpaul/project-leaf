@@ -168,6 +168,24 @@ pub enum ModelError {
         target: BlockId,
     },
 
+    /// Rows and cells only change through the table commands (and cells' text through the text
+    /// commands), so a table always stays a whole grid: moving, deleting, duplicating, converting,
+    /// splitting or merging a row or cell on its own is refused.
+    #[error("block {block} is part of a table; use the table commands")]
+    TablePart {
+        /// The row or cell.
+        block: BlockId,
+    },
+
+    /// The block is not a table, so the table commands don't apply to it.
+    #[error("block {0} is not a table")]
+    NotATable(BlockId),
+
+    /// A table needs at least one row and one column: making one empty, or removing its last row or
+    /// column, is refused (delete the table instead).
+    #[error("a table needs at least one row and one column")]
+    EmptyTable,
+
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]
     Loro(#[from] loro::LoroError),

@@ -24,6 +24,8 @@ pub enum BlockProp {
     ImageWidth(Option<f64>),
     /// An image's description for screen readers.
     ImageAlt(String),
+    /// Whether a table's first row is a header row, drawn emphasised.
+    TableHeaderRow(bool),
 }
 
 impl BlockProp {
@@ -36,18 +38,20 @@ impl BlockProp {
             Self::Language(_) => "language",
             Self::ImageWidth(_) => "image width",
             Self::ImageAlt(_) => "image alt text",
+            Self::TableHeaderRow(_) => "header row",
         }
     }
 }
 
 /// Every known prop key, for removing the ones a new kind no longer uses.
-pub(crate) const KNOWN_PROP_KEYS: [&str; 6] = [
+pub(crate) const KNOWN_PROP_KEYS: [&str; 7] = [
     keys::LEVEL,
     keys::CHECKED,
     keys::LANGUAGE,
     keys::ASSET,
     keys::WIDTH,
     keys::ALT,
+    keys::HEADER_ROW,
 ];
 
 /// Meta and props key names.
@@ -61,6 +65,7 @@ pub(crate) mod keys {
     pub const ASSET: &str = "asset";
     pub const WIDTH: &str = "width";
     pub const ALT: &str = "alt";
+    pub const HEADER_ROW: &str = "header_row";
 }
 
 /// What kind of block this is, with its type-specific properties.
@@ -100,6 +105,18 @@ pub enum BlockKind {
         /// Description for screen readers.
         alt: String,
     },
+    /// A grid of rich-text cells (E16, ADR 0061). Its children are [`BlockKind::TableRow`]s, theirs
+    /// [`BlockKind::TableCell`]s; every row has the same number of cells. Built and reshaped only with
+    /// the table commands ([`PageCommand::InsertTable`](crate::PageCommand::InsertTable) and friends);
+    /// cell text is edited with the usual text commands.
+    Table {
+        /// Whether the first row is a header row.
+        header_row: bool,
+    },
+    /// One row of a table. Has no text; holds the row's cells in column order.
+    TableRow,
+    /// One cell of a table row: text with the usual marks, nothing nested.
+    TableCell,
     /// A kind this version of Leaf does not know, probably from a newer version. It is shown as a
     /// read-only placeholder and its data is never rewritten, so nothing is lost.
     Unknown {
@@ -122,11 +139,16 @@ impl BlockKind {
             Self::Code { .. } => "code",
             Self::Divider => "divider",
             Self::Image { .. } => "image",
+            Self::Table { .. } => "table",
+            Self::TableRow => "table_row",
+            Self::TableCell => "table_cell",
             Self::Unknown { type_name } => type_name,
         }
     }
 
-    /// Whether other blocks may be nested inside this one. Unknown kinds are read-only, so no.
+    /// Whether other blocks may be nested inside this one by the general block commands (insert,
+    /// move, indent). Unknown kinds are read-only, so no. Tables and rows do have children, but only
+    /// rows and cells, managed by the table commands: see [`BlockKind::is_table_part`].
     #[must_use]
     pub fn allows_children(&self) -> bool {
         matches!(
@@ -138,7 +160,29 @@ impl BlockKind {
     /// Whether the block has a text container (the caption, for images).
     #[must_use]
     pub fn has_text(&self) -> bool {
-        !matches!(self, Self::Divider | Self::Unknown { .. })
+        !matches!(
+            self,
+            Self::Divider | Self::Unknown { .. } | Self::Table { .. } | Self::TableRow
+        )
+    }
+
+    /// Whether this is a row or cell, which only exist inside a table and only change through the
+    /// table commands (their text through the text commands). The general block commands refuse them,
+    /// so a table always stays a whole grid.
+    #[must_use]
+    pub fn is_table_part(&self) -> bool {
+        matches!(self, Self::TableRow | Self::TableCell)
+    }
+
+    /// The only kind a block of this kind may hold as children, for the kinds that hold a fixed
+    /// kind: rows in a table, cells in a row.
+    #[must_use]
+    pub(crate) fn fixed_child(&self) -> Option<Self> {
+        match self {
+            Self::Table { .. } => Some(Self::TableRow),
+            Self::TableRow => Some(Self::TableCell),
+            _ => None,
+        }
     }
 
     /// Whether its text may carry inline marks.
@@ -147,8 +191,9 @@ impl BlockKind {
         self.has_text() && !matches!(self, Self::Code { .. })
     }
 
-    /// Checks this kind can be written by a command: no unknown kinds (the model only creates what it
-    /// knows) and heading levels 1 to 3.
+    /// Checks this kind can be written by a general command (`InsertBlock`, `SetBlockKind`): no unknown
+    /// kinds (the model only creates what it knows), heading levels 1 to 3, and no table kinds (the
+    /// table commands build those, so a table is always a whole grid).
     pub(crate) fn check_creatable(&self) -> Result<(), ModelError> {
         match self {
             Self::Unknown { type_name } => Err(ModelError::InvalidKind(format!(
@@ -157,6 +202,9 @@ impl BlockKind {
             Self::Heading { level } if !(1..=3).contains(level) => Err(ModelError::InvalidKind(format!(
                 "heading level must be 1, 2 or 3, not {level}"
             ))),
+            Self::Table { .. } | Self::TableRow | Self::TableCell => Err(ModelError::InvalidKind(
+                "tables are made with InsertTable and reshaped with the table commands".into(),
+            )),
             _ => Ok(()),
         }
     }
@@ -168,6 +216,7 @@ impl BlockKind {
             Self::Todo { .. } => &[keys::CHECKED],
             Self::Code { .. } => &[keys::LANGUAGE],
             Self::Image { .. } => &[keys::ASSET, keys::WIDTH, keys::ALT],
+            Self::Table { .. } => &[keys::HEADER_ROW],
             _ => &[],
         }
     }
@@ -186,6 +235,7 @@ impl BlockKind {
                 Self::Image { asset, width, alt }
             }
             (Self::Image { asset, width, .. }, BlockProp::ImageAlt(alt)) => Self::Image { asset, width, alt },
+            (Self::Table { .. }, BlockProp::TableHeaderRow(header_row)) => Self::Table { header_row },
             (_, prop) => return Err(mismatch(&prop)),
         })
     }
@@ -246,6 +296,13 @@ impl BlockKind {
                 };
                 Self::Image { asset, width, alt }
             }
+            "table" => match prop(keys::HEADER_ROW) {
+                Some(LoroValue::Bool(header_row)) => Self::Table { header_row },
+                None => Self::Table { header_row: false },
+                Some(_) => return Err((keys::HEADER_ROW, "is not true or false".into())),
+            },
+            "table_row" => Self::TableRow,
+            "table_cell" => Self::TableCell,
             _ => Self::Unknown { type_name },
         })
     }
@@ -270,12 +327,15 @@ impl BlockKind {
                 }
                 meta.insert(keys::ALT, alt.as_str())?;
             }
+            Self::Table { header_row } => meta.insert(keys::HEADER_ROW, *header_row)?,
             // No props to write. Unknown kinds are never created, so never written either.
             Self::Paragraph
             | Self::BulletedList
             | Self::NumberedList
             | Self::Quote
             | Self::Divider
+            | Self::TableRow
+            | Self::TableCell
             | Self::Unknown { .. } => {}
         }
         Ok(())

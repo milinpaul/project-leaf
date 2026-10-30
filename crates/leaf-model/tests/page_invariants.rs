@@ -7,7 +7,7 @@
 
 mod common;
 
-use common::{command, outline, step};
+use common::{command, outline, step, tables_are_grids};
 use leaf_model::{History, PageDoc, PageOutcome};
 use proptest::prelude::*;
 
@@ -23,6 +23,7 @@ proptest! {
                 let list: Vec<String> = broken.iter().map(ToString::to_string).collect();
                 prop_assert!(false, "after {:?} (result {:?}):\n{}", command, result, list.join("\n"));
             }
+            prop_assert!(tables_are_grids(&page), "after {:?} (result {:?}) a table isn't a grid", command, result);
         }
         let reloaded = PageDoc::from_bytes(&page.to_bytes().unwrap()).unwrap();
         prop_assert_eq!(reloaded.check_invariants(), Ok(()));

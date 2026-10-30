@@ -270,7 +270,12 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                     out.push(format!("{pad}*{text}*"));
                 }
             }
-            BlockKind::Paragraph | BlockKind::Unknown { .. } => {
+            // Until E16-S04 writes Markdown tables, a table's cells come out as one line each.
+            BlockKind::Paragraph
+            | BlockKind::Unknown { .. }
+            | BlockKind::Table { .. }
+            | BlockKind::TableRow
+            | BlockKind::TableCell => {
                 out.push(format!("{pad}{}", escape_start(&text)));
             }
         }

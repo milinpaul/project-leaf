@@ -12,7 +12,9 @@ use crate::{ModelError, PageOutcome};
 
 impl PageDoc {
     pub(super) fn indent(&mut self, ids: &[BlockId]) -> Result<PageOutcome, ModelError> {
-        for node in self.outermost(ids)? {
+        let roots = self.outermost(ids)?;
+        self.refuse_table_parts(&roots)?;
+        for node in roots {
             let siblings = self.tree.children(self.parent_node(node)).unwrap_or_default();
             let position = siblings.iter().position(|&n| n == node).unwrap_or(0);
             let Some(&above) = position.checked_sub(1).and_then(|p| siblings.get(p)) else {
@@ -28,7 +30,9 @@ impl PageDoc {
     }
 
     pub(super) fn outdent(&mut self, ids: &[BlockId]) -> Result<PageOutcome, ModelError> {
-        for node in self.outermost(ids)? {
+        let roots = self.outermost(ids)?;
+        self.refuse_table_parts(&roots)?;
+        for node in roots {
             let Some(parent) = self.parent_node(node) else {
                 continue;
             };

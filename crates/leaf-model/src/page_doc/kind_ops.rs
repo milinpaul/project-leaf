@@ -15,10 +15,19 @@ impl PageDoc {
         kind.check_creatable()?;
         let node = self.node(id)?;
         let old = self.kind(id)?;
-        if let BlockKind::Unknown { type_name } = &old {
-            return Err(ModelError::InvalidKind(format!(
-                "cannot change a block of unknown type {type_name:?}: it would be rewritten"
-            )));
+        match &old {
+            BlockKind::Unknown { type_name } => {
+                return Err(ModelError::InvalidKind(format!(
+                    "cannot change a block of unknown type {type_name:?}: it would be rewritten"
+                )));
+            }
+            BlockKind::Table { .. } => {
+                return Err(ModelError::InvalidKind(
+                    "a table can't be turned into another kind of block".into(),
+                ));
+            }
+            part if part.is_table_part() => return Err(ModelError::TablePart { block: id }),
+            _ => {}
         }
         if old == *kind {
             return Ok(PageOutcome::Changed); // nothing to write; apply reports Unchanged
