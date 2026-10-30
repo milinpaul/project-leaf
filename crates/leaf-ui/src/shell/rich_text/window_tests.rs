@@ -121,3 +121,98 @@ fn the_caret_blinks_while_the_text_view_draws_it(cx: &mut TestAppContext) {
     cx.run_until_parked();
     assert!(on(&shell, cx), "stopped, left visible");
 }
+
+/// A paragraph as long as a pasted meeting transcript: about 38,000 characters, no line breaks.
+fn transcript() -> String {
+    let words = [
+        "so", "the", "partner", "maps", "their", "fields", "and", "then", "we", "review", "it.",
+    ];
+    let mut text = String::new();
+    let mut i = 0;
+    while text.len() < 38_000 {
+        text.push_str(words[i % words.len()]);
+        text.push(' ');
+        i += 7;
+    }
+    text
+}
+
+#[gpui::test]
+fn clicking_and_selecting_in_a_very_long_paragraph_stay_quick(cx: &mut TestAppContext) {
+    use std::time::{Duration, Instant};
+
+    use gpui::{Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent};
+
+    let (shell, cx, block) = open(cx);
+    let text = transcript();
+    shell.update(cx, |shell, _| {
+        shell
+            .editor
+            .open_page()
+            .unwrap()
+            .unwrap()
+            .set_text(block, &text)
+            .unwrap();
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    let painted = shell.read_with(cx, |shell, _| shell.blocks.painted.clone());
+    assert!(painted.line_count(block) > 10, "it wraps over many lines");
+
+    // A click into the paragraph and a drag across it: each turns the pointer into a text position.
+    let started = Instant::now();
+    let at = painted.caret_bounds(block, 500).unwrap().0 + gpui::point(gpui::px(1.0), gpui::px(2.0));
+    let to = painted.caret_bounds(block, 900).unwrap().0 + gpui::point(gpui::px(1.0), gpui::px(2.0));
+    cx.simulate_event(MouseDownEvent {
+        button: MouseButton::Left,
+        position: at,
+        modifiers: Modifiers::none(),
+        click_count: 1,
+        first_mouse: false,
+    });
+    cx.simulate_event(MouseMoveEvent {
+        position: to,
+        pressed_button: Some(MouseButton::Left),
+        modifiers: Modifiers::none(),
+    });
+    cx.simulate_event(MouseUpEvent {
+        button: MouseButton::Left,
+        position: to,
+        modifiers: Modifiers::none(),
+        click_count: 1,
+    });
+    let took = started.elapsed();
+    let selection = shell.update(cx, |shell, _| shell.page().unwrap().selection().unwrap());
+    assert!(
+        matches!(selection, Some(leaf_editor::Selection::Text { .. })),
+        "the drag selected text: {selection:?}"
+    );
+    // Generous: a debug build on a slow CI machine. Before the fix this took minutes.
+    assert!(took < Duration::from_secs(3), "click and drag took {took:?}");
+}
+
+#[gpui::test]
+fn every_boundary_is_where_gpui_draws_it(cx: &mut TestAppContext) {
+    let (shell, cx, block) = open(cx);
+    // Wrapped lines, formatting, and a hard line break inside the block, with non-Latin and accented text.
+    let texts = [LONG.to_owned(), format!("{LONG}\nZürich 東京 then more {LONG}")];
+    for text in texts {
+        shell.update(cx, |shell, _| {
+            let page = shell.editor.open_page().unwrap().unwrap();
+            page.set_text(block, &text).unwrap();
+            // Bold and code in the middle split the text into several runs of glyphs.
+            page.select(block, 10..40).unwrap();
+            page.toggle_mark(leaf_model::MarkKind::Bold).unwrap();
+            page.select(block, 120..150).unwrap();
+            page.toggle_mark(leaf_model::MarkKind::Code).unwrap();
+        });
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+        let painted = shell.read_with(cx, |shell, _| shell.blocks.painted.clone());
+        for offset in 0..=text.chars().count() {
+            assert_eq!(
+                painted.drawn_at(block, offset),
+                painted.gpui_position(block, offset),
+                "boundary {offset}"
+            );
+        }
+    }
+}
