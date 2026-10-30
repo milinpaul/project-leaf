@@ -35,7 +35,10 @@ keep the app editable after each merge.
   - visual lines are the distinct tops of character positions;
   - x is the window x, shared by every block;
   - "closest to x on a line" picks the nearest drawn boundary;
-  - blocks not on screen answer as one line.
+  - blocks not on screen answer as one line;
+  - every boundary's position is worked out in one pass over GPUI's glyphs, once per frame, the first time it is
+    needed (amended in E17-S08). Asking GPUI one boundary at a time walked the line from its start on every call,
+    so a click in a 38,000-character pasted paragraph took over a minute.
 - **Interim, until E07-S03:** the block being typed in still shows its text input. Clicking any other block switches
   it to the input with the cursor where the click landed (`PaintedLayout::offset_at`).
 - **Screenshot tool:** gains `caret=B:C` and `select=B:C-B:C`, through `Shell::editor_mut`, to check this visually.

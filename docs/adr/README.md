@@ -78,4 +78,5 @@ Records cover two kinds of decision:
 | [0059](0059-page-edited-time.md) | Page edited time: a field in the workspace doc, stamped by a command undo skips | Feature | Accepted |
 | [0060](0060-favourite-pages.md) | Favourite pages: a map from page to position in the workspace doc | Feature | Accepted |
 | [0061](0061-simple-tables.md) | Simple tables: rows and cells as blocks inside a table block | Architecture | Accepted |
+| [0062](0062-smooth-wheel-and-edge-scrolling.md) | Mouse-wheel steps glide; dragging a selection past the page's edge scrolls | Feature | Accepted |
 | [0063](0063-editing-tables.md) | Editing tables: cells as text blocks, a rectangle of cells, tables acted on whole | Feature | Accepted |

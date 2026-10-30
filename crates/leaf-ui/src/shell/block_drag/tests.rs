@@ -213,9 +213,22 @@ fn scrolling_is_faster_closer_to_the_edge_and_none_in_the_middle() {
     assert!(scroll_speed(598.0, 0.0, 600.0) > scroll_speed(570.0, 0.0, 600.0));
     assert!(scroll_speed(570.0, 0.0, 600.0) > 0.0, "down near the bottom");
     assert_eq!(
-        scroll_speed(-50.0, 0.0, 600.0),
+        scroll_speed(0.0, 0.0, 600.0),
         -super::MAX_SCROLL_PX,
-        "full speed past the edge"
+        "full speed at the edge"
+    );
+    assert!(
+        scroll_speed(-50.0, 0.0, 600.0) < -super::MAX_SCROLL_PX,
+        "faster past the edge"
+    );
+    assert!(
+        scroll_speed(650.0, 0.0, 600.0) < scroll_speed(700.0, 0.0, 600.0),
+        "faster further out"
+    );
+    assert_eq!(
+        scroll_speed(5000.0, 0.0, 600.0),
+        super::MAX_SCROLL_PX * super::PAST_EDGE_FACTOR,
+        "up to a limit"
     );
 }
 

@@ -31,6 +31,8 @@ frame. Blocks differ in height (headings, wrapped paragraphs, code), so a fixed-
   A block already on screen never moves the page (amended in E17-S06): `PageList::reveal` checks the row against the
   view first, because GPUI's `scroll_to_reveal_item` lines a row up with the bottom even when it is visible, and with
   the top of the window inside a tall first item (a cover above the title) that scrolled to the very top.
+- **Scrolling** (amended in E17-S01/S02, ADR 0062): mouse-wheel steps glide instead of jumping, and dragging a
+  text selection past the top or bottom edge scrolls the page.
 - **Markers by depth**, as in Notion: bullets • ◦ ▪ and numbers 1. a. i., repeating every three levels.
 
 - **Checked with real rendering:** `just screenshot` (`leaf-ui/examples/screenshot.rs`) renders a workspace in an
