@@ -103,9 +103,13 @@ Mobile; P2P collaboration (maybe).
 | Situation | Result |
 |---|---|
 | `Enter` mid-text | Split block at cursor; new block keeps the type for lists/to-dos, becomes paragraph for headings/quote. |
-| `Enter` on empty list item / to-do | Outdent one level; at root, convert to paragraph. |
+| `Enter` on empty list item / to-do / action item | Outdent one level; at root, convert to paragraph. |
 | `Enter` in code block | Newline inside the block. `Cmd/Ctrl+Enter` or `Enter` on two trailing empty lines exits. |
 | `Backspace` at start of non-paragraph block | Convert to paragraph (keep text). |
+| `Enter` in an action item | Split like a to-do: the new action item is not done and has no date, and keeps the priority. |
+| `Cmd/Ctrl+Enter` in a to-do or action item | Tick it off, or back on; the caret stays. |
+| `[!] ` typed at the start of a block | Turn it into an action item (also in the slash menu and Turn into). |
+| An action item's date | Shown as Today / Tomorrow / Yesterday, else e.g. "Fri 31 Oct" (with the year when not this year), plus the time; overdue (red) when not done and due on an earlier day, or today at a time already passed. |
 | `Backspace` at start of paragraph | Merge text into previous text block; children move to previous block. If previous is a divider or image, select it instead. |
 | `Delete` at end of block | Merge next block into this one. |
 | `Tab` / `Shift+Tab` | Indent under previous sibling / outdent to parent's level. Inside a code block: indent / outdent the caret's or selected lines by four spaces instead. |

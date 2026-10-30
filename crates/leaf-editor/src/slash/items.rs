@@ -64,8 +64,18 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
         item("Numbered list", &["ordered", "ol", "1."], BlockKind::NumberedList),
         item(
             "To-do list",
-            &["todo", "checkbox", "task", "[]"],
+            &["todo", "checkbox", "[]"],
             BlockKind::Todo { checked: false },
+        ),
+        item(
+            "Action item",
+            &["task", "action", "due", "deadline", "date", "priority", "[!]"],
+            BlockKind::Task {
+                done: false,
+                due: None,
+                time: None,
+                priority: None,
+            },
         ),
         item("Quote", &["blockquote", "citation", ">"], BlockKind::Quote),
         item(

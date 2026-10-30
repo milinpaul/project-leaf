@@ -183,14 +183,14 @@ impl PageEditor {
         Ok(())
     }
 
-    /// Ticks or unticks a to-do. Other blocks are left alone.
+    /// Ticks or unticks a to-do, or an action item off and on (E19-S02). Other blocks are left alone.
     pub fn toggle_checked(&mut self, id: BlockId) -> Result<(), EditorError> {
-        if let BlockKind::Todo { checked } = self.doc.kind(id)? {
-            self.doc.apply(PageCommand::SetProp {
-                id,
-                prop: BlockProp::Checked(!checked),
-            })?;
-        }
+        let prop = match self.doc.kind(id)? {
+            BlockKind::Todo { checked } => BlockProp::Checked(!checked),
+            BlockKind::Task { done, .. } => BlockProp::TaskDone(!done),
+            _ => return Ok(()),
+        };
+        self.doc.apply(PageCommand::SetProp { id, prop })?;
         Ok(())
     }
 
@@ -240,7 +240,7 @@ pub(crate) fn enter_in(doc: &mut PageDoc, id: BlockId, at: usize) -> Result<Care
     };
     let is_list = matches!(
         kind,
-        BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. }
+        BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. } | BlockKind::Task { .. }
     );
     if is_list && text.is_empty() {
         if doc.parent(id)?.is_some() {

@@ -126,6 +126,12 @@ pub fn turn_into_kinds() -> Vec<BlockKind> {
         BlockKind::BulletedList,
         BlockKind::NumberedList,
         BlockKind::Todo { checked: false },
+        BlockKind::Task {
+            done: false,
+            due: None,
+            time: None,
+            priority: None,
+        },
         BlockKind::Quote,
         BlockKind::Code {
             language: String::new(),

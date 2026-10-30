@@ -71,7 +71,7 @@ fn turn_into_opens_a_list_of_kinds_with_the_current_one_marked() {
     let menu = editor.block_menu_key(MenuKey::Right).unwrap().unwrap();
     let (kinds, selected) = menu.kinds.unwrap();
     assert_eq!(selected, 0);
-    assert_eq!(kinds.len(), 9);
+    assert_eq!(kinds.len(), 10, "the text kinds, action items included (E19-S02)");
     let current: Vec<&str> = kinds
         .iter()
         .filter(|k| k.current)
@@ -84,7 +84,7 @@ fn turn_into_opens_a_list_of_kinds_with_the_current_one_marked() {
     editor.block_menu_key(MenuKey::Enter).unwrap();
     editor.block_menu_key(MenuKey::Up).unwrap();
     let menu = editor.block_menu_key(MenuKey::Up).unwrap().unwrap();
-    assert_eq!(menu.kinds.unwrap().1, 7, "Up wraps to Quote");
+    assert_eq!(menu.kinds.unwrap().1, 8, "Up wraps to Quote");
     let menu = editor.block_menu_key(MenuKey::Escape).unwrap().unwrap();
     assert_eq!(menu.kinds, None, "Escape leaves the list first");
     editor.block_menu_key(MenuKey::Right).unwrap();
@@ -183,7 +183,7 @@ fn the_mouse_highlights_entries_but_not_greyed_out_ones() {
 
     editor.choose(MenuEntry::TurnInto).unwrap();
     editor.highlight(&MenuEntry::Kind(BlockKind::Quote)).unwrap();
-    assert_eq!(editor.block_menu().unwrap().unwrap().kinds.unwrap().1, 7);
+    assert_eq!(editor.block_menu().unwrap().unwrap().kinds.unwrap().1, 8);
     editor.highlight(&MenuEntry::TurnInto).unwrap();
     assert!(
         editor.block_menu().unwrap().unwrap().kinds.is_some(),

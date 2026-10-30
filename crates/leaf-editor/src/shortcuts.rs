@@ -1,5 +1,5 @@
-//! Markdown shortcuts: typing `# `, `- `, `1. `, `[] `, `> `, ```` ``` ```` or `---` at the start of a
-//! block turns it into a heading, list item, to-do, quote, code block or divider.
+//! Markdown shortcuts: typing `# `, `- `, `1. `, `[] `, `[!] `, `> `, ```` ``` ```` or `---` at the start
+//! of a block turns it into a heading, list item, to-do, action item, quote, code block or divider.
 //!
 //! The shortcut fires when the typing completes one of these exactly, with nothing else before the
 //! caret; text after the caret stays and becomes the converted block's text. The conversion is an undo
@@ -20,6 +20,12 @@ fn shortcut(typed: &str, rest_empty: bool) -> Option<BlockKind> {
         "### " => BlockKind::Heading { level: 3 },
         "- " | "* " => BlockKind::BulletedList,
         "[] " => BlockKind::Todo { checked: false },
+        "[!] " => BlockKind::Task {
+            done: false,
+            due: None,
+            time: None,
+            priority: None,
+        },
         "> " => BlockKind::Quote,
         "```" => BlockKind::Code {
             language: String::new(),
@@ -57,7 +63,8 @@ impl PageEditor {
             return Ok(None);
         };
         let same = match (&kind, &target) {
-            (BlockKind::Todo { .. }, BlockKind::Todo { .. }) => true,
+            (BlockKind::Todo { .. }, BlockKind::Todo { .. })
+            | (BlockKind::Task { .. }, BlockKind::Task { .. }) => true,
             _ => kind == target,
         };
         if same {
