@@ -27,6 +27,8 @@ takes an app's icon from a different place:
   It is the macOS bundle identifier, the Windows app ID and the Linux `app_id` and `.desktop` file name.
 - **macOS:** `just run` builds the binary, wraps it in `target/debug/Leaf.app` (`scripts/macos_app.py`) and runs it
   from there, so the Dock, app switcher and menu bar show Leaf. The copy is an APFS clone, so it is instant.
+  `just install` (E08-S07) makes the same bundle from a release build and copies it into `/Applications`, replacing
+  an older Leaf but refusing to delete a `Leaf.app` with another bundle ID.
 - **Windows:** `build.rs` embeds `leaf.ico` with `embed-resource`. It fails the build if a Windows build cannot embed
   it, rather than ship without an icon.
 - **Linux:** the window gets `app_id` and, on X11, the 256 px PNG via `image`. The `.desktop` entry and PNG files are ready
