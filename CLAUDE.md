@@ -22,6 +22,7 @@ just check      # fmt + lint + test (run before declaring work done)
 just test       # nextest, whole workspace
 just cov        # coverage with 90% gate on core crates
 just run        # launch the app
+just install    # macOS: build Leaf and put it in /Applications
 ```
 
 ## Architecture rules (non-negotiable)

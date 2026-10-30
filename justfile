@@ -65,6 +65,12 @@ run *args:
     python3 scripts/macos_app.py target/debug/leaf-app target/debug
     target/debug/Leaf.app/Contents/MacOS/Leaf {{args}}
 
+# Build an optimised Leaf and install it as /Applications/Leaf.app (run again to update it)
+[macos]
+install:
+    cargo build --release --locked -p leaf-app
+    python3 scripts/macos_app.py install target/release/leaf-app
+
 # Launch the app
 [linux]
 [windows]
@@ -84,9 +90,9 @@ screenshot *args:
 icons:
     python3 scripts/icons.py
 
-# Benchmarks
+# Benchmarks for the performance budgets (crates/leaf-bench; ADR 0056)
 bench:
-    cargo bench --workspace
+    cargo bench -p leaf-bench --bench budgets
 
 # Install the dev tools once. lefthook is a Go tool, not a crate: install it first with
 # `brew install lefthook` (macOS/Linux) or `scoop install lefthook` (Windows).
