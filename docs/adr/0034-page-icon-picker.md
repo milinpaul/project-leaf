@@ -17,7 +17,10 @@ emoji picker with search, like Notion's. That needs the emoji list with names an
 - **Only emoji from Unicode 13 or older**, without skin-tone variants: every supported OS font can draw them, and
   the grid stays calm. About 1,500 emoji in nine sections.
 - **Search** (`leaf_editor::EmojiPicker`): each typed word must start a word of the emoji's name, a shortcode or its
-  group's title ("food" finds the whole group, with emoji named for it first). Enter picks the first result. A
+  group's title ("food" finds the whole group, with emoji named for it first). Enter picks the highlighted emoji:
+  the first result, unless the arrow keys (amended in E17-S04: Left/Right by one, Up/Down by a row, across
+  sections, scrolled into view) or the mouse moved the highlight. The picker catches the arrows before its search
+  field, which would otherwise move its caret. A
   Random button picks from the friendlier groups using a seed the UI passes (the editor never reads the clock).
 - **UI**: the icon sits above the title (an "Add icon" button appears on hover when there is none). Clicking it opens
   a popover under it: search field, Random, Remove, and a grid that draws only the rows on screen.

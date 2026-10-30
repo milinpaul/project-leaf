@@ -149,6 +149,51 @@ fn copy_and_paste_carry_formatting_through_the_clipboard(cx: &mut TestAppContext
     );
 }
 
+/// E17-S05: a heading copied with only the caret in it, or with all its text selected, pastes back as a
+/// heading through the clipboard, with its bold.
+#[gpui::test]
+fn copying_a_block_keeps_its_kind_through_the_clipboard(cx: &mut TestAppContext) {
+    let (shell, cx, ids) = open(cx, &["Plans", "", ""]);
+    shell.update(cx, |shell, _| {
+        let page = shell.page().unwrap();
+        page.turn_into(ids[0], leaf_model::BlockKind::Heading { level: 2 })
+            .unwrap();
+    });
+    focus(&shell, cx, ids[0], 2);
+    cx.simulate_keystrokes("secondary-a secondary-b");
+    // Just the caret: Cmd+C copies the block.
+    focus(&shell, cx, ids[0], 2);
+    cx.simulate_keystrokes("secondary-c");
+    let item = cx.read_from_clipboard().unwrap();
+    assert_eq!(
+        item.text().as_deref(),
+        Some("## **Plans**"),
+        "Markdown for other apps"
+    );
+    focus(&shell, cx, ids[1], 0);
+    cx.simulate_keystrokes("secondary-v");
+    draw(cx);
+    let (kind, spans) = shell.update(cx, |shell, _| {
+        let doc = shell.page().unwrap().doc();
+        (doc.kind(ids[1]).unwrap(), doc.text(ids[1]).unwrap().unwrap())
+    });
+    assert_eq!(
+        kind,
+        leaf_model::BlockKind::Heading { level: 2 },
+        "pasted as a heading"
+    );
+    assert_eq!((spans[0].text.as_str(), spans[0].marks.bold), ("Plans", true));
+
+    // All of its text selected (Cmd+A once selects the block's text): the same.
+    focus(&shell, cx, ids[0], 0);
+    cx.simulate_keystrokes("secondary-a secondary-c");
+    focus(&shell, cx, ids[2], 0);
+    cx.simulate_keystrokes("secondary-v");
+    draw(cx);
+    let kind = shell.update(cx, |shell, _| shell.page().unwrap().doc().kind(ids[2]).unwrap());
+    assert_eq!(kind, leaf_model::BlockKind::Heading { level: 2 });
+}
+
 // ---- Input methods ----
 
 #[gpui::test]
