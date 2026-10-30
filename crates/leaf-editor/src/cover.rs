@@ -259,7 +259,7 @@ mod tests {
     #[test]
     fn names_this_version_does_not_know_are_kept_as_they_are() {
         for stored in [
-            "builtin:aurora",
+            "builtin:nebula",
             "builtin:Forest",
             "image:0123abcd",
             "dawn",
