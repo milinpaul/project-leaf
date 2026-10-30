@@ -86,7 +86,15 @@ fn the_mouse_highlights_and_picks_an_entry(cx: &mut TestAppContext) {
     let (shell, cx, block) = open(cx);
     cx.simulate_input("/");
     draw(cx);
-    let quote = cx.debug_bounds("slash-item-7").unwrap().center();
+    // Found by name, so new entries in the menu don't move the target.
+    let at = shell.update(cx, |shell, _| {
+        let menu = shell.page().unwrap().slash_menu().unwrap().unwrap();
+        menu.items.iter().position(|item| item.label == "Quote").unwrap()
+    });
+    let quote = cx
+        .debug_bounds(Box::leak(format!("slash-item-{at}").into_boxed_str()))
+        .unwrap()
+        .center();
     cx.simulate_event(MouseMoveEvent {
         position: quote,
         pressed_button: None,
@@ -96,7 +104,7 @@ fn the_mouse_highlights_and_picks_an_entry(cx: &mut TestAppContext) {
     let selected = shell.update(cx, |shell, _| {
         shell.page().unwrap().slash_menu().unwrap().unwrap().selected
     });
-    assert_eq!(selected, 7);
+    assert_eq!(selected, at);
     cx.simulate_event(MouseDownEvent {
         button: MouseButton::Left,
         position: quote,
