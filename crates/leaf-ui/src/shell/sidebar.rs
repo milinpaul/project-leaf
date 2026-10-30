@@ -57,8 +57,8 @@ impl Shell {
             .into_any_element()
     }
 
-    /// The workspace switcher (badge, name and a ⇕ mark; clicking opens the workspace menu) and the
-    /// compose button that starts a new page.
+    /// The workspace switcher (badge, name and a ⇕ mark; clicking opens the workspace menu), the
+    /// collapse button (`sidebar_toggle`) and the compose button that starts a new page.
     fn render_header(&self, cx: &mut Context<Self>) -> AnyElement {
         let name = self.workspace_name();
         let initial: SharedString = name
@@ -118,6 +118,7 @@ impl Shell {
             .gap_1()
             // The menu wraps the switcher in a popover of its own, which must grow, not the switcher.
             .child(div().flex_1().min_w_0().child(switcher))
+            .child(Self::render_collapse_button(cx))
             .child(compose)
             .into_any_element()
     }

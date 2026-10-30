@@ -2,7 +2,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use gpui::{
-    AppContext as _, Entity, TestAppContext, VisualTestContext, Window, WindowBounds, point, px, size,
+    AppContext as _, Entity, Modifiers, TestAppContext, VisualTestContext, Window, WindowBounds, point, px,
+    size,
 };
 use gpui_component::theme::Theme;
 use gpui_component::{Root, WindowExt as _};
@@ -26,6 +27,51 @@ fn open_window(cx: &mut TestAppContext) -> (Entity<Shell>, &mut VisualTestContex
     cx.update(|window, cx| window.draw(cx).clear(cx));
     let shell = made.borrow().clone().unwrap();
     (shell, cx)
+}
+
+fn hidden(cx: &mut VisualTestContext) -> bool {
+    cx.update(|_, cx| settings::get(cx).sidebar_hidden())
+}
+
+fn redraw(cx: &mut VisualTestContext) {
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+}
+
+#[gpui::test]
+fn the_collapse_and_menu_buttons_hide_and_show_the_sidebar(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+    cx.simulate_input("Notes");
+    cx.simulate_keystrokes("enter");
+    redraw(cx);
+    assert!(
+        cx.debug_bounds("show-sidebar").is_none(),
+        "no ☰ while the sidebar shows"
+    );
+
+    let collapse = cx.debug_bounds("collapse-sidebar").unwrap().center();
+    cx.simulate_click(collapse, Modifiers::none());
+    redraw(cx);
+    assert!(hidden(cx));
+    assert!(
+        cx.debug_bounds("collapse-sidebar").is_none(),
+        "the sidebar is gone"
+    );
+    assert!(
+        cx.debug_bounds("sidebar-search").is_none(),
+        "with its search field"
+    );
+    let page_focused =
+        |cx: &mut VisualTestContext| cx.update(|window, cx| shell.read(cx).page_focus.is_focused(window));
+    assert!(page_focused(cx), "the page keeps the keyboard");
+
+    let open = cx.debug_bounds("show-sidebar").unwrap().center();
+    cx.simulate_click(open, Modifiers::none());
+    redraw(cx);
+    assert!(!hidden(cx));
+    assert!(cx.debug_bounds("show-sidebar").is_none());
+    assert!(cx.debug_bounds("collapse-sidebar").is_some());
+    assert!(page_focused(cx));
 }
 
 #[gpui::test]
