@@ -35,6 +35,9 @@ impl PageEditor {
     pub fn action_targets(&mut self, block: BlockId) -> Result<Vec<BlockId>, EditorError> {
         let targets = match self.selection()? {
             Some(Selection::Blocks(blocks)) if self.covered_by(block, &blocks)? => blocks,
+            Some(Selection::Cells { table, cells }) if block == table || cells.contains(&block) => {
+                vec![table]
+            }
             Some(Selection::Text { start, end }) => {
                 let touched = self.blocks_between(start, end)?;
                 if touched.contains(&block) {
@@ -45,7 +48,9 @@ impl PageEditor {
             }
             _ => vec![block],
         };
-        Ok(targets.into_iter().filter(|&b| self.doc.contains(b)).collect())
+        // A row or cell is never acted on alone: the action takes its whole table (E16-S02).
+        let targets: Vec<BlockId> = targets.into_iter().filter(|&b| self.doc.contains(b)).collect();
+        crate::table::whole_tables(&self.doc, &targets)
     }
 
     /// Runs `action` from `block`'s menu on [`PageEditor::action_targets`], as one undo step. Returns
@@ -68,7 +73,11 @@ impl PageEditor {
                 let mut convertible = Vec::new();
                 for &target in &targets {
                     let text = self.doc.plain_text(target)?.unwrap_or_default();
-                    let unknown = matches!(self.doc.kind(target)?, BlockKind::Unknown { .. });
+                    // Blocks from newer versions are never rewritten, and a table stays a table.
+                    let unknown = matches!(
+                        self.doc.kind(target)?,
+                        BlockKind::Unknown { .. } | BlockKind::Table { .. }
+                    );
                     let loses_text = kind == BlockKind::Divider && !text.is_empty();
                     if !unknown && !loses_text {
                         convertible.push(target);

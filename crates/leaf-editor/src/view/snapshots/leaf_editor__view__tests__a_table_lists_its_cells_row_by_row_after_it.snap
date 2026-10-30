@@ -1,0 +1,13 @@
+---
+source: crates/leaf-editor/src/view/tests.rs
+expression: "render(PageView::build(&page).unwrap().rows())"
+---
+Paragraph "Shopping"
+Table { header_row: true, rows: 3, columns: 2 } 
+  TableCell { row: 0, column: 0, header: true } "Item"
+  TableCell { row: 0, column: 1, header: true } "Price"
+  TableCell { row: 1, column: 0, header: false } "Tomatoes"
+  TableCell { row: 1, column: 1, header: false } "2.50"<b>
+  TableCell { row: 2, column: 0, header: false } "Basil"
+  TableCell { row: 2, column: 1, header: false } 
+Paragraph "after"

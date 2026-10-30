@@ -138,7 +138,8 @@ impl PageEditor {
             return Ok(None);
         };
         self.begin()?;
-        let block = target.block;
+        // A picture asked for in a table cell goes below the table.
+        let block = crate::table::table_of(&self.doc, target.block)?.unwrap_or(target.block);
         let caret = self.doc.as_separate_step(|doc| -> Result<Caret, EditorError> {
             let image = BlockKind::Image {
                 asset,

@@ -1,4 +1,4 @@
-# 0063. Cover gallery: sections of thumbnails, and colour and gradient covers as SVG files
+# 0064. Cover gallery: sections of thumbnails, and colour and gradient covers as SVG files
 
 - **Status:** Accepted
 - **Type:** Feature

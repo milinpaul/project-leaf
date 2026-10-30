@@ -9,6 +9,7 @@ use leaf_core::BlockId;
 use leaf_model::Caret;
 
 use super::Direction;
+use crate::table::cell_place;
 use crate::{EditorError, PageEditor};
 
 /// How the screen laid out each block's text. Implemented by `leaf-ui` from its text layout.
@@ -67,25 +68,93 @@ impl PageEditor {
                 block,
                 at: layout.x_to_offset(block, line + 1, x),
             },
-            Vertical::Up => match self.neighbour(block, Direction::Back)? {
-                Some((above, _)) => Caret {
-                    block: above,
-                    at: layout.x_to_offset(above, layout.line_count(above).max(1) - 1, x),
-                },
-                None => Caret { block, at: 0 },
-            },
-            Vertical::Down => match self.neighbour(block, Direction::Forward)? {
-                Some((below, _)) => Caret {
-                    block: below,
-                    at: layout.x_to_offset(below, 0, x),
-                },
-                None => Caret {
-                    block,
-                    at: self.text_len(block)?,
-                },
-            },
+            Vertical::Up | Vertical::Down => self.across_lines(caret, direction, x, layout)?,
         };
         self.place(target, Some(x)).map(Some)
+    }
+
+    /// Up from a block's first line or Down from its last: the nearest line of the block above or
+    /// below. In a table that is the cell above or below in the same column, and past its top or
+    /// bottom row the block before or after the table; coming into a table, the cell under `x`.
+    fn across_lines(
+        &mut self,
+        caret: Caret,
+        direction: Vertical,
+        x: f32,
+        layout: &impl LineLayout,
+    ) -> Result<Caret, EditorError> {
+        let block = caret.block;
+        let (back, way) = match direction {
+            Vertical::Up => (true, Direction::Back),
+            Vertical::Down => (false, Direction::Forward),
+        };
+        let next = match cell_place(&self.doc, block)? {
+            Some(place) => {
+                let row = if back {
+                    place.row.checked_sub(1)
+                } else {
+                    Some(place.row + 1).filter(|&r| r < place.grid.len())
+                };
+                let same_column = row.and_then(|r| {
+                    let cells = &place.grid[r];
+                    cells
+                        .get(place.column.min(cells.len().saturating_sub(1)))
+                        .copied()
+                });
+                if let Some(cell) = same_column {
+                    Some(cell)
+                } else {
+                    let edge = if back {
+                        place.table
+                    } else {
+                        place.grid.concat().last().copied().unwrap_or(place.table)
+                    };
+                    self.neighbour(edge, way)?.map(|(b, _)| b)
+                }
+            }
+            None => self.neighbour(block, way)?.map(|(b, _)| b),
+        };
+        let Some(next) = next else {
+            return Ok(Caret {
+                block,
+                at: if back { 0 } else { self.text_len(block)? },
+            });
+        };
+        let next = self.column_under(next, block, x, layout)?;
+        let line = if back {
+            layout.line_count(next).max(1) - 1
+        } else {
+            0
+        };
+        Ok(Caret {
+            block: next,
+            at: layout.x_to_offset(next, line, x),
+        })
+    }
+
+    /// Coming into a table from outside it at `target` (a cell in its first or last row): the cell
+    /// in that row whose left edge is the last at or before `x`. Any other target stays.
+    fn column_under(
+        &self,
+        target: BlockId,
+        from: BlockId,
+        x: f32,
+        layout: &impl LineLayout,
+    ) -> Result<BlockId, EditorError> {
+        let Some(place) = cell_place(&self.doc, target)? else {
+            return Ok(target);
+        };
+        if cell_place(&self.doc, from)?.is_some_and(|here| here.table == place.table) {
+            return Ok(target);
+        }
+        let row = &place.grid[place.row];
+        Ok(row
+            .iter()
+            .copied()
+            .filter(|&cell| layout.offset_to_x(cell, 0) <= x)
+            .last()
+            .or_else(|| row.first().copied())
+            .unwrap_or(target))
     }
 
     fn text_len(&self, block: BlockId) -> Result<usize, EditorError> {

@@ -1,5 +1,5 @@
 //! UI-free editor logic: cursor, selection, key handling, slash menu, block menu, dragging blocks,
-//! clipboard, quick switcher and search bar.
+//! clipboard, tables, quick switcher and search bar.
 //!
 //! The editor turns key presses and mouse actions into model `Command`s, and turns documents into
 //! view models that the UI only has to draw. All editing behaviour lives here as plain Rust so it
@@ -31,6 +31,7 @@ mod selection;
 mod shortcuts;
 mod slash;
 mod switcher;
+mod table;
 mod view;
 mod workspace_editor;
 

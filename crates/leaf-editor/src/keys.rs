@@ -74,6 +74,18 @@ impl PageEditor {
         if let Some(outcome) = self.code_tab(key, caret, span)? {
             return Ok(outcome);
         }
+        // In a table cell, Tab moves between cells, Enter types a line break and Backspace and
+        // Delete never merge cells (E16-S02). A selection across cells is handled below like any
+        // other: deleting it empties the cells.
+        let in_one_block = span.is_none_or(|(start, end)| start.block == end.block);
+        if (in_one_block || matches!(key, Key::Tab | Key::ShiftTab))
+            && let Some(outcome) = self.cell_key(key, caret)?
+        {
+            return match outcome {
+                KeyOutcome::Caret(at) => self.set_caret(at).map(KeyOutcome::Caret),
+                other => Ok(other),
+            };
+        }
         let outcome = match (key, span) {
             (Key::Enter, Some((start, end))) if start.block != end.block => self.enter_over(start, end)?,
             (Key::Enter | Key::ModEnter, _) => {
@@ -88,7 +100,7 @@ impl PageEditor {
                     Some((start, end)) => self.blocks_between(start, end)?,
                     None => vec![caret.block],
                 };
-                self.nest(key, ids)?;
+                self.nest(key, &ids)?;
                 KeyOutcome::Caret(caret)
             }
         };
@@ -140,7 +152,7 @@ impl PageEditor {
             }),
             Key::Tab | Key::ShiftTab => {
                 self.begin()?;
-                self.nest(key, blocks.to_vec())?;
+                self.nest(key, blocks)?;
                 // Still selected, wherever they moved.
                 self.select_blocks(blocks)?;
                 Ok(KeyOutcome::Nothing)
@@ -149,7 +161,9 @@ impl PageEditor {
         }
     }
 
-    fn nest(&mut self, key: Key, ids: Vec<BlockId>) -> Result<(), EditorError> {
+    fn nest(&mut self, key: Key, ids: &[BlockId]) -> Result<(), EditorError> {
+        // A selection reaching into a table nests the whole table.
+        let ids = crate::table::whole_tables(&self.doc, ids)?;
         self.doc.apply(if key == Key::Tab {
             PageCommand::Indent { ids }
         } else {
@@ -165,7 +179,8 @@ impl PageEditor {
         let caret = self.doc.as_one_step(|doc| -> Result<Caret, EditorError> {
             let at = delete_span(doc, &order, start, end)?;
             match doc.kind(at.block)? {
-                BlockKind::Code { .. } => {
+                // A cell takes a line break; it is never split.
+                BlockKind::Code { .. } | BlockKind::TableCell => {
                     doc.apply(PageCommand::InsertText {
                         id: at.block,
                         pos: at.at,

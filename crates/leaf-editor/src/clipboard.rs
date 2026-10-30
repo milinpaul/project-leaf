@@ -39,6 +39,19 @@ impl PageEditor {
                 spans_in(&self.doc, start.block, start.at..end.at)?,
             )),
             Some(Selection::Text { start, end }) => Some(Fragment::Blocks(self.touched_blocks(start, end)?)),
+            // One paragraph per cell, row by row, until tables go on the clipboard (E16-S04).
+            Some(Selection::Cells { cells, .. }) => Some(Fragment::Blocks(
+                cells
+                    .iter()
+                    .map(|&cell| {
+                        Ok(FragmentBlock {
+                            kind: BlockKind::Paragraph,
+                            text: self.doc.text(cell)?.unwrap_or_default(),
+                            children: Vec::new(),
+                        })
+                    })
+                    .collect::<Result<_, EditorError>>()?,
+            )),
         })
     }
 
@@ -49,7 +62,7 @@ impl PageEditor {
             Some(Selection::Blocks(blocks)) => {
                 self.delete_blocks(&blocks)?;
             }
-            Some(Selection::Text { .. }) => {
+            Some(Selection::Text { .. } | Selection::Cells { .. }) => {
                 self.press(Key::Delete)?;
             }
             None => {}
@@ -61,6 +74,7 @@ impl PageEditor {
     /// With whole blocks selected, the fragment goes after the last of them. Returns where the caret
     /// went: after the pasted text.
     pub fn paste(&mut self, fragment: &Fragment) -> Result<Option<Caret>, EditorError> {
+        let fragment = &crate::table::without_tables(fragment);
         let empty = match fragment {
             Fragment::Text(spans) => spans.iter().all(|s| s.text.is_empty()),
             Fragment::Blocks(blocks) => blocks.is_empty(),
@@ -95,6 +109,11 @@ impl PageEditor {
             match fragment {
                 Fragment::Text(spans) => {
                     let end = insert_spans(doc, at.block, at.at, spans)?;
+                    Ok(Caret { at: end, ..at })
+                }
+                // A cell holds text only: the blocks' text goes in, a line each.
+                Fragment::Blocks(blocks) if doc.kind(at.block)? == BlockKind::TableCell => {
+                    let end = insert_spans(doc, at.block, at.at, &crate::table::as_lines(blocks))?;
                     Ok(Caret { at: end, ..at })
                 }
                 Fragment::Blocks(blocks) => paste_blocks(doc, at, blocks),
