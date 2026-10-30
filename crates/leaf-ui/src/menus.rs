@@ -25,6 +25,10 @@ use std::path::PathBuf;
 use gpui_component::input::{Copy, Cut, Paste, Redo, SelectAll, Undo};
 use leaf_store::RecentWorkspace;
 
+/// The keys that open search (Cmd+K on macOS, Ctrl+K elsewhere): bound to [`SearchOrLink`] and shown
+/// as the hint in the sidebar's search field, so the two can't disagree.
+pub const SEARCH_KEYS: &str = command!("k");
+
 /// Opens a workspace from File → Open Recent. Carries the folder, so it is built in code (from the
 /// recent list), never from a key binding.
 #[derive(Clone, Debug, PartialEq, gpui::Action)]
@@ -75,7 +79,7 @@ pub fn key_bindings() -> Vec<KeyBinding> {
         KeyBinding::new(command!(","), OpenSettings, None),
         KeyBinding::new(command!("n"), NewPage, None),
         KeyBinding::new(command!("p"), Search, None),
-        KeyBinding::new(command!("k"), SearchOrLink, None),
+        KeyBinding::new(SEARCH_KEYS, SearchOrLink, None),
         KeyBinding::new(command!("shift-n"), NewWorkspace, None),
         KeyBinding::new(command!("o"), OpenWorkspace, None),
         KeyBinding::new(command!("shift-o"), SwitchWorkspace, None),

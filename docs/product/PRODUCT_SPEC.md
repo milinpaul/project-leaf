@@ -40,7 +40,8 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 
 ### Search
 - **Search bar** (`Cmd/Ctrl+K` with no text selected, or `Cmd/Ctrl+P`): one box that finds pages by title and
-  by the text inside them, across the whole workspace (Notion-style).
+  by the text inside them, across the whole workspace (Notion-style). A "Search" field at the top of the sidebar,
+  showing the shortcut, opens it too.
 - Results are grouped by page, title matches first, each with a short excerpt and the matched words highlighted.
 - Choosing a result opens the page and scrolls to the matching block.
 - Pages in the trash are not searched. Matching ignores case and accents; partial words match as you type.

@@ -1,5 +1,5 @@
 //! The sidebar's frame around the page tree: the workspace header with its compose button, the
-//! "Pages" heading with its "+", and Settings at the foot. Quiet icon buttons with tooltips instead
+//! search field (`sidebar_search`), the "Pages" heading with its "+", and Settings at the foot. Quiet icon buttons with tooltips instead
 //! of labelled buttons, so the pages stay the loudest thing in the sidebar.
 
 use std::path::Path;
@@ -39,6 +39,7 @@ impl Shell {
         let (background, foreground, border) =
             (theme.sidebar, theme.sidebar_foreground, theme.sidebar_border);
         let header = self.render_header(cx);
+        let search = Self::render_sidebar_search(cx);
         let heading = Self::render_pages_heading(cx);
         let tree = self.render_tree(cx);
         v_flex()
@@ -49,6 +50,7 @@ impl Shell {
             .border_r_1()
             .border_color(border)
             .child(header)
+            .child(search)
             .child(heading)
             .child(v_flex().flex_1().min_h_0().px_2().child(tree))
             .child(Self::render_footer(cx))
