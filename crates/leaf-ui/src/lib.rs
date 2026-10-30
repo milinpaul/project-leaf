@@ -40,6 +40,7 @@ gpui_kit_assets::icon_assets!(
         Check,
         ChevronRight,
         Copy,
+        Ellipsis,
         ExternalLink,
         FaceSlightlySmilingPlus,
         FileText,
@@ -62,6 +63,8 @@ gpui_kit_assets::icon_assets!(
         SquareCheck,
         SquareCode,
         SquarePen,
+        Star,
+        StarFill,
         TextQuote,
         Trash,
         Type

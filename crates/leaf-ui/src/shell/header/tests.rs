@@ -216,8 +216,14 @@ fn remove_in_the_picker_shows_only_with_a_cover_and_takes_it_away(cx: &mut TestA
 fn the_page_starts_with_its_header_not_a_toolbar(cx: &mut TestAppContext) {
     let (_shell, cx) = open_window(cx);
     let header = cx.debug_bounds("page-header").expect("the header is drawn");
-    // Only the page's top padding sits above the header; the old row of "Turn into" buttons is gone.
-    let top = f32::from(header.top());
-    eprintln!("page header top: {top}");
-    assert!(top < 80.0, "the header starts at the top of the page: {top}");
+    let bar = cx
+        .debug_bounds("top-bar")
+        .expect("the top bar is drawn (E18-S03)");
+    // Only the top bar and the page's top padding sit above the header; the old row of "Turn into"
+    // buttons is gone.
+    let below_bar = f32::from(header.top() - bar.bottom());
+    assert!(
+        (0.0..80.0).contains(&below_bar),
+        "the header starts just under the top bar: {below_bar}"
+    );
 }

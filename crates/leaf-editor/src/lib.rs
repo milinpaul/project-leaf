@@ -59,6 +59,6 @@ pub use slash::{SlashAction, SlashItem, SlashMenu};
 pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
-    DropPlace, EditorError, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED, WorkspaceEditor,
-    trashed_ago,
+    Crumb, DropPlace, EditorError, MAX_CRUMBS, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED,
+    WorkspaceEditor, trashed_ago,
 };
