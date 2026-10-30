@@ -48,9 +48,26 @@ header.top h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
 .counts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 22px; font-size: 14px; color: var(--muted); }
 .counts b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.phase {
+  all: unset; box-sizing: border-box; cursor: pointer; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; align-content: start;
+}
+.phase:hover { border-color: color-mix(in srgb, var(--ink) 30%, var(--line)); }
+.phase.on { border-color: var(--leaf); box-shadow: inset 0 0 0 1px var(--leaf); }
+.phase .num { font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.phase .name { font-weight: 600; line-height: 1.25; }
+.phase .sub { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tag.now { background: var(--leaf-soft); color: var(--leaf); }
+.tag.phase { background: var(--violet-soft); color: var(--violet); }
+.epic .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
 .epics { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 20px; margin-bottom: 22px; }
-.epic { all: unset; cursor: pointer; padding: 6px 8px; border-radius: 8px; display: grid; gap: 4px; }
+.epic { padding: 6px 8px; border-radius: 8px; display: grid; gap: 4px; min-width: 0; }
 .epic:hover, .epic.on { background: var(--sunk); }
+.epic .pick { all: unset; cursor: pointer; display: grid; gap: 4px; }
+.epic .move { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.epic .move select { max-width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 4px; font-size: 12.5px; }
 .epic .row { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
 .epic .row span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
 .bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
@@ -68,7 +85,7 @@ header.top h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
 .col { background: var(--sunk); border-radius: 12px; padding: 10px; min-height: 120px; display: flex; flex-direction: column; gap: 8px; }
 .col h2 { font-size: 14px; margin: 2px 4px 4px; display: flex; justify-content: space-between; font-weight: 600; }
 .col h2 span { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
-.col .none { color: var(--muted); font-size: 13px; padding: 4px; }
+.col .none, .epics .none { color: var(--muted); font-size: 13px; padding: 4px; }
 
 .card {
   all: unset; box-sizing: border-box; cursor: pointer; background: var(--surface); border: 1px solid var(--line);
@@ -128,6 +145,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
   <div class="error" id="error" hidden></div>
   <button class="next" id="next"></button>
   <div class="counts" id="counts"></div>
+  <div class="phases" id="phases"></div>
   <div class="epics" id="epics"></div>
 
   <div class="filters">
@@ -158,7 +176,9 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
   const $ = id => document.getElementById(id);
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
   const dependents = id => data.stories.filter(s => s.depends_on.includes(id));
-  const state = { q: "", epic: "", pri: "", ready: false, done: true };
+  const state = { q: "", phase: "", epic: "", pri: "", ready: false, done: true };
+  const phases = data.phases || [];
+  const inPhase = e => state.phase === "" || String(e.phase) === state.phase;
 
   const live = location.protocol.startsWith("http");
   $("stamp").textContent = meta.generated_at ? `${live ? "Live, updated" : "Updated"} ${meta.generated_at}` : "";
@@ -195,18 +215,64 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
     const n = data.stories.filter(s => s.status === st).length; if (n) addCount(LABEL[st].toLowerCase(), n);
   }
 
-  // Epics
+  // Phases: each one's progress; picking one narrows the epics and stories to it
+  function phaseCard(id, num, name, sub, progress, current) {
+    const b = el("button", "phase"); b.dataset.id = id;
+    const top = el("div", "num"); top.append(el("span", null, num));
+    if (current) top.append(el("span", "tag now", "Current"));
+    b.append(top, el("div", "name", name), el("div", "sub", sub));
+    if (progress != null) { const bar = el("div", "bar"); const f = el("i"); f.style.width = `${Math.round(progress * 100)}%`; bar.append(f); b.append(bar); }
+    b.onclick = () => { state.phase = state.phase === id ? "" : id; if (state.epic && !inPhase(epicById[state.epic])) state.epic = ""; drawEpics(); render(); };
+    return b;
+  }
+  const phaseTag = n => { const t = el("span", "tag phase", `Phase ${n}`); t.title = phases.find(p => p.id === n)?.name || ""; return t; };
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  $("phases").append(phaseCard("", "Whole project", "All phases", `${plural(data.epics.length, "epic", "epics")} · ${done}/${total} stories done`, total ? done / total : 0, false));
+  for (const p of phases) {
+    const sub = `${plural(p.epics.length, "epic", "epics")} · ${p.story_count ? `${p.done_count}/${p.story_count} stories done` : "no stories yet"}`;
+    $("phases").append(phaseCard(String(p.id), `Phase ${p.id}`, p.name, sub, p.story_count ? p.progress : null, p.current));
+  }
+
+  // Epics: the selected phase's, each with a phase menu on the live board to move it
   const fEpic = $("fEpic");
-  fEpic.append(new Option("All epics", ""));
-  for (const e of data.epics) {
-    fEpic.append(new Option(`${e.id} ${e.title}`, e.id));
-    if (!e.story_count) continue;
-    const b = el("button", "epic"); b.dataset.id = e.id;
-    const row = el("div", "row"); row.append(el("span", null, `${e.id} ${e.title}`), el("span", null, `${e.done_count}/${e.story_count}`));
-    const bar = el("div", "bar"); const fill = el("i"); fill.style.width = `${Math.round(e.progress * 100)}%`; bar.append(fill);
-    b.append(row, bar);
-    b.onclick = () => { state.epic = state.epic === e.id ? "" : e.id; fEpic.value = state.epic; render(); };
-    $("epics").append(b);
+  function drawEpics() {
+    fEpic.replaceChildren(new Option("All epics", ""));
+    const list = $("epics"); list.replaceChildren();
+    for (const e of data.epics.filter(inPhase)) {
+      fEpic.append(new Option(`${e.id} ${e.title}`, e.id));
+      const box = el("div", "epic"); box.dataset.id = e.id;
+      const b = el("button", "pick");
+      const row = el("div", "row"); row.append(el("span", null, `${e.id} ${e.title}`), el("span", null, e.story_count ? `${e.done_count}/${e.story_count}` : "no stories"));
+      const bar = el("div", "bar"); const fill = el("i"); fill.style.width = `${Math.round(e.progress * 100)}%`; bar.append(fill);
+      b.append(row, bar);
+      b.onclick = () => { state.epic = state.epic === e.id ? "" : e.id; fEpic.value = state.epic; render(); };
+      box.append(b);
+      const metaRow = el("div", "meta"); metaRow.append(phaseTag(e.phase)); box.append(metaRow);
+      if (live && phases.length) {
+        const move = el("label", "move", "Move to");
+        const sel = el("select"); sel.setAttribute("aria-label", `Phase of ${e.id}`);
+        phases.forEach(p => { const o = new Option(`Phase ${p.id}`, String(p.id)); o.title = p.name; sel.append(o); });
+        sel.value = String(e.phase);
+        sel.onchange = () => moveEpic(e, sel);
+        move.append(sel); metaRow.append(move);
+      }
+      list.append(box);
+    }
+    if (!list.children.length) list.append(el("div", "none", "No epics in this phase yet."));
+    fEpic.value = state.epic;
+  }
+
+  async function moveEpic(e, sel) {
+    const to = Number(sel.value);
+    sel.disabled = true;
+    try {
+      const r = await fetch("/epic-phase", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ epic: e.id, phase: to }) });
+      if (!r.ok) throw new Error(r.statusText || `error ${r.status}`);
+      // The server rewrote the epic's file and rebuilt; the version poll reloads the page with the new phases.
+    } catch (err) {
+      sel.value = String(e.phase); sel.disabled = false;
+      $("error").hidden = false; $("error").textContent = `Could not move ${e.id} to phase ${to}: ${err.message}`;
+    }
   }
 
   // Filters
@@ -216,11 +282,13 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
   $("fReady").onchange = e => { state.ready = e.target.checked; render(); };
   $("fDone").onchange = e => { state.done = e.target.checked; render(); };
   $("clear").onclick = () => {
-    Object.assign(state, { q: "", epic: "", pri: "", ready: false, done: true });
+    Object.assign(state, { q: "", phase: "", epic: "", pri: "", ready: false, done: true });
+    drawEpics();
     $("q").value = ""; fEpic.value = ""; $("fPri").value = ""; $("fReady").checked = false; $("fDone").checked = true; render();
   };
 
   function matches(s) {
+    if (!inPhase(epicById[s.epic] || {})) return false;
     if (state.epic && s.epic !== state.epic) return false;
     if (state.pri && s.priority !== state.pri) return false;
     if (state.ready && !s.ready) return false;
@@ -233,6 +301,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
     const id = el("div", "id"); id.append(el("span", null, s.id), el("span", null, s.size));
     const tags = el("div", "tags");
     tags.append(el("span", `tag ${s.priority.toLowerCase()}`, s.priority));
+    if (epicById[s.epic]) tags.append(phaseTag(epicById[s.epic].phase));
     if (s.ready) tags.append(el("span", "tag ready", "Ready"));
     else if (s.status === "todo" && s.waiting_on.length) tags.append(el("span", "tag wait", `Waiting on ${s.waiting_on.length}`));
     if (s.assignee) tags.append(el("span", "tag who", s.assignee));
@@ -245,6 +314,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
   }
 
   function render() {
+    document.querySelectorAll(".phase").forEach(n => n.classList.toggle("on", n.dataset.id === state.phase));
     document.querySelectorAll(".epic").forEach(n => n.classList.toggle("on", n.dataset.id === state.epic));
     const board = $("board"); board.replaceChildren();
     for (const st of data.statuses) {
@@ -275,6 +345,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
     head.append(t, x);
     const tags = el("div", "tags");
     tags.append(el("span", "tag", LABEL[s.status]), el("span", `tag ${s.priority.toLowerCase()}`, s.priority), el("span", "tag", `Size ${s.size}`));
+    if (epicById[s.epic]) tags.append(phaseTag(epicById[s.epic].phase));
     if (s.ready) tags.append(el("span", "tag ready", "Ready"));
     if (s.assignee) tags.append(el("span", "tag who", s.assignee));
     s.labels.forEach(l => tags.append(el("span", "tag", l)));
@@ -303,6 +374,7 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
   $("drawer").addEventListener("click", e => { if (e.target.id === "drawer") e.target.close(); });
 
   // Apply restored filters to the controls
+  drawEpics();
   $("q").value = state.q; fEpic.value = state.epic; $("fPri").value = state.pri;
   $("fReady").checked = state.ready; $("fDone").checked = state.done;
   render();

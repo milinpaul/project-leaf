@@ -1,4 +1,4 @@
-# 0057. Search performance: rank only the newest matches, pick blocks before excerpts
+# 0058. Search performance: rank only the newest matches, pick blocks before excerpts
 
 - **Status:** Accepted
 - **Type:** Architecture

@@ -108,6 +108,7 @@ impl Shell {
         });
         v_flex()
             .id("page-header")
+            .debug_selector(|| "page-header".into())
             .group("page-header")
             .gap_1()
             .children(big_icon)

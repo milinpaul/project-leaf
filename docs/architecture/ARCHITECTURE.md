@@ -43,7 +43,7 @@ the screen stays thin.
 | `leaf-export` | Markdown import/export (Phase 1). | Touch files or the screen. |
 | `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR 0019). | Hold data that exists nowhere else. |
 | `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR 0055). Test support only. | Be used by the app. |
-| `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save, search), run by `just bench` and on every `main` push in CI (ADR 0056, 0057). Test support only. | Be used by the app. |
+| `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save, search), run by `just bench` and on every `main` push in CI (ADR 0056, 0058). Test support only. | Be used by the app. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. Holds Leaf's look (colours, bundled fonts, sizes) in one `theme` module (ADR 0027). | Contain editing logic. |
 | `leaf-app` | The program itself: starts up, opens windows, connects the crates. | Contain logic that a testable crate could hold. |
 
@@ -69,7 +69,8 @@ bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); ty
 emoji picker arrive through GPUI's platform text input (`shell/ime.rs`), which sees the caret's block with the draft
 spliced in; the mouse places the caret, drags select, double and triple clicks select a word and the block. (The first
 version, E07-S10, used one text input per block; those are gone.) Each row has a **⋮⋮ handle** that shows on hover and
-opens the **block menu** (E07-S04, ADR 0041): Turn into, Duplicate, Move up, Move down, Delete, with icons. The menu's
+opens the **block menu** (E07-S04, ADR 0041): Turn into, Duplicate, Move up, Move down, Delete, with icons. There is no toolbar of block types above the page: the slash menu, this menu and Markdown shortcuts
+change a block's type (E07-S11, ADR 0057). The menu's
 state lives in `PageEditor` (`leaf-editor/src/block_menu.rs`) like the slash menu; `shell/block_menu.rs` draws it, gives
 it the keyboard while open, and `Cmd/Ctrl+/` opens it for the caret's block. Dragging the handle is worked out in
 `leaf-editor/src/drag.rs` (E05-S04, ADR 0049): the UI passes the rows it drew and the pointer, `PageEditor::drop_target`
@@ -228,7 +229,7 @@ excerpts of up to three matching blocks (E11-S03). The search bar that shows the
 **Search speed (E11-S07).** On 5,000 pages / 100,000 blocks a search takes about 20 ms and re-indexing an edited
 page about 5 ms (`just bench-search`). To stay there, only the newest 10,000 matching blocks are ranked, each page's
 best three blocks are picked before excerpts are made, prefix indexes start at one letter, and the indexer keeps the
-list of searchable pages until titles or the page tree change (ADR 0057).
+list of searchable pages until titles or the page tree change (ADR 0058).
 
 ## Where things live
 
