@@ -163,6 +163,17 @@ enum WireKind {
     },
     TableRow,
     TableCell,
+    /// An action item (E19): its fields as the document stores them.
+    Task {
+        #[serde(default, skip_serializing_if = "is_false")]
+        done: bool,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        due: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        due_time: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        priority: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -200,6 +211,17 @@ impl WireBlock {
             },
             BlockKind::TableRow => WireKind::TableRow,
             BlockKind::TableCell => WireKind::TableCell,
+            BlockKind::Task {
+                done,
+                due,
+                time,
+                priority,
+            } => WireKind::Task {
+                done: *done,
+                due: due.map(|d| d.to_string()),
+                due_time: time.map(|t| t.to_string()),
+                priority: priority.map(|p| p.as_str().to_owned()),
+            },
             BlockKind::Unknown { .. } => return None,
         };
         Some(Self {
@@ -223,6 +245,18 @@ impl WireBlock {
             WireKind::Table { header_row } => BlockKind::Table { header_row },
             WireKind::TableRow => BlockKind::TableRow,
             WireKind::TableCell => BlockKind::TableCell,
+            // A field this version can't read makes the copy unreadable, like a kind it doesn't know.
+            WireKind::Task {
+                done,
+                due,
+                due_time,
+                priority,
+            } => BlockKind::Task {
+                done,
+                due: due.map(|d| d.parse()).transpose().ok()?,
+                time: due_time.map(|t| t.parse()).transpose().ok()?,
+                priority: priority.map(|p| p.parse()).transpose().ok()?,
+            },
         };
         Some(FragmentBlock {
             kind,

@@ -5,7 +5,7 @@ use loro::{LoroDoc, LoroMap, LoroTree, LoroValue, ValueOrContainer};
 
 use super::{BLOCKS, PageDoc};
 use crate::block_kind::keys;
-use crate::{BlockKind, Marks, ModelError, PageCommand, PageOutcome, TextSpan};
+use crate::{BlockKind, DueDate, DueTime, Marks, ModelError, PageCommand, PageOutcome, Priority, TextSpan};
 
 fn all_known_kinds() -> Vec<BlockKind> {
     vec![
@@ -31,10 +31,22 @@ fn all_known_kinds() -> Vec<BlockKind> {
             width: None,
             alt: String::new(),
         },
+        BlockKind::Task {
+            done: false,
+            due: None,
+            time: None,
+            priority: None,
+        },
+        BlockKind::Task {
+            done: true,
+            due: DueDate::new(2028, 2, 29).ok(),
+            time: DueTime::new(8, 15).ok(),
+            priority: Some(Priority::Medium),
+        },
     ]
 }
 
-fn insert(page: &mut PageDoc, kind: BlockKind, text: &str) -> BlockId {
+pub(super) fn insert(page: &mut PageDoc, kind: BlockKind, text: &str) -> BlockId {
     let index = page.root_blocks().len();
     match page
         .apply(PageCommand::InsertBlock {
@@ -51,7 +63,7 @@ fn insert(page: &mut PageDoc, kind: BlockKind, text: &str) -> BlockId {
 }
 
 /// Builds a page with raw Loro writes (for data the commands refuse to create), then loads it.
-fn load_raw(build: impl FnOnce(&LoroTree)) -> Result<PageDoc, ModelError> {
+pub(super) fn load_raw(build: impl FnOnce(&LoroTree)) -> Result<PageDoc, ModelError> {
     let doc = LoroDoc::new();
     let tree = doc.get_tree(BLOCKS);
     tree.enable_fractional_index(0);
@@ -61,7 +73,7 @@ fn load_raw(build: impl FnOnce(&LoroTree)) -> Result<PageDoc, ModelError> {
 }
 
 /// A raw block node with an id and type; returns its meta for further writes.
-fn raw_block(tree: &LoroTree, id: BlockId, type_name: &str) -> LoroMap {
+pub(super) fn raw_block(tree: &LoroTree, id: BlockId, type_name: &str) -> LoroMap {
     let meta = tree.get_meta(tree.create(None).unwrap()).unwrap();
     meta.insert(keys::ID, id.to_string()).unwrap();
     meta.insert(keys::TYPE, type_name).unwrap();
@@ -122,6 +134,8 @@ fn the_kind_table_matches_block_model() {
             ("divider", false, false, false),
             ("image", false, true, true),
             ("image", false, true, true),
+            ("task", true, true, true),
+            ("task", true, true, true),
         ]
     );
     // Tables: only rows and cells inside, and only through the table commands (ADR 0061).
@@ -241,7 +255,7 @@ type BadData = (&'static str, &'static str, Option<(&'static str, LoroValue)>);
 
 #[test]
 fn known_kinds_with_bad_data_are_errors_not_guesses() {
-    let cases: [BadData; 9] = [
+    let cases: [BadData; 15] = [
         ("type missing", "", None),
         ("heading", "level", Some(("level", LoroValue::I64(7)))),
         ("heading", "level", None),
@@ -259,6 +273,28 @@ fn known_kinds_with_bad_data_are_errors_not_guesses() {
             Some(("width", LoroValue::String("wide".into()))),
         ),
         ("image", "alt", Some(("alt", LoroValue::I64(0)))),
+        ("task", "done", Some(("done", LoroValue::String("yes".into())))),
+        (
+            "task",
+            "due",
+            Some(("due", LoroValue::String("2026-02-30".into()))),
+        ),
+        ("task", "due", Some(("due", LoroValue::I64(20_261_031)))),
+        (
+            "task",
+            "due_time",
+            Some(("due_time", LoroValue::String("25:00".into()))),
+        ),
+        (
+            "task",
+            "due_time",
+            Some(("due_time", LoroValue::String("09:00".into()))),
+        ),
+        (
+            "task",
+            "priority",
+            Some(("priority", LoroValue::String("urgent".into()))),
+        ),
     ];
     for (type_name, field, prop) in cases {
         let block = BlockId::new();

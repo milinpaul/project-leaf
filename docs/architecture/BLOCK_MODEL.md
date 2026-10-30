@@ -75,6 +75,10 @@ and rebuilds that index after undo, redo and import.
 | `table` | `header_row`: bool | no | `table_row` blocks only (at least one) |
 | `table_row` | — | no | `table_cell` blocks only (at least one) |
 | `table_cell` | — | yes | no |
+| `task` | `done`: bool, `due`: `YYYY-MM-DD`?, `due_time`: `HH:MM`? (only with `due`), `priority`: `high` \| `medium` \| `low`? | yes | yes |
+
+**Action items (E19, ADR 0068).** A `task` is a to-do with a due date, an optional wall-clock time and a priority.
+Dates and times have no time zone: due Friday stays due Friday. An absent prop means "not set"; a time needs a date.
 
 **Tables (E16, ADR 0061).** A simple table is a `table` block holding `table_row` blocks, each holding `table_cell`
 blocks in column order; a cell is a text block, so its text and marks change with the usual text commands and the
@@ -321,6 +325,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | heading n | `#` × n |
 | bulleted / numbered | `- ` / `1. `, children indented 2 spaces |
 | todo | `- [ ] ` / `- [x] ` |
+| task | `- [ ] ` / `- [x] ` for now; its date and priority get a Markdown form in E19-S04 |
 | quote | `> ` |
 | code | fenced block with language |
 | divider | `---` |

@@ -150,6 +150,7 @@ pub(crate) fn kind_label(kind: &BlockKind) -> &'static str {
         BlockKind::Table { .. } => "Table",
         BlockKind::TableRow => "Table row",
         BlockKind::TableCell => "Table cell",
+        BlockKind::Task { .. } => "Action item",
         BlockKind::Unknown { .. } => "Unknown",
     }
 }

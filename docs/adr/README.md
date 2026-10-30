@@ -84,3 +84,4 @@ Records cover two kinds of decision:
 | [0065](0065-page-top-bar.md) | Page top bar: breadcrumb, edited time, star and page menu above every page | Feature | Accepted |
 | [0066](0066-database-data-model.md) | Databases: one Loro document per database, rows as pages | Architecture | Accepted |
 | [0067](0067-formatting-bar.md) | Formatting bar: a floating bar over selected text, drawn in the page's own overlay | Feature | Accepted |
+| [0068](0068-action-item-block.md) | Action items: a `task` block kind with its fields as props | Feature | Accepted |

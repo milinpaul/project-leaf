@@ -450,4 +450,5 @@ fn empty_fragments_and_no_caret_change_nothing() {
 }
 
 mod pasted_links;
+mod tasks;
 mod whole_blocks;

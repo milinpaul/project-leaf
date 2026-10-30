@@ -83,6 +83,8 @@ impl BlockStyle {
             BlockKind::BulletedList => Self::Bulleted,
             BlockKind::NumberedList => Self::Numbered(number),
             BlockKind::Todo { checked } => Self::Todo { checked },
+            // Drawn as a to-do until action items get their own look (E19-S02, E19-S03).
+            BlockKind::Task { done, .. } => Self::Todo { checked: done },
             BlockKind::Quote => Self::Quote,
             BlockKind::Code { language } => Self::Code { language },
             BlockKind::Divider => Self::Divider,
