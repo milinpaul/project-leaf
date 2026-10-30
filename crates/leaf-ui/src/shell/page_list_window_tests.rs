@@ -244,7 +244,7 @@ fn the_click_time_unmark_text_call_keeps_the_scroll_position(cx: &mut TestAppCon
     );
     cx.update(|window, cx| {
         shell.update(cx, |shell, cx| {
-            gpui::EntityInputHandler::unmark_text(shell, window, cx)
+            gpui::EntityInputHandler::unmark_text(shell, window, cx);
         });
     });
     draw(cx);
