@@ -127,6 +127,10 @@ turns the place on screen into a model index (indexes count trashed pages; ADR 0
 (`uniform_list`), so 500 pages scroll smoothly. The UI code is `leaf_ui::shell::tree`.
 The sidebar's frame (`leaf_ui::shell::sidebar`, E06-S10) has a workspace header (badge, name, compose button), a
 "Pages" heading with a "+", and Settings at the foot; rows show a page icon and a hover "+" that adds a page inside.
+Starred pages show in a "Favourites" section above "Pages" (`leaf_ui::shell::favourites`, E18-S05), drawn from
+`WorkspaceEditor::favourites` on every frame, so renames, icons, the trash and restoring show at once; hidden while
+nothing is starred. Its right-click menu is the page menu for `MenuPlace::Favourites`, whose Rename edits the
+Favourites row rather than the tree row.
 Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole set.
 
 **Quick switcher (E06-S04).** `leaf_editor::QuickSwitcher` is a snapshot of the live pages with breadcrumbs, matched by
