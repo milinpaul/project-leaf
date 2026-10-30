@@ -255,6 +255,7 @@ impl WorkspaceEditor {
     }
 }
 
+mod favourites;
 mod trash;
 mod tree;
 

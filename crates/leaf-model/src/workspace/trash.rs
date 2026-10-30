@@ -73,6 +73,7 @@ impl Workspace {
         for &gone in &deleted {
             self.index.remove(gone);
         }
+        self.forget_favourites(&deleted)?;
         Ok(Outcome::PagesDeleted(deleted))
     }
 

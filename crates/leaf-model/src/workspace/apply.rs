@@ -79,6 +79,8 @@ impl Workspace {
             }
             WorkspaceCommand::RestorePage { page } => self.restore_page(page)?,
             WorkspaceCommand::DeletePagePermanently { page } => self.delete_page(page)?,
+            WorkspaceCommand::AddFavourite { page } => self.add_favourite(page)?,
+            WorkspaceCommand::RemoveFavourite { page } => self.remove_favourite(page)?,
         };
         self.doc.commit();
         // Whether anything was recorded decides it, so `Changed` always means exactly one undo step.

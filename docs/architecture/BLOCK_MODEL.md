@@ -25,6 +25,7 @@ LoroDoc (workspace)
           "created_at": i64     # unix ms
           "edited_at":  i64?    # unix ms, last change to blocks/title/icon/cover; missing = created_at (ADR 0059)
           "trashed_at": i64?    # set = in trash (subtree hidden)
+└── "favourites": LoroMap      # PageId -> position (i64); listed by position, then id (ADR 0060)
 ```
 
 Titles live here, not in page docs, so the sidebar renders without opening pages.
@@ -123,8 +124,13 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
 - `MarkEdited { page, at }`: sets `edited_at`. The editor applies it after a page's blocks, title, icon or cover
   change (`WorkspaceEditor::stamp_edits`), as its own commit with origin `leaf:edited`, which workspace undo skips:
   undo is an edit too, so it never restores an older time (ADR 0059)
-- `DeletePagePermanently { page }`: only for pages in the trash; deletes the subtree and returns every deleted
-  `PageId` (`Outcome::PagesDeleted`) so storage can drop their page docs
+- `DeletePagePermanently { page }`: only for pages in the trash; deletes the subtree (and its favourites) and returns
+  every deleted `PageId` (`Outcome::PagesDeleted`) so storage can drop their page docs
+- `AddFavourite { page }`: stars the page, placing it last (highest position + 1); already starred → `Unchanged`;
+  refused for a page in the trash. `RemoveFavourite { page }`: unstars it; not starred → `Unchanged`.
+  `favourites()` hides pages in the trash (restoring brings them back in place); `DeletePagePermanently` removes the
+  deleted pages' entries in the same commit. Two devices starring the same page write the same key, so it is
+  listed once.
 - A command that would change nothing (same title, same icon, same position) writes nothing and returns
   `Outcome::Unchanged`, so it leaves no empty undo step
 - Positions (`index`) count every child, including pages in the trash, while `root_pages`/`children` hide them; `child_slots(parent)` lists
