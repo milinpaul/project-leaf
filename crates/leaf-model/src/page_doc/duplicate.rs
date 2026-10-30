@@ -15,6 +15,7 @@ use crate::{ModelError, PageOutcome};
 impl PageDoc {
     pub(super) fn duplicate_blocks(&mut self, ids: &[BlockId]) -> Result<PageOutcome, ModelError> {
         let roots = self.outermost(ids)?;
+        self.refuse_table_parts(&roots)?;
         if roots.is_empty() {
             return Ok(PageOutcome::Unchanged);
         }

@@ -369,3 +369,39 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn a_table_shows_as_one_read_only_row_until_the_table_ui() {
+    let mut page = PageDoc::new();
+    let before = add(&mut page, None, BlockKind::Paragraph, "before");
+    let PageOutcome::BlockCreated(table) = page
+        .apply(PageCommand::InsertTable {
+            parent: None,
+            index: 1,
+            rows: 2,
+            columns: 2,
+            header_row: false,
+        })
+        .unwrap()
+    else {
+        panic!("expected a table");
+    };
+    let after = add(&mut page, None, BlockKind::Paragraph, "after");
+
+    let view = PageView::build(&page).unwrap();
+    let rows: Vec<(BlockId, BlockStyle)> = view.rows().iter().map(|r| (r.id, r.style.clone())).collect();
+    assert_eq!(
+        rows,
+        [
+            (before, BlockStyle::Paragraph),
+            (
+                table,
+                BlockStyle::Unknown {
+                    type_name: "table".into()
+                }
+            ),
+            (after, BlockStyle::Paragraph),
+        ],
+        "its rows and cells aren't listed"
+    );
+}

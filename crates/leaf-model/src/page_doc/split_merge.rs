@@ -13,6 +13,9 @@ use crate::{BlockKind, ModelError, PageOutcome};
 impl PageDoc {
     pub(super) fn split_block(&mut self, id: BlockId, pos: usize) -> Result<PageOutcome, ModelError> {
         let text = self.editable_text(id)?;
+        if self.kind(id)?.is_table_part() {
+            return Err(ModelError::TablePart { block: id });
+        }
         let len = text.len_unicode();
         if pos > len {
             return Err(ModelError::TextOutOfRange { end: pos, len });
@@ -50,6 +53,9 @@ impl PageDoc {
 
     pub(super) fn merge_into_previous(&mut self, id: BlockId) -> Result<PageOutcome, ModelError> {
         let source = self.editable_text(id)?;
+        if self.kind(id)?.is_table_part() {
+            return Err(ModelError::TablePart { block: id });
+        }
         let node = self.node(id)?;
         let order = self.document_order();
         let position = order.iter().position(|&n| n == node).unwrap_or(0);
@@ -58,6 +64,13 @@ impl PageDoc {
         };
         let into = self.block_at(previous_node)?;
         let into_kind = self.kind(into)?;
+        // Right after a table, the block above in reading order is its last cell: the table is the
+        // block to select, as for a divider or image.
+        if into_kind.is_table_part() {
+            return Err(ModelError::MergeTargetNotText {
+                target: self.table_of(into)?,
+            });
+        }
         let target = match self.text_container(into)? {
             Some(text) if into_kind.has_text() && !matches!(into_kind, BlockKind::Image { .. }) => text,
             _ => return Err(ModelError::MergeTargetNotText { target: into }),

@@ -38,7 +38,7 @@ impl fmt::Display for InvariantViolation {
 }
 
 impl PageDoc {
-    /// Every state invariant of the page (`BLOCK_MODEL.md` 1–6 and 8), or the list of what is broken.
+    /// Every state invariant of the page (`BLOCK_MODEL.md` 1–6, 8 and 9), or the list of what is broken.
     pub fn check_invariants(&self) -> Result<(), Vec<InvariantViolation>> {
         let mut broken = Vec::new();
         let mut report = |invariant: u8, node: TreeID, detail: String| {
@@ -92,9 +92,9 @@ impl PageDoc {
                 let has = if text.is_some() { "has" } else { "lacks" };
                 report(2, node, format!("{} {has} a text container", kind.type_name()));
             }
-            // 3: no children under kinds that can't hold them.
-            if !kind.allows_children() && self.tree.children_num(node).unwrap_or(0) > 0 {
-                report(3, node, format!("{} has children", kind.type_name()));
+            // 3 and 9: what a block may hold, and where rows and cells may sit.
+            for (invariant, detail) in self.nesting_problems(node, &kind) {
+                report(invariant, node, detail);
             }
             // 5: code text carries no marks.
             if let (BlockKind::Code { .. }, Some(text)) = (&kind, &text) {
@@ -137,6 +137,46 @@ impl PageDoc {
         }
 
         if broken.is_empty() { Ok(()) } else { Err(broken) }
+    }
+
+    /// Invariant 3 (no children under kinds that can't hold them; tables hold only rows, rows only
+    /// cells) and 9 (rows only inside tables, cells only inside rows) for one block.
+    fn nesting_problems(&self, node: TreeID, kind: &BlockKind) -> Vec<(u8, String)> {
+        let mut problems = Vec::new();
+        match kind.fixed_child() {
+            Some(allowed) => {
+                for child in self.tree.children(node).unwrap_or_default() {
+                    if let Some(other) = self.raw_kind(child).filter(|k| *k != allowed) {
+                        let detail = format!("{} holds a {}", kind.type_name(), other.type_name());
+                        problems.push((3, detail));
+                    }
+                }
+            }
+            None if !kind.allows_children() && self.tree.children_num(node).unwrap_or(0) > 0 => {
+                problems.push((3, format!("{} has children", kind.type_name())));
+            }
+            None => {}
+        }
+        if kind.is_table_part() && !self.in_place(node, kind) {
+            problems.push((9, format!("{} is outside its table", kind.type_name())));
+        }
+        problems
+    }
+
+    /// The kind stored at `node`, if it reads; `None` for unknown kinds too, whose rules are a newer
+    /// version's.
+    pub(super) fn raw_kind(&self, node: TreeID) -> Option<BlockKind> {
+        let kind = BlockKind::read(&self.tree.get_meta(node).ok()?).ok()?;
+        (!matches!(kind, BlockKind::Unknown { .. })).then_some(kind)
+    }
+
+    /// Whether a row or cell sits where it belongs: a row in a table, a cell in a row (invariant 9).
+    pub(super) fn in_place(&self, node: TreeID, kind: &BlockKind) -> bool {
+        let parent = match self.tree.parent(node) {
+            Some(TreeParentId::Node(parent)) => self.raw_kind(parent),
+            _ => None,
+        };
+        parent.and_then(|parent| parent.fixed_child()).as_ref() == Some(kind)
     }
 }
 
