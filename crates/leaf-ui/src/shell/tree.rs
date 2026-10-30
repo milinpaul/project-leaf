@@ -35,6 +35,9 @@ pub(super) struct TreeState {
 /// An inline rename in progress: the row's text field.
 struct Rename {
     page: PageId,
+    /// Whether the field is in the page's Favourites row rather than its tree row: a page can be in
+    /// both, and only the row that was right-clicked turns into a field.
+    in_favourites: bool,
     input: Entity<InputState>,
     _events: Subscription,
 }
@@ -85,6 +88,17 @@ impl Shell {
     /// "Rename": turns `page`'s row into a text field holding its title, all selected. Enter or
     /// clicking away keeps the new title; Escape keeps the old one.
     pub fn start_rename(&mut self, page: PageId, window: &mut Window, cx: &mut Context<Self>) {
+        self.start_rename_in(page, false, window, cx);
+    }
+
+    /// Starts an inline rename of `page` in its Favourites row (`in_favourites`) or its tree row.
+    pub(super) fn start_rename_in(
+        &mut self,
+        page: PageId,
+        in_favourites: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         let title = match self.editor.workspace().page(page) {
             Ok(meta) => meta.title,
             Err(err) => return report("could not read the page title", err),
@@ -109,6 +123,7 @@ impl Shell {
         });
         self.tree.renaming = Some(Rename {
             page,
+            in_favourites,
             input,
             _events: events,
         });
@@ -145,6 +160,16 @@ impl Shell {
             report("could not move the page to the trash", err);
         }
         cx.notify();
+    }
+
+    /// The rename field for `page`'s row, if that row (in Favourites when `in_favourites`, else in the
+    /// tree) is being renamed.
+    pub(super) fn rename_field(&self, page: PageId, in_favourites: bool) -> Option<Entity<InputState>> {
+        self.tree
+            .renaming
+            .as_ref()
+            .filter(|rename| rename.page == page && rename.in_favourites == in_favourites)
+            .map(|rename| rename.input.clone())
     }
 
     /// Drops an inline rename of `page`, if one is open, without keeping what was typed: the page is

@@ -238,6 +238,7 @@ mod block_menu;
 mod block_row;
 mod blocks;
 mod cover;
+mod favourites;
 mod found;
 mod header;
 mod image;
