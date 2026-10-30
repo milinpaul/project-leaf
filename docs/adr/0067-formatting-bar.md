@@ -1,4 +1,4 @@
-# 0066. Formatting bar: a floating bar over selected text, drawn in the page's own overlay
+# 0067. Formatting bar: a floating bar over selected text, drawn in the page's own overlay
 
 - **Status:** Accepted
 - **Type:** Feature

@@ -63,8 +63,13 @@ impl Shell {
         cx: &mut Context<Self>,
     ) -> Self {
         let expanded = storage.expanded();
+        let last_page = storage.open_page();
         let mut shell = Self::build(workspace, Some(storage), window, cx);
         shell.editor.restore_expanded(expanded);
+        // The page that was open when the workspace was last closed opens again (E06-S19).
+        if shell.editor.restore_open_page(last_page) {
+            shell.load_and_show_selected(window, cx);
+        }
         shell.start_autosave(window, cx);
         shell
     }
@@ -150,7 +155,19 @@ impl Shell {
             input.set_value(title, window, cx);
             input.focus(window, cx);
         });
+        self.remember_open_page();
         cx.notify();
+    }
+
+    /// Records the open page in the workspace's view state, so it opens again next launch (E06-S19).
+    /// Every way of opening a page ends in `show_selected`, which calls this.
+    fn remember_open_page(&mut self) {
+        let page = self.editor.selected();
+        if let Some(storage) = &mut self.storage
+            && let Err(err) = storage.save_open_page(page)
+        {
+            report("could not remember the open page", err);
+        }
     }
 
     fn on_title_event(
