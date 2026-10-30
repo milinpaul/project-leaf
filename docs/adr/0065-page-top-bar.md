@@ -27,8 +27,14 @@ the page sits, when it was last edited, a star for Favourites and a `⋯` menu. 
   gpui-component with its `clock` feature, so this adds no crate; `leaf-editor` keeps taking the offset as a
   number and stays free of clocks and time zones.
 - **Star:** outline, or filled in amber while the page is a favourite; a click toggles `set_favourite`.
-- **`⋯` menu:** a dropdown that for now offers Add to / Remove from Favourites; rename, move to trash and the
-  created/edited footer come with E18-S04.
+- **`⋯` menu** (amended in E18-S04): the page menu. Its entries are one list in `leaf-editor`
+  (`WorkspaceEditor::page_menu`: action, label, icon, shortcut, red or not, enabled, separator) that the sidebar's
+  right-click menu uses too (`shell/page_menu.rs` draws both and runs each action in one place): Add to / Remove
+  from Favourites, Rename, Move to Trash, and in the top bar a footer with when the page was created and last
+  edited; the sidebar adds "Add page inside". Rename from the top bar selects the page's title to type over; from
+  the sidebar it edits the row. Move to Trash opens the nearest page still there (its parent, the page after, the
+  one before, or the first page; `trash_and_open_next`) and shows a "Moved to Trash" notice whose Undo restores the
+  page and reopens it. Workspace changes have no Cmd+Z yet, so the notice is the undo.
 
 ## Alternatives considered
 

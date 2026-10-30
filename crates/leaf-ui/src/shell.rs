@@ -122,10 +122,7 @@ impl Shell {
     /// Opens `page` from the sidebar.
     pub fn open(&mut self, page: PageId, window: &mut Window, cx: &mut Context<Self>) {
         match self.editor.select(page) {
-            Ok(()) => {
-                self.load_selected_page();
-                self.show_selected(window, cx);
-            }
+            Ok(()) => self.load_and_show_selected(window, cx),
             Err(err) => report("could not open the page", err),
         }
     }
@@ -134,6 +131,12 @@ impl Shell {
     pub(super) fn focus_title(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.title.update(cx, |input, cx| input.focus(window, cx));
         cx.notify();
+    }
+
+    /// Shows the page the editor has selected: loads its blocks and fills in its title.
+    pub(super) fn load_and_show_selected(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.load_selected_page();
+        self.show_selected(window, cx);
     }
 
     /// Loads the open page's title into the title field and focuses it. `set_value` does not emit
@@ -248,6 +251,7 @@ mod page_keys;
 mod page_list;
 #[cfg(test)]
 mod page_list_window_tests;
+mod page_menu;
 mod rich_text;
 mod select_scroll;
 mod sidebar;

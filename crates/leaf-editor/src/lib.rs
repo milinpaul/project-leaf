@@ -63,6 +63,6 @@ pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
 pub use table_edit::TableEdit;
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
-    Crumb, DropPlace, EditorError, MAX_CRUMBS, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED,
-    WorkspaceEditor, trashed_ago,
+    Crumb, DropPlace, EditorError, MAX_CRUMBS, MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon,
+    RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED, WorkspaceEditor, trashed_ago,
 };

@@ -115,7 +115,9 @@ Appearance (System / Light / Dark), Workspace (its folder) and About. Menus and 
 
 **Page top bar (E18-S03, ADR 0065).** Above the open page, `shell::top_bar` draws the breadcrumb
 (`WorkspaceEditor::breadcrumb`), "Edited 3 minutes ago" (`edited_ago`, redrawn every 30 seconds; the exact local
-time on hover via `chrono::Local`), the Favourites star and the `⋯` page menu.
+time on hover via `chrono::Local`), the Favourites star and the `⋯` page menu. The page menu's entries come from
+`WorkspaceEditor::page_menu`; `shell::page_menu` draws them for the `⋯` and for the sidebar's right-click menu and
+runs the chosen action (E18-S04).
 
 **Sidebar page tree (E06-S03).** The sidebar lists the page tree (`WorkspaceEditor::sidebar` in `leaf-editor`):
 children show under expanded pages, and which pages are expanded is saved in the workspace folder's `view.json`
