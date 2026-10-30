@@ -19,6 +19,7 @@ mod drag;
 mod edited;
 mod emoji_picker;
 mod format;
+mod format_bar;
 mod fuzzy;
 mod history;
 mod image;
@@ -47,6 +48,7 @@ pub use edited::{edited_ago, edited_on};
 pub use emoji_picker::{
     EmojiChoice, EmojiPicker, EmojiSection, GridMove, RESULTS_TITLE as EMOJI_RESULTS_TITLE,
 };
+pub use format_bar::{FormatBar, KindChoice, MarkButton};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use image::{MIN_IMAGE_WIDTH, PasteKind, image_display_size, paste_kind, resized_image_width};
 pub use input::Preedit;

@@ -120,6 +120,11 @@ time on hover via `chrono::Local`), the Favourites star and the `⋯` page menu.
 runs the chosen action (E18-S04). Its "Full width" switch sets the page's `full_width` (E18-S06); the shell's
 `column` then drops the reading-width cap for that page's header and blocks.
 
+**Formatting bar (E07-S13, ADR 0066).** While text is selected, `shell::format_bar` floats a bar above the selection
+with Turn into and the mark buttons. `PageEditor::format_bar` says what it offers and which marks are on; clicks go
+through `toggle_mark`, the link popover and `BlockAction::TurnInto`, like the keyboard and the block menu. The Turn
+into list is drawn in the bar's overlay so the page keeps the keyboard and the selection.
+
 **Sidebar page tree (E06-S03).** The sidebar lists the page tree (`WorkspaceEditor::sidebar` in `leaf-editor`):
 children show under expanded pages, and which pages are expanded is saved in the workspace folder's `view.json`
 (`leaf_store::ViewState`), not in a document. Right-click offers Add page inside, Rename (inline) and Move to Trash;

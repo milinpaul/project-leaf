@@ -240,6 +240,7 @@ mod block_row;
 mod blocks;
 mod cover;
 mod favourites;
+mod format_bar;
 mod found;
 mod header;
 mod image;
