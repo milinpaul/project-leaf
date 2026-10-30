@@ -82,51 +82,22 @@ impl Shell {
             grid = grid.child(line);
         }
 
-        let add_row = div()
-            .id(SharedString::from(format!("table-add-row-{table}")))
-            .debug_selector(move || format!("table-add-row-{table}"))
+        let width = CELL_WIDTH * f32::from(u16::try_from(columns).unwrap_or(u16::MAX));
+        let add_row = Self::add_bar("table-add-row", table, &group, TableEdit::InsertRow(rows), cx)
             .ml(px(HANDLE))
-            .w(px(
-                CELL_WIDTH * f32::from(u16::try_from(columns).unwrap_or(u16::MAX))
-            ))
+            .w(px(width))
             .h(px(ADD_BAR))
-            .flex()
-            .justify_center()
-            .items_center()
-            .rounded_b_md()
-            .cursor_pointer()
-            .opacity(0.0)
-            .group_hover(group.clone(), |style| style.opacity(1.0))
-            .hover(|style| style.bg(cx.theme().muted))
-            .child(
-                Icon::new(IconName::Plus)
-                    .xsmall()
-                    .text_color(cx.theme().muted_foreground),
-            )
-            .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {
-                shell.table_edit(table, TableEdit::InsertRow(rows), window, cx);
-            }));
-        let add_column = div()
-            .id(SharedString::from(format!("table-add-column-{table}")))
-            .debug_selector(move || format!("table-add-column-{table}"))
-            .mt(px(HANDLE))
-            .w(px(ADD_BAR))
-            .flex()
-            .justify_center()
-            .items_center()
-            .rounded_r_md()
-            .cursor_pointer()
-            .opacity(0.0)
-            .group_hover(group.clone(), |style| style.opacity(1.0))
-            .hover(|style| style.bg(cx.theme().muted))
-            .child(
-                Icon::new(IconName::Plus)
-                    .xsmall()
-                    .text_color(cx.theme().muted_foreground),
-            )
-            .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {
-                shell.table_edit(table, TableEdit::InsertColumn(columns), window, cx);
-            }));
+            .rounded_b_md();
+        let add_column = Self::add_bar(
+            "table-add-column",
+            table,
+            &group,
+            TableEdit::InsertColumn(columns),
+            cx,
+        )
+        .mt(px(HANDLE))
+        .w(px(ADD_BAR))
+        .rounded_r_md();
 
         // Never squeezed to the box's width: the grid keeps its full width, which is what scrolls.
         let body = h_flex()
@@ -165,6 +136,35 @@ impl Shell {
             .border_color(border)
             .child(body)
             .into_any_element()
+    }
+
+    /// A "+" bar, shown while the pointer is over the table, that applies `edit` when clicked. `name`
+    /// names it for tests (`name-{table}`).
+    fn add_bar(
+        name: &'static str,
+        table: BlockId,
+        group: &SharedString,
+        edit: TableEdit,
+        cx: &mut Context<Self>,
+    ) -> gpui::Stateful<gpui::Div> {
+        div()
+            .id(SharedString::from(format!("{name}-{table}")))
+            .debug_selector(move || format!("{name}-{table}"))
+            .flex()
+            .justify_center()
+            .items_center()
+            .cursor_pointer()
+            .opacity(0.0)
+            .group_hover(group.clone(), |style| style.opacity(1.0))
+            .hover(|style| style.bg(cx.theme().muted))
+            .child(
+                Icon::new(IconName::Plus)
+                    .xsmall()
+                    .text_color(cx.theme().muted_foreground),
+            )
+            .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {
+                shell.table_edit(table, edit, window, cx);
+            }))
     }
 
     /// The view rows of `table`'s cells, as the editor listed them right after it.
@@ -220,8 +220,8 @@ impl Shell {
             .border_r_1()
             .border_b_1()
             .border_color(border)
-            .when(first_row, |cell| cell.border_t_1())
-            .when(column == 0, |cell| cell.border_l_1())
+            .when(first_row, gpui::Styled::border_t_1)
+            .when(column == 0, gpui::Styled::border_l_1)
             .when(header, |cell| cell.bg(header_tint))
             .when(whole, |cell| cell.bg(selected))
             .child(text)
