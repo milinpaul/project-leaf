@@ -56,6 +56,7 @@ gpui_kit_assets::icon_assets!(
         PencilLine,
         Repeat,
         RotateCcw,
+        Search,
         SquareCheck,
         SquareCode,
         SquarePen,

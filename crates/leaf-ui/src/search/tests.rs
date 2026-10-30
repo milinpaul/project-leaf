@@ -1,6 +1,6 @@
 //! The search bar in a real window: Cmd/Ctrl+P and Cmd/Ctrl+K open it (Cmd/Ctrl+K not over selected
 //! text), titles match as you type, full-text results come from a real index after a pause, and
-//! choosing a result opens the page at its block.
+//! choosing a result opens the page at its block. The sidebar's search field opens it too.
 
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
@@ -273,4 +273,34 @@ fn arrows_move_the_highlight_and_escape_closes(cx: &mut TestAppContext) {
     redraw(cx);
     assert!(!dialog_open(cx));
     assert_eq!(selected(&shell, cx), Some(first), "escape opens nothing");
+}
+
+#[gpui::test]
+fn the_sidebar_search_field_opens_the_search_bar(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    let (notes, _) = add(&shell, None, "Notes", &[], cx);
+    add(&shell, None, "Journal", &[], cx);
+    // The hint shows the shortcut's own keys.
+    assert!(cx.debug_bounds("kbd:cmd-k").is_some() || cx.debug_bounds("kbd:ctrl-k").is_some());
+    assert!(!dialog_open(cx));
+    let field = cx.debug_bounds("sidebar-search").unwrap().center();
+    cx.simulate_click(field, Modifiers::none());
+    redraw(cx);
+    assert!(dialog_open(cx), "clicking the field opens search");
+    cx.simulate_keystrokes("escape");
+    redraw(cx);
+    assert!(
+        !dialog_open(cx),
+        "Escape closes it: the search box has the keyboard"
+    );
+
+    // Typing after the click goes to the search box, and Enter opens the match.
+    cx.simulate_click(field, Modifiers::none());
+    redraw(cx);
+    cx.simulate_input("notes");
+    redraw(cx);
+    cx.simulate_keystrokes("enter");
+    redraw(cx);
+    assert!(!dialog_open(cx));
+    assert_eq!(selected(&shell, cx), Some(notes));
 }
