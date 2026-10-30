@@ -254,3 +254,40 @@ fn the_click_time_unmark_text_call_keeps_the_scroll_position(cx: &mut TestAppCon
         "the page stayed where it was scrolled to"
     );
 }
+
+/// E17-S06, the cover case: a page with a cover, scrolled a little so the top of the window is still
+/// inside the tall first row (cover and title). Clicking a block on screen jumped to the very top,
+/// because GPUI's `scroll_to_reveal_item` lines a row up with the bottom even when it is in view.
+#[gpui::test]
+fn clicking_a_block_under_a_cover_keeps_the_scroll_position(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 200);
+    shell.update(cx, |shell, _| {
+        let page = shell.editor.selected().unwrap();
+        shell
+            .editor
+            .set_cover(page, Some(leaf_editor::BuiltinCover::Forest))
+            .unwrap();
+    });
+    draw(cx);
+    let inside = shell.read_with(cx, |shell, _| {
+        shell.blocks.list.state.bounds_for_item(1).unwrap().center()
+    });
+    cx.simulate_event(gpui::ScrollEvent {
+        position: inside,
+        delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.0), px(-120.0))),
+        ..Default::default()
+    });
+    draw(cx);
+    let (before, target) = shell.read_with(cx, |shell, _| {
+        let state = &shell.blocks.list.state;
+        let top = state.logical_scroll_top();
+        assert_eq!(top.item_ix, 0, "still inside the cover and title: {top:?}");
+        assert!(top.offset_in_item > px(0.0), "scrolled a little: {top:?}");
+        (top, state.bounds_for_item(6).unwrap().center())
+    });
+    cx.simulate_click(target, gpui::Modifiers::none());
+    draw(cx);
+    let after = shell.read_with(cx, |shell, _| shell.blocks.list.state.logical_scroll_top());
+    assert_eq!(after, before, "the page stayed where it was scrolled to");
+}
