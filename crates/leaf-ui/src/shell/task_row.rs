@@ -8,7 +8,7 @@ use chrono::{Datelike as _, Local, Timelike as _};
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, Context, InteractiveElement as _, IntoElement, MouseButton, MouseDownEvent, ParentElement,
-    SharedString, StatefulInteractiveElement as _, Styled, div, point, px,
+    SharedString, Styled, div, point, px,
 };
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
@@ -98,7 +98,7 @@ impl Shell {
             .task_picker
             .as_ref()
             .filter(|p| p.block == id)
-            .map(|p| p.kind());
+            .map(super::task_pickers::OpenTaskPicker::kind);
         let chip = |name: &'static str| {
             div()
                 .id(SharedString::from(format!("{name}-{id}")))
@@ -147,22 +147,35 @@ impl Shell {
                     c.opacity(0.0).group_hover(ROW_GROUP, |s| s.opacity(1.0))
                 }),
         };
-        let open_at = move |kind: TaskPickerKind| {
-            cx.listener(move |shell: &mut Self, event: &MouseDownEvent, window, cx| {
-                // Not also a click that places the caret in the text.
-                cx.stop_propagation();
-                let at = point(event.position.x - px(12.0), event.position.y + px(16.0));
-                shell.open_task_picker(id, kind, at, window, cx);
-            })
-        };
         h_flex()
             .flex_none()
             .gap_1()
             .ml_2()
             .when(task.done, |chips| chips.opacity(0.6))
-            .child(date.on_mouse_down(MouseButton::Left, open_at(TaskPickerKind::Date)))
-            .child(flag.on_mouse_down(MouseButton::Left, open_at(TaskPickerKind::Priority)))
+            .child(date.on_mouse_down(
+                MouseButton::Left,
+                Self::picker_opener(id, TaskPickerKind::Date, cx),
+            ))
+            .child(flag.on_mouse_down(
+                MouseButton::Left,
+                Self::picker_opener(id, TaskPickerKind::Priority, cx),
+            ))
             .into_any_element()
+    }
+}
+
+impl Shell {
+    /// A chip's click: opens its picker just under the pointer, without placing the caret in the text.
+    fn picker_opener(
+        id: BlockId,
+        kind: TaskPickerKind,
+        cx: &mut Context<Self>,
+    ) -> impl Fn(&MouseDownEvent, &mut gpui::Window, &mut gpui::App) + 'static {
+        cx.listener(move |shell, event: &MouseDownEvent, window, cx| {
+            cx.stop_propagation();
+            let at = point(event.position.x - px(12.0), event.position.y + px(16.0));
+            shell.open_task_picker(id, kind, at, window, cx);
+        })
     }
 }
 

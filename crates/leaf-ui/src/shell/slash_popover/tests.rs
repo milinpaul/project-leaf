@@ -86,7 +86,13 @@ fn the_mouse_highlights_and_picks_an_entry(cx: &mut TestAppContext) {
     let (shell, cx, block) = open(cx);
     cx.simulate_input("/");
     draw(cx);
-    let quote = cx.debug_bounds("slash-item-7").unwrap().center();
+    // Found by its label, so adding an entry above it doesn't break the test.
+    let index = shell.update(cx, |shell, _| {
+        let menu = shell.page().unwrap().slash_menu().unwrap().unwrap();
+        menu.items.iter().position(|item| item.label == "Quote").unwrap()
+    });
+    let selector: &'static str = Box::leak(format!("slash-item-{index}").into_boxed_str());
+    let quote = cx.debug_bounds(selector).unwrap().center();
     cx.simulate_event(MouseMoveEvent {
         position: quote,
         pressed_button: None,
@@ -96,7 +102,7 @@ fn the_mouse_highlights_and_picks_an_entry(cx: &mut TestAppContext) {
     let selected = shell.update(cx, |shell, _| {
         shell.page().unwrap().slash_menu().unwrap().unwrap().selected
     });
-    assert_eq!(selected, 7);
+    assert_eq!(selected, index);
     cx.simulate_event(MouseDownEvent {
         button: MouseButton::Left,
         position: quote,

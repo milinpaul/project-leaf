@@ -69,7 +69,10 @@ fn the_round_check_ticks_the_item_off_and_on(cx: &mut TestAppContext) {
     click(cx, &format!("task-check-{id}"));
     assert!(matches!(task(&shell, cx, id), BlockKind::Task { done: true, .. }));
     click(cx, &format!("task-check-{id}"));
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { done: false, .. }));
+    assert!(matches!(
+        task(&shell, cx, id),
+        BlockKind::Task { done: false, .. }
+    ));
 }
 
 #[gpui::test]
@@ -80,10 +83,15 @@ fn the_date_picker_sets_a_day_a_time_and_clears_them(cx: &mut TestAppContext) {
 
     // "Add date" opens the picker; a quick pick sets the date and closes it.
     click(cx, &format!("task-date-{id}"));
-    assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), Some(TaskPickerKind::Date));
+    assert_eq!(
+        shell.read_with(cx, |s, _| s.task_picker_open()),
+        Some(TaskPickerKind::Date)
+    );
     click(cx, "quick-tomorrow");
     assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), None);
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { due: Some(d), time: None, .. } if d == tomorrow));
+    assert!(
+        matches!(task(&shell, cx, id), BlockKind::Task { due: Some(d), time: None, .. } if d == tomorrow)
+    );
 
     // A day on the calendar.
     click(cx, &format!("task-date-{id}"));
@@ -98,53 +106,110 @@ fn the_date_picker_sets_a_day_a_time_and_clears_them(cx: &mut TestAppContext) {
     let time = leaf_editor::parse_time("21:30");
     assert!(matches!(task(&shell, cx, id), BlockKind::Task { time: t, .. } if t == time));
 
+    // Reopened, the old time is selected, so typing replaces it.
+    click(cx, &format!("task-date-{id}"));
+    cx.simulate_input("8am");
+    cx.simulate_keystrokes("enter");
+    draw(cx);
+    let time = leaf_editor::parse_time("8:00");
+    assert!(matches!(task(&shell, cx, id), BlockKind::Task { time: t, .. } if t == time));
+
     // The month arrows don't pick anything; Clear takes the date and time away.
     click(cx, &format!("task-date-{id}"));
     click(cx, "month-next");
-    assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), Some(TaskPickerKind::Date));
+    assert_eq!(
+        shell.read_with(cx, |s, _| s.task_picker_open()),
+        Some(TaskPickerKind::Date)
+    );
     click(cx, "clear-date");
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { due: None, time: None, .. }));
+    assert!(matches!(
+        task(&shell, cx, id),
+        BlockKind::Task {
+            due: None,
+            time: None,
+            ..
+        }
+    ));
 }
 
 #[gpui::test]
 fn the_priority_menu_works_with_the_mouse_and_the_keys(cx: &mut TestAppContext) {
     let (shell, cx, id) = open(cx);
     click(cx, &format!("task-priority-{id}"));
-    assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), Some(TaskPickerKind::Priority));
+    assert_eq!(
+        shell.read_with(cx, |s, _| s.task_picker_open()),
+        Some(TaskPickerKind::Priority)
+    );
     click(cx, "priority-0");
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { priority: Some(Priority::High), .. }));
+    assert!(matches!(
+        task(&shell, cx, id),
+        BlockKind::Task {
+            priority: Some(Priority::High),
+            ..
+        }
+    ));
 
     // From the keyboard: the shortcut opens it on the current priority; Down twice, Enter.
     cx.update(|window, cx| {
-        shell.update(cx, |shell, cx| shell.focus_page_at(Caret { block: id, at: 0 }, window, cx));
+        shell.update(cx, |shell, cx| {
+            shell.focus_page_at(Caret { block: id, at: 0 }, window, cx);
+        });
     });
     draw(cx);
-    let shortcut = if cfg!(target_os = "macos") { "cmd-shift-p" } else { "ctrl-shift-p" };
+    let shortcut = if cfg!(target_os = "macos") {
+        "cmd-shift-p"
+    } else {
+        "ctrl-shift-p"
+    };
     cx.simulate_keystrokes(shortcut);
     draw(cx);
-    assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), Some(TaskPickerKind::Priority));
+    assert_eq!(
+        shell.read_with(cx, |s, _| s.task_picker_open()),
+        Some(TaskPickerKind::Priority)
+    );
     cx.simulate_keystrokes("down down enter");
     draw(cx);
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { priority: Some(Priority::Low), .. }));
+    assert!(matches!(
+        task(&shell, cx, id),
+        BlockKind::Task {
+            priority: Some(Priority::Low),
+            ..
+        }
+    ));
     // Escape closes without a change.
     cx.simulate_keystrokes(shortcut);
     cx.simulate_keystrokes("down escape");
     draw(cx);
     assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), None);
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { priority: Some(Priority::Low), .. }));
+    assert!(matches!(
+        task(&shell, cx, id),
+        BlockKind::Task {
+            priority: Some(Priority::Low),
+            ..
+        }
+    ));
 }
 
 #[gpui::test]
 fn the_date_shortcut_opens_the_picker_for_the_caret_item(cx: &mut TestAppContext) {
     let (shell, cx, id) = open(cx);
     cx.update(|window, cx| {
-        shell.update(cx, |shell, cx| shell.focus_page_at(Caret { block: id, at: 2 }, window, cx));
+        shell.update(cx, |shell, cx| {
+            shell.focus_page_at(Caret { block: id, at: 2 }, window, cx);
+        });
     });
     draw(cx);
-    let shortcut = if cfg!(target_os = "macos") { "cmd-shift-d" } else { "ctrl-shift-d" };
+    let shortcut = if cfg!(target_os = "macos") {
+        "cmd-shift-d"
+    } else {
+        "ctrl-shift-d"
+    };
     cx.simulate_keystrokes(shortcut);
     draw(cx);
-    assert_eq!(shell.read_with(cx, |s, _| s.task_picker_open()), Some(TaskPickerKind::Date));
+    assert_eq!(
+        shell.read_with(cx, |s, _| s.task_picker_open()),
+        Some(TaskPickerKind::Date)
+    );
     // A date chip once a date is set; a far past one is overdue (drawn in red, checked in the editor).
     click(cx, "quick-today");
     shell.update(cx, |shell, _| {
@@ -152,5 +217,8 @@ fn the_date_shortcut_opens_the_picker_for_the_caret_item(cx: &mut TestAppContext
         page.set_task_due(id, DueDate::new(2001, 1, 1).ok()).unwrap();
     });
     draw(cx);
-    assert!(cx.debug_bounds(Box::leak(format!("task-date-{id}").into_boxed_str())).is_some());
+    assert!(
+        cx.debug_bounds(Box::leak(format!("task-date-{id}").into_boxed_str()))
+            .is_some()
+    );
 }

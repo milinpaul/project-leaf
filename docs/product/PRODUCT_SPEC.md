@@ -110,6 +110,7 @@ Mobile; P2P collaboration (maybe).
 | `Cmd/Ctrl+Enter` in a to-do or action item | Tick it off, or back on; the caret stays. |
 | `[!] ` typed at the start of a block | Turn it into an action item (also in the slash menu and Turn into). |
 | An action item's date | Shown as Today / Tomorrow / Yesterday, else e.g. "Fri 31 Oct" (with the year when not this year), plus the time; overdue (red) when not done and due on an earlier day, or today at a time already passed. |
+| `Cmd/Ctrl+Shift+D` / `Cmd/Ctrl+Shift+P` in an action item | Open its date picker (calendar, Today / Tomorrow / Next week, a typed time, Clear) or its priority menu (arrow keys, Enter, Escape). |
 | `Backspace` at start of paragraph | Merge text into previous text block; children move to previous block. If previous is a divider or image, select it instead. |
 | `Delete` at end of block | Merge next block into this one. |
 | `Tab` / `Shift+Tab` | Indent under previous sibling / outdent to parent's level. Inside a code block: indent / outdent the caret's or selected lines by four spaces instead. |

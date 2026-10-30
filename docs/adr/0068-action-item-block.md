@@ -42,7 +42,9 @@ at once must converge without losing either change. The editor never reads the c
 
 ## Consequences
 
-- Until E19-S02 and E19-S03, a task is drawn as a to-do; until E19-S04, Markdown writes it as a to-do line. Leaf's
-  own clipboard already carries every field.
+- Until E19-S04, Markdown writes an action item as a to-do line. Leaf's own clipboard already carries every field.
+- E19-S03 draws it: a round check (to-dos keep the square), a date chip (red when overdue) and a priority flag in
+  three calm colours (High uses the danger red), with faint "add" buttons on hover only. The date picker and priority
+  menu each write one prop, so one undo step each; typing a time with no date also sets today.
 - Plain English: Leaf now has a place to store action items, each with a done tick, a due date, an optional time
-  and a priority. Nothing shows them differently yet; the next stories add the look, the keys and the date picker.
+  and a priority. They are drawn with a round check, a date chip and a priority flag, set from a date picker and a priority menu.
