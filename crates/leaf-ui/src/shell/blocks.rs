@@ -1,5 +1,6 @@
-//! The open page: a "Turn into" toolbar, then the title and blocks as a virtual list drawn by the rich
-//! text view. The page takes the keyboard itself (E07-S03): keys become editor actions
+//! The open page: the header (icon, cover, title), then the blocks, as a virtual list drawn by the
+//! rich text view. A block's type is changed with the slash menu, the block handle's "Turn into" or
+//! Markdown shortcuts (there is no toolbar, ADR 0057). The page takes the keyboard itself (E07-S03): keys become editor actions
 //! (`page_keys`), typed text and input-method drafts arrive through the platform's text input
 //! (`ime`), and the mouse places the caret and selects (`rich_text`). Every decision is
 //! `PageEditor`'s; this module only forwards and draws.
@@ -8,11 +9,10 @@ use std::collections::HashMap;
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, ClickEvent, Context, ElementInputHandler, InteractiveElement as _, IntoElement, MouseButton,
-    MouseUpEvent, ParentElement, Pixels, Point, SharedString, Styled, Task, Window, canvas, div, list, px,
+    AnyElement, Context, ElementInputHandler, InteractiveElement as _, IntoElement, MouseButton,
+    MouseUpEvent, ParentElement, Pixels, Point, Styled, Task, Window, canvas, div, list, px,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
-use gpui_component::{h_flex, v_flex};
+use gpui_component::v_flex;
 use leaf_core::BlockId;
 use leaf_editor::{PageEditor, Preedit};
 use leaf_model::{BlockKind, Caret};
@@ -63,26 +63,6 @@ pub(super) struct PageState {
     pub(super) link: Option<super::link_popover::OpenLink>,
     /// A code block's language picker, while it is open.
     pub(super) language: Option<super::language_picker::OpenLanguage>,
-}
-
-/// The "Turn into" toolbar: label and the kind each button applies.
-fn toolbar_kinds() -> [(&'static str, BlockKind); 9] {
-    [
-        ("Text", BlockKind::Paragraph),
-        ("H1", BlockKind::Heading { level: 1 }),
-        ("H2", BlockKind::Heading { level: 2 }),
-        ("H3", BlockKind::Heading { level: 3 }),
-        ("• List", BlockKind::BulletedList),
-        ("1. List", BlockKind::NumberedList),
-        ("To-do", BlockKind::Todo { checked: false }),
-        ("Quote", BlockKind::Quote),
-        (
-            "Code",
-            BlockKind::Code {
-                language: String::new(),
-            },
-        ),
-    ]
 }
 
 impl Shell {
@@ -198,16 +178,6 @@ impl Shell {
         self.end_stale_drag(cx);
         self.blocks.list.sync(self.editor.selected(), rows);
 
-        let toolbar = h_flex()
-            .gap_1()
-            .children(toolbar_kinds().into_iter().map(|(label, kind)| {
-                Button::new(SharedString::from(format!("turn-into-{label}")))
-                    .label(label)
-                    .ghost()
-                    .on_click(cx.listener(move |shell, _: &ClickEvent, window, cx| {
-                        shell.turn_focused_into(kind.clone(), window, cx);
-                    }))
-            }));
         let rows = list(self.blocks.list.state.clone(), cx.processor(Self::render_item)).size_full();
         // The platform's text input (typing, input methods, the emoji picker) reaches the page
         // through this handler while the page has the keyboard.
@@ -234,7 +204,6 @@ impl Shell {
                 self.render_trash_banner(cx)
                     .map(|banner| column(div().pt_4().child(banner))),
             )
-            .child(column(div().pt_2().pb_1().child(toolbar)))
             .child(
                 div()
                     .relative()

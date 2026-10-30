@@ -68,7 +68,8 @@ bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); ty
 emoji picker arrive through GPUI's platform text input (`shell/ime.rs`), which sees the caret's block with the draft
 spliced in; the mouse places the caret, drags select, double and triple clicks select a word and the block. (The first
 version, E07-S10, used one text input per block; those are gone.) Each row has a **⋮⋮ handle** that shows on hover and
-opens the **block menu** (E07-S04, ADR 0041): Turn into, Duplicate, Move up, Move down, Delete, with icons. The menu's
+opens the **block menu** (E07-S04, ADR 0041): Turn into, Duplicate, Move up, Move down, Delete, with icons. There is no toolbar of block types above the page: the slash menu, this menu and Markdown shortcuts
+change a block's type (E07-S11, ADR 0057). The menu's
 state lives in `PageEditor` (`leaf-editor/src/block_menu.rs`) like the slash menu; `shell/block_menu.rs` draws it, gives
 it the keyboard while open, and `Cmd/Ctrl+/` opens it for the caret's block. Dragging the handle is worked out in
 `leaf-editor/src/drag.rs` (E05-S04, ADR 0049): the UI passes the rows it drew and the pointer, `PageEditor::drop_target`
