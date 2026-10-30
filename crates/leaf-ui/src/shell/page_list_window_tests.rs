@@ -111,3 +111,35 @@ fn a_scroll_asked_for_right_after_opening_a_page_survives_the_reset(cx: &mut Tes
     });
     assert_eq!(top, 1 + 1_500, "the title is item 0");
 }
+
+/// E17-S06: scrolled down a long page, clicking a block left the page at the top.
+#[gpui::test]
+fn clicking_a_block_keeps_the_scroll_position(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 2_000);
+    draw(cx);
+    // Scroll to the middle the way the owner does: from the top, by the wheel, through unmeasured rows.
+    shell.update(cx, |shell, _| {
+        shell.blocks.list.state.scroll_to(ListOffset {
+            item_ix: 1 + 1_000,
+            offset_in_item: px(0.0),
+        });
+    });
+    draw(cx);
+    let (before, target) = shell.read_with(cx, |shell, _| {
+        let state = &shell.blocks.list.state;
+        let top = state.logical_scroll_top();
+        let bounds = state.bounds_for_item(top.item_ix + 3).unwrap();
+        (top, bounds.center())
+    });
+    cx.simulate_click(target, gpui::Modifiers::none());
+    draw(cx);
+    draw(cx);
+    let (after, caret_block, clicked) = shell.update(cx, |shell, _| {
+        let after = shell.blocks.list.state.logical_scroll_top();
+        let clicked = shell.blocks.list.rows[before.item_ix + 3 - 1].id;
+        (after, shell.caret_block(), clicked)
+    });
+    assert_eq!(caret_block, Some(clicked), "the click put the caret in the block under the mouse");
+    assert_eq!(after.item_ix, before.item_ix, "the page stayed where it was scrolled to");
+}
