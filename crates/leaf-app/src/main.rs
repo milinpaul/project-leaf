@@ -6,6 +6,7 @@
 //! **Boundaries:** UI crate, excluded from the coverage gate. Nothing depends on it.
 
 use std::path::PathBuf;
+use std::time::Instant;
 
 use gpui::{App, Bounds, QuitMode, WindowBounds, WindowOptions, point, px, size};
 use leaf_store::{DisplayArea, settings};
@@ -71,7 +72,30 @@ fn default_location() -> PathBuf {
         .join("Leaf")
 }
 
+/// Set (to anything) to print how long the first frame took after launch: the cold-start budget
+/// in `PRODUCT_SPEC.md` (under 500 ms to editable), checked in the Phase 0 acceptance pass.
+const STARTUP_TIMING: &str = "LEAF_STARTUP_TIMING";
+
+/// Prints the time from launch to the end of the window's first frame, if [`STARTUP_TIMING`] is set.
+/// The first callback runs as that frame starts; asking for another frame makes the second run once
+/// it has been drawn, so the number is a little over the true time, never under.
+fn report_first_frame(started: Instant, window: &mut gpui::Window) {
+    if std::env::var_os(STARTUP_TIMING).is_none() {
+        return;
+    }
+    window.on_next_frame(move |window, _| {
+        window.refresh();
+        window.on_next_frame(move |_, _| {
+            eprintln!(
+                "leaf: first frame drawn {} ms after launch",
+                started.elapsed().as_millis()
+            );
+        });
+    });
+}
+
 fn main() {
+    let started = Instant::now();
     // `leaf <path>` opens the workspace at <path>; plain `leaf` reopens the last one. With neither (the
     // first launch) or if it can't be opened, the welcome screen shows.
     let named = std::env::args_os().nth(1).map(PathBuf::from);
@@ -93,6 +117,7 @@ fn main() {
                 ..Default::default()
             };
             if let Err(err) = cx.open_window(options, |window, cx| {
+                report_first_frame(started, window);
                 leaf_ui::app_root(named.clone(), default_location(), window, cx)
             }) {
                 eprintln!("leaf: could not open a window: {err:#}");

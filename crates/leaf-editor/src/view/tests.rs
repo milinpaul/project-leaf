@@ -104,6 +104,39 @@ fn consecutive_numbered_siblings_count_up_and_anything_else_restarts() {
     );
 }
 
+/// "Numbered list numbers are computed when rendering, never stored": putting an item above others
+/// renumbers them in the view without touching what is stored for them, and a reloaded page counts
+/// the same way.
+#[test]
+fn list_numbers_are_worked_out_when_drawn_not_stored() {
+    let mut page = PageDoc::new();
+    let items: Vec<BlockId> = (0..3)
+        .map(|_| add(&mut page, None, BlockKind::NumberedList, "n"))
+        .collect();
+    let stored = |page: &PageDoc| -> Vec<_> {
+        items
+            .iter()
+            .map(|&b| (page.kind(b).unwrap(), page.text(b).unwrap()))
+            .collect()
+    };
+    let before = stored(&page);
+    page.apply(PageCommand::InsertBlock {
+        parent: None,
+        index: 0,
+        kind: BlockKind::NumberedList,
+        text: "first".into(),
+    })
+    .unwrap();
+    assert_eq!(
+        numbers(&page),
+        vec![(0, Some(1)), (0, Some(2)), (0, Some(3)), (0, Some(4))],
+        "the old items now count from 2"
+    );
+    assert_eq!(stored(&page), before, "and nothing stored for them changed");
+    let reloaded = PageDoc::from_bytes(&page.to_bytes().unwrap()).unwrap();
+    assert_eq!(numbers(&reloaded), numbers(&page));
+}
+
 #[test]
 fn nested_lists_count_on_their_own_and_children_dont_break_the_parent_run() {
     let mut page = PageDoc::new();

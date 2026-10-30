@@ -50,6 +50,11 @@ enum Step {
         page: usize,
         on: bool,
     },
+    /// The editor stamping a page's edited time, which undo skips (ADR 0059).
+    Stamp {
+        page: usize,
+        at: u8,
+    },
 }
 
 fn step() -> impl Strategy<Value = Step> {
@@ -65,12 +70,14 @@ fn step() -> impl Strategy<Value = Step> {
         1 => page.clone().prop_map(|page| Step::Trash { page }),
         1 => page.clone().prop_map(|page| Step::Restore { page }),
         1 => page.clone().prop_map(|page| Step::Delete { page }),
-        2 => (page, any::<bool>()).prop_map(|(page, on)| Step::Favourite { page, on }),
+        2 => (page.clone(), any::<bool>()).prop_map(|(page, on)| Step::Favourite { page, on }),
+        1 => (page, any::<u8>()).prop_map(|(page, at)| Step::Stamp { page, at }),
     ]
 }
 
 /// Every page with its parent and metadata (the visible tree, then each trashed page's subtree),
-/// and the favourites with whether each page is starred.
+/// and the favourites with whether each page is starred. The edited time is left out: undo skips it
+/// on purpose, so it is the one field that doesn't go back.
 type Outline = (Vec<(Option<PageId>, PageMeta, bool)>, Vec<PageId>);
 
 fn outline(ws: &Workspace) -> Result<Outline, leaf_model::ModelError> {
@@ -81,7 +88,11 @@ fn outline(ws: &Workspace) -> Result<Outline, leaf_model::ModelError> {
         out: &mut Vec<(Option<PageId>, PageMeta, bool)>,
     ) -> Result<(), leaf_model::ModelError> {
         for page in pages {
-            out.push((parent, ws.page(page)?, ws.is_favourite(page)));
+            let meta = PageMeta {
+                edited_at: 0,
+                ..ws.page(page)?
+            };
+            out.push((parent, meta, ws.is_favourite(page)));
             walk(ws, Some(page), ws.children(page)?, out)?;
         }
         Ok(())
@@ -132,6 +143,10 @@ fn command(step: Step, pages: &[PageId]) -> Option<WorkspaceCommand> {
         Step::Delete { page } => WorkspaceCommand::DeletePagePermanently { page: pick(page)? },
         Step::Favourite { page, on: true } => WorkspaceCommand::AddFavourite { page: pick(page)? },
         Step::Favourite { page, on: false } => WorkspaceCommand::RemoveFavourite { page: pick(page)? },
+        Step::Stamp { page, at } => WorkspaceCommand::MarkEdited {
+            page: pick(page)?,
+            at: 1_000 + i64::from(at),
+        },
     })
 }
 
@@ -147,6 +162,12 @@ proptest! {
 
         for step in steps {
             let Some(command) = command(step, &pages) else { continue };
+            // A stamp is never an undo step of its own: the outline stays as it was.
+            if matches!(command, WorkspaceCommand::MarkEdited { .. }) {
+                let _ = ws.apply(command);
+                prop_assert_eq!(&outline(&ws).unwrap(), history.last().unwrap(), "a stamp changes only the edited time");
+                continue;
+            }
             match ws.apply(command) {
                 Ok(Outcome::PageCreated(page)) => pages.push(page),
                 Ok(Outcome::Changed | Outcome::PagesDeleted(_)) => {}

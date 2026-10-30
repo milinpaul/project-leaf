@@ -80,4 +80,6 @@ impl PageEditor {
 }
 
 #[cfg(test)]
+mod round_trip_tests;
+#[cfg(test)]
 mod tests;
