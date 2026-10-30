@@ -157,7 +157,8 @@ impl PageEditor {
             .unwrap_or(target))
     }
 
-    fn text_len(&self, block: BlockId) -> Result<usize, EditorError> {
+    /// How many characters of text `block` has (0 for blocks without text).
+    pub(crate) fn text_len(&self, block: BlockId) -> Result<usize, EditorError> {
         Ok(self.doc.plain_text(block)?.map_or(0, |text| text.chars().count()))
     }
 }

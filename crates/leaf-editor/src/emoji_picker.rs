@@ -32,11 +32,27 @@ pub struct EmojiSection {
     pub emojis: Vec<EmojiChoice>,
 }
 
-/// The picker's state: the search text and the sections it leaves.
+/// The picker's state: the search text, the sections it leaves and the highlighted emoji.
 #[derive(Debug, Clone)]
 pub struct EmojiPicker {
     query: String,
     sections: Vec<EmojiSection>,
+    /// The highlighted emoji, as (section, position in it): what Enter picks and arrows move. The
+    /// first emoji until the arrows or the mouse move it; `None` only when nothing is shown.
+    highlighted: Option<(usize, usize)>,
+}
+
+/// An arrow key in the picker's grid (E17-S04).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GridMove {
+    /// The emoji before, into the previous section from a section's first.
+    Left,
+    /// The emoji after, into the next section from a section's last.
+    Right,
+    /// The row above, in the same column (the last row of the previous section from a first row).
+    Up,
+    /// The row below, in the same column (the first row of the next section from a last row).
+    Down,
 }
 
 impl Default for EmojiPicker {
@@ -49,9 +65,11 @@ impl EmojiPicker {
     /// The picker with nothing typed: every offered emoji, by group.
     #[must_use]
     pub fn new() -> Self {
+        let sections = all_sections();
         Self {
             query: String::new(),
-            sections: all_sections(),
+            highlighted: first_of(&sections),
+            sections,
         }
     }
 
@@ -88,6 +106,7 @@ impl EmojiPicker {
                 }]
             }
         };
+        self.highlighted = first_of(&self.sections);
     }
 
     /// The sections to draw.
@@ -96,12 +115,69 @@ impl EmojiPicker {
         &self.sections
     }
 
-    /// The first emoji shown, which Enter picks.
+    /// The first emoji shown.
     #[must_use]
     pub fn first(&self) -> Option<EmojiChoice> {
         self.sections
             .first()
             .and_then(|section| section.emojis.first().copied())
+    }
+
+    /// Where the highlighted emoji is, as (section, position in it).
+    #[must_use]
+    pub fn highlighted(&self) -> Option<(usize, usize)> {
+        self.highlighted
+    }
+
+    /// The highlighted emoji, which Enter picks: the best match as you type, or where the arrows or the
+    /// mouse moved it.
+    #[must_use]
+    pub fn highlighted_choice(&self) -> Option<EmojiChoice> {
+        let (section, at) = self.highlighted?;
+        self.sections.get(section)?.emojis.get(at).copied()
+    }
+
+    /// The mouse over an emoji: highlights it. Positions outside the grid are ignored.
+    pub fn highlight(&mut self, section: usize, at: usize) {
+        if self.sections.get(section).is_some_and(|s| at < s.emojis.len()) {
+            self.highlighted = Some((section, at));
+        }
+    }
+
+    /// Moves the highlight with an arrow key over a grid `columns` wide. At the first or last emoji it
+    /// stays put.
+    pub fn move_highlight(&mut self, step: GridMove, columns: usize) {
+        let Some((section, at)) = self.highlighted else {
+            return;
+        };
+        let columns = columns.max(1);
+        let len = |s: usize| self.sections.get(s).map_or(0, |section| section.emojis.len());
+        let last_row_start = |s: usize| len(s).saturating_sub(1) / columns * columns;
+        let target = match step {
+            GridMove::Left if at > 0 => Some((section, at - 1)),
+            GridMove::Left if section > 0 => Some((section - 1, len(section - 1).saturating_sub(1))),
+            GridMove::Right if at + 1 < len(section) => Some((section, at + 1)),
+            GridMove::Right if section + 1 < self.sections.len() => Some((section + 1, 0)),
+            GridMove::Up if at >= columns => Some((section, at - columns)),
+            GridMove::Up if section > 0 => {
+                let above = section - 1;
+                Some((
+                    above,
+                    (last_row_start(above) + at % columns).min(len(above).saturating_sub(1)),
+                ))
+            }
+            GridMove::Down if at / columns < last_row_start(section) / columns => {
+                Some((section, (at + columns).min(len(section) - 1)))
+            }
+            GridMove::Down if section + 1 < self.sections.len() => {
+                let below = section + 1;
+                Some((below, (at % columns).min(len(below).saturating_sub(1))))
+            }
+            _ => None,
+        };
+        if let Some(target) = target {
+            self.highlighted = Some(target);
+        }
     }
 
     /// A pleasant emoji for the Random button, chosen by `seed` (the app passes something that changes,
@@ -131,6 +207,14 @@ impl EmojiPicker {
             choice,
         )
     }
+}
+
+/// The first emoji of `sections`, if any.
+fn first_of(sections: &[EmojiSection]) -> Option<(usize, usize)> {
+    sections
+        .iter()
+        .position(|section| !section.emojis.is_empty())
+        .map(|section| (section, 0))
 }
 
 /// Every emoji the picker offers, in Unicode's order.

@@ -5,6 +5,9 @@
 //! back what it reads (ADR 0030). Pasting is one undo step, whatever it takes:
 //!
 //! - **Text** from inside one block goes in at the caret, keeping its formatting.
+//! - **A whole block** is copied as a block, kind and all (E17-S05): all of its text selected, or just
+//!   the caret in it with nothing selected. Pasted into text it goes in as text; on an empty line it
+//!   gives back the same block.
 //! - **Blocks** pasted mid-text split the line: the first block's text joins the text before the
 //!   caret, the other blocks follow, and the text that was after the caret ends up after the last
 //!   pasted text. In an empty paragraph the first block takes its place, kind and all, so copying
@@ -25,8 +28,21 @@ use crate::selection::delete_span;
 use crate::{EditorError, Key, PageEditor, Selection};
 
 impl PageEditor {
-    /// Copy: the selection as a fragment. `None` with nothing selected.
+    /// Copy: the selection as a fragment. All of one block's text, or the caret alone with nothing
+    /// selected, copies that block whole, so its kind comes along (E17-S05). `None` with neither a
+    /// selection nor a caret.
     pub fn copy(&mut self) -> Result<Option<Fragment>, EditorError> {
+        if let Some(fragment) = self.copied_selection()? {
+            return Ok(Some(fragment));
+        }
+        match (self.selection()?, self.caret()?) {
+            (None, Some(caret)) => Ok(Some(self.whole_block(caret.block)?)),
+            _ => Ok(None),
+        }
+    }
+
+    /// The selection as a fragment, `None` with nothing selected.
+    fn copied_selection(&mut self) -> Result<Option<Fragment>, EditorError> {
         Ok(match self.selection()? {
             None => None,
             Some(Selection::Blocks(blocks)) => Some(Fragment::Blocks(
@@ -35,6 +51,14 @@ impl PageEditor {
                     .map(|&b| subtree(&self.doc, b))
                     .collect::<Result<_, _>>()?,
             )),
+            Some(Selection::Text { start, end })
+                if start.block == end.block
+                    && start.at == 0
+                    && end.at > 0
+                    && end.at == self.text_len(end.block)? =>
+            {
+                Some(self.whole_block(start.block)?)
+            }
             Some(Selection::Text { start, end }) if start.block == end.block => Some(Fragment::Text(
                 spans_in(&self.doc, start.block, start.at..end.at)?,
             )),
@@ -55,9 +79,10 @@ impl PageEditor {
         })
     }
 
-    /// Cut: copies the selection, then deletes it as one undo step.
+    /// Cut: copies the selection, then deletes it as one undo step. Unlike copy, it needs a
+    /// selection: with only the caret it does nothing, so a stray Cmd+X never deletes a block.
     pub fn cut(&mut self) -> Result<Option<Fragment>, EditorError> {
-        let fragment = self.copy()?;
+        let fragment = self.copied_selection()?;
         match self.selection()? {
             Some(Selection::Blocks(blocks)) => {
                 self.delete_blocks(&blocks)?;
@@ -146,6 +171,23 @@ impl PageEditor {
         self.paste(&fragment)
     }
 
+    /// `block` alone as a fragment: one block with its kind and formatted text, without what is
+    /// nested in it. A table cell gives just its text: a cell can't go on the clipboard or live
+    /// outside its table.
+    fn whole_block(&mut self, block: BlockId) -> Result<Fragment, EditorError> {
+        let len = self.text_len(block)?;
+        let text = spans_in(&self.doc, block, 0..len)?;
+        let kind = self.doc.kind(block)?;
+        if kind.is_table_part() {
+            return Ok(Fragment::Text(text));
+        }
+        Ok(Fragment::Blocks(vec![FragmentBlock {
+            kind,
+            text,
+            children: Vec::new(),
+        }]))
+    }
+
     /// The blocks a cross-block text selection touches, trimmed at both ends, nested as they are
     /// relative to each other.
     fn touched_blocks(&mut self, start: Caret, end: Caret) -> Result<Vec<FragmentBlock>, EditorError> {
@@ -191,7 +233,9 @@ fn paste_blocks(doc: &mut PageDoc, at: Caret, blocks: &[FragmentBlock]) -> Resul
     let Some((first, rest)) = blocks.split_first() else {
         return Ok(at);
     };
-    let empty = at.at == 0 && kind == BlockKind::Paragraph;
+    // Only a line that is really empty takes the first block's kind: at the start of a line that has
+    // text, the pasted text joins it and the line keeps its kind (E17-S05).
+    let empty = len == 0 && kind == BlockKind::Paragraph;
     let mut end = Caret {
         block: at.block,
         at: at.at,

@@ -18,6 +18,10 @@ blocks into the middle of a line must split it sensibly, and a copy pasted back 
   their kind, formatted text and children.
   - **Copy:** a selection in one block becomes `Text`. A selection across blocks becomes `Blocks`, trimmed at both
     ends and nested as the blocks are relative to each other. Selected blocks are copied whole.
+  - **A whole block** (amended in E17-S05): all of one block's text selected, or just the caret in a block with
+    nothing selected, copies that block as `Blocks` (its kind and text, not what is nested in it), so a heading
+    or to-do keeps its kind. A table cell copies as `Text`: cells only exist inside their table. Cut with only the caret does nothing. Pasting blocks lets the first take a line's kind
+    only when that line is empty; at the start of a line with text, the text joins it.
   - **Cut:** copy, then delete, as one undo step.
 - **Wire format:** JSON, versioned:
   `{"leaf_fragment": 1, "text": [...]}` or `{"leaf_fragment": 1, "blocks": [...]}`.

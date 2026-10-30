@@ -66,6 +66,43 @@ fn searching_and_pressing_enter_sets_the_icon(cx: &mut TestAppContext) {
     assert_eq!(sidebar.as_deref(), Some("🚀"), "the sidebar shows it");
 }
 
+/// The emoji a search shows, in order, as the editor's picker has them.
+fn results(query: &str) -> Vec<&'static str> {
+    let mut picker = leaf_editor::EmojiPicker::new();
+    picker.set_query(query);
+    picker.sections()[0]
+        .emojis
+        .iter()
+        .map(|choice| choice.emoji)
+        .collect()
+}
+
+#[gpui::test]
+fn arrow_keys_move_through_the_results_and_enter_picks(cx: &mut TestAppContext) {
+    let (shell, cx) = open_window(cx);
+    click(cx, "add-icon");
+    cx.simulate_input("heart");
+    redraw(cx);
+    let found = results("heart");
+    assert!(found.len() > 12, "enough hearts for two rows: {}", found.len());
+    // Right twice, down a row, left once: the 12th result (row 2, column 2 of 10).
+    cx.simulate_keystrokes("right right down left");
+    redraw(cx);
+    cx.simulate_keystrokes("enter");
+    redraw(cx);
+    assert_eq!(icon(&shell, cx).as_deref(), Some(found[11]));
+    assert!(!picker_open(&shell, cx));
+
+    // Typing still works after the arrows, and a new search starts from its best match again.
+    click(cx, "page-icon");
+    cx.simulate_keystrokes("down");
+    cx.simulate_input("rocket");
+    redraw(cx);
+    cx.simulate_keystrokes("enter");
+    redraw(cx);
+    assert_eq!(icon(&shell, cx).as_deref(), Some("🚀"));
+}
+
 #[gpui::test]
 fn clicking_an_emoji_sets_it_and_remove_takes_it_away(cx: &mut TestAppContext) {
     let (shell, cx) = open_window(cx);

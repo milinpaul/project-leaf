@@ -111,6 +111,7 @@ Mobile; P2P collaboration (maybe).
 | `Tab` / `Shift+Tab` | Indent under previous sibling / outdent to parent's level. Inside a code block: indent / outdent the caret's or selected lines by four spaces instead. |
 | Arrow up/down at first/last visual line | Move to previous/next block, keeping horizontal position. |
 | Paste multi-line text | Each line becomes a paragraph; markdown syntax is converted. |
+| Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |
 | `Tab` / `Shift+Tab` in a table cell | Move to the next / previous cell (caret at the end of its text). `Tab` in the last cell adds a row and moves into it. |
 | Arrow keys in a table cell | Move within the cell's text; at its edge, Left/Right go to the neighbouring cell and Up/Down to the cell above/below in the same column. Past the table's edge, to the block before/after it. Coming into a table, Up/Down pick the column under the caret. |

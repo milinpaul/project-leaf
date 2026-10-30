@@ -561,3 +561,31 @@ fn undo_puts_back_a_cell_selection() {
     assert!(p.editor.undo().unwrap());
     assert_eq!(p.editor.selection().unwrap(), before);
 }
+
+/// E17-S05 with tables: copying with only the caret in a cell, or all of a cell's text selected,
+/// copies the cell's text, not a cell (which can't go on the clipboard or live outside a table).
+#[test]
+fn copying_a_whole_cell_copies_its_text() {
+    let mut p = Page::new(2, 2);
+    let cell = p.cell(1, 0);
+    p.editor.set_caret(Caret { block: cell, at: 2 }).unwrap();
+    let copied = p.editor.copy().unwrap().unwrap();
+    assert!(
+        matches!(&copied, Fragment::Text(spans) if spans.iter().map(|s| s.text.as_str()).collect::<String>() == "r1c0")
+    );
+    assert!(
+        Fragment::from_json(&copied.to_json()).is_some(),
+        "it goes on the clipboard"
+    );
+    p.editor.select(cell, 0..4).unwrap();
+    assert_eq!(p.editor.copy().unwrap(), Some(copied.clone()));
+    // Pasted at the end of the paragraph below the table: just the words.
+    p.editor
+        .set_caret(Caret {
+            block: p.below,
+            at: 5,
+        })
+        .unwrap();
+    p.editor.paste(&copied).unwrap();
+    assert_eq!(p.text(p.below), "belowr1c0");
+}

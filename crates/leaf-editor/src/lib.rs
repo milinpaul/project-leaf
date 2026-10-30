@@ -43,7 +43,9 @@ pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, 
 pub use cover::{BuiltinCover, CoverSection, PageCover};
 pub use drag::{BlockDrop, RowBox};
 pub use edited::{edited_ago, edited_on};
-pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};
+pub use emoji_picker::{
+    EmojiChoice, EmojiPicker, EmojiSection, GridMove, RESULTS_TITLE as EMOJI_RESULTS_TITLE,
+};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use image::{MIN_IMAGE_WIDTH, PasteKind, image_display_size, paste_kind, resized_image_width};
 pub use input::Preedit;
