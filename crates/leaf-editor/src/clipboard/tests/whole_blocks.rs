@@ -97,7 +97,7 @@ fn copying_through_the_json_clipboard_keeps_the_block() {
 }
 
 #[test]
-fn without_leafs_own_copy_the_markdown_still_brings_the_kind_and_marks() {
+fn without_the_leaf_fragment_the_markdown_still_brings_the_kind_and_marks() {
     let (mut editor, ids) = page(&[heading("Plans for May"), p(0, "")]);
     mark(&mut editor, ids[0], 10..13, Mark::Bold);
     editor.set_caret(at(ids[0], 0)).unwrap();
