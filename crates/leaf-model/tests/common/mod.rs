@@ -50,8 +50,10 @@ pub(crate) fn mark_kinds() -> [MarkKind; 5] {
     ]
 }
 
-pub(crate) fn props() -> [BlockProp; 6] {
+pub(crate) fn props() -> [BlockProp; 8] {
     [
+        BlockProp::TableHeaderRow(true),
+        BlockProp::TableHeaderRow(false),
         BlockProp::Checked(true),
         BlockProp::Checked(false),
         BlockProp::HeadingLevel(2),
@@ -130,6 +132,20 @@ pub(crate) enum Step {
     Duplicate {
         blocks: Vec<usize>,
     },
+    InsertTable {
+        parent: Option<usize>,
+        index: usize,
+        rows: usize,
+        columns: usize,
+        header_row: bool,
+    },
+    /// A row or column command (`op` picks which) on a table on the page.
+    Reshape {
+        table: usize,
+        op: usize,
+        a: usize,
+        b: usize,
+    },
 }
 
 pub(crate) fn text() -> impl Strategy<Value = String> {
@@ -160,6 +176,10 @@ pub(crate) fn step() -> impl Strategy<Value = Step> {
         2 => (n(), n()).prop_map(|(block, pos)| Step::Split { block, pos }),
         2 => n().prop_map(|block| Step::Merge { block }),
         1 => some().prop_map(|blocks| Step::Duplicate { blocks }),
+        1 => (proptest::option::of(n()), n(), 1..4_usize, 1..4_usize, any::<bool>()).prop_map(
+            |(parent, index, rows, columns, header_row)| Step::InsertTable { parent, index, rows, columns, header_row }
+        ),
+        3 => (n(), 0..6_usize, n(), n()).prop_map(|(table, op, a, b)| Step::Reshape { table, op, a, b }),
     ]
 }
 
@@ -274,13 +294,91 @@ pub(crate) fn command(step: Step, page: &PageDoc) -> Option<PageCommand> {
         },
         Step::SetProp { block, prop } => PageCommand::SetProp {
             id: p.block(block)?,
-            prop: props()[prop % 6].clone(),
+            prop: props()[prop % 8].clone(),
         },
         Step::Merge { block } => PageCommand::MergeIntoPrevious { id: p.block(block)? },
         Step::Duplicate { blocks } => PageCommand::DuplicateBlocks {
             ids: p.blocks(blocks),
         },
+        Step::InsertTable {
+            parent,
+            index,
+            rows,
+            columns,
+            header_row,
+        } => {
+            let parent = parent.and_then(|n| p.block(n));
+            let siblings = parent.map_or_else(
+                || page.root_blocks().len(),
+                |b| page.children(b).map_or(0, |c| c.len()),
+            );
+            PageCommand::InsertTable {
+                parent,
+                index: index % (siblings + 1),
+                rows,
+                columns,
+                header_row,
+            }
+        }
+        Step::Reshape { table, op, a, b } => reshape(page, table, op, a, b)?,
         text_step => return text_command(text_step, &p),
+    })
+}
+
+/// A row or column command on one of the page's tables, with positions wrapped into (or just past)
+/// range so most are valid and some are refused.
+fn reshape(page: &PageDoc, table: usize, op: usize, a: usize, b: usize) -> Option<PageCommand> {
+    let tables = tables(page);
+    let table = *tables.get(table % tables.len().max(1))?;
+    let cells = page.table_cells(table).ok()?;
+    let rows = cells.len() + 1;
+    let columns = cells.iter().map(Vec::len).max().unwrap_or(0) + 1;
+    Some(match op {
+        0 => PageCommand::InsertTableRow {
+            table,
+            index: a % rows,
+        },
+        1 => PageCommand::DeleteTableRow {
+            table,
+            index: a % rows,
+        },
+        2 => PageCommand::MoveTableRow {
+            table,
+            from: a % rows,
+            to: b % rows,
+        },
+        3 => PageCommand::InsertTableColumn {
+            table,
+            index: a % columns,
+        },
+        4 => PageCommand::DeleteTableColumn {
+            table,
+            index: a % columns,
+        },
+        _ => PageCommand::MoveTableColumn {
+            table,
+            from: a % columns,
+            to: b % columns,
+        },
+    })
+}
+
+/// Every table on the page, in reading order.
+pub(crate) fn tables(page: &PageDoc) -> Vec<BlockId> {
+    outline(page)
+        .into_iter()
+        .filter(|(_, _, kind, _)| matches!(kind, BlockKind::Table { .. }))
+        .map(|(_, id, _, _)| id)
+        .collect()
+}
+
+/// Whether every table is a whole grid: at least one row, every row the same length, at least one
+/// cell. Commands keep tables this way; only merges may leave rows uneven.
+pub(crate) fn tables_are_grids(page: &PageDoc) -> bool {
+    tables(page).into_iter().all(|table| {
+        let cells = page.table_cells(table).unwrap_or_default();
+        let width = cells.first().map_or(0, Vec::len);
+        width > 0 && cells.iter().all(|row| row.len() == width)
     })
 }
 

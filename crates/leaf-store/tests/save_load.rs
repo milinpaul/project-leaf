@@ -158,6 +158,53 @@ fn pages_survive_save_and_reopen_through_many_rounds() {
 }
 
 #[test]
+fn a_table_survives_save_and_reopen_unchanged() {
+    let dir = TempDir::new();
+    let path = dir.0.join("w.leaf");
+    let mut folder = Folder::create(&path).unwrap();
+    let key = DocKey::Page(PageId::new());
+    let mut page = PageDoc::new();
+
+    let PageOutcome::BlockCreated(table) = page
+        .apply(PageCommand::InsertTable {
+            parent: None,
+            index: 0,
+            rows: 2,
+            columns: 2,
+            header_row: true,
+        })
+        .unwrap()
+    else {
+        panic!("expected a table");
+    };
+    folder.store_mut().save(key, &page, 0).unwrap();
+    let cell = page.table_cells(table).unwrap()[1][0];
+    page.apply(PageCommand::InsertText {
+        id: cell,
+        pos: 0,
+        text: "Tomatoes".into(),
+    })
+    .unwrap();
+    page.apply(PageCommand::SetMark {
+        id: cell,
+        range: 0..3,
+        mark: Mark::Italic,
+    })
+    .unwrap();
+    page.apply(PageCommand::InsertTableColumn { table, index: 1 })
+        .unwrap();
+    folder.store_mut().save(key, &page, 1).unwrap();
+    let expected = (outline(&page), page.table_cells(table).unwrap());
+    drop(folder);
+
+    let folder = Folder::open(&path).unwrap();
+    let loaded: PageDoc = folder.store().load(key).unwrap().unwrap();
+    assert_eq!((outline(&loaded), loaded.table_cells(table).unwrap()), expected);
+    assert_eq!(loaded.kind(table).unwrap(), BlockKind::Table { header_row: true });
+    assert_eq!(loaded.check_invariants(), Ok(()));
+}
+
+#[test]
 fn saving_with_nothing_changed_writes_nothing() {
     let dir = TempDir::new();
     let path = dir.0.join("w.leaf");

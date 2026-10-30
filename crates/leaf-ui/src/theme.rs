@@ -11,7 +11,8 @@
 use std::borrow::Cow;
 use std::rc::Rc;
 
-use gpui::{App, Subscription, Window};
+use gpui::{App, ElementId, Styled as _, Subscription, Window};
+use gpui_component::button::Button;
 use gpui_component::theme::{Theme, ThemeConfig, ThemeConfigColors, ThemeMode};
 use leaf_store::Appearance;
 
@@ -127,6 +128,13 @@ const FONTS: [&[u8]; 5] = [
     include_bytes!("../assets/fonts/Inter-Bold.ttf"),
     include_bytes!("../assets/fonts/Inter-BoldItalic.ttf"),
 ];
+
+/// A button with Leaf's pointer: the hand. gpui-component's buttons show the arrow, as desktop apps
+/// often do, but the owner wants the hand on everything clickable (E07-S12). Every button in Leaf is
+/// made here; a test fails if one is made with `Button::new` elsewhere.
+pub fn button(id: impl Into<ElementId>) -> Button {
+    Button::new(id).cursor_pointer()
+}
 
 /// Loads the fonts and installs Leaf's light and dark themes, in the appearance the owner chose in
 /// Settings (following the system by default; `LEAF_APPEARANCE=light|dark` overrides both, for

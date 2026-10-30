@@ -144,6 +144,69 @@ pub enum PageCommand {
         /// Block to merge away.
         id: BlockId,
     },
+    /// Adds a table of `rows` × `columns` empty cells under `parent` (or at the top level) at
+    /// `index`, and returns the table's ID in [`PageOutcome::BlockCreated`]. Needs at least one row
+    /// and one column.
+    InsertTable {
+        /// Block to nest under; its kind must allow children.
+        parent: Option<BlockId>,
+        /// Position among the parent's children.
+        index: usize,
+        /// How many rows, at least 1.
+        rows: usize,
+        /// How many columns, at least 1.
+        columns: usize,
+        /// Whether the first row is a header row.
+        header_row: bool,
+    },
+    /// Adds a row of empty cells at row position `index` (equal to the row count appends). Returns
+    /// the new row in [`PageOutcome::BlockCreated`].
+    InsertTableRow {
+        /// The table.
+        table: BlockId,
+        /// Row position for the new row.
+        index: usize,
+    },
+    /// Deletes the row at `index` with its cells. The last row can't be deleted (delete the table).
+    DeleteTableRow {
+        /// The table.
+        table: BlockId,
+        /// Row position.
+        index: usize,
+    },
+    /// Moves the row at `from` so it ends up at row position `to`.
+    MoveTableRow {
+        /// The table.
+        table: BlockId,
+        /// Current row position.
+        from: usize,
+        /// Final row position.
+        to: usize,
+    },
+    /// Adds an empty cell at column position `index` in every row (equal to the column count
+    /// appends). Returns the new cells, top to bottom, in [`PageOutcome::BlocksCreated`].
+    InsertTableColumn {
+        /// The table.
+        table: BlockId,
+        /// Column position for the new column.
+        index: usize,
+    },
+    /// Deletes the cell at column position `index` in every row. The last column can't be deleted.
+    DeleteTableColumn {
+        /// The table.
+        table: BlockId,
+        /// Column position.
+        index: usize,
+    },
+    /// Moves the column at `from` so it ends up at column position `to`, in every row.
+    MoveTableColumn {
+        /// The table.
+        table: BlockId,
+        /// Current column position.
+        from: usize,
+        /// Final column position.
+        to: usize,
+    },
 }
 
 /// What applying a page command produced.

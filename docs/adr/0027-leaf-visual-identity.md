@@ -51,6 +51,10 @@ Before, light and dark:
 
 ## Consequences
 
+- **Pointers** (E07-S12): the I-beam over the page's text and title, the hand over everything clickable (buttons,
+  checkboxes, sidebar rows, menu rows, pickers), the arrow elsewhere. Every button is made with `theme::button`,
+  which adds the hand that gpui-component's buttons leave out; a test fails if one is made with `Button::new`.
+
 - Changing the look means editing one file; screens ask for roles ("muted text") rather than colours.
 - The binary grows by about 2 MB of fonts. More weights can be added later if needed.
 - The interim block editor (E07-S10) and the formatting toolbar will be restyled when their real versions land.

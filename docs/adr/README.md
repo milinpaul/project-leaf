@@ -77,4 +77,5 @@ Records cover two kinds of decision:
 | [0058](0058-search-performance.md) | Search performance: rank only the newest matches, pick blocks before excerpts | Architecture | Accepted |
 | [0059](0059-page-edited-time.md) | Page edited time: a field in the workspace doc, stamped by a command undo skips | Feature | Accepted |
 | [0060](0060-favourite-pages.md) | Favourite pages: a map from page to position in the workspace doc | Feature | Accepted |
-| [0061](0061-cover-gallery.md) | Cover gallery: sections of thumbnails, and colour and gradient covers as SVG files | Feature | Accepted |
+| [0061](0061-simple-tables.md) | Simple tables: rows and cells as blocks inside a table block | Architecture | Accepted |
+| [0062](0062-cover-gallery.md) | Cover gallery: sections of thumbnails, and colour and gradient covers as SVG files | Feature | Accepted |

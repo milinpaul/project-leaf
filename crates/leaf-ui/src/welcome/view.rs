@@ -10,7 +10,7 @@ use gpui::{
     IntoElement, MouseButton, MouseDownEvent, ObjectFit, ParentElement, Render, SharedString,
     StatefulInteractiveElement as _, Styled, StyledImage as _, Window, div, ease_out_quint, img, px,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::input::Input;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
@@ -121,6 +121,7 @@ impl Welcome {
                     "A fresh folder for your pages",
                     cx,
                 )
+                .cursor_pointer()
                 .on_click(
                     cx.listener(|welcome, _: &ClickEvent, window, cx| welcome.start_create(window, cx)),
                 ),
@@ -133,6 +134,7 @@ impl Welcome {
                     "A .leaf folder on this computer",
                     cx,
                 )
+                .cursor_pointer()
                 .on_click(cx.listener(|welcome, _: &ClickEvent, _, cx| {
                     welcome.choose_folder_to_open(cx);
                 })),
@@ -165,7 +167,7 @@ impl Welcome {
                     .child(Icon::new(IconName::FolderOpen).xsmall())
                     .child(div().flex_1().min_w_0().truncate().child(location))
                     .child(
-                        Button::new("change-location")
+                        crate::theme::button("change-location")
                             .label("Change…")
                             .ghost()
                             .xsmall()
@@ -184,7 +186,7 @@ impl Welcome {
                     .gap_2()
                     .pt_1()
                     .child(
-                        Button::new("create-confirm")
+                        crate::theme::button("create-confirm")
                             .debug_selector(|| "create-confirm".into())
                             .label("Create workspace")
                             .primary()
@@ -193,7 +195,7 @@ impl Welcome {
                             ),
                     )
                     .child(
-                        Button::new("create-cancel")
+                        crate::theme::button("create-cancel")
                             .label("Cancel")
                             .ghost()
                             .on_click(cx.listener(|welcome, _: &ClickEvent, window, cx| {
@@ -210,7 +212,7 @@ impl Welcome {
         let theme = cx.theme();
         let (text, bg, radius) = (theme.foreground, theme.secondary, theme.radius);
         let create_here = message.create_here.map(|folder| {
-            Button::new("create-here")
+            crate::theme::button("create-here")
                 .debug_selector(|| "create-here".into())
                 .label("Create workspace here")
                 .primary()
@@ -302,7 +304,7 @@ impl Welcome {
                 .gap_1()
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                 .child(
-                    Button::new(("locate", ix))
+                    crate::theme::button(("locate", ix))
                         .debug_selector(move || format!("locate-{ix}"))
                         .label("Locate…")
                         .ghost()
@@ -312,7 +314,7 @@ impl Welcome {
                         ),
                 )
                 .child(
-                    Button::new(("remove", ix))
+                    crate::theme::button(("remove", ix))
                         .debug_selector(move || format!("remove-{ix}"))
                         .label("Remove")
                         .ghost()
@@ -347,6 +349,7 @@ impl Welcome {
                     .child(div().truncate().text_xs().text_color(muted).child(detail)),
             )
             .children(actions)
+            .cursor_pointer()
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |welcome, _: &MouseDownEvent, _, cx| welcome.open_recent(ix, cx)),

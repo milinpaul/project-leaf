@@ -55,6 +55,7 @@ impl PageDoc {
             Err((field, _)) => {
                 let fallback = match field {
                     keys::LEVEL => BlockKind::Heading { level: 1 },
+                    keys::HEADER_ROW => BlockKind::Table { header_row: false },
                     keys::ASSET => BlockKind::Paragraph,
                     _ => return Ok(false),
                 };
@@ -100,12 +101,35 @@ impl PageDoc {
         if let (Some(text), true) = (&text, kind.has_text() && !kind.allows_marks()) {
             changed |= strip_marks(text)?;
         }
-        // 3: children step out of a block that can't hold them.
+        // 3: children step out of a block that can't hold them; a table or row keeps only its rows
+        // or cells.
         let kind = BlockKind::read(&meta).unwrap_or(kind);
-        if !kind.allows_children() {
-            changed |= self.lift_children(node)?;
+        match kind.fixed_child() {
+            Some(allowed) => changed |= self.lift_children_except(node, &allowed)?,
+            None if !kind.allows_children() => changed |= self.lift_children(node)?,
+            None => {}
+        }
+        // 9: a row or cell outside its table becomes a paragraph, keeping its text and what it holds
+        // (the next pass gives it a text container and lets its own rows or cells out).
+        if kind.is_table_part() && !self.in_place(node, &kind) {
+            BlockKind::Paragraph.write(&meta)?;
+            changed = true;
         }
         Ok(changed)
+    }
+
+    /// Moves every child of `node` that isn't of kind `keep` out to sit right after it, in order.
+    fn lift_children_except(&self, node: TreeID, keep: &BlockKind) -> Result<bool, ModelError> {
+        let mut previous = node;
+        let mut moved = false;
+        for child in self.tree.children(node).unwrap_or_default() {
+            if self.raw_kind(child).is_some_and(|kind| kind != *keep) {
+                self.tree.mov_after(child, previous)?;
+                previous = child;
+                moved = true;
+            }
+        }
+        Ok(moved)
     }
 }
 

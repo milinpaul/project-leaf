@@ -147,6 +147,9 @@ fn kind_label(kind: &BlockKind) -> &'static str {
         BlockKind::Code { .. } => "Code",
         BlockKind::Divider => "Divider",
         BlockKind::Image { .. } => "Image",
+        BlockKind::Table { .. } => "Table",
+        BlockKind::TableRow => "Table row",
+        BlockKind::TableCell => "Table cell",
         BlockKind::Unknown { .. } => "Unknown",
     }
 }
