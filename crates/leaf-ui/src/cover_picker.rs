@@ -8,7 +8,7 @@ use gpui::{
     KeyDownEvent, MouseButton, MouseDownEvent, ObjectFit, ParentElement, Render, SharedString,
     StatefulInteractiveElement as _, Styled, StyledImage as _, Window, div, img, px,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::tooltip::Tooltip;
 use gpui_component::{ActiveTheme as _, Sizable as _, h_flex, v_flex};
 use leaf_editor::{BuiltinCover, CoverSection, PageCover};
@@ -113,7 +113,7 @@ impl CoverPickerPanel {
         let theme = cx.theme();
         let (foreground, border, muted) = (theme.foreground, theme.border, theme.muted_foreground);
         let remove = self.current.is_some().then(|| {
-            Button::new("cover-picker-remove")
+            crate::theme::button("cover-picker-remove")
                 .debug_selector(|| "cover-picker-remove".into())
                 .ghost()
                 .small()
