@@ -15,6 +15,7 @@ leaf-editor.workspace = true
 leaf-model.workspace = true
 leaf-search.workspace = true
 leaf-store.workspace = true
+chrono.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }

@@ -44,21 +44,25 @@ impl Shell {
             .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.toggle_sidebar(true, window, cx)))
     }
 
+    /// The ☰ button that brings the sidebar back: at the left end of the page's top bar (E18-S03), or
+    /// floating in the corner when no page is open.
+    pub(super) fn reopen_sidebar_button(cx: &mut Context<Self>) -> Button {
+        crate::theme::button("show-sidebar")
+            .debug_selector(|| "show-sidebar".into())
+            .icon(Icon::new(IconName::Menu))
+            .ghost()
+            .small()
+            .tooltip_with_action("Show sidebar", &ToggleSidebar, None)
+            .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.toggle_sidebar(true, window, cx)))
+    }
+
     /// The ☰ button that brings the sidebar back, floating in the page's top-left corner while the
     /// sidebar is hidden. It floats rather than taking a row, so the page doesn't jump down when the
     /// sidebar goes; a soft backing keeps it legible over a cover image.
     pub(super) fn render_reopen_button(cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
         let (backing, radius) = (theme.background.opacity(0.85), theme.radius);
-        let open = crate::theme::button("show-sidebar")
-            .debug_selector(|| "show-sidebar".into())
-            .icon(Icon::new(IconName::Menu))
-            .ghost()
-            .small()
-            .tooltip_with_action("Show sidebar", &ToggleSidebar, None)
-            .on_click(
-                cx.listener(|shell, _: &ClickEvent, window, cx| shell.toggle_sidebar(true, window, cx)),
-            );
+        let open = Self::reopen_sidebar_button(cx);
         div()
             .absolute()
             .top(px(REOPEN_INSET))
