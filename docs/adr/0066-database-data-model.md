@@ -1,6 +1,6 @@
 # 0066. Databases: one Loro document per database, rows as pages
 
-- **Status:** Proposed (spike; the owner answered its open questions on 2026-10-30)
+- **Status:** Accepted (owner merged the spike with its answers, 2026-10-30)
 - **Type:** Architecture
 - **Date:** 2026-10-30
 - **Story:** E09-S01
