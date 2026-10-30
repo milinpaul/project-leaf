@@ -36,6 +36,8 @@ The editor already keeps an input method's draft outside the document until it i
   - A composition over a given range (reconversion) selects that range first; an accent-menu replacement selects
     its range and types.
   - A composition abandoned without a commit keeps what was shown.
+    This call (`unmark_text`) never scrolls: macOS makes it before every click reaches the page, and revealing
+    the old caret there jumped a scrolled page back to it (E17-S06).
 - **Mouse:**
   - A click places the caret; Shift extends the selection.
   - A drag selects from where it started, across blocks.

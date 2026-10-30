@@ -119,13 +119,16 @@ impl EntityInputHandler for Shell {
 
     fn unmark_text(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         // The composition ended without the input method committing (focus moved away): keep what
-        // the user saw.
+        // the user saw. macOS also calls this before every click reaches the page, so it never
+        // scrolls: revealing the old caret here jumped the page back to it (E17-S06).
         if let Some(page) = self.page()
             && let Some(draft) = page.preedit().ok().flatten()
         {
             let _ = page.commit_preedit(&draft.text);
+            self.restart_blink();
+            window.invalidate_character_coordinates();
+            cx.notify();
         }
-        self.ime_changed(window, cx);
     }
 
     fn replace_text_in_range(

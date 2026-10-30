@@ -111,3 +111,146 @@ fn a_scroll_asked_for_right_after_opening_a_page_survives_the_reset(cx: &mut Tes
     });
     assert_eq!(top, 1 + 1_500, "the title is item 0");
 }
+
+/// E17-S06: scrolled down a long page, clicking a block left the page at the top.
+#[gpui::test]
+fn clicking_a_block_keeps_the_scroll_position(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 2_000);
+    draw(cx);
+    // Scroll down the way the owner does: with the trackpad, a frame at a time.
+    let inside = shell.read_with(cx, |shell, _| {
+        shell.blocks.list.state.bounds_for_item(1).unwrap().center()
+    });
+    for _ in 0..60 {
+        cx.simulate_event(gpui::ScrollEvent {
+            position: inside,
+            delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.0), px(-400.0))),
+            ..Default::default()
+        });
+        draw(cx);
+    }
+    let (before, target) = shell.read_with(cx, |shell, _| {
+        let state = &shell.blocks.list.state;
+        let top = state.logical_scroll_top();
+        assert!(
+            top.item_ix > 100,
+            "the wheel scrolled well down the page: {top:?}"
+        );
+        let bounds = state.bounds_for_item(top.item_ix + 3).unwrap();
+        (top, bounds.center())
+    });
+    cx.simulate_click(target, gpui::Modifiers::none());
+    cx.run_until_parked();
+    draw(cx);
+    cx.run_until_parked();
+    draw(cx);
+    let (after, caret_block, clicked) = shell.update(cx, |shell, _| {
+        let after = shell.blocks.list.state.logical_scroll_top();
+        let clicked = shell.blocks.list.rows[before.item_ix + 3 - 1].id;
+        (after, shell.caret_block(), clicked)
+    });
+    assert_eq!(
+        caret_block,
+        Some(clicked),
+        "the click put the caret in the block under the mouse"
+    );
+    assert_eq!(
+        after.item_ix, before.item_ix,
+        "the page stayed where it was scrolled to"
+    );
+}
+
+/// E17-S06: the same at the end of a page a few screens long.
+#[gpui::test]
+fn clicking_a_block_at_the_end_of_a_short_page_keeps_the_scroll_position(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 80);
+    draw(cx);
+    // Scroll down the way the owner does: with the trackpad, a frame at a time.
+    let inside = shell.read_with(cx, |shell, _| {
+        shell.blocks.list.state.bounds_for_item(1).unwrap().center()
+    });
+    for _ in 0..60 {
+        cx.simulate_event(gpui::ScrollEvent {
+            position: inside,
+            delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.0), px(-400.0))),
+            ..Default::default()
+        });
+        draw(cx);
+    }
+    let (before, target) = shell.read_with(cx, |shell, _| {
+        let state = &shell.blocks.list.state;
+        let top = state.logical_scroll_top();
+        assert!(
+            top.item_ix > 20,
+            "the wheel scrolled to the end of the page: {top:?}"
+        );
+        let bounds = state.bounds_for_item(top.item_ix + 3).unwrap();
+        (top, bounds.center())
+    });
+    cx.simulate_click(target, gpui::Modifiers::none());
+    cx.run_until_parked();
+    draw(cx);
+    cx.run_until_parked();
+    draw(cx);
+    let (after, caret_block, clicked) = shell.update(cx, |shell, _| {
+        let after = shell.blocks.list.state.logical_scroll_top();
+        let clicked = shell.blocks.list.rows[before.item_ix + 3 - 1].id;
+        (after, shell.caret_block(), clicked)
+    });
+    assert_eq!(
+        caret_block,
+        Some(clicked),
+        "the click put the caret in the block under the mouse"
+    );
+    assert_eq!(
+        after.item_ix, before.item_ix,
+        "the page stayed where it was scrolled to"
+    );
+}
+
+/// E17-S06, the real cause: on macOS every click goes to the system's text input first, which calls
+/// `unmark_text` before the page sees the click. With the caret still near the top, that scrolled the
+/// page back up to it.
+#[gpui::test]
+fn the_click_time_unmark_text_call_keeps_the_scroll_position(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 2_000);
+    draw(cx);
+    // The caret stays in the first block while the page scrolls away from it.
+    let first = shell.read_with(cx, |shell, _| shell.blocks.list.rows[0].id);
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.focus_page_at(leaf_model::Caret { block: first, at: 0 }, window, cx);
+        });
+    });
+    draw(cx);
+    let inside = shell.read_with(cx, |shell, _| {
+        shell.blocks.list.state.bounds_for_item(1).unwrap().center()
+    });
+    for _ in 0..60 {
+        cx.simulate_event(gpui::ScrollEvent {
+            position: inside,
+            delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.0), px(-400.0))),
+            ..Default::default()
+        });
+        draw(cx);
+    }
+    let before = shell.read_with(cx, |shell, _| shell.blocks.list.state.logical_scroll_top());
+    assert!(
+        before.item_ix > 100,
+        "the wheel scrolled well down the page: {before:?}"
+    );
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            gpui::EntityInputHandler::unmark_text(shell, window, cx);
+        });
+    });
+    draw(cx);
+    let after = shell.read_with(cx, |shell, _| shell.blocks.list.state.logical_scroll_top());
+    assert_eq!(
+        after.item_ix, before.item_ix,
+        "the page stayed where it was scrolled to"
+    );
+}
