@@ -128,6 +128,10 @@ turns the place on screen into a model index (indexes count trashed pages; ADR 0
 (`uniform_list`), so 500 pages scroll smoothly. The UI code is `leaf_ui::shell::tree`.
 The sidebar's frame (`leaf_ui::shell::sidebar`, E06-S10) has a workspace header (badge, name, compose button), a
 "Pages" heading with a "+", and Settings at the foot; rows show a page icon and a hover "+" that adds a page inside.
+Starred pages show in a "Favourites" section above "Pages" (`leaf_ui::shell::favourites`, E18-S05), drawn from
+`WorkspaceEditor::favourites` on every frame, so renames, icons, the trash and restoring show at once; hidden while
+nothing is starred. Its right-click menu is the page menu for `MenuPlace::Favourites`, whose Rename edits the
+Favourites row rather than the tree row.
 Extra Lucide icons are bundled one by one in `leaf_ui::assets()`, not the whole set.
 
 **Quick switcher (E06-S04).** `leaf_editor::QuickSwitcher` is a snapshot of the live pages with breadcrumbs, matched by
@@ -180,7 +184,9 @@ nothing, so the list stays in step with the view; each cell uses the same rich-t
 the caret, selection and marks work unchanged. Columns are a fixed 160 px; a table wider than the page scrolls
 sideways inside its own box (a horizontal swipe or Shift+wheel), never the page. Hover controls ("+" under and
 beside the grid, a handle per row and column with a menu) call `PageEditor::edit_table` with a `TableEdit`: one
-table command and one undo step, the caret following the edit.
+table command and one undo step, the caret following the edit. Tables come in and go out through `/table` (a 3 × 3
+table with a header row) and the clipboard (E16-S04): pasting a Markdown table builds one with the table commands,
+copying writes one, and Leaf's own fragment keeps `table`, `table_row` and `table_cell` blocks (ADR 0032's update).
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;

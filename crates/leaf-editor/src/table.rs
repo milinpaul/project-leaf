@@ -11,7 +11,7 @@
 use leaf_core::BlockId;
 use leaf_model::{BlockKind, Caret, Marks, PageCommand, PageDoc, TextSpan};
 
-use crate::{EditorError, Fragment, FragmentBlock, Key, KeyOutcome, PageEditor};
+use crate::{EditorError, FragmentBlock, Key, KeyOutcome, PageEditor};
 
 /// Where a cell sits in its table.
 pub(crate) struct CellPlace {
@@ -112,38 +112,47 @@ pub(crate) fn clear_cells(doc: &mut PageDoc, cells: &[BlockId]) -> Result<Option
     Ok(cells.first().map(|&block| Caret { block, at: 0 }))
 }
 
-/// `fragment` with every table turned into one paragraph per cell, row by row, keeping the cells'
-/// formatting: what pasting does with a table until tables go on the clipboard (E16-S04).
-pub(crate) fn without_tables(fragment: &Fragment) -> Fragment {
-    fn flatten(blocks: &[FragmentBlock], out: &mut Vec<FragmentBlock>) {
-        for block in blocks {
-            match block.kind {
-                BlockKind::Table { .. } | BlockKind::TableRow => flatten(&block.children, out),
-                BlockKind::TableCell => out.push(FragmentBlock {
-                    kind: BlockKind::Paragraph,
-                    text: block.text.clone(),
+/// The cells of `table` in `cells` as a table of their own, row by row, keeping their formatting:
+/// what copying a cell selection puts on the clipboard (E16-S04). It keeps the header row when the
+/// selection includes the table's first row.
+pub(crate) fn cells_as_table(
+    doc: &PageDoc,
+    table: BlockId,
+    cells: &[BlockId],
+) -> Result<FragmentBlock, EditorError> {
+    let BlockKind::Table { header_row } = doc.kind(table)? else {
+        return Err(leaf_model::ModelError::NotATable(table).into());
+    };
+    let mut rows = Vec::new();
+    let mut first_row = None;
+    for (index, row) in doc.table_cells(table)?.into_iter().enumerate() {
+        let picked: Vec<FragmentBlock> = row
+            .into_iter()
+            .filter(|cell| cells.contains(cell))
+            .map(|cell| {
+                Ok(FragmentBlock {
+                    kind: BlockKind::TableCell,
+                    text: doc.text(cell)?.unwrap_or_default(),
                     children: Vec::new(),
-                }),
-                _ => {
-                    let mut children = Vec::new();
-                    flatten(&block.children, &mut children);
-                    out.push(FragmentBlock {
-                        kind: block.kind.clone(),
-                        text: block.text.clone(),
-                        children,
-                    });
-                }
-            }
+                })
+            })
+            .collect::<Result<_, EditorError>>()?;
+        if !picked.is_empty() {
+            first_row.get_or_insert(index);
+            rows.push(FragmentBlock {
+                kind: BlockKind::TableRow,
+                text: Vec::new(),
+                children: picked,
+            });
         }
     }
-    match fragment {
-        Fragment::Text(_) => fragment.clone(),
-        Fragment::Blocks(blocks) => {
-            let mut out = Vec::new();
-            flatten(blocks, &mut out);
-            Fragment::Blocks(out)
-        }
-    }
+    Ok(FragmentBlock {
+        kind: BlockKind::Table {
+            header_row: header_row && first_row == Some(0),
+        },
+        text: Vec::new(),
+        children: rows,
+    })
 }
 
 /// The text of `blocks` and everything nested in them, one line per block, formatting kept: what
@@ -151,6 +160,11 @@ pub(crate) fn without_tables(fragment: &Fragment) -> Fragment {
 pub(crate) fn as_lines(blocks: &[FragmentBlock]) -> Vec<TextSpan> {
     fn walk(blocks: &[FragmentBlock], out: &mut Vec<TextSpan>, first: &mut bool) {
         for block in blocks {
+            // A table and its rows are only containers: their cells are the lines.
+            if matches!(block.kind, BlockKind::Table { .. } | BlockKind::TableRow) {
+                walk(&block.children, out, first);
+                continue;
+            }
             if !std::mem::take(first) {
                 out.push(TextSpan {
                     text: "\n".into(),

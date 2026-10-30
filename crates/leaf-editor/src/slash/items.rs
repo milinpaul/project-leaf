@@ -32,6 +32,8 @@ pub enum SlashAction {
     /// Asks for an image file: the UI shows a file picker and gives the stored picture to
     /// [`PageEditor::insert_image`](crate::PageEditor::insert_image) (E05-S07).
     Image,
+    /// Adds a 3 × 3 table with a header row, in place of an empty line or below the block (E16-S04).
+    Table,
 }
 
 /// Every entry, in the order the menu shows them with no query.
@@ -78,6 +80,11 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             label: "Image",
             keywords: &["picture", "photo", "img", "upload"],
             action: SlashAction::Image,
+        },
+        SlashItem {
+            label: "Table",
+            keywords: &["grid", "rows", "|"],
+            action: SlashAction::Table,
         },
     ]
 }

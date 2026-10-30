@@ -144,7 +144,9 @@ impl Shell {
                 });
                 cx.notify();
             }
-            PageAction::Rename => self.start_rename(page, window, cx),
+            PageAction::Rename => {
+                self.start_rename_in(page, place == MenuPlace::Favourites, window, cx);
+            }
             PageAction::ToggleFullWidth => self.toggle_full_width(page, cx),
             PageAction::MoveToTrash => self.trash_from_menu(page, window, cx),
         }

@@ -62,11 +62,7 @@ impl Shell {
             theme.sidebar_accent,
             theme.radius,
         );
-        let renaming = self
-            .tree
-            .renaming
-            .as_ref()
-            .is_some_and(|rename| rename.page == page);
+        let renaming = self.rename_field(page, false).is_some();
 
         let mut row = h_flex()
             .id(("page-row", ix))
@@ -84,7 +80,7 @@ impl Shell {
             .when(item.selected, |row| row.bg(active))
             .child(Self::chevron(ix, item, cx))
             .child(Self::page_icon(item, cx))
-            .child(self.label(item, cx))
+            .child(self.label(item, false, cx))
             .when(!renaming, |row| row.child(Self::add_inside(ix, page, cx)));
         let title_left = indent(item.depth) + px(CHEVRON_PX);
         row = match self.mark(page, ix + 1 == count) {
@@ -165,7 +161,7 @@ impl Shell {
     }
 
     /// The page's emoji, or a quiet page icon when it has none, so every title starts at the same place.
-    fn page_icon(item: &SidebarItem, cx: &mut Context<Self>) -> AnyElement {
+    pub(in crate::shell) fn page_icon(item: &SidebarItem, cx: &mut Context<Self>) -> AnyElement {
         let slot = div().flex_none().w(px(18.0)).flex().justify_center();
         match &item.icon {
             Some(emoji) => slot.child(emoji.clone()).into_any_element(),
@@ -206,16 +202,16 @@ impl Shell {
             .into_any_element()
     }
 
-    /// The row's title, or the rename field while it is being renamed.
-    fn label(&self, item: &SidebarItem, cx: &mut Context<Self>) -> AnyElement {
+    /// The row's title, or the rename field while it is being renamed. `in_favourites` says whether
+    /// the row is in the Favourites section or the tree.
+    pub(in crate::shell) fn label(
+        &self,
+        item: &SidebarItem,
+        in_favourites: bool,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let cell = div().flex_1().min_w_0();
-        let input = self
-            .tree
-            .renaming
-            .as_ref()
-            .filter(|rename| rename.page == item.page)
-            .map(|rename| rename.input.clone());
-        match input {
+        match self.rename_field(item.page, in_favourites) {
             Some(input) => cell
                 // Escape keeps the old title; the field would otherwise only clear its selection.
                 .capture_key_down(cx.listener(|shell, event: &KeyDownEvent, window, cx| {

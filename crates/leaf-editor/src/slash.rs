@@ -10,10 +10,11 @@ mod items;
 
 pub use items::{SlashAction, SlashItem};
 
-use leaf_model::{Anchor, BlockKind, Caret, PageCommand};
+use leaf_core::BlockId;
+use leaf_model::{Anchor, BlockKind, Caret, PageCommand, PageDoc};
 
 use crate::caret::Vertical;
-use crate::page_editor::insert_after;
+use crate::page_editor::{insert_after, insert_table};
 use crate::{EditorError, PageEditor};
 
 /// The open menu as the editor keeps it.
@@ -150,6 +151,14 @@ impl PageEditor {
                 self.request_image(caret)?;
                 return Ok(Some(caret));
             }
+            SlashAction::Table => {
+                let caret = self
+                    .doc
+                    .as_separate_step(|doc| table_in_place_of(doc, block, typed.clone()))?;
+                let caret = self.set_caret(caret)?;
+                self.finish()?;
+                return Ok(Some(caret));
+            }
         };
         let caret = self.doc.as_separate_step(|doc| -> Result<Caret, EditorError> {
             doc.apply(PageCommand::DeleteText {
@@ -226,6 +235,47 @@ impl PageEditor {
             });
         }
         Ok(())
+    }
+}
+
+/// The size `/table` makes: a header row and two rows under it, three columns.
+const NEW_TABLE: (usize, usize) = (3, 3);
+
+/// Removes the typed `/table` (`typed`) from `block` and adds a new table: in place of `block` when
+/// that leaves it an empty paragraph with nothing nested in it, else right below it. Returns the start
+/// of the first cell.
+fn table_in_place_of(
+    doc: &mut PageDoc,
+    block: BlockId,
+    typed: std::ops::Range<usize>,
+) -> Result<Caret, EditorError> {
+    doc.apply(PageCommand::DeleteText {
+        id: block,
+        range: typed,
+    })?;
+    let parent = doc.parent(block)?;
+    let siblings = match parent {
+        Some(parent) => doc.children(parent)?,
+        None => doc.root_blocks(),
+    };
+    let index = siblings
+        .iter()
+        .position(|&b| b == block)
+        .unwrap_or(siblings.len());
+    let replace = doc.kind(block)? == BlockKind::Paragraph
+        && doc.plain_text(block)?.is_none_or(|t| t.is_empty())
+        && doc.children(block)?.is_empty();
+    let table = insert_table(doc, parent, index + 1, NEW_TABLE, true)?;
+    if replace {
+        doc.apply(PageCommand::DeleteBlocks { ids: vec![block] })?;
+    }
+    let first = doc
+        .table_cells(table)?
+        .first()
+        .and_then(|row| row.first().copied());
+    match first {
+        Some(block) => Ok(Caret { block, at: 0 }),
+        None => Err(leaf_model::ModelError::EmptyTable.into()),
     }
 }
 

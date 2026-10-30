@@ -41,6 +41,13 @@ fn the_top_bar_and_the_sidebar_offer_the_same_actions_in_the_same_order() {
         ],
         "the sidebar can also add a page inside; the width is chosen where the page is open"
     );
+    assert_eq!(
+        actions(&editor, page, MenuPlace::Favourites),
+        side,
+        "a Favourites row offers what a tree row does"
+    );
+    let menu = editor.page_menu(page, MenuPlace::Favourites, NOW, 0).unwrap();
+    assert!(menu.footer.is_empty(), "no times in a sidebar menu");
 }
 
 #[test]

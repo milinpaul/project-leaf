@@ -47,6 +47,9 @@ pub enum MenuPlace {
     TopBar,
     /// A sidebar row's right-click menu: with "Add page inside".
     Sidebar,
+    /// A row of the sidebar's Favourites section (E18-S05): the same entries as [`Self::Sidebar`];
+    /// only renaming differs, which happens in the row that was clicked.
+    Favourites,
 }
 
 /// One entry of a page menu.
@@ -103,7 +106,7 @@ impl WorkspaceEditor {
             switch: None,
         };
         let mut entries = Vec::new();
-        if place == MenuPlace::Sidebar {
+        if matches!(place, MenuPlace::Sidebar | MenuPlace::Favourites) {
             entries.push(entry(PageAction::AddInside, "Add page inside", PageMenuIcon::Add));
         }
         entries.push(if favourite {
@@ -138,7 +141,7 @@ impl WorkspaceEditor {
                 format!("Created {}", edited_on(meta.created_at, offset_minutes)),
                 format!("Last {}", edited_ago(now, meta.edited_at).to_lowercase()),
             ],
-            MenuPlace::Sidebar => Vec::new(),
+            MenuPlace::Sidebar | MenuPlace::Favourites => Vec::new(),
         };
         Ok(PageMenu { entries, footer })
     }

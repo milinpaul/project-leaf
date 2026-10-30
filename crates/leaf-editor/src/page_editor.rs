@@ -291,5 +291,26 @@ pub(crate) fn insert_block(
     Ok(id)
 }
 
+/// Adds an empty `rows` × `columns` table under `parent` at `index` and returns it.
+pub(crate) fn insert_table(
+    doc: &mut PageDoc,
+    parent: Option<BlockId>,
+    index: usize,
+    (rows, columns): (usize, usize),
+    header_row: bool,
+) -> Result<BlockId, EditorError> {
+    let command = PageCommand::InsertTable {
+        parent,
+        index,
+        rows,
+        columns,
+        header_row,
+    };
+    let PageOutcome::BlockCreated(id) = doc.apply(command)? else {
+        unreachable!("InsertTable always reports the table it created");
+    };
+    Ok(id)
+}
+
 #[cfg(test)]
 mod tests;
