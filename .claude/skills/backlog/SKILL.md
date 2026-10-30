@@ -20,6 +20,7 @@ python3 scripts/backlog.py claim <id> <your-name>     # todo → planning, sets 
 python3 scripts/backlog.py move <id> <status> "note"  # change status + dated Log line
 python3 scripts/backlog.py pr <id> <url>              # link a PR (fills `pr:`, shown on the card)
 python3 scripts/backlog.py summary                    # counts per status
+python3 scripts/backlog.py phase <epic> <n>           # move an epic (and its stories) to phase n
 python3 scripts/backlog.py serve --open               # live board (run in background)
 ```
 

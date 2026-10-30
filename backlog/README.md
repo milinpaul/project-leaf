@@ -58,6 +58,11 @@ Claude Code handles all of this itself:
 - `.claude/skills/backlog/SKILL.md` is the procedure Claude follows.
 - `.claude/settings.json` hooks regenerate `backlog.json` and `board.html` at session start and after every backlog edit.
 - Open `backlog/board.html` in a browser to see the control panel (ask Claude to open it).
+- **Phases:** each epic's `phase:` (0 to 3, named in `scripts/backlog.py` after `PRODUCT_SPEC.md`) puts it and its
+  stories in a phase. The board shows every phase's progress and marks the current one (the first with unfinished
+  stories); picking a phase narrows the epics and stories to it. On the live board (`backlog.py serve`), each
+  epic's "Move to" menu moves it to another phase by rewriting its `phase:` line; `backlog.py phase <epic> <n>` does
+  the same from the command line. Only the board page itself can make that change, not other websites.
 
 ## Agent protocol (summary)
 

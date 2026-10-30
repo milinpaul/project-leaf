@@ -15,6 +15,7 @@ Usage:
   python3 scripts/backlog.py claim <id> <assignee>
   python3 scripts/backlog.py move <id> <status> [note]
   python3 scripts/backlog.py pr <id> <url>          # link a pull request to a story
+  python3 scripts/backlog.py phase <epic> <n>       # move an epic (and its stories) to phase n
 
 No third-party dependencies (standard library only).
 """
@@ -30,6 +31,13 @@ OUT = ROOT / "backlog.json"
 BOARD = ROOT / "board.html"
 TEMPLATE = Path(__file__).resolve().parent / "board_template.html"
 
+# The phases in docs/product/PRODUCT_SPEC.md, by number. An epic's `phase:` must be one of these.
+PHASES = {
+    0: "Pre-MVP: the page editor",
+    1: "MVP",
+    2: "More views, sync and the web viewer",
+    3: "Web editor",
+}
 STATUSES = ["backlog", "todo", "planning", "in_progress", "review", "done", "blocked"]
 PRIORITIES = ["P0", "P1", "P2"]
 SIZES = ["S", "M", "L"]
@@ -105,8 +113,12 @@ def load() -> dict:
             errors.append(f"{path.name}: id {meta['id']} does not match filename")
         if meta["status"] not in STATUSES:
             errors.append(f"{path.name}: bad status {meta['status']}")
+        phase = int(meta["phase"]) if str(meta["phase"]).isdigit() else None
+        if phase not in PHASES:
+            errors.append(f"{path.name}: bad phase {meta['phase']!r}; use one of {sorted(PHASES)}")
+            continue
         epics.append({
-            "id": meta["id"], "title": meta["title"], "phase": int(meta["phase"]),
+            "id": meta["id"], "title": meta["title"], "phase": phase,
             "status": meta["status"], "goal": sections(body).get("goal", ""),
             "path": f"backlog/epics/{path.name}",
         })
@@ -167,7 +179,35 @@ def load() -> dict:
         e["done_count"] = sum(s["status"] == "done" for s in own)
         e["progress"] = round(e["done_count"] / len(own), 2) if own else 0.0
 
-    return {"schema_version": 1, "statuses": STATUSES, "epics": epics, "stories": stories}
+    return {"schema_version": 1, "statuses": STATUSES, "phases": phase_summary(epics), "epics": epics, "stories": stories}
+
+
+def phase_summary(epics: list[dict]) -> list[dict]:
+    """Each phase with its epics and story progress. The current phase is the first with unfinished stories."""
+    phases = []
+    for number, name in sorted(PHASES.items()):
+        own = [e for e in epics if e["phase"] == number]
+        count, done = sum(e["story_count"] for e in own), sum(e["done_count"] for e in own)
+        phases.append({
+            "id": number, "name": name, "epics": [e["id"] for e in own], "story_count": count,
+            "done_count": done, "progress": round(done / count, 2) if count else 0.0, "current": False,
+        })
+    current = next((p for p in phases if p["done_count"] < p["story_count"]), None)
+    if current:
+        current["current"] = True
+    return phases
+
+
+def set_epic_phase(epic_id: str, phase) -> None:
+    """Moves an epic to another phase by editing the `phase:` line of its file. Its stories go with it."""
+    path = ROOT / "epics" / f"{epic_id}.md"
+    if not re.fullmatch(r"E\d+", str(epic_id)) or not path.exists():
+        raise BacklogError(f"no epic {epic_id}")
+    if str(phase) not in {str(p) for p in PHASES}:
+        raise BacklogError(f"bad phase {phase!r}; use one of {sorted(PHASES)}")
+    head, front, body = path.read_text(encoding="utf-8").split("---\n", 2)
+    lines = [f"phase: {phase}" if line.split(":", 1)[0].strip() == "phase" else line for line in front.splitlines()]
+    path.write_text(f"{head}---\n" + "\n".join(lines) + "\n---\n" + body, encoding="utf-8")
 
 
 def find_cycles(by_id: dict) -> list[str]:
@@ -311,6 +351,28 @@ def serve(port: int, open_browser: bool) -> int:
             self.end_headers()
             self.wfile.write(body)
 
+        def do_POST(self):  # noqa: N802 (stdlib naming)
+            # Only the board itself may change files. A page from another site can't send JSON here without a
+            # CORS preflight this server never answers, and its Origin header wouldn't match anyway.
+            origin = self.headers.get("Origin", "")
+            allowed = {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
+            if self.path != "/epic-phase":
+                self.send_error(404)
+                return
+            if origin not in allowed or self.headers.get("Content-Type", "").split(";")[0] != "application/json":
+                self.send_error(403, "only the board page can change the backlog")
+                return
+            try:
+                length = min(int(self.headers.get("Content-Length", "0")), 4096)
+                body = json.loads(self.rfile.read(length) or b"{}")
+                set_epic_phase(str(body.get("epic", "")), body.get("phase"))
+            except (ValueError, BacklogError) as exc:
+                self.send_error(400, str(exc).splitlines()[0])
+                return
+            rebuild()
+            self.send_response(204)
+            self.end_headers()
+
         def log_message(self, *args):  # keep the terminal quiet
             pass
 
@@ -346,6 +408,8 @@ def main(argv: list[str]) -> int:
                 raise BacklogError(f"bad status {argv[2]}; use one of {STATUSES}")
             note = " ".join(argv[3:]) or f"moved to {argv[2]}"
             set_fields(argv[1], {"status": argv[2]}, note)
+        elif argv[:1] == ["phase"] and len(argv) >= 3:
+            set_epic_phase(argv[1], argv[2])
         elif argv[:1] == ["pr"] and len(argv) >= 3:
             if not PR_URL.match(argv[2]):
                 raise BacklogError(f"not a GitHub pull request URL: {argv[2]}")
@@ -359,7 +423,7 @@ def main(argv: list[str]) -> int:
     except BacklogError as exc:
         print(exc, file=sys.stderr)
         return 1
-    if argv[:1] in (["claim"], ["move"], ["pr"]):
+    if argv[:1] in (["claim"], ["move"], ["pr"], ["phase"]):
         write_all(data)
         print(f"{argv[1]} updated; backlog.json and board.html regenerated")
         return 0
