@@ -449,4 +449,5 @@ fn empty_fragments_and_no_caret_change_nothing() {
     assert_eq!(texts(&editor), vec!["a"]);
 }
 
+mod pasted_links;
 mod whole_blocks;

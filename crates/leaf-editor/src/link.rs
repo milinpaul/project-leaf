@@ -22,6 +22,21 @@ impl PageEditor {
     }
 }
 
+/// The link to make from pasted `text`, when it is one address on its own (E17-S10): a scheme Leaf
+/// opens (`https://`, `http://`, `mailto:`) or a `www.` address, with spaces and line breaks around it
+/// ignored. Stricter than [`openable_url`], which also takes `example.com`: a pasted `notes.txt` stays
+/// text.
+#[must_use]
+pub fn pasted_link(text: &str) -> Option<String> {
+    let text = text.trim();
+    if text.contains(char::is_whitespace) {
+        return None;
+    }
+    let lower = text.to_ascii_lowercase();
+    let addressed = SCHEMES.iter().any(|scheme| lower.starts_with(scheme)) || lower.starts_with("www.");
+    addressed.then(|| openable_url(text)).flatten()
+}
+
 /// What to hand the system's browser or mail app for a link's `href`, or `None` when Leaf won't open
 /// it. An address without a scheme that looks like a web address (`example.com/page`) gets
 /// `https://`.
