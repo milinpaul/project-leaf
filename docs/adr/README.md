@@ -83,3 +83,4 @@ Records cover two kinds of decision:
 | [0064](0064-cover-gallery.md) | Cover gallery: sections of thumbnails, and colour and gradient covers as SVG files | Feature | Accepted |
 | [0065](0065-page-top-bar.md) | Page top bar: breadcrumb, edited time, star and page menu above every page | Feature | Accepted |
 | [0066](0066-database-data-model.md) | Databases: one Loro document per database, rows as pages | Architecture | Accepted |
+| [0067](0067-formatting-bar.md) | Formatting bar: a floating bar over selected text, drawn in the page's own overlay | Feature | Accepted |

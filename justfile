@@ -90,6 +90,10 @@ screenshot *args:
 icons:
     python3 scripts/icons.py
 
+# The Phase 0 acceptance tests too slow for every run (a 3,000-word document typed through the window)
+acceptance:
+    cargo nextest run -p leaf-ui --release --run-ignored only long_document
+
 # Benchmarks for the performance budgets (crates/leaf-bench; ADR 0056)
 bench:
     cargo bench -p leaf-bench --bench budgets
