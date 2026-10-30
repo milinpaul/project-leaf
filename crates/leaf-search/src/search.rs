@@ -18,9 +18,21 @@ pub const MAX_PAGES: usize = 50;
 /// At most this many matching blocks are shown under each page, best first.
 pub const BLOCKS_PER_PAGE: usize = 3;
 
-/// How many matching blocks are read before grouping. Bounds the work for a very common word
-/// while leaving room for [`MAX_PAGES`] pages.
-const MAX_BLOCK_ROWS: i64 = 1000;
+/// How many of the best matching blocks are considered when picking each page's best
+/// [`BLOCKS_PER_PAGE`]. Picking happens before excerpts are made, so a page with hundreds of
+/// matching blocks can't crowd the others out of the results.
+const CANDIDATE_BLOCKS: i64 = 2_000;
+
+/// How many blocks get an excerpt: enough for [`MAX_PAGES`] pages of [`BLOCKS_PER_PAGE`] each,
+/// with room for pages whose title matched as well. Excerpts are the costly part of reading a row.
+const EXCERPT_BLOCKS: i64 = 300;
+
+/// At most this many matching blocks are ranked: the most recently indexed ones. Ranking scores
+/// every match, about a millisecond per thousand, so a word in nearly every block (a single letter
+/// typed so far) would blow the 50 ms budget (E11-S07, ADR 0058). Below this, every match is
+/// ranked; above it, an older block can be missed, which only happens for words so common that
+/// the search bar couldn't show all their pages anyway. Titles are always all searched.
+pub const RANKED_BLOCKS: i64 = 10_000;
 
 /// Roughly how many words an excerpt shows around the match.
 const EXCERPT_WORDS: i64 = 16;
@@ -97,21 +109,76 @@ struct Group {
     saved_at: i64,
 }
 
+/// The matching blocks to show, best first, in three steps so the costly parts only touch the
+/// rows that are kept:
+/// - `ranked`: the best [`CANDIDATE_BLOCKS`], scored in FTS5 alone among the newest
+///   [`RANKED_BLOCKS`] matches (those at or above the rowid the inner subquery finds; rowids only
+///   grow, so a page just re-indexed is always among them);
+/// - `kept`: each page's best [`BLOCKS_PER_PAGE`] of those, at most [`EXCERPT_BLOCKS`];
+/// - the outer query makes their excerpts. The `+` keeps SQLite from looking each kept row up
+///   through FTS5 one at a time, which re-runs the whole match per row; one pass is far cheaper.
+const BLOCK_QUERY: &str = "
+WITH ranked AS (
+  SELECT rowid AS id, bm25(blocks_fts) AS score
+  FROM blocks_fts
+  WHERE blocks_fts MATCH ?1
+    AND rowid >= coalesce((SELECT rowid FROM blocks_fts WHERE blocks_fts MATCH ?1
+                           ORDER BY rowid DESC LIMIT 1 OFFSET ?3), 0)
+  ORDER BY score
+  LIMIT ?4),
+kept AS (
+  SELECT id FROM (
+    SELECT r.id, r.score, row_number() OVER (PARTITION BY b.page_id ORDER BY r.score, r.id) AS nth
+    FROM ranked r JOIN blocks b ON b.id = r.id)
+  WHERE nth <= ?5
+  ORDER BY score
+  LIMIT ?6)
+SELECT b.page_id, b.block_id, b.kind, snippet(blocks_fts, 0, char(1), char(2), '…', ?2),
+       bm25(blocks_fts), p.title, p.saved_at
+FROM blocks_fts JOIN blocks b ON b.id = blocks_fts.rowid JOIN pages p ON p.page_id = b.page_id
+WHERE blocks_fts MATCH ?1 AND +blocks_fts.rowid IN kept
+ORDER BY bm25(blocks_fts), b.id";
+
 /// Searches `conn` for `query`. Every word must match, as a prefix, ignoring case and accents.
-/// Pages whose title matches come first; then best match first; then most recently edited.
-/// An empty or punctuation-only query returns nothing.
+/// Pages whose title matches come first; then best match first; then most recently edited. Only
+/// the newest [`RANKED_BLOCKS`] matching blocks are ranked. An empty or punctuation-only query
+/// returns nothing.
 pub(crate) fn search(conn: &Connection, query: &str) -> Result<Vec<PageHit>, SearchError> {
     let Some(expression) = match_expression(query) else {
         return Ok(Vec::new());
     };
     let mut groups: HashMap<PageId, Group> = HashMap::new();
+    add_title_matches(conn, &expression, &mut groups)?;
+    add_block_matches(conn, &expression, &mut groups)?;
 
+    let mut groups: Vec<Group> = groups.into_values().collect();
+    groups.sort_by(|a, b| {
+        b.hit
+            .title_matched
+            .cmp(&a.hit.title_matched)
+            .then(a.score.partial_cmp(&b.score).unwrap_or(Ordering::Equal))
+            .then(b.saved_at.cmp(&a.saved_at))
+            .then(a.hit.page.cmp(&b.hit.page))
+    });
+    Ok(groups
+        .into_iter()
+        .take(MAX_PAGES)
+        .map(|group| group.hit)
+        .collect())
+}
+
+/// Every page whose title matches, with the title highlighted.
+fn add_title_matches(
+    conn: &Connection,
+    expression: &str,
+    groups: &mut HashMap<PageId, Group>,
+) -> Result<(), SearchError> {
     let mut titles = conn.prepare_cached(
         "SELECT p.page_id, highlight(pages_fts, 0, char(1), char(2)), bm25(pages_fts), p.saved_at
          FROM pages_fts JOIN pages p ON p.id = pages_fts.rowid
          WHERE pages_fts MATCH ?1",
     )?;
-    let rows = titles.query_map([&expression], |row| {
+    let rows = titles.query_map([expression], |row| {
         Ok((
             row.get::<_, String>(0)?,
             row.get::<_, String>(1)?,
@@ -130,16 +197,26 @@ pub(crate) fn search(conn: &Connection, query: &str) -> Result<Vec<PageHit>, Sea
         };
         groups.insert(page, Group { hit, score, saved_at });
     }
+    Ok(())
+}
 
-    let mut blocks = conn.prepare_cached(
-        "SELECT b.page_id, b.block_id, b.kind, snippet(blocks_fts, 0, char(1), char(2), '…', ?2),
-                bm25(blocks_fts), p.title, p.saved_at
-         FROM blocks_fts JOIN blocks b ON b.id = blocks_fts.rowid JOIN pages p ON p.page_id = b.page_id
-         WHERE blocks_fts MATCH ?1
-         ORDER BY bm25(blocks_fts)
-         LIMIT ?3",
-    )?;
-    let rows = blocks.query_map(params![expression, EXCERPT_WORDS, MAX_BLOCK_ROWS], |row| {
+/// The best matching blocks ([`BLOCK_QUERY`]), added under their pages.
+fn add_block_matches(
+    conn: &Connection,
+    expression: &str,
+    groups: &mut HashMap<PageId, Group>,
+) -> Result<(), SearchError> {
+    let mut blocks = conn.prepare_cached(BLOCK_QUERY)?;
+    let per_page = i64::try_from(BLOCKS_PER_PAGE).unwrap_or(i64::MAX);
+    let limits = params![
+        expression,
+        EXCERPT_WORDS,
+        RANKED_BLOCKS - 1,
+        CANDIDATE_BLOCKS,
+        per_page,
+        EXCERPT_BLOCKS
+    ];
+    let rows = blocks.query_map(limits, |row| {
         Ok((
             row.get::<_, String>(0)?,
             row.get::<_, String>(1)?,
@@ -174,21 +251,7 @@ pub(crate) fn search(conn: &Connection, query: &str) -> Result<Vec<PageHit>, Sea
             });
         }
     }
-
-    let mut groups: Vec<Group> = groups.into_values().collect();
-    groups.sort_by(|a, b| {
-        b.hit
-            .title_matched
-            .cmp(&a.hit.title_matched)
-            .then(a.score.partial_cmp(&b.score).unwrap_or(Ordering::Equal))
-            .then(b.saved_at.cmp(&a.saved_at))
-            .then(a.hit.page.cmp(&b.hit.page))
-    });
-    Ok(groups
-        .into_iter()
-        .take(MAX_PAGES)
-        .map(|group| group.hit)
-        .collect())
+    Ok(())
 }
 
 /// Text with no matches marked.

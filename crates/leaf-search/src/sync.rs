@@ -27,9 +27,11 @@ pub enum Finished {
 pub struct Syncer<S> {
     index: SearchIndex,
     source: S,
-    /// The last workspace document read, with the version it was read at, so it is only reloaded
-    /// when titles or the page tree changed.
-    workspace: Option<(Option<PageVersion>, Workspace)>,
+    /// The last workspace document read, with the version it was read at and the pages search
+    /// should find in it, so neither is redone unless titles or the page tree changed. Listing the
+    /// pages reads every title, which on 5,000 pages costs more than re-indexing the edited page
+    /// (E11-S07).
+    workspace: Option<(Option<PageVersion>, Workspace, HashMap<PageId, String>)>,
 }
 
 impl<S: PageSource> Syncer<S> {
@@ -51,18 +53,18 @@ impl<S: PageSource> Syncer<S> {
     /// in the trash. Pages that didn't change aren't read at all.
     pub fn reconcile(&mut self, stop: &dyn Fn() -> bool) -> Result<Finished, SearchError> {
         let versions = self.source.versions().map_err(SearchError::Source)?;
-        let current = matches!(&self.workspace, Some((seen, _)) if *seen == versions.workspace);
+        let current = matches!(&self.workspace, Some((seen, ..)) if *seen == versions.workspace);
         if !current {
             let workspace = self.source.workspace().map_err(SearchError::Source)?;
-            self.workspace = Some((versions.workspace, workspace));
+            let wanted = searchable(&workspace)?;
+            self.workspace = Some((versions.workspace, workspace, wanted));
         }
-        let Some((_, workspace)) = &self.workspace else {
+        let Some((_, workspace, wanted)) = &self.workspace else {
             return Ok(Finished::Done); // just filled in above
         };
-        let wanted = searchable(workspace)?;
         let indexed = self.index.indexed_pages()?;
 
-        for (&page, wanted_title) in &wanted {
+        for (&page, wanted_title) in wanted {
             let version = versions.pages.get(&page).copied().unwrap_or_default();
             if let Some(have) = indexed.get(&page)
                 && have.title == *wanted_title
