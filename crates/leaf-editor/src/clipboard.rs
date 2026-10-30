@@ -12,6 +12,9 @@
 //!   caret, the other blocks follow, and the text that was after the caret ends up after the last
 //!   pasted text. In an empty paragraph the first block takes its place, kind and all, so copying
 //!   blocks and pasting them on an empty line gives back exactly what was copied.
+//! - **Tables** (E16-S04) are built with the table commands and filled cell by cell. One pasted first
+//!   goes below the line (or in place of an empty paragraph), and the text after the caret goes to a
+//!   new line below it. Into a cell, a table's cells go in as lines of text.
 
 mod fragment;
 mod markdown;
@@ -23,7 +26,7 @@ use std::ops::Range;
 use leaf_core::BlockId;
 use leaf_model::{BlockKind, Caret, Mark, MarkKind, PageCommand, PageDoc, TextSpan};
 
-use crate::page_editor::{insert_after, insert_block};
+use crate::page_editor::{insert_after, insert_block, insert_table};
 use crate::selection::delete_span;
 use crate::{EditorError, Key, PageEditor, Selection};
 
@@ -63,19 +66,11 @@ impl PageEditor {
                 spans_in(&self.doc, start.block, start.at..end.at)?,
             )),
             Some(Selection::Text { start, end }) => Some(Fragment::Blocks(self.touched_blocks(start, end)?)),
-            // One paragraph per cell, row by row, until tables go on the clipboard (E16-S04).
-            Some(Selection::Cells { cells, .. }) => Some(Fragment::Blocks(
-                cells
-                    .iter()
-                    .map(|&cell| {
-                        Ok(FragmentBlock {
-                            kind: BlockKind::Paragraph,
-                            text: self.doc.text(cell)?.unwrap_or_default(),
-                            children: Vec::new(),
-                        })
-                    })
-                    .collect::<Result<_, EditorError>>()?,
-            )),
+            Some(Selection::Cells { table, cells }) => {
+                Some(Fragment::Blocks(vec![crate::table::cells_as_table(
+                    &self.doc, table, &cells,
+                )?]))
+            }
         })
     }
 
@@ -99,7 +94,6 @@ impl PageEditor {
     /// With whole blocks selected, the fragment goes after the last of them. Returns where the caret
     /// went: after the pasted text.
     pub fn paste(&mut self, fragment: &Fragment) -> Result<Option<Caret>, EditorError> {
-        let fragment = &crate::table::without_tables(fragment);
         let empty = match fragment {
             Fragment::Text(spans) => spans.iter().all(|s| s.text.is_empty()),
             Fragment::Blocks(blocks) => blocks.is_empty(),
@@ -254,6 +248,9 @@ fn paste_blocks(doc: &mut PageDoc, at: Caret, blocks: &[FragmentBlock]) -> Resul
     let Some((first, rest)) = blocks.split_first() else {
         return Ok(at);
     };
+    if matches!(first.kind, BlockKind::Table { .. }) {
+        return paste_below_line(doc, at, blocks, &tail, len == 0 && kind == BlockKind::Paragraph);
+    }
     // Only a line that is really empty takes the first block's kind: at the start of a line that has
     // text, the pasted text joins it and the line keeps its kind (E17-S05).
     let empty = len == 0 && kind == BlockKind::Paragraph;
@@ -281,6 +278,30 @@ fn paste_blocks(doc: &mut PageDoc, at: Caret, blocks: &[FragmentBlock]) -> Resul
         insert_tree(doc, below.0, below.1, block, &mut last)?;
     }
     finish_with_tail(doc, &last, &tail)
+}
+
+/// Pastes blocks starting with a table, which can't join a line's text: they go after the line, and
+/// the text that was after the caret follows them. An empty paragraph with nothing nested in it is
+/// replaced instead.
+fn paste_below_line(
+    doc: &mut PageDoc,
+    at: Caret,
+    blocks: &[FragmentBlock],
+    tail: &[TextSpan],
+    empty_line: bool,
+) -> Result<Caret, EditorError> {
+    let mut last = Placed {
+        block: at.block,
+        end: None,
+    };
+    for block in blocks {
+        let (parent, index) = top_level_after(doc, at.block, last.block)?;
+        insert_tree(doc, parent, index, block, &mut last)?;
+    }
+    if empty_line && doc.children(at.block)?.is_empty() {
+        doc.apply(PageCommand::DeleteBlocks { ids: vec![at.block] })?;
+    }
+    finish_with_tail(doc, &last, tail)
 }
 
 /// Pastes blocks right after `after` (and what is nested in it).
@@ -351,6 +372,14 @@ fn insert_tree(
     block: &FragmentBlock,
     last: &mut Placed,
 ) -> Result<usize, EditorError> {
+    if let BlockKind::Table { header_row } = block.kind {
+        let table = paste_table(doc, parent, index, block, header_row)?;
+        *last = Placed {
+            block: table,
+            end: None,
+        };
+        return Ok(index + 1);
+    }
     let id = insert_block(doc, parent, index, block.kind.clone())?;
     let end = if block.kind.has_text() {
         insert_spans(doc, id, 0, &block.text)?
@@ -372,6 +401,32 @@ fn insert_tree(
         }
         Ok(next)
     }
+}
+
+/// Builds the table `block` describes under `parent` at `index`: as many rows as it has, as many
+/// columns as its longest row (short rows get empty cells), each cell's formatted text filled in.
+fn paste_table(
+    doc: &mut PageDoc,
+    parent: Option<BlockId>,
+    index: usize,
+    block: &FragmentBlock,
+    header_row: bool,
+) -> Result<BlockId, EditorError> {
+    let rows: Vec<&[FragmentBlock]> = block
+        .children
+        .iter()
+        .filter(|row| row.kind == BlockKind::TableRow)
+        .map(|row| row.children.as_slice())
+        .collect();
+    let columns = rows.iter().map(|row| row.len()).max().unwrap_or(0).max(1);
+    let table = insert_table(doc, parent, index, (rows.len().max(1), columns), header_row)?;
+    let grid = doc.table_cells(table)?;
+    for (cells, ids) in rows.iter().zip(&grid) {
+        for (cell, &id) in cells.iter().zip(ids) {
+            insert_spans(doc, id, 0, &cell.text)?;
+        }
+    }
+    Ok(table)
 }
 
 fn insert_children(
@@ -497,7 +552,9 @@ fn nest(rows: Vec<(usize, FragmentBlock)>) -> Vec<FragmentBlock> {
             let Some((d, mut block)) = rows.next() else {
                 break;
             };
-            block.children = take(rows, d + 1);
+            // Keep what the block already holds (a table's rows) ahead of what nests under it.
+            let nested = take(rows, d + 1);
+            block.children.extend(nested);
             out.push(block);
         }
         out

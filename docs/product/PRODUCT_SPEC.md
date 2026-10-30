@@ -111,6 +111,8 @@ Mobile; P2P collaboration (maybe).
 | `Tab` / `Shift+Tab` | Indent under previous sibling / outdent to parent's level. Inside a code block: indent / outdent the caret's or selected lines by four spaces instead. |
 | Arrow up/down at first/last visual line | Move to previous/next block, keeping horizontal position. |
 | Paste multi-line text | Each line becomes a paragraph; markdown syntax is converted. |
+| Paste a Markdown table (header, `|---|` line, rows) | Becomes a table with a header row; cells keep their formatting. Rows separated by blank lines still join it when they start with `|`. Pasted into a cell, its cells go in as lines of text. |
+| Copy a table, or selected cells | Other apps get a Markdown table (plain text: tab-separated rows); pasted back into Leaf it is a table again. |
 | Paste a lone web address (`https://…`, `www.…`) | It goes in as a link whose text is the address; over selected text, that text becomes a link to it. Into a code block it stays plain text. |
 | Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |
@@ -119,7 +121,7 @@ Mobile; P2P collaboration (maybe).
 | `Enter` in a table cell | Line break inside the cell. |
 | `Backspace` at start of a table cell / `Delete` at its end | Nothing (cells never merge). If every cell is empty, `Backspace` deletes the table (one undo step). |
 | `Backspace` / `Delete` next to a table, or with it selected | The table is selected first; pressed again, it is deleted (one undo step). |
-| Selecting from one cell into another | Selects whole cells (the rectangle between them). `Backspace`/`Delete`/typing empty them, copy gives their text, formatting applies to all of it. A selection reaching from outside into a table takes the table whole. |
+| Selecting from one cell into another | Selects whole cells (the rectangle between them). `Backspace`/`Delete`/typing empty them, copy gives them as a table, formatting applies to all of it. A selection reaching from outside into a table takes the table whole. |
 
 Numbered list numbers are computed when rendering, never stored.
 

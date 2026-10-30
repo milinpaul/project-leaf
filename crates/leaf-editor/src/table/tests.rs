@@ -349,27 +349,6 @@ fn typing_over_selected_cells_empties_them_and_types_in_the_first() {
 }
 
 #[test]
-fn selected_cells_copy_as_one_paragraph_each_and_cut_empties_them() {
-    let mut p = Page::new(2, 2);
-    p.editor
-        .select_between(at(p.cell(0, 0), 0), at(p.cell(1, 1), 0))
-        .unwrap();
-    let Some(Fragment::Blocks(blocks)) = p.editor.copy().unwrap() else {
-        panic!("expected blocks");
-    };
-    let texts: Vec<String> = blocks
-        .iter()
-        .map(|b| {
-            assert_eq!(b.kind, BlockKind::Paragraph);
-            b.text.iter().map(|s| s.text.as_str()).collect()
-        })
-        .collect();
-    assert_eq!(texts, ["r0c0", "r0c1", "r1c0", "r1c1"]);
-    p.editor.cut().unwrap();
-    assert_eq!(p.grid(), [["", ""], ["", ""]]);
-}
-
-#[test]
 fn formatting_selected_cells_formats_all_their_text() {
     let mut p = Page::new(2, 2);
     p.editor
@@ -432,23 +411,6 @@ fn pasting_blocks_into_a_cell_puts_their_text_in_one_line_each() {
     assert_eq!(p.grid().len(), 1, "no blocks were added");
     p.editor.paste_text("- three\n- four").unwrap();
     assert_eq!(p.text(cell), "r0c0 one\ntwothree\nfour");
-}
-
-#[test]
-fn a_copied_table_pastes_as_a_paragraph_per_cell_for_now() {
-    let mut p = Page::new(2, 2);
-    p.editor.select_blocks(&[p.table]).unwrap();
-    let fragment = p.editor.copy().unwrap().unwrap();
-    p.put(p.below, 5);
-    p.editor.paste(&fragment).unwrap();
-    let texts: Vec<String> = p
-        .editor
-        .doc()
-        .root_blocks()
-        .into_iter()
-        .filter_map(|b| p.editor.doc().plain_text(b).unwrap())
-        .collect();
-    assert_eq!(texts, ["above", "belowr0c0", "r0c1", "r1c0", "r1c1"]);
 }
 
 #[test]
@@ -589,3 +551,5 @@ fn copying_a_whole_cell_copies_its_text() {
     p.editor.paste(&copied).unwrap();
     assert_eq!(p.text(p.below), "belowr1c0");
 }
+
+mod in_and_out;

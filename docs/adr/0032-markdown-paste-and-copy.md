@@ -58,9 +58,28 @@ Copying from Leaf should give other apps plain text and Markdown alongside Leaf'
 
 ## Consequences
 
-- Markdown features without blocks (tables, footnotes, HTML, images by URL) paste as text. Images by file come with
-  E05-S07.
+- Markdown features without blocks (footnotes, HTML, images by URL) paste as text. Images by file come with
+  E05-S07. Tables paste as tables since E16-S04 (below).
 - Markdown export of whole pages (Phase 1) can reuse the writer.
 - Plain English: paste text from anywhere and it becomes proper blocks. Each line is a paragraph, `# Title` becomes a
   heading, `- item` a bullet, `- [x]` a ticked to-do, `**bold**` bold, and so on. Copying from Leaf also gives other
   apps clean Markdown and plain text.
+
+## Update 2026-10-30 (E16-S04): tables
+
+- **Pasting:** a GitHub-style table (header line, `|---|` delimiter line with as many columns, rows) becomes a table
+  block with a header row (`clipboard/markdown/table.rs`).
+  - Outer pipes are optional, `\|` is a pipe in a cell, `<br>` a line break, and cells keep their inline formatting.
+  - Short rows get empty cells; extra cells are dropped (GFM's rule).
+  - Text copied from a rendered page often has blank lines between rows, so a row after blank lines still belongs to
+    the table when it starts with `|`. A pipe-less line after a blank line ends the table, so prose with a `|` in it
+    stays prose. A line with `|` but no delimiter line under it is never a table.
+- **Copying:** a table writes a Markdown table (first row as the header, which GFM requires; pipes escaped, line breaks
+  as `<br>`) and plain text as a line per row with cells separated by tabs, which spreadsheets read as cells.
+  Leaf's own fragment carries `table`, `table_row` and `table_cell` blocks (an additive change, so
+  `FRAGMENT_VERSION` stays 1; an older Leaf can't read the fragment and falls back to the Markdown).
+  Selected cells copy as a table of just those cells.
+- **Pasting a table** builds it with the table commands and fills each cell. It can't join a line's text, so it goes
+  below the line (or replaces an empty paragraph) and the text after the caret moves to a new line below it. Into a
+  cell, a table's cells go in as lines of text: tables never nest.
+

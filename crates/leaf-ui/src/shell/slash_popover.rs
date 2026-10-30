@@ -125,6 +125,7 @@ impl Shell {
                         Icon::new(match &item.action {
                             SlashAction::Block(kind) => kind_icon(kind),
                             SlashAction::Image => IconName::Image,
+                            SlashAction::Table => IconName::Table,
                         })
                         .small()
                         .text_color(muted),

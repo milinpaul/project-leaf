@@ -66,6 +66,7 @@ gpui_kit_assets::icon_assets!(
         Star,
         StarFill,
         StarOff,
+        Table,
         TextQuote,
         Trash,
         Type

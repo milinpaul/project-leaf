@@ -4,11 +4,12 @@
 //! Reading is line by line, following `BLOCK_MODEL.md` "Markdown mapping": `#`–`###` headings
 //! (deeper ones become heading 3), `-`/`*`/`+` bullets, `1.` numbers, `- [ ]`/`- [x]` to-dos, `>`
 //! quotes, fenced code with its language, `---` dividers, and nesting by indentation (two spaces a
-//! level). Every other line is a paragraph of its own, as pasted plain text expects; a line indented
-//! under a list item or quote without a marker of its own continues it. Inline formatting is read by
-//! [`inline`].
+//! level), and tables ([`table`], E16-S04). Every other line is a paragraph of its own, as pasted
+//! plain text expects; a line indented under a list item or quote without a marker of its own
+//! continues it. Inline formatting is read by [`inline`].
 
 pub(crate) mod inline;
+mod table;
 
 use leaf_model::{BlockKind, TextSpan};
 
@@ -71,7 +72,10 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
     let mut fence: Option<(String, usize, String, Vec<String>)> = None;
     // Whether the last block is a list item or quote, which indented lines without a marker continue.
     let mut open_item: Option<usize> = None;
-    for line in text.split('\n') {
+    let lines: Vec<&str> = text.split('\n').collect();
+    let mut next = 0;
+    while let Some(&line) = lines.get(next) {
+        next += 1;
         if let Some((marker, fence_indent, language, lines)) = &mut fence {
             if line.trim_start().starts_with(marker.as_str())
                 && line.trim().chars().all(|c| c == '`' || c == '~')
@@ -106,6 +110,12 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
                 Vec::new(),
             ));
             open_item = None;
+            continue;
+        }
+        if let Some((table, after)) = table::read(&lines, next - 1) {
+            rows.push((columns / 2, table));
+            open_item = None;
+            next = after;
             continue;
         }
         let start = block_start(content);
@@ -199,8 +209,13 @@ impl Fragment {
     pub fn to_plain_text(&self) -> String {
         fn lines(blocks: &[FragmentBlock], out: &mut Vec<String>) {
             for block in blocks {
-                if block.kind != BlockKind::Divider {
-                    out.push(block.text.iter().map(|s| s.text.as_str()).collect());
+                match block.kind {
+                    BlockKind::Divider => {}
+                    BlockKind::Table { .. } => {
+                        table::plain(block, out);
+                        continue;
+                    }
+                    _ => out.push(block.text.iter().map(|s| s.text.as_str()).collect()),
                 }
                 lines(&block.children, out);
             }
@@ -270,12 +285,12 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                     out.push(format!("{pad}*{text}*"));
                 }
             }
-            // Until E16-S04 writes Markdown tables, a table's cells come out as one line each.
-            BlockKind::Paragraph
-            | BlockKind::Unknown { .. }
-            | BlockKind::Table { .. }
-            | BlockKind::TableRow
-            | BlockKind::TableCell => {
+            BlockKind::Table { .. } => {
+                table::write(block, &pad, out);
+                continue;
+            }
+            // Rows and cells only travel inside their table; on their own they are lines of text.
+            BlockKind::Paragraph | BlockKind::Unknown { .. } | BlockKind::TableRow | BlockKind::TableCell => {
                 out.push(format!("{pad}{}", escape_start(&text)));
             }
         }
