@@ -209,3 +209,48 @@ fn clicking_a_block_at_the_end_of_a_short_page_keeps_the_scroll_position(cx: &mu
         "the page stayed where it was scrolled to"
     );
 }
+
+/// E17-S06, the real cause: on macOS every click goes to the system's text input first, which calls
+/// `unmark_text` before the page sees the click. With the caret still near the top, that scrolled the
+/// page back up to it.
+#[gpui::test]
+fn the_click_time_unmark_text_call_keeps_the_scroll_position(cx: &mut TestAppContext) {
+    let (shell, cx) = open_shell(cx);
+    big_page(&shell, cx, 2_000);
+    draw(cx);
+    // The caret stays in the first block while the page scrolls away from it.
+    let first = shell.read_with(cx, |shell, _| shell.blocks.list.rows[0].id);
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            shell.focus_page_at(leaf_model::Caret { block: first, at: 0 }, window, cx);
+        });
+    });
+    draw(cx);
+    let inside = shell.read_with(cx, |shell, _| {
+        shell.blocks.list.state.bounds_for_item(1).unwrap().center()
+    });
+    for _ in 0..60 {
+        cx.simulate_event(gpui::ScrollEvent {
+            position: inside,
+            delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.0), px(-400.0))),
+            ..Default::default()
+        });
+        draw(cx);
+    }
+    let before = shell.read_with(cx, |shell, _| shell.blocks.list.state.logical_scroll_top());
+    assert!(
+        before.item_ix > 100,
+        "the wheel scrolled well down the page: {before:?}"
+    );
+    cx.update(|window, cx| {
+        shell.update(cx, |shell, cx| {
+            gpui::EntityInputHandler::unmark_text(shell, window, cx)
+        });
+    });
+    draw(cx);
+    let after = shell.read_with(cx, |shell, _| shell.blocks.list.state.logical_scroll_top());
+    assert_eq!(
+        after.item_ix, before.item_ix,
+        "the page stayed where it was scrolled to"
+    );
+}
