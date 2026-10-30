@@ -5,7 +5,7 @@
 use gpui::{
     AnyElement, ClickEvent, Context, InteractiveElement as _, IntoElement, ParentElement, Styled, Window, div,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::PageId;
@@ -51,13 +51,13 @@ impl Shell {
             return None;
         }
         let danger = cx.theme().danger;
-        let restore = Button::new("banner-restore")
+        let restore = crate::theme::button("banner-restore")
             .debug_selector(|| "banner-restore".into())
             .label("Restore page")
             .outline()
             .small()
             .on_click(cx.listener(move |shell, _: &ClickEvent, _, cx| shell.restore_page(page, cx)));
-        let delete = Button::new("banner-delete")
+        let delete = crate::theme::button("banner-delete")
             .debug_selector(|| "banner-delete".into())
             .label("Delete forever")
             .danger()

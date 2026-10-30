@@ -8,7 +8,7 @@ use gpui::{
     AnyElement, App, ClickEvent, Context, FocusHandle, FontWeight, InteractiveElement as _, IntoElement,
     MouseButton, MouseDownEvent, ParentElement, SharedString, Styled, div, px,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::menu::{DropdownMenu as _, PopupMenu};
 use gpui_component::sidebar::SidebarHeader;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
@@ -104,7 +104,7 @@ impl Shell {
                 let current = self.storage.as_ref().map(|storage| storage.root().to_owned());
                 move |menu, _, cx| workspace_menu(menu, &focus, current.as_deref(), cx)
             });
-        let compose = Button::new("new-page")
+        let compose = crate::theme::button("new-page")
             .debug_selector(|| "new-page".into())
             .icon(Icon::new(IconName::SquarePen))
             .ghost()
@@ -126,7 +126,7 @@ impl Shell {
     /// "Pages", with a "+" that shows when the pointer is over the heading and adds a top-level page.
     fn render_pages_heading(cx: &mut Context<Self>) -> AnyElement {
         let muted = cx.theme().muted_foreground;
-        let add = Button::new("add-page")
+        let add = crate::theme::button("add-page")
             .debug_selector(|| "add-page".into())
             .icon(Icon::new(IconName::Plus))
             .ghost()
@@ -189,6 +189,7 @@ impl Shell {
         h_flex()
             .id(id)
             .debug_selector(move || id.to_owned())
+            .cursor_pointer()
             .h(px(30.0))
             .px_2()
             .gap_2()

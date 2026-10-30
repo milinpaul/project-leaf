@@ -43,11 +43,11 @@ impl Shell {
             PageCover::Unknown(_) => div().size_full().bg(cx.theme().muted).into_any_element(),
         };
         let open = self.cover_picker.is_some();
-        let change = Button::new("change-cover")
+        let change = crate::theme::button("change-cover")
             .debug_selector(|| "change-cover".into())
             .small()
             .label("Change cover");
-        let remove = Button::new("remove-cover")
+        let remove = crate::theme::button("remove-cover")
             .debug_selector(|| "remove-cover".into())
             .small()
             .label("Remove")

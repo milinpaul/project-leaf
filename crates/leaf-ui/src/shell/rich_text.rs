@@ -124,6 +124,8 @@ impl Shell {
             .py(look.pad)
             .line_height(look.line_height)
             .min_h(look.line_height + look.pad * 2.0)
+            // The text cursor (I-beam) over text, so the page reads as somewhere to type (E07-S12).
+            .cursor_text()
             .child(styled)
             .child(overlay)
             .on_mouse_down(
