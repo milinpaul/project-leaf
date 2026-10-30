@@ -4,3 +4,4 @@
 {"run_id":"1793374525-561192205","line":118,"new":{"module_name":"leaf_editor__keys__tests__tasks","snapshot_name":"the_view_carries_an_action_items_fields","metadata":{"source":"crates/leaf-editor/src/keys/tests/tasks.rs","assertion_line":118,"expression":"rows[0].style"},"snapshot":"Task {\n    done: false,\n    due: Some(\n        DueDate {\n            year: 2026,\n            month: 12,\n            day: 1,\n        },\n    ),\n    time: None,\n    priority: Some(\n        Medium,\n    ),\n}"},"old":{"module_name":"leaf_editor__keys__tests__tasks","metadata":{},"snapshot":""}}
 {"run_id":"1793374535-60816033","line":118,"new":null,"old":null}
 {"run_id":"1793375002-863359750","line":118,"new":null,"old":null}
+{"run_id":"2be4f06b-816f-4a6c-8834-f5e73810453b","line":118,"new":null,"old":null}
