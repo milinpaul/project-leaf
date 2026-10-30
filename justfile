@@ -84,9 +84,9 @@ screenshot *args:
 icons:
     python3 scripts/icons.py
 
-# Benchmarks
+# Benchmarks for the performance budgets (crates/leaf-bench; ADR 0056)
 bench:
-    cargo bench --workspace
+    cargo bench -p leaf-bench --bench budgets
 
 # Install the dev tools once. lefthook is a Go tool, not a crate: install it first with
 # `brew install lefthook` (macOS/Linux) or `scoop install lefthook` (Windows).
