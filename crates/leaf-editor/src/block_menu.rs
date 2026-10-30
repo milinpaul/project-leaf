@@ -20,6 +20,26 @@ pub(crate) struct OpenMenu {
     selected: usize,
     /// The highlighted kind while the "Turn into" list is open.
     kind: Option<usize>,
+    /// The row under the pointer, which `settle_hover` acts on.
+    hovered: Option<Hovered>,
+}
+
+/// A row of the menu, by position.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Hovered {
+    Main(usize),
+    Kind(usize),
+}
+
+/// What the pointer's move will do to the "Turn into" list once it rests there: the UI waits a moment
+/// and then calls [`PageEditor::settle_hover`], so passing over rows on the way to the list (or
+/// diagonally across the main entries into it) doesn't open or close it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HoverChange {
+    /// Over "Turn into" with the list closed: open it.
+    OpenKinds,
+    /// Over another main entry with the list open: close it and highlight that entry.
+    CloseKinds,
 }
 
 /// One entry of the block menu.
@@ -151,6 +171,7 @@ impl PageEditor {
             block,
             selected: 0,
             kind: None,
+            hovered: None,
         });
         self.block_menu()
     }
@@ -253,29 +274,76 @@ impl PageEditor {
         self.block_menu()
     }
 
-    /// The mouse over `entry`: highlights it. Greyed-out entries aren't highlighted, and moving onto
-    /// another main entry closes the "Turn into" list.
-    pub fn highlight(&mut self, entry: &MenuEntry) -> Result<(), EditorError> {
+    /// The mouse over `entry`. With the "Turn into" list closed, a main entry is highlighted at once; a
+    /// kind in the open list too. Opening or closing the list waits: the answer says which one the UI
+    /// should settle (with [`Self::settle_hover`]) after a short pause; it is given only when the
+    /// pointer comes onto a new row, so moving within one row doesn't keep restarting the pause.
+    /// Greyed-out entries aren't highlighted, but still count as "away from the list".
+    pub fn highlight(&mut self, entry: &MenuEntry) -> Result<Option<HoverChange>, EditorError> {
         let Some(menu) = self.block_menu()? else {
-            return Ok(());
+            return Ok(None);
         };
         let Some(open) = &mut self.menu else {
-            return Ok(());
+            return Ok(None);
         };
-        let find = |items: &[MenuItem]| items.iter().position(|i| &i.entry == entry && i.enabled);
-        if let Some(at) = menu.kinds.as_ref().and_then(|(kinds, _)| find(kinds)) {
+        if let Some(at) = menu
+            .kinds
+            .as_ref()
+            .and_then(|(kinds, _)| kinds.iter().position(|i| &i.entry == entry))
+        {
             open.kind = Some(at);
-        } else if let Some(at) = find(&menu.items) {
-            open.selected = at;
-            if *entry != MenuEntry::TurnInto {
-                open.kind = None;
-            }
+            open.hovered = Some(Hovered::Kind(at));
+            return Ok(None);
         }
-        Ok(())
+        let Some(at) = menu.items.iter().position(|i| &i.entry == entry) else {
+            return Ok(None);
+        };
+        let moved = open.hovered != Some(Hovered::Main(at));
+        open.hovered = Some(Hovered::Main(at));
+        let enabled = menu.items[at].enabled;
+        let change = match (menu.kinds.is_some(), *entry == MenuEntry::TurnInto) {
+            (false, turn_into) => {
+                if enabled {
+                    open.selected = at;
+                }
+                (turn_into && enabled).then_some(HoverChange::OpenKinds)
+            }
+            (true, true) => None,
+            (true, false) => Some(HoverChange::CloseKinds),
+        };
+        Ok(change.filter(|_| moved))
     }
 
-    /// A click on `entry`: "Turn into" opens or closes the list of kinds; anything else runs the
-    /// block action (one undo step) and closes the menu. Greyed-out entries do nothing.
+    /// After the pointer has rested a moment: opens the "Turn into" list if it is over "Turn into",
+    /// or closes it (highlighting the entry there) if it is over another main entry. Over the list
+    /// itself, or with the menu closed, nothing changes.
+    pub fn settle_hover(&mut self) -> Result<Option<BlockMenu>, EditorError> {
+        let Some(menu) = self.block_menu()? else {
+            return Ok(None);
+        };
+        let Some(open) = &mut self.menu else {
+            return Ok(None);
+        };
+        if let Some(Hovered::Main(at)) = open.hovered
+            && let Some(item) = menu.items.get(at)
+        {
+            match (item.entry == MenuEntry::TurnInto, open.kind) {
+                (true, None) if item.enabled => open.kind = Some(0),
+                (false, Some(_)) => {
+                    open.kind = None;
+                    if item.enabled {
+                        open.selected = at;
+                    }
+                }
+                _ => {}
+            }
+        }
+        self.block_menu()
+    }
+
+    /// A click on `entry`: "Turn into" opens the list of kinds (and keeps it open if hovering already
+    /// did); anything else runs the block action (one undo step) and closes the menu. Greyed-out
+    /// entries do nothing.
     pub fn choose(&mut self, entry: MenuEntry) -> Result<Option<BlockMenu>, EditorError> {
         let Some(menu) = self.block_menu()? else {
             return Ok(None);
@@ -290,10 +358,7 @@ impl PageEditor {
         let action = match entry {
             MenuEntry::TurnInto => {
                 if let Some(open) = &mut self.menu {
-                    open.kind = match open.kind {
-                        Some(_) => None,
-                        None => Some(0),
-                    };
+                    open.kind = open.kind.or(Some(0));
                 }
                 return self.block_menu();
             }

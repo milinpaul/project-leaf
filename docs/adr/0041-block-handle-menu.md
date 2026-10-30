@@ -18,6 +18,11 @@ and tests could not drive it without a window.
   the menu is for, the highlighted entry and whether the "Turn into" list is open. Entries are worked out each time,
   so a greyed-out entry always matches what the page allows. Keys (`MenuKey`), hovers (`highlight`) and clicks
   (`choose`) all go through it, and choosing runs `block_action` as one undo step.
+- **Hovering "Turn into" opens its list; crossing other rows doesn't close it** (amended in E17-S03). The editor
+  remembers the row under the pointer. `highlight` says whether resting there would open or close the list
+  (`HoverChange`), and the UI waits (150 ms to open, 300 ms to close) before calling `settle_hover`, which acts on
+  wherever the pointer is by then. So passing over "Turn into" doesn't flash the list open, and a diagonal path into
+  the list across Duplicate or Move up keeps it open. A click on "Turn into" opens the list (it no longer toggles).
 - **Move up / Move down** are new `BlockAction`s. They move the action's blocks (one block, or the selection) one
   place among their siblings with the existing `MoveBlocks` command, children included. At the first or last sibling,
   or when the selected blocks have different parents, nothing happens and the entry is greyed out. Moving never

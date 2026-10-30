@@ -34,7 +34,7 @@ mod view;
 mod workspace_editor;
 
 pub use block_actions::BlockAction;
-pub use block_menu::{BlockMenu, MenuEntry, MenuItem, MenuKey, turn_into_kinds};
+pub use block_menu::{BlockMenu, HoverChange, MenuEntry, MenuItem, MenuKey, turn_into_kinds};
 pub use caret::{LineLayout, Motion, Vertical};
 pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, language_label};

@@ -1,9 +1,9 @@
-//! Tests for the block menu (E07-S04): its entries, keyboard and clicks.
+//! Tests for the block menu (E07-S04, E17-S03): its entries, keyboard, clicks and hovering.
 
 use leaf_model::BlockKind;
 
 use crate::block_actions::tests::{at, outline, p, page, row};
-use crate::{MenuEntry, MenuKey, PageEditor};
+use crate::{HoverChange, MenuEntry, MenuKey, PageEditor};
 
 fn labels(editor: &mut PageEditor) -> Vec<(&'static str, bool)> {
     editor
@@ -121,8 +121,8 @@ fn clicks_choose_entries_directly() {
             .unwrap()
             .unwrap()
             .kinds
-            .is_none(),
-        "toggles"
+            .is_some(),
+        "a second click keeps it open (hovering may have opened it already)"
     );
     assert_eq!(editor.choose(MenuEntry::Duplicate).unwrap(), None);
     assert_eq!(outline(&editor).len(), 3);
@@ -190,13 +190,101 @@ fn the_mouse_highlights_entries_but_not_greyed_out_ones() {
         "still open over Turn into"
     );
     editor.highlight(&MenuEntry::Duplicate).unwrap();
+    editor.settle_hover().unwrap();
     let menu = editor.block_menu().unwrap().unwrap();
     assert_eq!(
         (menu.selected, menu.kinds),
         (1, None),
-        "another entry closes the list"
+        "resting on another entry closes the list"
     );
     editor.close_block_menu();
     editor.highlight(&MenuEntry::Delete).unwrap();
     assert_eq!(editor.block_menu().unwrap(), None);
+}
+
+#[test]
+fn resting_on_turn_into_opens_the_list() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(0, "b")]);
+    editor.open_block_menu(ids[1]).unwrap();
+    editor.highlight(&MenuEntry::Duplicate).unwrap();
+    assert_eq!(
+        editor.highlight(&MenuEntry::TurnInto).unwrap(),
+        Some(HoverChange::OpenKinds)
+    );
+    let menu = editor.block_menu().unwrap().unwrap();
+    assert_eq!(
+        (menu.selected, menu.kinds.is_some()),
+        (0, false),
+        "highlighted at once, opened later"
+    );
+    let menu = editor.settle_hover().unwrap().unwrap();
+    assert_eq!(menu.kinds.map(|(_, at)| at), Some(0));
+    assert_eq!(
+        editor.highlight(&MenuEntry::TurnInto).unwrap(),
+        None,
+        "already open"
+    );
+}
+
+#[test]
+fn passing_over_turn_into_does_not_open_the_list() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(0, "b")]);
+    editor.open_block_menu(ids[1]).unwrap();
+    editor.highlight(&MenuEntry::TurnInto).unwrap();
+    assert_eq!(editor.highlight(&MenuEntry::Duplicate).unwrap(), None);
+    let menu = editor.settle_hover().unwrap().unwrap();
+    assert_eq!((menu.selected, menu.kinds), (1, None));
+}
+
+#[test]
+fn crossing_other_entries_into_the_list_keeps_it_open() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(0, "b")]);
+    editor.open_block_menu(ids[1]).unwrap();
+    editor.choose(MenuEntry::TurnInto).unwrap();
+    // Diagonally from "Turn into" down to "Heading 2", over Duplicate and a greyed-out Move down.
+    assert_eq!(
+        editor.highlight(&MenuEntry::Duplicate).unwrap(),
+        Some(HoverChange::CloseKinds)
+    );
+    assert_eq!(
+        editor.highlight(&MenuEntry::MoveDown).unwrap(),
+        Some(HoverChange::CloseKinds)
+    );
+    assert_eq!(
+        editor.highlight(&MenuEntry::MoveDown).unwrap(),
+        None,
+        "moving within the same row doesn't restart the pause"
+    );
+    let menu = editor.block_menu().unwrap().unwrap();
+    assert_eq!(
+        (menu.selected, menu.kinds.is_some()),
+        (0, true),
+        "nothing changes until the pointer rests"
+    );
+    let heading = MenuEntry::Kind(BlockKind::Heading { level: 2 });
+    assert_eq!(editor.highlight(&heading).unwrap(), None);
+    let menu = editor.settle_hover().unwrap().unwrap();
+    assert_eq!(
+        menu.kinds.map(|(_, at)| at),
+        Some(2),
+        "still open, Heading 2 highlighted"
+    );
+    assert_eq!(editor.choose(heading).unwrap(), None);
+    assert_eq!(
+        editor.doc().kind(ids[1]).unwrap(),
+        BlockKind::Heading { level: 2 }
+    );
+}
+
+#[test]
+fn resting_on_a_greyed_out_entry_closes_the_list_without_highlighting_it() {
+    let (mut editor, ids) = page(&[p(0, "a"), p(0, "b")]);
+    editor.open_block_menu(ids[1]).unwrap();
+    editor.choose(MenuEntry::TurnInto).unwrap();
+    editor.highlight(&MenuEntry::MoveDown).unwrap();
+    let menu = editor.settle_hover().unwrap().unwrap();
+    assert_eq!((menu.selected, menu.kinds), (0, None));
+    editor.close_block_menu();
+    assert_eq!(editor.settle_hover().unwrap(), None, "a closed menu stays closed");
+    assert_eq!(editor.highlight(&MenuEntry::TurnInto).unwrap(), None);
 }

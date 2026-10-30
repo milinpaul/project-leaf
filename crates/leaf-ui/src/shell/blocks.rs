@@ -47,6 +47,8 @@ pub(super) struct PageState {
     pub(super) menu_at: Point<Pixels>,
     /// The block whose menu is open as of this frame, so its handle stays shown.
     pub(super) menu_block: Option<BlockId>,
+    /// The pause before the block menu's "Turn into" list opens or closes under the pointer.
+    pub(super) menu_hover: Option<Task<()>>,
     /// The block a search result opened at, tinted for a moment.
     pub(super) flash: super::found::Flash,
     /// Where each row was drawn in the last frame, for dropping dragged blocks.
