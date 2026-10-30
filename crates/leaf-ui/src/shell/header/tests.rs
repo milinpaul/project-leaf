@@ -175,3 +175,13 @@ fn the_picker_offers_every_built_in_cover(cx: &mut TestAppContext) {
     click(cx, "cover-night");
     assert_eq!(cover(&shell, cx), Some(PageCover::Builtin(BuiltinCover::Night)));
 }
+
+#[gpui::test]
+fn the_page_starts_with_its_header_not_a_toolbar(cx: &mut TestAppContext) {
+    let (_shell, cx) = open_window(cx);
+    let header = cx.debug_bounds("page-header").expect("the header is drawn");
+    // Only the page's top padding sits above the header; the old row of "Turn into" buttons is gone.
+    let top = f32::from(header.top());
+    eprintln!("page header top: {top}");
+    assert!(top < 80.0, "the header starts at the top of the page: {top}");
+}
