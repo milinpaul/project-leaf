@@ -16,6 +16,7 @@ use leaf_core::{DatabaseId, PageId};
 use leaf_model::{Database, DatabaseCommand, ModelError, Outcome, WorkspaceCommand};
 
 use super::{EditorError, WorkspaceEditor};
+use crate::DatabaseEditor;
 
 impl WorkspaceEditor {
     /// Adds an empty database page at the end of `parent`'s pages (or the top level), with its database
@@ -39,25 +40,33 @@ impl WorkspaceEditor {
         else {
             unreachable!("CreateDatabasePage always reports the page it created");
         };
-        self.databases.insert(database, Database::new());
+        self.databases
+            .insert(database, DatabaseEditor::new(Database::new()));
         Ok((page, database))
     }
 
     /// Hands over a database as loaded from disk. One already in memory keeps its live copy (it may have newer
     /// edits).
     pub fn insert_database(&mut self, id: DatabaseId, database: Database) {
-        self.databases.entry(id).or_insert(database);
+        self.databases
+            .entry(id)
+            .or_insert_with(|| DatabaseEditor::new(database));
     }
 
     /// A loaded database, read-only.
     #[must_use]
     pub fn database(&self, id: DatabaseId) -> Option<&Database> {
-        self.databases.get(&id)
+        self.databases.get(&id).map(DatabaseEditor::database)
+    }
+
+    /// A loaded database as a table, to read its view and edit its cells (E09-S04).
+    pub fn database_editor(&mut self, id: DatabaseId) -> Option<&mut DatabaseEditor> {
+        self.databases.get_mut(&id)
     }
 
     /// Every loaded database, for saving.
     pub fn loaded_databases(&self) -> impl Iterator<Item = (DatabaseId, &Database)> {
-        self.databases.iter().map(|(id, db)| (*id, db))
+        self.databases.iter().map(|(id, db)| (*id, db.database()))
     }
 
     /// The database `page` is, when it is a database page.
@@ -68,7 +77,7 @@ impl WorkspaceEditor {
             .ok_or_else(|| ModelError::NotADatabasePage(page).into())
     }
 
-    fn loaded_mut(&mut self, id: DatabaseId) -> Result<&mut Database, EditorError> {
+    fn loaded_mut(&mut self, id: DatabaseId) -> Result<&mut DatabaseEditor, EditorError> {
         self.databases
             .get_mut(&id)
             .ok_or(EditorError::DatabaseNotLoaded(id))
@@ -83,7 +92,7 @@ impl WorkspaceEditor {
         now_ms: i64,
     ) -> Result<PageId, EditorError> {
         let id = self.database_of(database_page)?;
-        let rows = self.loaded_mut(id)?.rows().len();
+        let rows = self.loaded_mut(id)?.database().rows().len();
         if index > rows {
             return Err(ModelError::IndexOutOfRange { index, len: rows }.into());
         }
@@ -127,7 +136,7 @@ impl WorkspaceEditor {
     /// `now_ms`), and a trashed page whose row is back comes out. Outside the workspace's undo. Also needed after
     /// changes from another device are merged into the database (Phase 2).
     pub fn reconcile_rows(&mut self, id: DatabaseId, now_ms: i64) -> Result<(), EditorError> {
-        let Some(database) = self.databases.get(&id) else {
+        let Some(database) = self.databases.get(&id).map(DatabaseEditor::database) else {
             return Err(EditorError::DatabaseNotLoaded(id));
         };
         let mut to_trash = Vec::new();
@@ -158,13 +167,13 @@ impl WorkspaceEditor {
             return Ok(());
         };
         let database = self.loaded_mut(id)?;
-        if database.contains_row(page) {
+        if database.database().contains_row(page) {
             return Ok(());
         }
         match database.apply(DatabaseCommand::RestoreRow { row: page }) {
             // Never a row here (its add was undone): it comes back at the end.
             Err(ModelError::RowNotFound(_)) => {
-                let index = database.rows().len();
+                let index = database.database().rows().len();
                 database.apply(DatabaseCommand::AddRow { row: page, index })?;
             }
             other => {

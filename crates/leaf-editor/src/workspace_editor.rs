@@ -6,7 +6,7 @@
 use std::collections::{HashMap, HashSet};
 
 use leaf_core::{DatabaseId, PageId};
-use leaf_model::{Database, ModelError, PageDoc, Workspace, WorkspaceCommand};
+use leaf_model::{ModelError, PageDoc, Workspace, WorkspaceCommand};
 
 use crate::{BuiltinCover, PageCover, PageEditor};
 use thiserror::Error;
@@ -62,7 +62,7 @@ pub struct WorkspaceEditor {
     /// Pages whose title, icon or cover changed since the last [`WorkspaceEditor::stamp_edits`].
     retitled: HashSet<PageId>,
     /// The databases loaded so far (from disk, or new), Phase 1.
-    databases: HashMap<DatabaseId, Database>,
+    databases: HashMap<DatabaseId, crate::DatabaseEditor>,
 }
 
 impl WorkspaceEditor {

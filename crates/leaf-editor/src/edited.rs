@@ -53,7 +53,7 @@ pub fn edited_on(at: i64, offset_minutes: i32) -> String {
 /// Year, month (1 to 12) and day (1 to 31) of the day `days` after 1 January 1970, in the
 /// proleptic Gregorian calendar. Howard Hinnant's `civil_from_days`, valid far beyond any real
 /// timestamp.
-fn civil_from_days(days: i64) -> (i64, i64, i64) {
+pub(crate) fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let z = days + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z.rem_euclid(146_097);
