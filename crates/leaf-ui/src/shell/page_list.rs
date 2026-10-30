@@ -76,11 +76,28 @@ impl PageList {
         item.checked_sub(HEADER_ITEMS).and_then(|i| self.rows.get(i))
     }
 
-    /// Scrolls so the row of `block` is on screen.
+    /// Scrolls so the row of `block` is on screen, and leaves the page alone if it already is.
+    ///
+    /// GPUI's `scroll_to_reveal_item` lines a row up with the bottom of the view even when the row is
+    /// in view, which can scroll *up*: with the top of the window inside a tall first item (a page
+    /// cover above the title), clicking any block jumped to the very top (E17-S06). A row taller than
+    /// the view that is partly on screen counts as shown, so clicking in a long paragraph doesn't move
+    /// the page either.
     pub(super) fn reveal(&self, block: BlockId) {
-        if let Some(i) = self.rows.iter().position(|row| row.id == block) {
-            self.state.scroll_to_reveal_item(HEADER_ITEMS + i);
+        let Some(i) = self.rows.iter().position(|row| row.id == block) else {
+            return;
+        };
+        let item = HEADER_ITEMS + i;
+        if let Some(row) = self.state.bounds_for_item(item) {
+            let view = self.state.viewport_bounds();
+            let inside = row.top() >= view.top() && row.bottom() <= view.bottom();
+            let covers_view =
+                row.top() < view.bottom() && row.bottom() > view.top() && row.size.height > view.size.height;
+            if inside || covers_view {
+                return;
+            }
         }
+        self.state.scroll_to_reveal_item(item);
     }
 }
 
