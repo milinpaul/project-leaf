@@ -25,7 +25,7 @@ an emoji. Then it splits and rejoins a paragraph in the middle and types into it
 expected (kind, depth and text), and the saved page reads back the same.
 
 Still to do: writing and editing such a document by hand in the app (mouse selection, drag, paste from other apps).
-The Mac's screen was locked for most of this pass.
+The Mac's screen was locked for most of this pass; this and the kill test in item 4 are story E08-S09.
 
 ## 2. Every editor rule has a test
 
