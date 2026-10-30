@@ -128,7 +128,9 @@ impl Shell {
                 shell.table_edit(table, TableEdit::InsertColumn(columns), window, cx);
             }));
 
+        // Never squeezed to the box's width: the grid keeps its full width, which is what scrolls.
         let body = h_flex()
+            .flex_none()
             .items_stretch()
             .child(v_flex().child(grid).child(add_row))
             .child(add_column);
@@ -141,6 +143,7 @@ impl Shell {
             .debug_selector(move || format!("table-{table}"))
             .group(group)
             .w_full()
+            .flex()
             .ml(super::block_row::indent_of(row) - px(HANDLE))
             .track_scroll(&scroll)
             .overflow_x_scroll()

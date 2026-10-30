@@ -148,7 +148,7 @@ fn a_click_puts_the_caret_in_a_cell_and_typing_goes_there(cx: &mut TestAppContex
     let (shell, cx) = open(&path, page, cx);
     let cell = cells(&shell, cx, table)[1][1];
     let at = cx.debug_bounds(selector("table-cell", cell)).unwrap();
-    cx.simulate_click(point(at.right() - px(4.0), at.center().y), Modifiers::none());
+    cx.simulate_click(at.center(), Modifiers::none());
     let caret = shell.update(cx, |shell, _| shell.page().unwrap().caret().unwrap().unwrap());
     assert_eq!(caret.block, cell);
     cx.simulate_input("!");

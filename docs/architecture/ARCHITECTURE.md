@@ -167,7 +167,13 @@ reshape a table, and the general block commands refuse to touch a row or cell on
 (`BlockStyle::Table`, `BlockStyle::TableCell { row, column, header }`); Tab moves between cells (adding a row at
 the end), Enter types a line break, Backspace and Delete never merge cells, Up/Down keep to the column, and a
 selection from one cell into another is `Selection::Cells`, the rectangle between them (ADR 0063). Anything that acts on blocks
-(block menu, drag, nesting, a selection reaching into a table) takes the table whole. Drawing the grid is E16-S03.
+(block menu, drag, nesting, a selection reaching into a table) takes the table whole. In the window
+(`leaf-ui/src/shell/table_row.rs`, E16-S03) the table's row draws the whole grid and the cell rows after it draw
+nothing, so the list stays in step with the view; each cell uses the same rich-text drawing as any block, so clicks,
+the caret, selection and marks work unchanged. Columns are a fixed 160 px; a table wider than the page scrolls
+sideways inside its own box (a horizontal swipe or Shift+wheel), never the page. Hover controls ("+" under and
+beside the grid, a handle per row and column with a menu) call `PageEditor::edit_table` with a `TableEdit`: one
+table command and one undo step, the caret following the edit.
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
