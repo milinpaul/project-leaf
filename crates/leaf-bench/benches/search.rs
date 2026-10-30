@@ -2,24 +2,23 @@
 //!
 //! Measures a full rebuild of the index, typed queries through the search bar's read-only
 //! connection (p95 must stay under 50 ms) and re-indexing one edited page the way the background
-//! worker does after a save (p95 under 20 ms). Prints the numbers and fails when a budget is missed.
-//! Run with `just bench-search` (or `cargo bench -p leaf-search`); timings only mean something in
-//! the optimised build `cargo bench` uses.
+//! worker does after a save (p95 under 20 ms). Prints the numbers and fails when a budget is missed,
+//! unless `LEAF_BENCH_RECORD_ONLY` is set: CI only records them, since shared runners are too noisy
+//! to judge a budget by (ADR 0056). Run with `just bench` or `just bench-search`; timings only mean
+//! something in the optimised build `cargo bench` uses.
 
 use std::collections::HashMap;
 use std::error::Error;
-use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
+use leaf_bench::{SEED, Scratch};
 use leaf_core::PageId;
 use leaf_fixtures::{BIG_WORKSPACE_PAGES, BLOCKS_PER_PAGE, big_workspace};
 use leaf_model::{PageDoc, Workspace};
 use leaf_search::{PageSource, PageVersion, SavedVersions, SearchIndex, Searcher, SourceError, Syncer};
 
-/// The fixture's seed: a fixed one, so every run measures the same workspace.
-const SEED: u64 = 42;
 /// Budget for one query, at the 95th percentile.
 const QUERY_BUDGET: Duration = Duration::from_millis(50);
 /// Budget for re-indexing one edited page, at the 95th percentile.
@@ -99,15 +98,6 @@ impl PageSource for Saved {
     }
 }
 
-/// A folder for the index, removed when dropped.
-struct TempDir(PathBuf);
-
-impl Drop for TempDir {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
-}
-
 /// The time below which `share` of `times` fall (`times` sorted).
 fn percentile(times: &[Duration], share: f64) -> Duration {
     #[expect(
@@ -156,17 +146,16 @@ fn run() -> Result<bool, Box<dyn Error + Send + Sync>> {
         saved.save_page(*page, doc.to_bytes()?);
     }
 
-    let dir = TempDir(std::env::temp_dir().join(format!("leaf-search-bench-{}", std::process::id())));
-    let _ = std::fs::remove_dir_all(&dir.0);
-    std::fs::create_dir_all(&dir.0)?;
-    let (index, _) = SearchIndex::open(&dir.0)?;
+    let dir = Scratch::new();
+    std::fs::create_dir_all(dir.path())?;
+    let (index, _) = SearchIndex::open(dir.path())?;
     let mut syncer = Syncer::new(index, saved.clone());
 
     let started = Instant::now();
     syncer.rebuild(&|| false)?;
     println!("full rebuild: {:.2} s", started.elapsed().as_secs_f64());
 
-    let searcher = Searcher::open(&dir.0)?;
+    let searcher = Searcher::open(dir.path())?;
     let mut times = Vec::with_capacity(QUERIES.len() * QUERY_RUNS);
     for query in QUERIES {
         let mut slowest = Duration::ZERO;
@@ -200,6 +189,10 @@ fn run() -> Result<bool, Box<dyn Error + Send + Sync>> {
 fn main() -> ExitCode {
     match run() {
         Ok(true) => ExitCode::SUCCESS,
+        Ok(false) if std::env::var_os("LEAF_BENCH_RECORD_ONLY").is_some() => {
+            println!("search missed its budget (recorded only)");
+            ExitCode::SUCCESS
+        }
         Ok(false) => {
             eprintln!("search missed its budget");
             ExitCode::FAILURE

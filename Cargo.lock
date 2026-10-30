@@ -3890,6 +3890,7 @@ dependencies = [
  "leaf-editor",
  "leaf-fixtures",
  "leaf-model",
+ "leaf-search",
  "leaf-store",
  "thiserror 2.0.21",
 ]
@@ -3950,7 +3951,6 @@ name = "leaf-search"
 version = "0.1.0"
 dependencies = [
  "leaf-core",
- "leaf-fixtures",
  "leaf-model",
  "loro",
  "proptest",

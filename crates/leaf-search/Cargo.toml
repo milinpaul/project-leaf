@@ -17,12 +17,6 @@ tracing.workspace = true
 # Only to write a block of a kind this version doesn't know, as a newer Leaf would.
 loro.workspace = true
 proptest.workspace = true
-# The full-size workspace the search budget is measured on (benches/search.rs).
-leaf-fixtures.workspace = true
-
-[[bench]]
-name = "search"
-harness = false
 
 [lints]
 workspace = true

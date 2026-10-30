@@ -7,7 +7,7 @@
 
 /// Version of the layout below. Bump it on any change: an index with another version is deleted
 /// and rebuilt, which is always safe because it holds nothing that isn't in the documents.
-pub const INDEX_VERSION: u32 = 2;
+pub const INDEX_VERSION: u32 = 3;
 
 /// `meta` key holding [`INDEX_VERSION`].
 pub(crate) const VERSION_KEY: &str = "index_version";
@@ -16,7 +16,8 @@ pub(crate) const VERSION_KEY: &str = "index_version";
 pub(crate) const COMPLETE_KEY: &str = "complete";
 
 /// Creates every table. `unicode61 remove_diacritics 2` makes matching ignore case and accents
-/// ("cafe" finds "café"); the prefix indexes make type-ahead ("pro" finds "project") fast.
+/// ("cafe" finds "café"); the prefix indexes make type-ahead ("pro" finds "project") fast, from
+/// the first letter typed (version 3, E11-S07: a one-letter search had to scan every word).
 pub(crate) const CREATE: &str = "
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 
@@ -39,12 +40,12 @@ CREATE INDEX blocks_by_page ON blocks(page_id);
 
 CREATE VIRTUAL TABLE pages_fts USING fts5(
   title, content = 'pages', content_rowid = 'id',
-  tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
+  tokenize = 'unicode61 remove_diacritics 2', prefix = '1 2 3'
 );
 
 CREATE VIRTUAL TABLE blocks_fts USING fts5(
   text, content = 'blocks', content_rowid = 'id',
-  tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
+  tokenize = 'unicode61 remove_diacritics 2', prefix = '1 2 3'
 );
 
 CREATE TRIGGER pages_ai AFTER INSERT ON pages BEGIN

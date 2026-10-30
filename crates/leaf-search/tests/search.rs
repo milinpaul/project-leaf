@@ -248,18 +248,17 @@ fn only_the_newest_matching_blocks_are_ranked() {
     let old = text("Old", &["harbour"]);
     put(&mut index, &old, 1);
     // ...then `RANKED_BLOCKS` weaker matches, newer, spread over pages.
-    let per_page = 1_000;
+    let per_page = 10;
     let filler: Vec<String> = (0..per_page)
         .map(|n| format!("a long line {n} about the harbour and many other words besides"))
         .collect();
     let filler: Vec<&str> = filler.iter().map(String::as_str).collect();
-    let page_count = usize::try_from(RANKED_BLOCKS).unwrap() / per_page;
-    for n in 0..page_count {
+    for n in 0..usize::try_from(RANKED_BLOCKS).unwrap() / per_page {
         put(&mut index, &text(&format!("Page {n}"), &filler), 2);
     }
 
     let hits = index.search("harbour").unwrap();
-    assert!(!hits.is_empty());
+    assert_eq!(hits.len(), MAX_PAGES, "the newer pages fill the results");
     assert!(
         !pages(&hits).contains(&old.page),
         "older than the newest {RANKED_BLOCKS}"
@@ -270,4 +269,30 @@ fn only_the_newest_matching_blocks_are_ranked() {
     assert_eq!(index.search("harbour").unwrap()[0].page, old.page);
     // Its title is always searched, however many blocks match.
     assert_eq!(index.search("old").unwrap()[0].page, old.page);
+}
+
+#[test]
+fn a_page_full_of_matches_does_not_crowd_out_the_others() {
+    let dir = TempDir::new();
+    let mut index = open(&dir);
+    // Hundreds of the best possible matches on one page...
+    let crowded = text("Crowded", &["harbour"; 600]);
+    put(&mut index, &crowded, 1);
+    // ...and weaker ones on others.
+    let others: Vec<PageText> = (0..20)
+        .map(|n| {
+            text(
+                &format!("Page {n}"),
+                &["the harbour at dusk, with boats and gulls"],
+            )
+        })
+        .collect();
+    for page in &others {
+        put(&mut index, page, 1);
+    }
+
+    let hits = index.search("harbour").unwrap();
+    assert_eq!(hits.len(), 1 + others.len(), "every page is found");
+    assert_eq!(hits[0].page, crowded.page, "best match first");
+    assert_eq!(hits[0].blocks.len(), BLOCKS_PER_PAGE);
 }
