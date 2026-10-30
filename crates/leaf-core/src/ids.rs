@@ -1,4 +1,4 @@
-//! Permanent identities for pages and blocks.
+//! Permanent identities for pages, blocks and databases (with their columns and select options).
 //!
 //! Both are UUID v7: globally unique, so they survive copy and paste between pages and later sync
 //! between devices, and time-ordered, so sorting by ID roughly sorts by creation time. Blocks keep
@@ -80,9 +80,30 @@ uuid_id!(
     "block"
 );
 
+uuid_id!(
+    /// Identifies a database across the whole workspace, forever: the key of its own document (ADR 0066).
+    /// A database's rows are pages, so they use [`PageId`].
+    DatabaseId,
+    "database"
+);
+
+uuid_id!(
+    /// Identifies a column (property) within its database, forever: survives renames, moves and type
+    /// changes, so cells and the view refer to it by this rather than by name or position.
+    ColumnId,
+    "column"
+);
+
+uuid_id!(
+    /// Identifies one option of a select or multi-select column, forever: cells hold this, so renaming
+    /// or recolouring an option is one edit.
+    OptionId,
+    "option"
+);
+
 #[cfg(test)]
 mod tests {
-    use super::{BlockId, PageId};
+    use super::{BlockId, ColumnId, DatabaseId, OptionId, PageId};
     use crate::CoreError;
 
     #[test]
@@ -120,6 +141,18 @@ mod tests {
         assert_eq!(json, format!("\"{id}\""));
         assert_eq!(serde_json::from_str::<PageId>(&json).unwrap(), id);
         assert!(serde_json::from_str::<PageId>("\"nope\"").is_err());
+    }
+
+    #[test]
+    fn database_ids_round_trip_and_name_their_kind() {
+        let (database, column, option) = (DatabaseId::new(), ColumnId::new(), OptionId::new());
+        assert_eq!(database.to_string().parse::<DatabaseId>(), Ok(database));
+        assert_eq!(column.to_string().parse::<ColumnId>(), Ok(column));
+        assert_eq!(option.to_string().parse::<OptionId>(), Ok(option));
+        assert!(matches!(
+            "x".parse::<ColumnId>(),
+            Err(CoreError::InvalidId { kind: "column", .. })
+        ));
     }
 
     #[test]
