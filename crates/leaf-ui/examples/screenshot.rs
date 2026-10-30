@@ -9,7 +9,7 @@
 //! Opens the workspace's first page. Options:
 //!
 //! - `N` (a number): scroll so block N (counted from 0) is at the top.
-//! - `dark`: the dark appearance.
+//! - `dark`: the dark appearance. `nosidebar`: the sidebar hidden, as `Cmd/Ctrl+\` leaves it.
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
 //! - `language=B`: open code block B's language picker.
@@ -56,11 +56,13 @@ mod mac {
     type Error = Box<dyn std::error::Error>;
 
     /// What the command line asked for.
+    #[allow(clippy::struct_excessive_bools, reason = "independent command-line switches")]
     struct Options {
         folder: String,
         out: String,
         scroll: Option<usize>,
         dark: bool,
+        nosidebar: bool,
         bench: bool,
         caret: Option<String>,
         select: Option<String>,
@@ -73,7 +75,7 @@ mod mac {
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -88,6 +90,7 @@ mod mac {
             out,
             scroll: rest.iter().find_map(|a| a.parse().ok()),
             dark: rest.iter().any(|a| a == "dark"),
+            nosidebar: rest.iter().any(|a| a == "nosidebar"),
             bench: rest.iter().any(|a| a == "bench"),
             link: rest.iter().any(|a| a == "link"),
             language: value("language="),
@@ -145,6 +148,9 @@ mod mac {
                 leaf_ui::theme::set_appearance(Appearance::Dark, window, cx);
             }
             shell.update(cx, |shell, cx| {
+                if options.nosidebar {
+                    shell.toggle_sidebar(false, window, cx);
+                }
                 let first = shell
                     .editor()
                     .sidebar()
