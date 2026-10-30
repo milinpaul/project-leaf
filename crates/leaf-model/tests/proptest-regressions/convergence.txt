@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 727f0687bf6675887f0738d994288a3c30b09b0a70f1f44efeb6c1be81ef51bd # shrinks to setup = [], rounds = [([AddColumn(0, 0), AddColumn(84, 0), AddColumn(3, 0)], [AddColumn(0, 0), AddColumn(20, 0), AddColumn(29, 0), DeleteColumn(2), MoveColumn(128, 43), AddColumn(15, 0)]), ([MoveColumn(72, 88), AddColumn(7, 0)], []), ([DeleteColumn(95)], [AddColumn(68, 0), AddColumn(0, 0)])]

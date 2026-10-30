@@ -131,33 +131,11 @@ fn rows_added_on_both_peers_are_all_kept() -> LoroResult<()> {
 }
 
 #[test]
-fn in_a_tree_a_row_deleted_on_one_peer_stays_deleted_when_the_other_moves_it() -> LoroResult<()> {
-    // Rows as nodes of a flat Loro tree (fractional index order), as pages and blocks already are.
-    let a = LoroDoc::new();
-    a.set_peer_id(1)?;
-    let rows = a.get_tree("rows");
-    rows.enable_fractional_index(0);
-    let ids: Vec<_> = (0..3)
-        .map(|_| rows.create(TreeParentId::Root))
-        .collect::<LoroResult<_>>()?;
-    for (id, name) in ids.iter().zip(["row-a", "row-b", "row-c"]) {
-        rows.get_meta(*id)?.insert("id", name)?;
-    }
-    a.commit();
-    let b = LoroDoc::new();
-    b.set_peer_id(2)?;
-    b.import(&export(&a, loro::ExportMode::all_updates())?)?;
-
-    // A moves row-a to the end; B deletes it and moves row-c to the top.
-    rows.mov_to(ids[0], TreeParentId::Root, 2)?;
-    a.commit();
-    let b_rows = b.get_tree("rows");
-    b_rows.delete(ids[0])?;
-    b_rows.mov_to(ids[2], TreeParentId::Root, 0)?;
-    b.commit();
-    b.import(&export(&a, loro::ExportMode::all_updates())?)?;
-    a.import(&export(&b, loro::ExportMode::all_updates())?)?;
-
+fn in_a_tree_a_delete_against_a_concurrent_move_is_settled_by_loros_order_of_the_edits() -> LoroResult<()> {
+    // Rows as nodes of a flat Loro tree (fractional index order), as pages and blocks already are. E09-S02
+    // corrected this spike: it first tried one case only and concluded "delete wins". Loro orders the two concurrent
+    // edits by device ID, so here peer 2's edit wins either way, and the tree alone can't record that a row was
+    // deleted (ADR 0066, "Correction").
     let names = |doc: &LoroDoc| -> Vec<String> {
         let tree = doc.get_tree("rows");
         tree.children(TreeParentId::Root)
@@ -170,12 +148,38 @@ fn in_a_tree_a_row_deleted_on_one_peer_stays_deleted_when_the_other_moves_it() -
             })
             .collect()
     };
-    assert_eq!(names(&a), names(&b));
-    assert_eq!(
-        names(&a),
-        ["row-c", "row-b"],
-        "delete wins over a concurrent move"
-    );
+    for peer_two_deletes in [true, false] {
+        let a = LoroDoc::new();
+        a.set_peer_id(1)?;
+        let rows = a.get_tree("rows");
+        rows.enable_fractional_index(0);
+        let ids: Vec<_> = (0..3)
+            .map(|_| rows.create(TreeParentId::Root))
+            .collect::<LoroResult<_>>()?;
+        for (id, name) in ids.iter().zip(["row-a", "row-b", "row-c"]) {
+            rows.get_meta(*id)?.insert("id", name)?;
+        }
+        a.commit();
+        let b = LoroDoc::new();
+        b.set_peer_id(2)?;
+        b.import(&export(&a, loro::ExportMode::all_updates())?)?;
+
+        let (mover, deleter) = if peer_two_deletes { (&a, &b) } else { (&b, &a) };
+        mover.get_tree("rows").mov_to(ids[0], TreeParentId::Root, 2)?;
+        mover.commit();
+        deleter.get_tree("rows").delete(ids[0])?;
+        deleter.commit();
+        b.import(&export(&a, loro::ExportMode::all_updates())?)?;
+        a.import(&export(&b, loro::ExportMode::all_updates())?)?;
+
+        assert_eq!(names(&a), names(&b), "both peers agree either way");
+        let expected: &[&str] = if peer_two_deletes {
+            &["row-b", "row-c"]
+        } else {
+            &["row-b", "row-c", "row-a"]
+        };
+        assert_eq!(names(&a), expected, "peer_two_deletes={peer_two_deletes}");
+    }
     Ok(())
 }
 

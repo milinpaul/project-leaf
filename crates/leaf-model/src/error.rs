@@ -1,6 +1,6 @@
 //! Errors from the document model.
 
-use leaf_core::{BlockId, PageId};
+use leaf_core::{BlockId, ColumnId, OptionId, PageId};
 use thiserror::Error;
 
 /// Everything that can go wrong reading or changing Leaf documents.
@@ -197,6 +197,66 @@ pub enum ModelError {
     /// column, is refused (delete the table instead).
     #[error("a table needs at least one row and one column")]
     EmptyTable,
+
+    /// The column is not in this database (never existed, or deleted).
+    #[error("column {0} not found")]
+    ColumnNotFound(ColumnId),
+
+    /// The row is not in this database.
+    #[error("row {0} not found in this database")]
+    RowNotFound(PageId),
+
+    /// The page is already a row of this database: a page is one row, once.
+    #[error("page {0} is already a row of this database")]
+    DuplicateRow(PageId),
+
+    /// The option is not one of the column's select options.
+    #[error("column {column} has no option {option}")]
+    OptionNotFound {
+        /// The select or multi-select column.
+        column: ColumnId,
+        /// The option asked for.
+        option: OptionId,
+    },
+
+    /// A column or row node in a saved database has no usable identity, or two claim the same one.
+    /// Loading fails rather than hiding it, so no data is silently lost.
+    #[error("invalid database {part} node {node}: {reason}")]
+    InvalidDatabaseNode {
+        /// `"column"` or `"row"`.
+        part: &'static str,
+        /// Loro's internal node ID, for debugging only.
+        node: String,
+        /// What was wrong with it.
+        reason: String,
+    },
+
+    /// The column's type comes from a newer version of Leaf, so this version can't change its cells or
+    /// its type without losing what that version stored (ADR 0066).
+    #[error("column {column} has a type this version doesn't know ({type_name}); it is read-only")]
+    UnknownColumnType {
+        /// The column.
+        column: ColumnId,
+        /// The stored type name.
+        type_name: String,
+    },
+
+    /// Columns can only be created with a type this version knows.
+    #[error("unknown column type {0:?}")]
+    UnknownPropertyType(String),
+
+    /// The value doesn't fit the column's type (a number into a checkbox column, say).
+    #[error("column {column} holds {expected} values")]
+    CellTypeMismatch {
+        /// The column.
+        column: ColumnId,
+        /// The column's type name.
+        expected: String,
+    },
+
+    /// The column doesn't have select options (it isn't a select or multi-select column).
+    #[error("column {0} has no options")]
+    NotASelectColumn(ColumnId),
 
     /// Loro rejected an operation or could not read the bytes.
     #[error(transparent)]

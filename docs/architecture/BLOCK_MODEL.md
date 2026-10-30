@@ -46,6 +46,33 @@ LoroDoc (page, keyed by PageId)
 
 Root nodes of the `"blocks"` tree are the page's top-level blocks, in order.
 
+### Database doc (Phase 1, ADR 0066)
+
+```
+LoroDoc (database, keyed by DatabaseId)
+├── "columns": LoroTree (flat)  column order; node meta "id" = ColumnId
+├── "schema":  LoroMap          ColumnId -> LoroMap
+│     "name":    String
+│     "type":    String         text | number | select | multi_select | date | checkbox | url; others kept, read-only
+│     "hidden":  bool?
+│     "width":   f64?
+│     "options": LoroMovableList of LoroMap { "id": OptionId, "name", "color" }   # made with the column
+│     ...unknown keys kept
+├── "rows":    LoroTree (flat)  row order; node meta "id" = the row's PageId, "deleted": true once deleted
+├── "cells":   LoroMap          PageId -> mergeable LoroMap: ColumnId -> value
+│     text, url: String · number: f64 · date: i64 (unix ms) · checkbox: bool · select: OptionId as String
+│     multi_select: mergeable LoroMap OptionId -> true
+└── "view":    LoroMap          "sort": [{column, descending}], "filters": [{column, op, value}] (plain values)
+```
+
+Order and existence are kept apart (ADR 0066, "Correction"):
+- the trees only order; a column exists while its schema entry does, and a row until its node is marked `deleted`;
+- nodes never leave their trees, so a delete on one device survives a move of the same node on another;
+- cells of deleted rows and columns stay, unread, so undo brings them back whole.
+
+`Database` (`leaf-model/src/database.rs`) reads cells by what is stored. A value written under an earlier type reads
+back as itself, and the editor converts it for display (ADR 0066 answer 3).
+
 ## IDs
 
 | Thing | ID | Stability |
@@ -251,6 +278,15 @@ holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that br
 8. Every block has an `id` in its meta, and no two blocks in a page share one.
 9. A `table_row` sits in a `table` and a `table_cell` in a `table_row`. (Commands also keep every table a full grid;
    the page property test checks that, but merges may leave rows uneven, so it is not a state invariant.)
+
+Database documents have their own, checked by `Database::check_invariants()` after every command in
+`crates/leaf-model/tests/database/` (random commands, two-peer convergence, undo and redo round-trips):
+
+- D1. Every column and row node has a valid ID in its meta. A merge may leave one ID on two nodes; readers use the
+  first in order.
+- D2. The column and row trees are flat.
+- D3. Every schema entry is keyed by a column ID and is a map with a `type` name.
+- D4. Option IDs are valid and unique within their column.
 
 ## Persistence (`leaf-store`)
 

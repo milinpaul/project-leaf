@@ -13,4 +13,4 @@ mod ids;
 
 pub use asset::AssetId;
 pub use error::CoreError;
-pub use ids::{BlockId, PageId};
+pub use ids::{BlockId, ColumnId, DatabaseId, OptionId, PageId};

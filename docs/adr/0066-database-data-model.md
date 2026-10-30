@@ -32,7 +32,8 @@ code exists.
 LoroDoc (database)
 ├── "columns": LoroTree (flat)     column order; node meta "id" = column ID
 ├── "schema":  LoroMap             column ID -> LoroMap { "name", "type", "options", "width", "hidden", ...unknown keys kept }
-├── "rows":    LoroTree (flat)     row order; node meta "id" = the row's PageId
+│                                  (a column exists while its schema entry does; see the correction below)
+├── "rows":    LoroTree (flat)     row order; node meta "id" = the row's PageId, "deleted" once deleted
 ├── "cells":   LoroMap             row ID -> mergeable LoroMap: column ID -> value
 └── "view":    LoroMap             sort, filters, hidden columns, widths (one table view for now)
 ```
@@ -75,7 +76,7 @@ All of these are tests in the spike (11 tests, plus one measurement).
 | Add tags to one multi-select cell on both peers | All kept; a tag removed on one peer goes. |
 | Rows added on both peers | All kept. |
 | **Row deleted on one peer, moved on the other: movable list** | **The deleted row comes back.** Both peers agree, but a deleted row reappears. The same happens to a column's place in the order (its schema stays deleted, so readers must skip order entries without a schema). |
-| Row deleted on one peer, moved on the other: tree | Delete wins. Hence trees for row and column order, as for pages and blocks. |
+| Row deleted on one peer, moved on the other: tree | Delete wins in the order the spike tried; **corrected by E09-S02: Loro's order of the two concurrent edits decides, so sometimes the move wins** (below). |
 | Property type from a newer version, older peer renames and moves it | Its settings (`expression`, a nested `format` map) and its cells' values survive. |
 | Undo a cell edit; undo a column delete | Both restore exactly the earlier schema and table. |
 
@@ -133,3 +134,26 @@ E09-S02, if sorting a 10,000-row database while it opens turns out to matter.
   and their changes combine sensibly when they sync: different cells both stick, tags add up, and a deleted row or
   column stays deleted. A 10,000-row database is about 2 MB, and its first screen shows in a few hundredths of a
   second.
+
+## Correction (2026-10-30, E09-S02)
+
+The two-peer property test written for E09-S02 found a merged column that was still in the order but had no schema.
+In a Loro tree, a delete and a concurrent move of the same node settle by Loro's fixed order of concurrent edits
+(here, by device ID). When the move sorts after the delete, it brings the node back. The spike tried only the case
+where the delete sorted last, so the finding above was half right.
+
+So **existence is recorded apart from order**, in values a move never touches:
+- a column exists while its schema entry does, and deleting a column deletes only that entry;
+- a row exists until its node's meta has `deleted: true`;
+- neither node is ever taken out of its tree.
+
+Readers also take an ID that a merge left on two nodes once (the first in order). Re-adding a deleted row clears its
+mark and moves it to the new place, keeping its cells. Trees still give order without a deleted row coming back as a
+duplicate, which a movable list can't.
+
+Each column's options list is created with the column, so undo and redo of adding an option act on a list that was
+always there. Creating it lazily on first use broke redo. A concurrent move can bring back a deleted option the same
+way; that is harmless (an extra option in the list) and left as it is.
+
+The spike's tree test now runs both cases.
+

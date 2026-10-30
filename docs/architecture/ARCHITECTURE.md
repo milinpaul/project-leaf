@@ -194,6 +194,13 @@ table command and one undo step, the caret following the edit. Tables come in an
 table with a header row) and the clipboard (E16-S04): pasting a Markdown table builds one with the table commands,
 copying writes one, and Leaf's own fragment keeps `table`, `table_row` and `table_cell` blocks (ADR 0032's update).
 
+**Databases (Phase 1, E09).** A database is one Loro document of its own (`leaf_model::Database`, ADR 0066): column
+order and row order in two flat trees, the columns' schema, every cell, and the table view's sort and filters. It
+changes only through `DatabaseCommand`s, each one commit and one undo step, like pages. Each row is a page whose title
+and body live in the workspace and the page's own document (E09-S03 stores them); the database document holds only
+row IDs, order and property values, so a table view never opens a document per row. See BLOCK_MODEL.md "Database
+doc".
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.
