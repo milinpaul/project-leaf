@@ -123,7 +123,9 @@ impl Shell {
                     // The input's own height and line height fit body text; size them to the heading.
                     .line_height(rems(2.75))
                     .h(rems(3.25))
-                    .px_0(),
+                    .px_0()
+                    // The text cursor over the title, as over the blocks (E07-S12).
+                    .cursor_text(),
             )
             .into_any_element()
     }
