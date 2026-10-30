@@ -65,6 +65,12 @@ run *args:
     python3 scripts/macos_app.py target/debug/leaf-app target/debug
     target/debug/Leaf.app/Contents/MacOS/Leaf {{args}}
 
+# Build an optimised Leaf and install it as /Applications/Leaf.app (run again to update it)
+[macos]
+install:
+    cargo build --release --locked -p leaf-app
+    python3 scripts/macos_app.py install target/release/leaf-app
+
 # Launch the app
 [linux]
 [windows]
