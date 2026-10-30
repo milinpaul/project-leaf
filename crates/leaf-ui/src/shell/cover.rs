@@ -112,10 +112,12 @@ impl Shell {
 
     /// Opens the cover picker, with the keyboard in it so Esc closes it.
     fn open_cover_picker(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let panel = cx.new(CoverPickerPanel::new);
+        let current = self.page_cover();
+        let panel = cx.new(|cx| CoverPickerPanel::new(current, cx));
         let events = cx.subscribe(&panel, |shell, _, picked: &CoverPicked, cx| {
             match picked {
                 CoverPicked::Cover(cover) => shell.set_page_cover(Some(*cover), cx),
+                CoverPicked::Remove => shell.set_page_cover(None, cx),
                 CoverPicked::Dismissed => {}
             }
             shell.cover_picker = None;

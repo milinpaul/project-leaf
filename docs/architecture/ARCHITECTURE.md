@@ -174,6 +174,8 @@ its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `built
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.
 Six built-in covers (Dawn, Forest, Ocean, Paper, Night, Travel; E06-S12) are files in
 `crates/leaf-ui/assets/covers/` (`leaf_ui::covers`): SVG, except Travel, a WebP made with an image model (E06-S15).
+Sixteen calm solid colour and gradient covers (E06-S16) are SVG files too; `BuiltinCover::section()` groups them
+for the picker, a gallery of thumbnails four to a row with the current cover outlined (ADR 0064).
 GPUI's `img()` draws both; the band's height follows its width
 (3.5:1, 160–320 px) so wide and narrow windows crop little of the picture.
 "Add cover" sits beside "Add icon"; "Change cover" opens `leaf_ui::cover_picker` and "Remove" clears it, both through

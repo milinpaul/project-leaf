@@ -40,7 +40,7 @@ pub use block_menu::{BlockMenu, HoverChange, MenuEntry, MenuItem, MenuKey, turn_
 pub use caret::{LineLayout, Motion, Vertical};
 pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, language_label};
-pub use cover::{BuiltinCover, PageCover};
+pub use cover::{BuiltinCover, CoverSection, PageCover};
 pub use drag::{BlockDrop, RowBox};
 pub use edited::{edited_ago, edited_on};
 pub use emoji_picker::{EmojiChoice, EmojiPicker, EmojiSection, RESULTS_TITLE as EMOJI_RESULTS_TITLE};

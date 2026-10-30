@@ -332,7 +332,7 @@ fn a_cover_from_a_newer_version_reads_as_unknown_and_can_be_removed() {
     workspace
         .apply(WorkspaceCommand::SetPageCover {
             page,
-            cover: Some("builtin:aurora".into()),
+            cover: Some("builtin:nebula".into()),
         })
         .unwrap();
     let mut editor = WorkspaceEditor::new(workspace);
@@ -340,7 +340,7 @@ fn a_cover_from_a_newer_version_reads_as_unknown_and_can_be_removed() {
 
     assert_eq!(
         editor.selected_cover().unwrap(),
-        Some(PageCover::Unknown("builtin:aurora".into()))
+        Some(PageCover::Unknown("builtin:nebula".into()))
     );
     editor.set_cover(page, None).unwrap();
     assert_eq!(editor.selected_cover().unwrap(), None);

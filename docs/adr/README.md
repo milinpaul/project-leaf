@@ -80,3 +80,4 @@ Records cover two kinds of decision:
 | [0061](0061-simple-tables.md) | Simple tables: rows and cells as blocks inside a table block | Architecture | Accepted |
 | [0062](0062-smooth-wheel-and-edge-scrolling.md) | Mouse-wheel steps glide; dragging a selection past the page's edge scrolls | Feature | Accepted |
 | [0063](0063-editing-tables.md) | Editing tables: cells as text blocks, a rectangle of cells, tables acted on whole | Feature | Accepted |
+| [0064](0064-cover-gallery.md) | Cover gallery: sections of thumbnails, and colour and gradient covers as SVG files | Feature | Accepted |
