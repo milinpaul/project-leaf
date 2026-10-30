@@ -1,0 +1,16 @@
+[package]
+name = "leaf-fixtures"
+description = "Large, repeatable test workspaces for Leaf's performance tests and benchmarks"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+leaf-core.workspace = true
+leaf-model.workspace = true
+leaf-store.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

@@ -72,6 +72,10 @@ run *args:
     cargo run -p leaf-app -- {{args}}
 
 # Screenshot a workspace off screen (works with the screen locked; macOS):
+# A full-size test workspace (5,000 pages, 100,000 blocks) in a new folder, to open or benchmark
+fixture folder seed="2026":
+    cargo run --release -p leaf-fixtures --example make_workspace -- {{folder}} {{seed}}
+
 # just screenshot <workspace folder> <out.png> [first block] [dark] [bench]
 screenshot *args:
     cargo run -q -p leaf-ui --example screenshot -- {{args}}
