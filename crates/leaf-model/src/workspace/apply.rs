@@ -96,34 +96,11 @@ impl Workspace {
                 index,
                 title,
                 created_at,
-            } => {
-                let Outcome::PageCreated(page) = self.create_page(parent, index, &title, created_at)? else {
-                    unreachable!("create_page always reports the page it created");
-                };
-                let database = DatabaseId::new();
-                self.tree
-                    .get_meta(self.node(page)?)?
-                    .insert(keys::DATABASE, database.to_string())?;
-                Outcome::DatabasePageCreated { page, database }
-            }
+            } => self.create_database_page(parent, index, &title, created_at)?,
             WorkspaceCommand::CreateRowPage {
                 database_page,
                 created_at,
-            } => {
-                let database = self
-                    .page(database_page)?
-                    .database
-                    .ok_or(ModelError::NotADatabasePage(database_page))?;
-                let node = self.node(database_page)?;
-                let index = self.tree.children_num(Some(node)).unwrap_or(0);
-                let outcome = self.create_page(Some(database_page), index, "", created_at)?;
-                if let Outcome::PageCreated(page) = outcome {
-                    self.tree
-                        .get_meta(self.node(page)?)?
-                        .insert(keys::ROW_OF, database.to_string())?;
-                }
-                outcome
-            }
+            } => self.create_row_page(database_page, created_at)?,
             WorkspaceCommand::DeletePagePermanently { page } => self.delete_page(page)?,
             WorkspaceCommand::AddFavourite { page } => self.add_favourite(page)?,
             WorkspaceCommand::RemoveFavourite { page } => self.remove_favourite(page)?,
@@ -145,6 +122,40 @@ impl Workspace {
         // A refused command commits nothing; don't leave the origin for the next one.
         self.doc.set_next_commit_origin("");
         outcome
+    }
+
+    fn create_database_page(
+        &mut self,
+        parent: Option<PageId>,
+        index: usize,
+        title: &str,
+        created_at: i64,
+    ) -> Result<Outcome, ModelError> {
+        let Outcome::PageCreated(page) = self.create_page(parent, index, title, created_at)? else {
+            unreachable!("create_page always reports the page it created");
+        };
+        let database = DatabaseId::new();
+        self.tree
+            .get_meta(self.node(page)?)?
+            .insert(keys::DATABASE, database.to_string())?;
+        Ok(Outcome::DatabasePageCreated { page, database })
+    }
+
+    /// An untitled page at the end of the database page's children, marked as a row of its database.
+    fn create_row_page(&mut self, database_page: PageId, created_at: i64) -> Result<Outcome, ModelError> {
+        let database = self
+            .page(database_page)?
+            .database
+            .ok_or(ModelError::NotADatabasePage(database_page))?;
+        let node = self.node(database_page)?;
+        let index = self.tree.children_num(Some(node)).unwrap_or(0);
+        let outcome = self.create_page(Some(database_page), index, "", created_at)?;
+        if let Outcome::PageCreated(page) = outcome {
+            self.tree
+                .get_meta(self.node(page)?)?
+                .insert(keys::ROW_OF, database.to_string())?;
+        }
+        Ok(outcome)
     }
 
     fn create_page(

@@ -169,7 +169,7 @@ proptest! {
                 continue;
             }
             match ws.apply(command) {
-                Ok(Outcome::PageCreated(page)) => pages.push(page),
+                Ok(Outcome::PageCreated(page) | Outcome::DatabasePageCreated { page, .. }) => pages.push(page),
                 Ok(Outcome::Changed | Outcome::PagesDeleted(_)) => {}
                 // Valid but changed nothing, or rejected: no undo step either way.
                 Ok(Outcome::Unchanged) | Err(_) => {

@@ -168,3 +168,41 @@ fn the_last_open_page_opens_again(cx: &mut TestAppContext) {
     assert_eq!(shell.read_with(cx, |shell, _| shell.editor().selected()), None);
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
+
+/// E09-S03: a database's document is saved with everything else, and restoring a deleted row's page from the
+/// Trash brings the row back.
+#[gpui::test]
+fn databases_are_saved_and_a_row_restored_from_the_trash_comes_back(cx: &mut TestAppContext) {
+    let path = temp_workspace("database");
+    let (shell, cx) = open_window(&path, cx);
+    let (page, database, rows) = cx.update(|_, cx| {
+        shell.update(cx, |shell, _| {
+            let editor = shell.editor_mut();
+            let (page, database) = editor.new_database_page(None, 1).unwrap();
+            let rows: Vec<_> = (0..2).map(|i| editor.add_row(page, i, 2).unwrap()).collect();
+            editor.delete_row(page, rows[0], 3).unwrap();
+            (page, database, rows)
+        })
+    });
+    cx.update(|_, cx| shell.update(cx, |shell, _| shell.save(true)));
+    let store = leaf_store::Store::open(&path.join("workspace.sqlite")).unwrap();
+    let saved: leaf_model::Database = store.load(DocKey::Database(database)).unwrap().unwrap();
+    assert_eq!(saved.rows(), [rows[1]]);
+    let workspace: Workspace = store.load(DocKey::Workspace).unwrap().unwrap();
+    assert_eq!(workspace.page(rows[0]).unwrap().row_of, Some(database));
+    assert!(workspace.is_in_trash(rows[0]).unwrap());
+
+    cx.update(|_, cx| shell.update(cx, |shell, cx| shell.restore_page(rows[0], cx)));
+    let live = shell.read_with(cx, |shell, _| shell.editor().database(database).unwrap().rows());
+    assert_eq!(live, rows, "back first, where it was");
+    assert!(shell.read_with(cx, |shell, _| {
+        !shell.editor().workspace().is_in_trash(rows[0]).unwrap()
+    }));
+    let sidebar = shell.read_with(cx, |shell, _| shell.editor().sidebar().unwrap());
+    assert!(
+        sidebar.iter().all(|item| !rows.contains(&item.page)),
+        "rows stay out of the sidebar"
+    );
+    assert!(sidebar.iter().any(|item| item.page == page));
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}

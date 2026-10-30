@@ -21,13 +21,16 @@ fn database(rows: usize) -> (Database, Vec<PageId>) {
     let ids = (0..rows)
         .map(|i| {
             let row = PageId::new();
-            db.apply(DatabaseCommand::AddRow { row, index: i }).unwrap();
-            db.apply(DatabaseCommand::SetCell {
-                row,
-                column: name,
-                value: Some(CellValue::Text(format!("row {i}"))),
-            })
-            .unwrap();
+            assert!(db.apply(DatabaseCommand::AddRow { row, index: i }).is_ok());
+            let value = Some(CellValue::Text(format!("row {i}")));
+            assert!(
+                db.apply(DatabaseCommand::SetCell {
+                    row,
+                    column: name,
+                    value,
+                })
+                .is_ok()
+            );
             row
         })
         .collect();
