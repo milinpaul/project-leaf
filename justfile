@@ -93,6 +93,11 @@ icons:
 # Benchmarks for the performance budgets (crates/leaf-bench; ADR 0056)
 bench:
     cargo bench -p leaf-bench --bench budgets
+    cargo bench -p leaf-bench --bench search
+
+# Search against its budget on 5,000 pages / 100,000 blocks: query p95 < 50 ms, re-index one page p95 < 20 ms
+bench-search:
+    cargo bench -p leaf-bench --bench search
 
 # Install the dev tools once. lefthook is a Go tool, not a crate: install it first with
 # `brew install lefthook` (macOS/Linux) or `scoop install lefthook` (Windows).

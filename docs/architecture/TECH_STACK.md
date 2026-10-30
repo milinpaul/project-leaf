@@ -31,7 +31,7 @@ crates/
   leaf-export   markdown import/export (Phase 1)                    [core, wasm-ok]
   leaf-search   full-text index (SQLite FTS5)                       [core, native]
   leaf-fixtures big seeded test documents for tests and benchmarks  [test support, native]
-  leaf-bench    divan benchmarks for the performance budgets        [test support, native]
+  leaf-bench    performance budget benchmarks (divan; search)       [test support, native]
   leaf-ui       GPUI components, theme, rendering of view models    [ui]
   leaf-app      binary: windows, menus, wiring, platform glue       [ui]
 ```

@@ -43,7 +43,7 @@ the screen stays thin.
 | `leaf-export` | Markdown import/export (Phase 1). | Touch files or the screen. |
 | `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR 0019). | Hold data that exists nowhere else. |
 | `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR 0055). Test support only. | Be used by the app. |
-| `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save), run by `just bench` and on every `main` push in CI (ADR 0056). Test support only. | Be used by the app. |
+| `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save, search), run by `just bench` and on every `main` push in CI (ADR 0056, 0058). Test support only. | Be used by the app. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. Holds Leaf's look (colours, bundled fonts, sizes) in one `theme` module (ADR 0027). | Contain editing logic. |
 | `leaf-app` | The program itself: starts up, opens windows, connects the crates. | Contain logic that a testable crate could hold. |
 
@@ -225,6 +225,11 @@ is logged and repaired by resetting the index and rebuilding; it never stops edi
 (`Searcher`, a read-only connection) matches every typed word as a prefix, ignoring case and accents; pages whose
 title matches come first, then the best match, then the most recently edited; each result has highlighted
 excerpts of up to three matching blocks (E11-S03). The search bar that shows them is E11-S05/06.
+
+**Search speed (E11-S07).** On 5,000 pages / 100,000 blocks a search takes about 20 ms and re-indexing an edited
+page about 5 ms (`just bench-search`). To stay there, only the newest 10,000 matching blocks are ranked, each page's
+best three blocks are picked before excerpts are made, prefix indexes start at one letter, and the indexer keeps the
+list of searchable pages until titles or the page tree change (ADR 0058).
 
 ## Where things live
 

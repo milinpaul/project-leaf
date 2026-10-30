@@ -16,9 +16,16 @@ thiserror.workspace = true
 
 [dev-dependencies]
 divan.workspace = true
+leaf-search.workspace = true
 
 [[bench]]
 name = "budgets"
+harness = false
+
+# Search against its budget (E11-S07). Its own harness: the budget is a 95th percentile, which
+# divan doesn't report.
+[[bench]]
+name = "search"
 harness = false
 
 [lints]

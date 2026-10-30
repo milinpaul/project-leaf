@@ -1,7 +1,9 @@
 //! Benchmarks for the performance budgets in `PRODUCT_SPEC.md` (E08-S02), and the setup they share.
 //!
-//! The benches themselves live in `benches/budgets.rs` and run with `just bench`; CI runs them on
-//! every push to `main` and keeps the results as the `bench-results` artifact. This library holds
+//! The benches themselves live in `benches/budgets.rs` (divan) and `benches/search.rs` (search on a
+//! 5,000-page workspace, E11-S07, with its own harness because its budget is a 95th percentile).
+//! They run with `just bench`; CI runs them on every push to `main` and keeps the results as the
+//! `bench-results` artifact. This library holds
 //! only their setup: a big page saved to a scratch workspace folder, and an editor with the caret
 //! in the middle of a big page. It is tested like any other code, so a bench never measures a
 //! setup that quietly went wrong (an empty page, a caret that never landed).
