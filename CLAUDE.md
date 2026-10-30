@@ -66,6 +66,8 @@ The owner does not write Rust and relies on these docs to understand the system.
 - Coverage gate passes.
 - Docs updated (`docs/architecture/ARCHITECTURE.md` / ADR / crate docs) if behaviour or structure changed.
 - PR description: what changed, why, how it was tested, plain-English summary for a non-Rust reader.
+- No Claude session links (`Claude-Session:` lines, `claude.ai/code/session_…` URLs) in commits, PR descriptions or
+  comments: the repository is public (owner's decision, 2026-10-30). The `Co-Authored-By` line is fine.
 
 ## When unsure
 
