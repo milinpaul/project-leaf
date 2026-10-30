@@ -234,6 +234,7 @@ mod ime;
 mod language_picker;
 mod link_popover;
 mod markers;
+mod menu_place;
 mod page_keys;
 mod page_list;
 #[cfg(test)]

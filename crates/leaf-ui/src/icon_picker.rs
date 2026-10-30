@@ -6,7 +6,7 @@ use gpui::{
     InteractiveElement as _, IntoElement, MouseButton, MouseDownEvent, ParentElement, Render, ScrollStrategy,
     SharedString, Styled, Subscription, UniformListScrollHandle, Window, div, px, uniform_list,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::input::{Input, InputEvent, InputState};
 use gpui_component::{ActiveTheme as _, Disableable as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
@@ -109,6 +109,7 @@ impl IconPickerPanel {
                         .text_size(px(22.0))
                         .hover(|style| style.bg(hover))
                         .child(emoji)
+                        .cursor_pointer()
                         .on_mouse_down(
                             MouseButton::Left,
                             cx.listener(move |_, _: &MouseDownEvent, _, cx| {
@@ -146,7 +147,7 @@ impl Focusable for IconPickerPanel {
 impl Render for IconPickerPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let muted = cx.theme().muted_foreground;
-        let random = Button::new("random-icon")
+        let random = crate::theme::button("random-icon")
             .debug_selector(|| "random-icon".into())
             .label("Random")
             .ghost()
@@ -154,7 +155,7 @@ impl Render for IconPickerPanel {
             .on_click(cx.listener(|_, _, _, cx| {
                 cx.emit(IconPicked::Emoji(EmojiPicker::random(seed()).emoji));
             }));
-        let remove = Button::new("remove-icon")
+        let remove = crate::theme::button("remove-icon")
             .debug_selector(|| "remove-icon".into())
             .label("Remove")
             .ghost()

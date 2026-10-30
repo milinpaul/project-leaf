@@ -10,7 +10,7 @@ use gpui::{
     SharedString, StatefulInteractiveElement as _, Styled, StyledText, Subscription, WeakEntity, Window, div,
     px,
 };
-use gpui_component::button::{Button, ButtonVariant, ButtonVariants as _};
+use gpui_component::button::{ButtonVariant, ButtonVariants as _};
 use gpui_component::input::{Input, InputEvent, InputState};
 use gpui_component::{
     ActiveTheme as _, Disableable as _, Icon, Sizable as _, WindowExt as _, h_flex, v_flex,
@@ -202,14 +202,14 @@ impl TrashPanel {
                 trashed_ago(self.now, item.trashed_at)
             ))
         };
-        let restore = Button::new(("restore", ix))
+        let restore = crate::theme::button(("restore", ix))
             .debug_selector(move || format!("restore-{ix}"))
             .icon(Icon::new(IconName::RotateCcw))
             .ghost()
             .xsmall()
             .tooltip("Restore")
             .on_click(cx.listener(move |panel, _: &ClickEvent, _, cx| panel.restore(page, cx)));
-        let delete = Button::new(("delete", ix))
+        let delete = crate::theme::button(("delete", ix))
             .debug_selector(move || format!("delete-{ix}"))
             .icon(Icon::new(IconName::Trash).text_color(danger))
             .ghost()
@@ -247,6 +247,7 @@ impl TrashPanel {
                     .child(restore)
                     .child(delete),
             )
+            .cursor_pointer()
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |panel, _: &MouseDownEvent, window, cx| panel.open_page(page, window, cx)),
@@ -305,7 +306,7 @@ impl Render for TrashPanel {
             1 => "1 page".to_owned(),
             n => format!("{n} pages"),
         };
-        let empty = Button::new("empty-trash")
+        let empty = crate::theme::button("empty-trash")
             .debug_selector(|| "empty-trash".into())
             .label("Empty trash")
             .danger()

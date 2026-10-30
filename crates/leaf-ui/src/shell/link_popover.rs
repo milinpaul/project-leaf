@@ -9,7 +9,7 @@ use gpui::{
     InteractiveElement as _, IntoElement, KeyBinding, MouseDownEvent, ParentElement as _, Pixels, Point,
     Render, Styled as _, Subscription, Window, actions, anchored, deferred, point, px,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::input::{Input, InputEvent, InputState};
 use gpui_component::{ActiveTheme as _, Disableable as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
@@ -115,7 +115,7 @@ impl Render for LinkPopover {
                 ),
             )
             .child(
-                Button::new("link-open")
+                crate::theme::button("link-open")
                     .icon(IconName::ExternalLink)
                     .ghost()
                     .small()
@@ -130,7 +130,7 @@ impl Render for LinkPopover {
             .when(self.linked, |row| {
                 row.child(
                     gpui::div().debug_selector(|| "link-remove".into()).child(
-                        Button::new("link-remove")
+                        crate::theme::button("link-remove")
                             .icon(IconName::Trash)
                             .ghost()
                             .small()

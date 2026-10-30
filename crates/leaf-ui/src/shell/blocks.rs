@@ -43,8 +43,12 @@ pub(super) struct PageState {
     blink: Option<Task<()>>,
     /// Where a mouse drag started, while the button is down.
     pub(super) drag: Option<Caret>,
-    /// Where the block menu's top-left corner goes, set when it opens.
+    /// What the block menu hangs from, set when it opens: the left edge and the top and bottom of the
+    /// handle (or of the line, from the keyboard). The menu goes below it, or above when there's no room.
     pub(super) menu_at: Point<Pixels>,
+    pub(super) menu_top: Pixels,
+    /// Where the "Turn into" list was drawn, so a click in it doesn't count as outside the menu.
+    pub(super) menu_list: Option<gpui::Bounds<Pixels>>,
     /// The block whose menu is open as of this frame, so its handle stays shown.
     pub(super) menu_block: Option<BlockId>,
     /// The pause before the block menu's "Turn into" list opens or closes under the pointer.
@@ -196,7 +200,7 @@ impl Shell {
         .left_0()
         .size_full();
 
-        let menu = self.render_block_menu(cx);
+        let menu = self.render_block_menu(window, cx);
         let link = self.render_link_popover(cx);
         let language = self.render_language_picker(cx);
         let page = v_flex()
@@ -225,7 +229,7 @@ impl Shell {
                     .child(rows),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
-            .children(menu)
+            .child(menu)
             .children(link)
             .children(language)
             .children(slash);

@@ -12,7 +12,6 @@ use gpui::{
     StatefulInteractiveElement as _, Styled, StyledImage as _, Window, div, img, prelude::FluentBuilder as _,
     px, rgb,
 };
-use gpui_component::button::Button;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, WindowExt as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 use leaf_store::Appearance;
@@ -166,6 +165,7 @@ impl SettingsPanel {
             .when(!chosen, |row| row.hover(|row| row.bg(hover)))
             .child(Icon::new(section.icon()).small())
             .child(section.label())
+            .cursor_pointer()
             .on_click(cx.listener(move |panel, _: &ClickEvent, _, cx| {
                 panel.section = section;
                 cx.notify();
@@ -201,6 +201,7 @@ impl SettingsPanel {
                         })
                         .child(label),
                 )
+                .cursor_pointer()
                 .on_click(cx.listener(move |_, _: &ClickEvent, window, cx| {
                     theme::set_appearance(appearance, window, cx);
                     cx.notify();
@@ -265,7 +266,7 @@ impl SettingsPanel {
             )
             .child(
                 h_flex().child(
-                    Button::new("reveal-workspace")
+                    crate::theme::button("reveal-workspace")
                         .label(reveal)
                         .icon(Icon::new(IconName::FolderOpen))
                         .outline()
