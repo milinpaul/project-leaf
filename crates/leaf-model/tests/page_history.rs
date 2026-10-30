@@ -1,4 +1,4 @@
-//! Property test for workspace undo and redo (E01-S06).
+//! Property test for workspace undo and redo (E01-S06), favourites included (E18-S02).
 //!
 //! Random sequences of every page command, valid and invalid. After each accepted command the
 //! outline is recorded; undoing step by step must retrace those outlines exactly back to the empty
@@ -42,6 +42,10 @@ enum Step {
     Delete {
         page: usize,
     },
+    Favourite {
+        page: usize,
+        on: bool,
+    },
 }
 
 fn step() -> impl Strategy<Value = Step> {
@@ -55,20 +59,24 @@ fn step() -> impl Strategy<Value = Step> {
         2 => (page.clone(), parent, 0..4_usize).prop_map(|(page, parent, index)| Step::Move { page, parent, index }),
         1 => page.clone().prop_map(|page| Step::Trash { page }),
         1 => page.clone().prop_map(|page| Step::Restore { page }),
-        1 => page.prop_map(|page| Step::Delete { page }),
+        1 => page.clone().prop_map(|page| Step::Delete { page }),
+        2 => (page, any::<bool>()).prop_map(|(page, on)| Step::Favourite { page, on }),
     ]
 }
 
-/// Every page with its parent and metadata: the visible tree, then each trashed page's subtree.
-fn outline(ws: &Workspace) -> Result<Vec<(Option<PageId>, PageMeta)>, leaf_model::ModelError> {
+/// Every page with its parent and metadata (the visible tree, then each trashed page's subtree),
+/// and the favourites with whether each page is starred.
+type Outline = (Vec<(Option<PageId>, PageMeta, bool)>, Vec<PageId>);
+
+fn outline(ws: &Workspace) -> Result<Outline, leaf_model::ModelError> {
     fn walk(
         ws: &Workspace,
         parent: Option<PageId>,
         pages: Vec<PageId>,
-        out: &mut Vec<(Option<PageId>, PageMeta)>,
+        out: &mut Vec<(Option<PageId>, PageMeta, bool)>,
     ) -> Result<(), leaf_model::ModelError> {
         for page in pages {
-            out.push((parent, ws.page(page)?));
+            out.push((parent, ws.page(page)?, ws.is_favourite(page)));
             walk(ws, Some(page), ws.children(page)?, out)?;
         }
         Ok(())
@@ -78,7 +86,7 @@ fn outline(ws: &Workspace) -> Result<Vec<(Option<PageId>, PageMeta)>, leaf_model
     for page in ws.trash()? {
         walk(ws, None, vec![page], &mut out)?;
     }
-    Ok(out)
+    Ok((out, ws.favourites()?))
 }
 
 fn command(step: Step, pages: &[PageId]) -> Option<WorkspaceCommand> {
@@ -113,6 +121,8 @@ fn command(step: Step, pages: &[PageId]) -> Option<WorkspaceCommand> {
         },
         Step::Restore { page } => WorkspaceCommand::RestorePage { page: pick(page)? },
         Step::Delete { page } => WorkspaceCommand::DeletePagePermanently { page: pick(page)? },
+        Step::Favourite { page, on: true } => WorkspaceCommand::AddFavourite { page: pick(page)? },
+        Step::Favourite { page, on: false } => WorkspaceCommand::RemoveFavourite { page: pick(page)? },
     })
 }
 

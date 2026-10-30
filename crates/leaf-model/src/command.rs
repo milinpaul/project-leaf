@@ -82,6 +82,17 @@ pub enum WorkspaceCommand {
         /// A page that was trashed on its own (listed by `Workspace::trash`).
         page: PageId,
     },
+    /// Stars a page: adds it to the end of the favourites (ADR 0060). Already a favourite: nothing
+    /// changes. A page in the trash can't be starred.
+    AddFavourite {
+        /// Page to star.
+        page: PageId,
+    },
+    /// Takes a page out of the favourites. Not a favourite: nothing changes.
+    RemoveFavourite {
+        /// Page to unstar.
+        page: PageId,
+    },
     /// Deletes a page in the trash, and everything inside it, for good. Reports every deleted page in
     /// [`Outcome::PagesDeleted`] so storage can drop their documents.
     DeletePagePermanently {

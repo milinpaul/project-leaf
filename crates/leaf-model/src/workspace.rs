@@ -114,6 +114,15 @@ impl Workspace {
         self.saved.is_behind(&self.doc)
     }
 
+    /// Merges changes made by another copy of this workspace (exported with
+    /// [`Workspace::unsaved_changes`] or [`Workspace::to_bytes`]). The changes are not undoable here.
+    /// Phase 0 has no sync; tests use this to check that two copies converge.
+    pub fn import_changes(&mut self, bytes: &[u8]) -> Result<(), ModelError> {
+        self.doc.import(bytes)?;
+        self.index = PageIndex::build(&self.tree)?;
+        Ok(())
+    }
+
     /// Top-level pages, in sidebar order. Pages in the trash are left out, and with them everything
     /// inside them; [`Workspace::trash`] lists those.
     pub fn root_pages(&self) -> Result<Vec<PageId>, ModelError> {
@@ -251,6 +260,7 @@ fn page_id_of(tree: &LoroTree, node: TreeID) -> Result<PageId, ModelError> {
 }
 
 mod apply;
+mod favourites;
 mod trash;
 mod undo;
 

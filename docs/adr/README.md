@@ -76,3 +76,4 @@ Records cover two kinds of decision:
 | [0057](0057-no-turn-into-toolbar.md) | No "Turn into" toolbar: block types change from the slash menu, the block handle and Markdown | Feature | Accepted |
 | [0058](0058-search-performance.md) | Search performance: rank only the newest matches, pick blocks before excerpts | Architecture | Accepted |
 | [0059](0059-page-edited-time.md) | Page edited time: a field in the workspace doc, stamped by a command undo skips | Feature | Accepted |
+| [0060](0060-favourite-pages.md) | Favourite pages: a map from page to position in the workspace doc | Feature | Accepted |
