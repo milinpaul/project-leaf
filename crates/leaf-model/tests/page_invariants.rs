@@ -42,7 +42,10 @@ proptest! {
         for step in steps {
             let Some(command) = command(step, &page) else { continue };
             match page.apply(command) {
-                Ok(PageOutcome::Unchanged) | Err(_) => {} // no change, no undo step
+                // No change, no undo step: and nothing half-written that undo would then take back.
+                Ok(PageOutcome::Unchanged) | Err(_) => {
+                    prop_assert_eq!(&outline(&page), history.last().unwrap(), "a no-op left the page as it was");
+                }
                 Ok(_) => history.push(outline(&page)),
             }
         }

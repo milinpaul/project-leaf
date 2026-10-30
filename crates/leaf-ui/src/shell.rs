@@ -265,6 +265,8 @@ mod image_row;
 mod ime;
 mod language_picker;
 mod link_popover;
+#[cfg(test)]
+mod long_document_tests;
 mod markers;
 mod menu_place;
 mod page_keys;

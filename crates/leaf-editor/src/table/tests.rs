@@ -553,3 +553,4 @@ fn copying_a_whole_cell_copies_its_text() {
 }
 
 mod in_and_out;
+mod spec_gaps;
