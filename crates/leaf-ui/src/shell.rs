@@ -188,7 +188,12 @@ impl Render for Shell {
         let page = v_flex().flex_1().size_full().child(page);
         let layout = settings::get(cx);
         let body = if layout.sidebar_hidden() {
-            page.into_any_element()
+            div()
+                .relative()
+                .size_full()
+                .child(page)
+                .child(Self::render_reopen_button(cx))
+                .into_any_element()
         } else {
             // Dragging the divider resizes the sidebar; the width is remembered for the next launch.
             let (min, max) = SIDEBAR_WIDTH_RANGE;
@@ -236,6 +241,7 @@ mod page_list_window_tests;
 mod rich_text;
 mod sidebar;
 mod sidebar_search;
+mod sidebar_toggle;
 mod slash_popover;
 mod storage;
 mod trash;

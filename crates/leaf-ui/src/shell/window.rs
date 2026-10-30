@@ -37,11 +37,8 @@ impl Shell {
                     ShortcutAction::Link => shell.open_link_popover(window, cx),
                 }
             }))
-            .on_action(cx.listener(|_, _: &ToggleSidebar, _, cx| {
-                settings::update(cx, |settings| {
-                    settings.set_sidebar_hidden(!settings.sidebar_hidden());
-                });
-                cx.notify();
+            .on_action(cx.listener(|shell, _: &ToggleSidebar, window, cx| {
+                shell.toggle_sidebar(false, window, cx);
             }))
             .on_action(cx.listener(|shell, _: &OpenSettings, window, cx| {
                 shell.open_settings(Section::Appearance, window, cx);

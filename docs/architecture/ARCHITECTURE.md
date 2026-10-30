@@ -108,7 +108,8 @@ through those commands (E06-S07).
 
 **Window, sidebar and Settings (E06-S02).** At startup `leaf-app` loads the app settings (`settings.json` in the
 OS's settings folder; format in `leaf_store::settings`, ADR 0029) and opens the window where it was, if that is still
-on a screen. The sidebar is resizable and can be hidden (Cmd/Ctrl+\\); its width, its visibility and the window
+on a screen. The sidebar is resizable and can be hidden (Cmd/Ctrl+\\, or its collapse button; a ☰ button in the
+page's corner brings it back, `shell::sidebar_toggle`, E06-S18); its width, its visibility and the window
 frame are written back on blur and quit. A cog at the foot of the sidebar (or Cmd/Ctrl+,) opens the Settings dialog:
 Appearance (System / Light / Dark), Workspace (its folder) and About. Menus and shortcuts live in `leaf_ui::menus`.
 
