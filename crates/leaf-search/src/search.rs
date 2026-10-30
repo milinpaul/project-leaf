@@ -20,7 +20,14 @@ pub const BLOCKS_PER_PAGE: usize = 3;
 
 /// How many matching blocks are read before grouping. Bounds the work for a very common word
 /// while leaving room for [`MAX_PAGES`] pages.
-const MAX_BLOCK_ROWS: i64 = 1000;
+const MAX_BLOCK_ROWS: i64 = 400;
+
+/// At most this many matching blocks are ranked: the most recently indexed ones. Ranking scores
+/// every match, about a millisecond per thousand, so a word in nearly every block (a single letter
+/// typed so far) would blow the 50 ms budget (E11-S07, ADR 0056). Below this, every match is
+/// ranked; above it, an older block can be missed, which only happens for words so common that
+/// the search bar couldn't show all their pages anyway. Titles are always all searched.
+pub const RANKED_BLOCKS: i64 = 10_000;
 
 /// Roughly how many words an excerpt shows around the match.
 const EXCERPT_WORDS: i64 = 16;
@@ -98,8 +105,8 @@ struct Group {
 }
 
 /// Searches `conn` for `query`. Every word must match, as a prefix, ignoring case and accents.
-/// Pages whose title matches come first; then best match first; then most recently edited.
-/// An empty or punctuation-only query returns nothing.
+/// Pages whose title matches come first; then best match first; then most recently edited. Only
+/// the newest [`RANKED_BLOCKS`] matching blocks are ranked. An empty or punctuation-only query returns nothing.
 pub(crate) fn search(conn: &Connection, query: &str) -> Result<Vec<PageHit>, SearchError> {
     let Some(expression) = match_expression(query) else {
         return Ok(Vec::new());
@@ -131,15 +138,24 @@ pub(crate) fn search(conn: &Connection, query: &str) -> Result<Vec<PageHit>, Sea
         groups.insert(page, Group { hit, score, saved_at });
     }
 
+    // Ranked in FTS5 alone, then joined, so only the rows kept are looked up. The newest
+    // `RANKED_BLOCKS` matches are those at or above the rowid found by the inner subquery; rowids
+    // only grow, so a re-indexed page is always among the newest.
     let mut blocks = conn.prepare_cached(
-        "SELECT b.page_id, b.block_id, b.kind, snippet(blocks_fts, 0, char(1), char(2), '…', ?2),
-                bm25(blocks_fts), p.title, p.saved_at
-         FROM blocks_fts JOIN blocks b ON b.id = blocks_fts.rowid JOIN pages p ON p.page_id = b.page_id
-         WHERE blocks_fts MATCH ?1
-         ORDER BY bm25(blocks_fts)
-         LIMIT ?3",
+        "SELECT b.page_id, b.block_id, b.kind, t.excerpt, t.score, p.title, p.saved_at
+         FROM (SELECT rowid AS id, snippet(blocks_fts, 0, char(1), char(2), '…', ?2) AS excerpt,
+                      bm25(blocks_fts) AS score
+               FROM blocks_fts
+               WHERE blocks_fts MATCH ?1
+                 AND rowid >= coalesce((SELECT rowid FROM blocks_fts WHERE blocks_fts MATCH ?1
+                                        ORDER BY rowid DESC LIMIT 1 OFFSET ?4), 0)
+               ORDER BY score
+               LIMIT ?3) AS t
+         JOIN blocks b ON b.id = t.id JOIN pages p ON p.page_id = b.page_id
+         ORDER BY t.score",
     )?;
-    let rows = blocks.query_map(params![expression, EXCERPT_WORDS, MAX_BLOCK_ROWS], |row| {
+    let newest = params![expression, EXCERPT_WORDS, MAX_BLOCK_ROWS, RANKED_BLOCKS - 1];
+    let rows = blocks.query_map(newest, |row| {
         Ok((
             row.get::<_, String>(0)?,
             row.get::<_, String>(1)?,

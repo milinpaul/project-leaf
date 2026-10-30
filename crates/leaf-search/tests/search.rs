@@ -5,7 +5,8 @@ mod common;
 use common::TempDir;
 use leaf_core::{BlockId, PageId};
 use leaf_search::{
-    BLOCKS_PER_PAGE, BlockText, MAX_PAGES, PageHit, PageText, PageVersion, SearchIndex, Searcher,
+    BLOCKS_PER_PAGE, BlockText, MAX_PAGES, PageHit, PageText, PageVersion, RANKED_BLOCKS, SearchIndex,
+    Searcher,
 };
 use proptest::prelude::*;
 
@@ -237,4 +238,36 @@ proptest! {
         put(&mut index, &text("Café NOT AND", &["a (quoted) \"text\" with * and ^ signs"]), 1);
         prop_assert!(index.search(&input).is_ok(), "{input:?} failed: {:?}", index.search(&input).err());
     }
+}
+
+#[test]
+fn only_the_newest_matching_blocks_are_ranked() {
+    let dir = TempDir::new();
+    let mut index = open(&dir);
+    // The best possible match, indexed first...
+    let old = text("Old", &["harbour"]);
+    put(&mut index, &old, 1);
+    // ...then `RANKED_BLOCKS` weaker matches, newer, spread over pages.
+    let per_page = 1_000;
+    let filler: Vec<String> = (0..per_page)
+        .map(|n| format!("a long line {n} about the harbour and many other words besides"))
+        .collect();
+    let filler: Vec<&str> = filler.iter().map(String::as_str).collect();
+    let page_count = usize::try_from(RANKED_BLOCKS).unwrap() / per_page;
+    for n in 0..page_count {
+        put(&mut index, &text(&format!("Page {n}"), &filler), 2);
+    }
+
+    let hits = index.search("harbour").unwrap();
+    assert!(!hits.is_empty());
+    assert!(
+        !pages(&hits).contains(&old.page),
+        "older than the newest {RANKED_BLOCKS}"
+    );
+
+    // Editing it makes it new again, and as the best match it comes first.
+    put(&mut index, &old, 3);
+    assert_eq!(index.search("harbour").unwrap()[0].page, old.page);
+    // Its title is always searched, however many blocks match.
+    assert_eq!(index.search("old").unwrap()[0].page, old.page);
 }

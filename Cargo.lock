@@ -3880,6 +3880,7 @@ name = "leaf-search"
 version = "0.1.0"
 dependencies = [
  "leaf-core",
+ "leaf-fixtures",
  "leaf-model",
  "loro",
  "proptest",

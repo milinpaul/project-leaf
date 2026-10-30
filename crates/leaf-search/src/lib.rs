@@ -34,7 +34,7 @@ pub use extract::{UNTITLED, page_text};
 pub use index::{INDEX_FILE, IndexState, IndexedPage, SEARCH_DIR, SearchIndex};
 pub use page_text::{BlockText, PageText, PageVersion};
 pub use schema::INDEX_VERSION;
-pub use search::{BLOCKS_PER_PAGE, BlockHit, Highlighted, MAX_PAGES, PageHit, Searcher};
+pub use search::{BLOCKS_PER_PAGE, BlockHit, Highlighted, MAX_PAGES, PageHit, RANKED_BLOCKS, Searcher};
 pub use source::{PageSource, SavedVersions, SourceError};
 pub use sync::{Finished, Syncer};
 pub use worker::SearchWorker;
