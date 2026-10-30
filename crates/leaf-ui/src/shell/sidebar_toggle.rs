@@ -35,7 +35,7 @@ impl Shell {
 
     /// The collapse button in the sidebar's header; its tooltip names the shortcut.
     pub(super) fn render_collapse_button(cx: &mut Context<Self>) -> Button {
-        Button::new("collapse-sidebar")
+        crate::theme::button("collapse-sidebar")
             .debug_selector(|| "collapse-sidebar".into())
             .icon(Icon::new(IconName::PanelLeft))
             .ghost()
@@ -50,7 +50,7 @@ impl Shell {
     pub(super) fn render_reopen_button(cx: &mut Context<Self>) -> AnyElement {
         let theme = cx.theme();
         let (backing, radius) = (theme.background.opacity(0.85), theme.radius);
-        let open = Button::new("show-sidebar")
+        let open = crate::theme::button("show-sidebar")
             .debug_selector(|| "show-sidebar".into())
             .icon(Icon::new(IconName::Menu))
             .ghost()

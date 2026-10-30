@@ -178,3 +178,32 @@ fn the_theme_follows_the_mode(cx: &mut TestAppContext) {
         assert_eq!(Theme::global(cx).radius, gpui::px(6.0));
     });
 }
+
+/// Every button shows the hand (E07-S12): buttons are made with `theme::button`, never `Button::new`
+/// directly, which would show the arrow.
+#[test]
+fn every_button_is_made_by_theme_button() {
+    fn rust_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.is_dir() {
+                rust_files(&path, out);
+            } else if path.extension().is_some_and(|ext| ext == "rs") {
+                out.push(path);
+            }
+        }
+    }
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files = Vec::new();
+    rust_files(&src, &mut files);
+    let needle = ["Button", "::new("].concat();
+    let offenders: Vec<_> = files
+        .iter()
+        .filter(|path| !path.ends_with("src/theme.rs"))
+        .filter(|path| std::fs::read_to_string(path).unwrap().contains(&needle))
+        .collect();
+    assert!(
+        offenders.is_empty(),
+        "use theme::button instead of Button::new in {offenders:?}"
+    );
+}

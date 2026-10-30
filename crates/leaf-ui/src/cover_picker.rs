@@ -57,6 +57,7 @@ impl CoverPickerPanel {
                     .rounded(radius),
             )
             .child(div().text_xs().child(cover.label()))
+            .cursor_pointer()
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |_, _: &MouseDownEvent, _, cx| cx.emit(CoverPicked::Cover(cover))),

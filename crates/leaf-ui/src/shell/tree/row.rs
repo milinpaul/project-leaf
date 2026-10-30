@@ -95,7 +95,9 @@ impl Shell {
         };
         if !renaming {
             // While renaming, clicks belong to the text field.
-            row = row.on_click(cx.listener(move |shell, _, window, cx| shell.open(page, window, cx)));
+            row = row
+                .cursor_pointer()
+                .on_click(cx.listener(move |shell, _, window, cx| shell.open(page, window, cx)));
         }
 
         let dragged = DraggedPage {
@@ -150,6 +152,7 @@ impl Shell {
             .text_color(muted)
             .hover(|style| style.bg(active))
             .child(Icon::new(icon).xsmall())
+            .cursor_pointer()
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |shell, _: &MouseDownEvent, _, cx| {
@@ -191,6 +194,7 @@ impl Shell {
             .hover(|style| style.bg(active))
             .tooltip(|window, cx| Tooltip::new("Add a page inside").build(window, cx))
             .child(Icon::new(IconName::Plus).xsmall())
+            .cursor_pointer()
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |shell, _: &MouseDownEvent, window, cx| {
@@ -278,6 +282,7 @@ fn menu_row(icon: IconName, label: &'static str, danger: bool) -> PopupMenuItem 
         };
         h_flex()
             .h(px(MENU_ROW_HEIGHT))
+            .cursor_pointer()
             .px_1()
             .gap_2p5()
             .text_color(text)

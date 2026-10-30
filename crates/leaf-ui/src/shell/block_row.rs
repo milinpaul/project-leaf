@@ -119,6 +119,7 @@ impl Shell {
             BlockStyle::Todo { checked } => Some(
                 Checkbox::new(ElementId::from(SharedString::from(format!("todo-{id}"))))
                     .checked(*checked)
+                    .cursor_pointer()
                     .on_click(move |_, _, cx| {
                         let _ = shell.update(cx, |shell, cx| shell.toggle_todo(id, cx));
                     })

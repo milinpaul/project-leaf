@@ -7,7 +7,7 @@ use gpui::{
     Anchor, AnyElement, AppContext as _, Context, Focusable as _, FontWeight, InteractiveElement as _,
     IntoElement, ParentElement, Styled, Window, div, px, rems,
 };
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::ButtonVariants as _;
 use gpui_component::input::Input;
 use gpui_component::popover::Popover;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
@@ -32,7 +32,7 @@ impl Shell {
         let picking = open || self.cover_picker.is_some();
         let muted = cx.theme().muted_foreground;
         let trigger = match &icon {
-            Some(emoji) => Button::new("page-icon")
+            Some(emoji) => crate::theme::button("page-icon")
                 .debug_selector(|| "page-icon".into())
                 .ghost()
                 // Room for the large emoji; a button is sized for a line of text.
@@ -45,7 +45,7 @@ impl Shell {
                         .line_height(px(ICON_SIZE + 8.0))
                         .child(emoji.clone()),
                 ),
-            None => Button::new("add-icon")
+            None => crate::theme::button("add-icon")
                 .debug_selector(|| "add-icon".into())
                 .ghost()
                 .small()
@@ -73,7 +73,7 @@ impl Shell {
             popover = popover.child(panel.clone());
         }
         let add_cover = (!on_cover).then(|| {
-            let trigger = Button::new("add-cover")
+            let trigger = crate::theme::button("add-cover")
                 .debug_selector(|| "add-cover".into())
                 .ghost()
                 .small()

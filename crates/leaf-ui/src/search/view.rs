@@ -143,6 +143,7 @@ impl SearchPanel {
                     cx.notify();
                 }
             }))
+            .cursor_pointer()
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |panel, _: &MouseDownEvent, window, cx| {
