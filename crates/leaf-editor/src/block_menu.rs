@@ -134,7 +134,7 @@ pub fn turn_into_kinds() -> Vec<BlockKind> {
 }
 
 /// The name of a kind in the "Turn into" list.
-fn kind_label(kind: &BlockKind) -> &'static str {
+pub(crate) fn kind_label(kind: &BlockKind) -> &'static str {
     match kind {
         BlockKind::Paragraph => "Text",
         BlockKind::Heading { level: 1 } => "Heading 1",
@@ -155,7 +155,7 @@ fn kind_label(kind: &BlockKind) -> &'static str {
 }
 
 /// Whether `a` and `b` are the same kind for the "current" tick (a ticked to-do is still a to-do).
-fn same_kind(a: &BlockKind, b: &BlockKind) -> bool {
+pub(crate) fn same_kind(a: &BlockKind, b: &BlockKind) -> bool {
     std::mem::discriminant(a) == std::mem::discriminant(b)
         && match (a, b) {
             (BlockKind::Heading { level: x }, BlockKind::Heading { level: y }) => x == y,

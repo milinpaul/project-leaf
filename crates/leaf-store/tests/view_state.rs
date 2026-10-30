@@ -69,3 +69,28 @@ fn a_damaged_file_gives_defaults_and_is_moved_aside() {
     fs::create_dir(&path).unwrap(); // unreadable as a file
     assert_eq!(ViewState::load(&path), ViewState::default());
 }
+
+#[test]
+fn the_open_page_round_trips_and_a_bad_or_missing_one_reads_as_none() {
+    let dir = TempDir::new();
+    let path = dir.0.join(VIEW_STATE);
+    let page = PageId::new();
+    let mut state = ViewState::default();
+    assert_eq!(state.open_page(), None);
+    state.set_open_page(Some(page));
+    state.save(&path).unwrap();
+    assert_eq!(ViewState::load(&path).open_page(), Some(page));
+
+    // An older view.json without it, and a damaged entry, both just mean no page.
+    fs::write(&path, r#"{"expanded": []}"#).unwrap();
+    assert_eq!(ViewState::load(&path).open_page(), None);
+    fs::write(&path, r#"{"open_page": "not-an-id"}"#).unwrap();
+    assert_eq!(ViewState::load(&path).open_page(), None);
+
+    state.set_open_page(None);
+    state.save(&path).unwrap();
+    assert!(
+        !fs::read_to_string(&path).unwrap().contains("open_page"),
+        "none is left out"
+    );
+}

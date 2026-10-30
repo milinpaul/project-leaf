@@ -120,9 +120,15 @@ time on hover via `chrono::Local`), the Favourites star and the `⋯` page menu.
 runs the chosen action (E18-S04). Its "Full width" switch sets the page's `full_width` (E18-S06); the shell's
 `column` then drops the reading-width cap for that page's header and blocks.
 
+**Formatting bar (E07-S13, ADR 0067).** While text is selected, `shell::format_bar` floats a bar above the selection
+with Turn into and the mark buttons. `PageEditor::format_bar` says what it offers and which marks are on; clicks go
+through `toggle_mark`, the link popover and `BlockAction::TurnInto`, like the keyboard and the block menu. The Turn
+into list is drawn in the bar's overlay so the page keeps the keyboard and the selection.
+
 **Sidebar page tree (E06-S03).** The sidebar lists the page tree (`WorkspaceEditor::sidebar` in `leaf-editor`):
 children show under expanded pages, and which pages are expanded is saved in the workspace folder's `view.json`
-(`leaf_store::ViewState`), not in a document. Right-click offers Add page inside, Rename (inline) and Move to Trash;
+(`leaf_store::ViewState`), not in a document. So is the open page, which opens again when the workspace
+is next opened (E06-S19). Right-click offers Add page inside, Rename (inline) and Move to Trash;
 dragging a row shows a line (above or below) or a ring (inside) and drops through `WorkspaceEditor::move_page`, which
 turns the place on screen into a model index (indexes count trashed pages; ADR 0031). Only rows on screen are drawn
 (`uniform_list`), so 500 pages scroll smoothly. The UI code is `leaf_ui::shell::tree`.

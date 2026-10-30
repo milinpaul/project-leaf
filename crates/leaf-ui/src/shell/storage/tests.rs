@@ -131,3 +131,40 @@ fn deleting_a_page_for_good_removes_its_document_from_disk(cx: &mut TestAppConte
     );
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
+
+/// E06-S19: the page open when the window closes opens again with the workspace; a page in the trash
+/// doesn't.
+#[gpui::test]
+fn the_last_open_page_opens_again(cx: &mut TestAppContext) {
+    let path = temp_workspace("last-page");
+    let (first, second) = {
+        let (shell, cx) = open_window(&path, cx);
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        let first = shell.read_with(cx, |shell, _| shell.editor().selected().unwrap());
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.new_page(window, cx)));
+        let second = shell.read_with(cx, |shell, _| shell.editor().selected().unwrap());
+        cx.update(|window, cx| shell.update(cx, |shell, cx| shell.open(first, window, cx)));
+        // Closing: everything is saved and the folder's lock let go.
+        shell.update(cx, |shell, _| {
+            shell.save(true);
+            shell.storage = None;
+        });
+        (first, second)
+    };
+
+    let (shell, cx) = open_window(&path, cx);
+    let open = shell.read_with(cx, |shell, _| shell.editor().selected());
+    assert_eq!(open, Some(first), "the page that was open last");
+    assert_ne!(Some(second), open);
+
+    // Trash it, close, reopen: nothing is opened, as before this feature.
+    shell.update(cx, |shell, _| shell.editor.trash(first, 0).unwrap());
+    shell.update(cx, |shell, _| {
+        shell.save(true);
+        shell.storage = None;
+    });
+    let path_again = path.clone();
+    let (shell, cx) = open_window(&path_again, cx);
+    assert_eq!(shell.read_with(cx, |shell, _| shell.editor().selected()), None);
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}

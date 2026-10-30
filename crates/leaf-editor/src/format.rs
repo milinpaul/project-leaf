@@ -219,7 +219,7 @@ impl PageEditor {
     }
 
     /// The selection's text in each block that can take marks, as non-empty ranges in reading order.
-    fn markable_ranges(&mut self) -> Result<Vec<TextRange>, EditorError> {
+    pub(crate) fn markable_ranges(&mut self) -> Result<Vec<TextRange>, EditorError> {
         let mut pieces: Vec<(BlockId, Range<usize>)> = Vec::new();
         match self.selection()? {
             None => {}
