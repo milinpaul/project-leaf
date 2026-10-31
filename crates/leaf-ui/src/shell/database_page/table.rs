@@ -38,6 +38,9 @@ pub(in crate::shell) struct DatabaseTable {
     pub(super) add_menu: Option<Vec<HiddenColumn>>,
     /// The column menu's name field.
     pub(super) column_name: Entity<InputState>,
+    /// The open option's menu inside the picker, and its name field (E09-S11).
+    pub(super) option_menu: Option<leaf_editor::OptionMenu>,
+    pub(super) option_name: Entity<InputState>,
     pub(super) shell: WeakEntity<Shell>,
 }
 
@@ -143,11 +146,11 @@ impl TableDelegate for DatabaseTable {
                 super::cells::render_picker(
                     picker,
                     &self.query,
+                    self.option_menu.as_ref().map(|menu| (menu, &self.option_name)),
                     &self.shell,
                     super::cells::PickerFor::Table,
                     cx,
                 )
-                .into_any_element()
             }),
             Some(EditKind::Date) => Some(super::cells::render_calendar(&self.calendar, window, cx)),
             _ => None,

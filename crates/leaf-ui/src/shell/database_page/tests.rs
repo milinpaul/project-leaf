@@ -285,6 +285,8 @@ mod columns;
 
 mod inline;
 
+mod option_menu;
+
 mod query;
 
 mod row_page;
