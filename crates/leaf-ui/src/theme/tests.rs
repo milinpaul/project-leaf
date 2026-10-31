@@ -207,3 +207,25 @@ fn every_button_is_made_by_theme_button() {
         "use theme::button instead of Button::new in {offenders:?}"
     );
 }
+
+#[test]
+fn callout_text_and_icons_stay_readable_in_every_tone() {
+    use leaf_model::CalloutTone;
+
+    let mut tones = CalloutTone::ALL.to_vec();
+    tones.push(CalloutTone::Other("celebrate".into()));
+    for (mode, palette, dark) in [("light", &LIGHT, false), ("dark", &DARK, true)] {
+        for tone in &tones {
+            let (background, icon) = super::callout_hex(tone, dark);
+            let text = contrast(palette.text, background);
+            assert!(text >= 7.0, "{mode} {tone:?}: text on callout is {text:.1}:1");
+            let icon = contrast(icon, background);
+            assert!(icon >= 4.5, "{mode} {tone:?}: icon on callout is {icon:.1}:1");
+            let edge = contrast(background, palette.page);
+            assert!(
+                edge < 1.6,
+                "{mode} {tone:?}: the box stays soft against the page ({edge:.2}:1)"
+            );
+        }
+    }
+}

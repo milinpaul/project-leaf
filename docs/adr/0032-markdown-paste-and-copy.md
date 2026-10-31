@@ -83,3 +83,18 @@ Copying from Leaf should give other apps plain text and Markdown alongside Leaf'
   below the line (or replaces an empty paragraph) and the text after the caret moves to a new line below it. Into a
   cell, a table's cells go in as lines of text: tables never nest.
 
+## Update 2026-10-31 (E19-S04): action items
+
+- **Copying:** an action item writes a task list line with its fields in a group at the end, in plain words any app
+  shows readably: `- [ ] Send invoice (due 2026-10-31 14:00, high)`. The date is `YYYY-MM-DD` and the time 24-hour
+  `HH:MM`, as stored, so nothing depends on language or time zone. An item with neither a date nor a priority ends in
+  `(action item)`, so it doesn't come back as a to-do (`clipboard/markdown/task.rs`).
+- **Pasting:** a to-do line becomes an action item only when its last `(…)` group is made entirely of those parts
+  (`due` with a date and an optional time, `high` / `medium` / `low`, `action item`; any order and case, each at most
+  once). Anything else in brackets, like `- [ ] Call Sam (after lunch)`, stays to-do text.
+- **A to-do whose text happens to end like that** (`Pick a level (high)`) has its bracket escaped when copied
+  (`\(high)`), so it pastes back as a to-do with the same text.
+- **Alternatives considered:** Obsidian Tasks' emoji (`📅 2026-10-31 ⏫`) is compact but unreadable without the
+  plugin and awkward to type; a `[!]` box (`- [!] ...`) is not a GitHub task list and shows as a bullet elsewhere.
+- Plain English: copy an action item into an email or notes app and it reads naturally, with its date and priority in
+  brackets; paste that back into Leaf and it is an action item again.

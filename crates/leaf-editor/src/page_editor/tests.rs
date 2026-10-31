@@ -413,3 +413,41 @@ fn enter_on_an_empty_paragraph_still_adds_a_block() {
     assert_ne!(second, first);
     assert_eq!(editor.doc().len(), 2);
 }
+
+#[test]
+fn set_callout_tone_changes_only_callouts_in_one_undo_step() {
+    use leaf_model::CalloutTone;
+
+    let (mut editor, first) = editor();
+    editor
+        .turn_into(
+            first,
+            BlockKind::Callout {
+                tone: CalloutTone::Info,
+            },
+        )
+        .unwrap();
+    editor.doc.set_undo_merge_interval(0);
+    editor.set_callout_tone(first, CalloutTone::Error).unwrap();
+    assert_eq!(
+        editor.doc().kind(first).unwrap(),
+        BlockKind::Callout {
+            tone: CalloutTone::Error
+        }
+    );
+    editor.undo().unwrap();
+    assert_eq!(
+        editor.doc().kind(first).unwrap(),
+        BlockKind::Callout {
+            tone: CalloutTone::Info
+        }
+    );
+
+    editor.turn_into(first, BlockKind::Quote).unwrap();
+    editor.set_callout_tone(first, CalloutTone::Note).unwrap();
+    assert_eq!(
+        editor.doc().kind(first).unwrap(),
+        BlockKind::Quote,
+        "not a callout: left alone"
+    );
+}

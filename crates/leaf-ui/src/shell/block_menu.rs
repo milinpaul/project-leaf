@@ -110,6 +110,7 @@ pub(super) fn kind_icon(kind: &BlockKind) -> IconName {
         BlockKind::Todo { .. } => IconName::SquareCheck,
         BlockKind::Task { .. } => IconName::CircleCheck,
         BlockKind::Quote => IconName::TextQuote,
+        BlockKind::Callout { .. } => IconName::Info,
         BlockKind::Code { .. } => IconName::SquareCode,
         BlockKind::Divider => IconName::Minus,
         _ => IconName::Type,

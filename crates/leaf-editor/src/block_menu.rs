@@ -133,6 +133,9 @@ pub fn turn_into_kinds() -> Vec<BlockKind> {
             priority: None,
         },
         BlockKind::Quote,
+        BlockKind::Callout {
+            tone: leaf_model::CalloutTone::Info,
+        },
         BlockKind::Code {
             language: String::new(),
         },
@@ -150,6 +153,7 @@ pub(crate) fn kind_label(kind: &BlockKind) -> &'static str {
         BlockKind::NumberedList => "Numbered list",
         BlockKind::Todo { .. } => "To-do list",
         BlockKind::Quote => "Quote",
+        BlockKind::Callout { .. } => "Callout",
         BlockKind::Code { .. } => "Code",
         BlockKind::Divider => "Divider",
         BlockKind::Image { .. } => "Image",

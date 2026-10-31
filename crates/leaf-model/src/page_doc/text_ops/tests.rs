@@ -327,7 +327,7 @@ fn unknown_blocks_are_never_edited_even_if_they_have_text() {
     tree.enable_fractional_index(0);
     let meta = tree.get_meta(tree.create(None).unwrap()).unwrap();
     meta.insert("id", id.to_string()).unwrap();
-    meta.insert("type", "callout").unwrap();
+    meta.insert("type", "sticky_note").unwrap();
     meta.ensure_mergeable_text("text")
         .unwrap()
         .insert(0, "kept")
@@ -343,7 +343,7 @@ fn unknown_blocks_are_never_edited_even_if_they_have_text() {
         })
         .unwrap_err();
     assert!(
-        matches!(&err, ModelError::TextNotAllowed { kind } if kind == "callout"),
+        matches!(&err, ModelError::TextNotAllowed { kind } if kind == "sticky_note"),
         "{err}"
     );
 }
