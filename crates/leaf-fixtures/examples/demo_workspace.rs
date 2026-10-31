@@ -6,11 +6,11 @@
 use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use leaf_core::{BlockId, PageId};
+use leaf_core::{AssetId, BlockId, PageId};
 use leaf_fixtures::{Fixture, FixtureError, save_to_folder};
 use leaf_model::{
-    BlockKind, DueDate, DueTime, Mark, Outcome, PageCommand, PageDoc, PageOutcome, Priority, Workspace,
-    WorkspaceCommand,
+    BlockKind, DueDate, DueTime, Mark, Outcome, PageCommand, PageDoc, PageOutcome, Priority, WebPreview,
+    Workspace, WorkspaceCommand,
 };
 use leaf_store::ViewState;
 
@@ -20,7 +20,11 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
     match demo().and_then(|(fixture, trip)| {
-        let saved = save_to_folder(folder.as_ref(), &fixture)?;
+        let mut saved = save_to_folder(folder.as_ref(), &fixture)?;
+        // The reading list's web bookmark pictures, stored as the fetcher would store them.
+        for picture in [PREVIEW, FAVICON] {
+            saved.import_asset(picture, now_ms())?;
+        }
         // Open the trip with its pages showing in the sidebar.
         let mut view = ViewState::default();
         view.set_expanded(&[trip]);
@@ -69,6 +73,7 @@ fn demo() -> Result<(Fixture, PageId), FixtureError> {
     for (index, ((icon, title), children)) in TREE.iter().enumerate() {
         let page = create(&mut workspace, None, index, icon, title, now)?;
         first.get_or_insert(page);
+        made.push((title, page));
         for (child_index, (icon, title)) in children.iter().enumerate() {
             made.push((
                 title,
@@ -91,7 +96,10 @@ fn demo() -> Result<(Fixture, PageId), FixtureError> {
     workspace.apply(WorkspaceCommand::AddFavourite { page: trip })?;
     let fixture = Fixture {
         workspace,
-        pages: vec![(trip, trip_page(now, links)?)],
+        pages: vec![
+            (trip, trip_page(now, links)?),
+            (find("Reading list")?, reading_list(now)?),
+        ],
     };
     Ok((fixture, trip))
 }
@@ -196,6 +204,65 @@ fn trip_page(now: i64, links: [PageId; 3]) -> Result<PageDoc, FixtureError> {
         "Comfortable walking shoes",
         &[],
     )?;
+    Ok(page.doc)
+}
+
+/// A web bookmark's preview picture and site icon (E15-S04): a built-in cover and a small leaf.
+const PREVIEW: &[u8] = include_bytes!("../../leaf-ui/assets/covers/forest.svg");
+const FAVICON: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#2f8f6b"/><path d="M9 23c0-9 6-14 15-14-1 9-6 15-15 14z" fill="#e8f5ee"/></svg>"##;
+
+/// The reading list: web bookmarks with a full preview, with words only, and not fetched yet.
+fn reading_list(now: i64) -> Result<PageDoc, FixtureError> {
+    let mut page = Writer {
+        doc: PageDoc::new(),
+        count: 0,
+    };
+    page.add(
+        BlockKind::Paragraph,
+        "Articles to read on the train. Paste a link and choose Create web bookmark.",
+        &[("Create web bookmark", Mark::Bold)],
+    )?;
+    let bookmarks: [(&str, WebPreview); 3] = [
+        (
+            "https://www.inkandswitch.com/local-first/",
+            WebPreview {
+                title: Some("Local-first software: you own your data, in spite of the cloud".into()),
+                description: Some(
+                    "Cloud apps make it easy to work together, but your data lives on someone else's computer. \
+                     Local-first software keeps the data on your own devices and syncs it when it can."
+                        .into(),
+                ),
+                image: Some(AssetId::of(PREVIEW)),
+                favicon: Some(AssetId::of(FAVICON)),
+                fetched_at: Some(now),
+            },
+        ),
+        (
+            "https://loro.dev/docs/tutorial/get_started",
+            WebPreview {
+                title: Some("Get started with Loro".into()),
+                description: Some("Loro is a CRDT library: documents that merge edits from many devices without conflicts.".into()),
+                fetched_at: Some(now),
+                ..WebPreview::default()
+            },
+        ),
+        ("https://www.gpui.rs/", WebPreview::default()),
+    ];
+    for (url, preview) in bookmarks {
+        let id = page.add(
+            BlockKind::WebBookmark {
+                url: url.into(),
+                preview: WebPreview::default(),
+            },
+            "",
+            &[],
+        )?;
+        page.doc.apply(PageCommand::SetWebBookmarkPreview {
+            id,
+            url: url.into(),
+            preview,
+        })?;
+    }
     Ok(page.doc)
 }
 

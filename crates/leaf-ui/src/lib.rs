@@ -61,6 +61,7 @@ gpui_kit_assets::icon_assets!(
         FaceSlightlySmilingPlus,
         FileText,
         Flag,
+        Globe,
         GripVertical,
         Heading1,
         Heading2,

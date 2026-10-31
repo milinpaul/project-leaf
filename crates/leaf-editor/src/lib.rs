@@ -11,6 +11,7 @@
 
 mod block_actions;
 mod block_menu;
+mod bookmark_card;
 mod caret;
 mod clipboard;
 mod code_block;
@@ -45,6 +46,7 @@ mod workspace_editor;
 
 pub use block_actions::BlockAction;
 pub use block_menu::{BlockMenu, HoverChange, MenuEntry, MenuItem, MenuKey, turn_into_kinds};
+pub use bookmark_card::{WebBookmarkCard, domain_of};
 pub use caret::{LineLayout, Motion, Vertical};
 pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, language_label};

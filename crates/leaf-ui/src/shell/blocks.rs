@@ -93,6 +93,8 @@ pub(super) struct PageState {
     pub(super) task_picker: Option<super::task_pickers::OpenTaskPicker>,
     /// The address box the slash menu's "Web bookmark" opened, while it is open (E15-S03).
     pub(super) address: Option<super::web_bookmark::OpenAddress>,
+    /// Web bookmarks whose preview is being fetched, drawn with a loading state (E15-S04; filled by E15-S05).
+    pub(super) fetching: std::collections::HashSet<BlockId>,
 }
 
 impl Shell {

@@ -1,0 +1,10 @@
+---
+source: crates/leaf-editor/src/bookmark_card/tests.rs
+expression: "picture(&WebBookmarkCard::new(LEAF, &WebPreview::default(), true))"
+---
+title:       https://www.leaf.app/blog/local-first?ref=home
+description: (none)
+footer:      [icon none] leaf.app
+picture:     none
+opens:       https://www.leaf.app/blog/local-first?ref=home
+fetched: false, fetching: true

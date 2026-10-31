@@ -97,7 +97,9 @@ menu), and `WorkspaceEditor::link_menu` matches the query against the workspace'
 fuzzy matcher, adding "New page"; Enter or a click calls `link_menu_apply`, which links the page in one undo step. **Web bookmarks** are made in `leaf-editor/src/web_bookmark.rs` (E15-S03,
 ADR-087): a pasted web address remembers an offer while the caret sits right after the untouched link, and
 the slash menu's "Web bookmark" asks for an address like "Image" asks for a file; `shell/web_bookmark.rs` draws the
-offer menu and the address box and forwards. A **code block** shows its language at the top right on hover; a click opens a searchable list
+offer menu and the address box and forwards. A bookmark is drawn as a card (E15-S04, `shell/bookmark_card.rs`) from
+`leaf_editor::WebBookmarkCard`, which decides what shows; its pictures come from the asset store like an image's, and
+the blocks whose preview is being fetched (`PageState::fetching`, filled by the fetcher in E15-S05) show a loading line. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR-054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
 and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR-043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
