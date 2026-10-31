@@ -285,6 +285,8 @@ mod page_list;
 mod page_list_window_tests;
 mod page_menu;
 mod rich_text;
+#[cfg(test)]
+mod scrollbar_tests;
 mod select_scroll;
 mod sidebar;
 mod sidebar_search;
