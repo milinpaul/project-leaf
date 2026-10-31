@@ -23,6 +23,8 @@ pub(crate) mod keys {
     pub const OPTIONS: &str = "options";
     pub const ID: &str = "id";
     pub const COLOR: &str = "color";
+    /// A plain value kept inside a multi-select cell's map, once the column holds another type (E09-S12).
+    pub const PLAIN: &str = "=";
 }
 
 /// A column's type. Types this version doesn't know (from a newer Leaf) read as `Unknown` and keep their name;
@@ -185,7 +187,18 @@ impl CellValue {
         match cell {
             ValueOrContainer::Value(LoroValue::Null) => None,
             ValueOrContainer::Value(value) => Some(Self::from_loro(&value, kind)),
+            // A multi-select cell's map. Once the column holds another type, its value is kept inside the map
+            // (see `keys::PLAIN`); emptied, the cell is empty unless it is a multi-select.
             ValueOrContainer::Container(Container::Map(map)) => {
+                if *kind != PropertyType::MultiSelect {
+                    if let Some(ValueOrContainer::Value(plain)) = map.get(keys::PLAIN) {
+                        return Some(Self::from_loro(&plain, kind));
+                    }
+                    let any_option = map.keys().any(|key| key.parse::<OptionId>().is_ok());
+                    if !any_option {
+                        return None;
+                    }
+                }
                 Some(Self::from_loro(&map.get_deep_value(), kind))
             }
             ValueOrContainer::Container(_) => Some(Self::Unknown),
@@ -214,6 +227,10 @@ pub(crate) fn check_options(column: &Column, value: &CellValue) -> Result<(), Mo
 /// Sets a multi-select cell's map to exactly `options`, touching only the options that change, so tags added
 /// on another device at the same time are kept and options this version can't read are left alone.
 pub(crate) fn write_options(map: &LoroMap, options: &BTreeSet<OptionId>) -> Result<(), ModelError> {
+    // A plain value kept here while the column had another type goes: the cell holds options now.
+    if map.get(keys::PLAIN).is_some() {
+        map.delete(keys::PLAIN)?;
+    }
     let mut stored = Vec::new();
     map.for_each(|key, _| stored.push(key.to_owned()));
     for key in stored {
