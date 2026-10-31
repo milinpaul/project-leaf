@@ -1,0 +1,19 @@
+# Security policy
+
+## Supported versions
+
+Leaf is pre-alpha and has no releases yet. Security fixes go into `main`.
+
+## Reporting a vulnerability
+
+**Please don't open a public issue for security problems.** Report them privately through GitHub's
+[private vulnerability reporting](https://github.com/milinpaul/project-leaf/security/advisories/new) instead.
+
+Include what you found, the steps to reproduce it, and what an attacker could do with it. You'll get an answer
+within a week. Once a fix is merged, we'll credit you in the advisory unless you'd rather stay anonymous.
+
+## Scope
+
+Leaf is a local, offline app: in Phase 0 it makes no network requests. The most relevant problems are files
+that crash Leaf or make it lose data when opened (a crafted workspace, image or pasted content), and anything
+that lets Leaf read or write outside the workspace folder you chose.
