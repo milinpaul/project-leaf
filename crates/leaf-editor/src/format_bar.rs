@@ -25,6 +25,9 @@ pub struct FormatBar {
     /// Bold, italic, strikethrough, code and link, in that order; empty when no selected text can
     /// take marks (only code blocks are selected).
     pub marks: Vec<MarkButton>,
+    /// Whether "Link to page" is offered: the selection is words in one block that can hold a page link,
+    /// without a line break or `]`, so they can search the page list (E10-S10).
+    pub link_to_page: bool,
 }
 
 /// One kind in the "Turn into" list.
@@ -98,12 +101,14 @@ impl PageEditor {
                 button(MarkKind::Link, "Link", on.link.is_some()),
             ]
         };
+        let link_to_page = !marks.is_empty() && self.selection_can_link(start, end)?;
         Ok(Some(FormatBar {
             start,
             end,
             kinds,
             kind_label: label,
             marks,
+            link_to_page,
         }))
     }
 }
