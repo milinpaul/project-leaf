@@ -369,3 +369,20 @@ fn tab_into_an_off_screen_column_scrolls_the_table_to_it(cx: &mut TestAppContext
     );
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
+
+#[gpui::test]
+fn a_tall_wide_tables_scrollbar_stays_in_the_window(cx: &mut TestAppContext) {
+    let path = temp_workspace("tall-wide-bar");
+    let (page, table) = save_page(&path, 60, 9);
+    let (shell, cx) = open(&path, page, cx);
+    draw(cx);
+    let frame = cx.debug_bounds(selector("table", table)).unwrap();
+    assert!(frame.bottom() > px(900.0), "the table runs past the window");
+    let bar = cx.debug_bounds(selector("table-scrollbar", table)).unwrap();
+    assert!(
+        bar.bottom() <= px(900.0) && bar.top() >= frame.top(),
+        "reachable without scrolling: {bar:?}"
+    );
+    let _ = shell;
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}

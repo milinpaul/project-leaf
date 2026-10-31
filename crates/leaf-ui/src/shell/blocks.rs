@@ -55,6 +55,9 @@ pub(super) struct PageState {
     pub(super) menu_hover: Option<Task<()>>,
     /// Each table's sideways scroll position (E16-S03), kept across frames.
     pub(super) table_scroll: HashMap<BlockId, gpui::ScrollHandle>,
+    /// Where the page's list showed on screen, taken before the rows are drawn: a row can't ask the list while
+    /// it is drawing (a wide table keeps its scrollbar inside it, E16-S05).
+    pub(super) viewport: gpui::Bounds<Pixels>,
     /// A mouse-wheel glide in progress (E17-S01).
     pub(super) wheel: super::smooth_scroll::WheelGlide,
     /// Scrolling while a text selection is dragged near an edge (E17-S02).
@@ -216,6 +219,7 @@ impl Shell {
         self.blocks.drawn.clear();
         self.end_stale_drag(cx);
         self.blocks.list.sync(self.editor.selected(), rows);
+        self.blocks.viewport = self.blocks.list.state.viewport_bounds();
 
         let rows = list(self.blocks.list.state.clone(), cx.processor(Self::render_item)).size_full();
         // The platform's text input (typing, input methods, the emoji picker) reaches the page

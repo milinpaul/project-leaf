@@ -9,20 +9,30 @@ use super::super::Shell;
 use super::{CELL_WIDTH, HANDLE};
 
 impl Shell {
-    /// The horizontal scrollbar under `table`'s grid, shown while the pointer is over the table.
-    pub(super) fn table_scrollbar(table: BlockId, scroll: &gpui::ScrollHandle) -> gpui::Div {
-        div()
+    /// The horizontal scrollbar under `table`'s grid, shown while the pointer is over the table. A table taller
+    /// than the window would leave it out of sight below the fold, so then it sits at the bottom of the window
+    /// instead, over the table (where the table was drawn last frame).
+    pub(super) fn table_scrollbar(&self, table: BlockId, scroll: &gpui::ScrollHandle) -> gpui::Div {
+        let bar = div()
             .debug_selector(move || format!("table-scrollbar-{table}"))
             .absolute()
             .left_0()
             .right_0()
-            .bottom_0()
-            .h(Scrollbar::width())
-            .child(
-                Scrollbar::horizontal(scroll)
-                    .id(SharedString::from(format!("table-scrollbar-{table}")))
-                    .mode(ScrollbarMode::Hover),
-            )
+            .h(Scrollbar::width());
+        let frame = scroll.bounds();
+        let view = self.blocks.viewport;
+        let past_the_fold =
+            frame.size.height > px(0.0) && frame.top() < view.bottom() && frame.bottom() > view.bottom();
+        let bar = if past_the_fold {
+            bar.top((view.bottom() - frame.top() - Scrollbar::width()).max(px(0.0)))
+        } else {
+            bar.bottom_0()
+        };
+        bar.child(
+            Scrollbar::horizontal(scroll)
+                .id(SharedString::from(format!("table-scrollbar-{table}")))
+                .mode(ScrollbarMode::Hover),
+        )
     }
 
     /// Scrolls `table`'s box sideways so the caret, drawn at `x` (window coordinates) in one of its cells,

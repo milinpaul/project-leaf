@@ -116,7 +116,7 @@ impl Shell {
         // movement scrolls it (a horizontal swipe, or Shift+wheel); scrolling up and down over it
         // moves the page.
         let scroll = self.blocks.table_scroll.entry(table).or_default().clone();
-        let scrollbar = Self::table_scrollbar(table, &scroll);
+        let scrollbar = self.table_scrollbar(table, &scroll);
         let frame = div()
             .id(SharedString::from(format!("table-scroll-{table}")))
             .debug_selector(move || format!("table-{table}"))
