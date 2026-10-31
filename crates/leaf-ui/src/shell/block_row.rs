@@ -67,6 +67,9 @@ impl Shell {
         let highlight = self.blocks.highlights.get(&id).cloned();
         let caret = self.blocks.caret.filter(|c| c.block == id).map(|c| c.at);
         let body = self.render_rich_text(row, &look, highlight.as_ref(), caret, window, cx);
+        if let BlockStyle::Callout { tone } = &row.style {
+            return Self::render_callout(row, tone, body, cx);
+        }
         let line = line.children(prefix).child(body);
         match &row.style {
             // An action item's date chip and priority flag follow its text (E19-S03).
@@ -175,9 +178,15 @@ fn space_above(style: &BlockStyle) -> Pixels {
 pub(super) fn handle_place(row: &BlockRow) -> (Pixels, Pixels) {
     let look = look_of(&row.style);
     let first_line = look.line_height + look.pad * 2.0;
+    // A callout's text starts below its box's padding.
+    let inset = if matches!(row.style, BlockStyle::Callout { .. }) {
+        px(super::callout::GAP_Y + super::callout::PAD_Y)
+    } else {
+        px(0.0)
+    };
     (
         indent_of(row),
-        space_above(&row.style) + (first_line - px(20.0)) / 2.0,
+        space_above(&row.style) + inset + (first_line - px(20.0)) / 2.0,
     )
 }
 

@@ -324,6 +324,8 @@ mod text_ops;
 mod undo;
 
 #[cfg(test)]
+mod callout_tests;
+#[cfg(test)]
 mod task_tests;
 #[cfg(test)]
 mod tests;

@@ -73,6 +73,8 @@ pub(super) struct PageState {
     pub(super) resize_press: Option<Pixels>,
     /// The link popover, while it is open.
     pub(super) link: Option<super::link_popover::OpenLink>,
+    /// A callout's tone picker, while it is open (E21-S02).
+    pub(super) tones: Option<super::callout::OpenTones>,
     /// The floating formatting bar over selected text (E07-S13).
     pub(super) format_bar: super::format_bar::FormatBarState,
     /// A code block's language picker, while it is open.
@@ -215,6 +217,7 @@ impl Shell {
         let menu = self.render_block_menu(window, cx);
         let link = self.render_link_popover(cx);
         let language = self.render_language_picker(cx);
+        let tones = self.render_tone_picker(cx);
         let task_picker = self.render_task_picker(cx);
         let page = v_flex()
             .size_full()
@@ -247,6 +250,7 @@ impl Shell {
             .child(menu)
             .children(link)
             .children(language)
+            .children(tones)
             .children(task_picker)
             .children(slash)
             .children(format_bar);

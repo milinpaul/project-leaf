@@ -42,7 +42,8 @@ at once must converge without losing either change. The editor never reads the c
 
 ## Consequences
 
-- Until E19-S04, Markdown writes an action item as a to-do line. Leaf's own clipboard already carries every field.
+- Leaf's own clipboard carries every field; Markdown writes them in a group at the end of a to-do line, e.g.
+  `- [ ] Send invoice (due 2026-10-31 14:00, high)` (E19-S04, ADR 0032).
 - E19-S03 draws it: a round check (to-dos keep the square), a date chip (red when overdue) and a priority flag in
   three calm colours (High uses the danger red), with faint "add" buttons on hover only. The date picker and priority
   menu each write one prop, so one undo step each; typing a time with no date also sets today.

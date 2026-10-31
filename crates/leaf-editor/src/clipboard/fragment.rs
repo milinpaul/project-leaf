@@ -174,6 +174,10 @@ enum WireKind {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         priority: Option<String>,
     },
+    /// A callout (E21): its tone by its stored name, so a tone from a newer version survives a copy.
+    Callout {
+        tone: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -222,6 +226,9 @@ impl WireBlock {
                 due_time: time.map(|t| t.to_string()),
                 priority: priority.map(|p| p.as_str().to_owned()),
             },
+            BlockKind::Callout { tone } => WireKind::Callout {
+                tone: tone.as_str().to_owned(),
+            },
             BlockKind::Unknown { .. } => return None,
         };
         Some(Self {
@@ -256,6 +263,9 @@ impl WireBlock {
                 due: due.map(|d| d.parse()).transpose().ok()?,
                 time: due_time.map(|t| t.parse()).transpose().ok()?,
                 priority: priority.map(|p| p.parse()).transpose().ok()?,
+            },
+            WireKind::Callout { tone } => BlockKind::Callout {
+                tone: leaf_model::CalloutTone::parse(&tone),
             },
         };
         Some(FragmentBlock {

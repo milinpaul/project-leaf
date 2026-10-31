@@ -48,7 +48,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 - Works fully offline; the search index is rebuilt from the pages if it is lost.
 
 ### Block editor
-- **Block types:** paragraph, heading 1–3, bulleted list, numbered list, to-do, quote, code (language label; syntax highlighting optional), divider, image (local file), simple table (a grid of text cells, not a database; E16), action item (a task with a due date, optional time, priority and a round check; overdue dates in red; E19).
+- **Block types:** paragraph, heading 1–3, bulleted list, numbered list, to-do, quote, code (language label; syntax highlighting optional), divider, image (local file), simple table (a grid of text cells, not a database; E16), action item (a task with a due date, optional time, priority and a round check; overdue dates in red; E19), callout (text in a tinted box with an icon, in five tones: info, success, warning, error, note; E21).
 - **Inline marks:** bold, italic, strikethrough, inline code, link.
 - **Slash menu** (`/`): insert or convert blocks, fuzzy filtered.
 - **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`.
@@ -84,7 +84,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ## Phase 2
 
-Board, calendar and gallery views; relations and rollups; toggles, callouts, columns; templates; graph view;
+Board, calendar and gallery views; relations and rollups; toggles, columns; templates; graph view;
 cloud sync and team workspaces; read-only web viewer (E13); MCP server.
 
 ## Phase 3
@@ -105,6 +105,7 @@ Mobile; P2P collaboration (maybe).
 | `Enter` mid-text | Split block at cursor; new block keeps the type for lists/to-dos, becomes paragraph for headings/quote. |
 | `Enter` on empty list item / to-do / action item | Outdent one level; at root, convert to paragraph. |
 | `Enter` in code block | Newline inside the block. `Cmd/Ctrl+Enter` or `Enter` on two trailing empty lines exits. |
+| `Enter` in a callout | Line break inside the callout. `Enter` on an empty last line (or in an empty callout) removes that line and adds a paragraph after it; `Cmd/Ctrl+Enter` leaves from anywhere. |
 | `Backspace` at start of non-paragraph block | Convert to paragraph (keep text). |
 | `Enter` in an action item | Split like a to-do: the new action item is not done and has no date, and keeps the priority. |
 | `Cmd/Ctrl+Enter` in a to-do or action item | Tick it off, or back on; the caret stays. |
@@ -117,6 +118,7 @@ Mobile; P2P collaboration (maybe).
 | Arrow up/down at first/last visual line | Move to previous/next block, keeping horizontal position. |
 | Paste multi-line text | Each line becomes a paragraph; markdown syntax is converted. |
 | Paste a Markdown table (header, `|---|` line, rows) | Becomes a table with a header row; cells keep their formatting. Rows separated by blank lines still join it when they start with `|`. Pasted into a cell, its cells go in as lines of text. |
+| Copy or paste an action item as Markdown | Written as `- [ ] Send invoice (due 2026-10-31 14:00, high)` (`(action item)` when it has no date or priority); pasting such a line makes an action item. Other brackets stay text, and plain `- [ ]` lines stay to-dos. |
 | Copy a table, or selected cells | Other apps get a Markdown table (plain text: tab-separated rows); pasted back into Leaf it is a table again. |
 | Paste a lone web address (`https://…`, `www.…`) | It goes in as a link whose text is the address; over selected text, that text becomes a link to it. Into a code block it stays plain text. |
 | Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |
