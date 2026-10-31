@@ -19,6 +19,7 @@ mod page_meta;
 mod saved;
 mod task;
 mod text;
+mod web_bookmark;
 mod workspace;
 
 pub use block_kind::{BlockKind, BlockProp};
@@ -35,4 +36,5 @@ pub use page_meta::PageMeta;
 pub use saved::fold_saved;
 pub use task::{DueDate, DueTime, Priority};
 pub use text::{Mark, MarkKind, Marks, PAGE_LINK, TextSpan};
+pub use web_bookmark::{WebPreview, check_web_address};
 pub use workspace::{DEFAULT_UNDO_MERGE_MS, Workspace};

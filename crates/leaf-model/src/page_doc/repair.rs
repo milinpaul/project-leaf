@@ -52,12 +52,12 @@ impl PageDoc {
             Ok(kind) => kind,
             // 4: a property the kind needs went missing, because the other copy changed the block to
             // a kind without it at the same time. A heading falls back to level 1; an image without
-            // its file becomes a paragraph, keeping its caption.
+            // its file, or a web bookmark without its address, becomes a paragraph, keeping any text.
             Err((field, _)) => {
                 let fallback = match field {
                     keys::LEVEL => BlockKind::Heading { level: 1 },
                     keys::HEADER_ROW => BlockKind::Table { header_row: false },
-                    keys::ASSET => BlockKind::Paragraph,
+                    keys::ASSET | keys::URL => BlockKind::Paragraph,
                     _ => return Ok(false),
                 };
                 fallback.write(&meta)?;
@@ -92,6 +92,8 @@ impl PageDoc {
                 BlockKind::Paragraph.write(&meta)?;
                 changed = true;
             }
+            // A web bookmark keeps its empty one (ADR-007, `keeps_text_container`).
+            (Some(_), false) if kind.keeps_text_container() => {}
             (Some(_), false) => {
                 meta.delete(keys::TEXT)?;
                 changed = true;

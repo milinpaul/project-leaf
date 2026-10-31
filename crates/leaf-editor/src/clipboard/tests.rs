@@ -453,3 +453,27 @@ mod page_links;
 mod pasted_links;
 mod tasks;
 mod whole_blocks;
+
+#[test]
+fn a_web_bookmark_copies_with_its_preview_and_a_bad_address_is_not_read() {
+    let bookmark = Fragment::Blocks(vec![FragmentBlock {
+        kind: BlockKind::WebBookmark {
+            url: "https://leaf.app/blog".into(),
+            preview: leaf_model::WebPreview {
+                title: Some("The Leaf blog".into()),
+                description: None,
+                image: Some(AssetId::of(b"cover")),
+                favicon: None,
+                fetched_at: Some(1_793_000_000_000),
+            },
+        },
+        text: Vec::new(),
+        children: Vec::new(),
+    }]);
+    let json = bookmark.to_json();
+    assert!(json.contains("\"type\":\"web_bookmark\""), "{json}");
+    assert!(!json.contains("favicon"), "missing parts are left out: {json}");
+    assert_eq!(Fragment::from_json(&json), Some(bookmark));
+    let bad = r#"{"leaf_fragment": 1, "blocks": [{"type": "web_bookmark", "url": "javascript:alert(1)"}]}"#;
+    assert_eq!(Fragment::from_json(bad), None);
+}

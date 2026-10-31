@@ -522,3 +522,36 @@ fn callouts_survive_copy_as_markdown_and_paste_again() {
     assert!(markdown.contains("> [!CAUTION]"), "{markdown}");
     assert_eq!(parse(&markdown), blocks, "every tone and both lines come back");
 }
+
+// ---- Web bookmarks (E15-S02) ----
+
+#[test]
+fn a_web_bookmark_copies_as_a_link_on_its_own_line() {
+    let bookmark = |title: Option<&str>| {
+        block(
+            BlockKind::WebBookmark {
+                url: "https://leaf.app/blog".into(),
+                preview: leaf_model::WebPreview {
+                    title: title.map(Into::into),
+                    ..leaf_model::WebPreview::default()
+                },
+            },
+            "",
+        )
+    };
+    let titled = Fragment::Blocks(vec![bookmark(Some("The Leaf blog"))]).to_markdown();
+    assert_eq!(titled.trim_end(), "[The Leaf blog](https://leaf.app/blog)");
+    let bare = Fragment::Blocks(vec![bookmark(None)]).to_markdown();
+    assert!(bare.contains("https://leaf.app/blog"), "{bare}");
+    // Markdown has no bookmark: pasting it back gives a paragraph with the link.
+    let back = parse(&titled);
+    assert_eq!(back[0].kind, BlockKind::Paragraph);
+    assert_eq!(
+        back[0].text[0].marks.link.as_deref(),
+        Some("https://leaf.app/blog")
+    );
+    assert_eq!(
+        back[0].text[0].text, "The Leaf blog",
+        "the title comes back as the link's words"
+    );
+}

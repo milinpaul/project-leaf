@@ -321,6 +321,17 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                     out.push(format!("{pad}*{text}*"));
                 }
             }
+            // Markdown has no bookmark: a link on its own line, its title as the words.
+            BlockKind::WebBookmark { url, preview } => {
+                let link = TextSpan {
+                    text: preview.title.clone().unwrap_or_else(|| url.clone()),
+                    marks: leaf_model::Marks {
+                        link: Some(url.clone()),
+                        ..leaf_model::Marks::default()
+                    },
+                };
+                out.push(format!("{pad}{}", escape_start(&inline::write(&[link]))));
+            }
             BlockKind::Table { .. } => {
                 table::write(block, &pad, out);
                 continue;

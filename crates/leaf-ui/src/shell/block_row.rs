@@ -54,6 +54,10 @@ impl Shell {
                 BlockStyle::Unknown { type_name } => {
                     format!("[{type_name}: made by a newer Leaf, read-only]")
                 }
+                // Until the card (E15-S04): its title, or the address.
+                BlockStyle::WebBookmark { url, preview } => {
+                    format!("Web bookmark: {}", preview.title.as_deref().unwrap_or(url))
+                }
                 _ => String::new(),
             };
             return line
