@@ -182,3 +182,38 @@ fn a_source_that_cannot_be_read_is_an_error() {
             .starts_with("search could not read the saved pages")
     );
 }
+
+#[test]
+fn rows_of_a_database_are_found_though_the_sidebar_leaves_them_out() {
+    let (dir, saved) = (TempDir::new(), Saved::default());
+    let mut ws = Workspace::new();
+    let Ok(leaf_model::Outcome::DatabasePageCreated { page: list, .. }) =
+        ws.apply(WorkspaceCommand::CreateDatabasePage {
+            parent: None,
+            index: 0,
+            title: "Reading list".into(),
+            created_at: 1,
+        })
+    else {
+        panic!("expected a database page");
+    };
+    let Ok(leaf_model::Outcome::PageCreated(row)) = ws.apply_unrecorded(WorkspaceCommand::CreateRowPage {
+        database_page: list,
+        created_at: 2,
+    }) else {
+        panic!("expected a row page");
+    };
+    ws.apply(WorkspaceCommand::RenamePage {
+        page: row,
+        title: "Dune".into(),
+    })
+    .unwrap();
+    let mut doc = PageDoc::new();
+    paragraph(&mut doc, "sand worms");
+    saved.save_page(row, &doc, 3);
+    saved.save_workspace(&ws, 4);
+    let mut sync = syncer(&dir, &saved);
+    assert_eq!(sync.rebuild(NEVER).unwrap(), Finished::Done);
+    assert_eq!(found(&sync, "worms"), [row], "by its text");
+    assert_eq!(found(&sync, "dune"), [row], "by its title");
+}

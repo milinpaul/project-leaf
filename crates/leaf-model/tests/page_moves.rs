@@ -104,7 +104,9 @@ impl Reference {
 
 fn verdict(result: Result<Outcome, ModelError>) -> (Verdict, Option<PageId>) {
     match result {
-        Ok(Outcome::PageCreated(page)) => (Verdict::Ok, Some(page)),
+        Ok(Outcome::PageCreated(page) | Outcome::DatabasePageCreated { page, .. }) => {
+            (Verdict::Ok, Some(page))
+        }
         Ok(Outcome::Changed | Outcome::Unchanged | Outcome::PagesDeleted(_)) => (Verdict::Ok, None),
         Err(ModelError::IndexOutOfRange { .. }) => (Verdict::OutOfRange, None),
         Err(ModelError::MoveIntoOwnSubtree { .. }) => (Verdict::IntoOwnSubtree, None),

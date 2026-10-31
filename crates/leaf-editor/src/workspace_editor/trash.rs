@@ -50,6 +50,8 @@ impl WorkspaceEditor {
     /// Takes `page` out of the trash, back where it was (or to the end of the top level if the page it
     /// lived in is still in the trash).
     pub fn restore(&mut self, page: PageId) -> Result<(), EditorError> {
+        // A row page brings its row back too (E09-S03); its database must be loaded.
+        self.restore_row_of(page)?;
         self.workspace.apply(WorkspaceCommand::RestorePage { page })?;
         Ok(())
     }

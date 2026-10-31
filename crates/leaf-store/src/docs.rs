@@ -8,26 +8,33 @@
 
 use std::fmt;
 
-use leaf_core::PageId;
-use leaf_model::{ModelError, PageDoc, Workspace};
+use leaf_core::{DatabaseId, PageId};
+use leaf_model::{Database, ModelError, PageDoc, Workspace};
 use rusqlite::{Connection, OptionalExtension, params};
 
 use crate::{Store, StoreError};
 
-/// Which document a row belongs to: the workspace (page tree) or one page's blocks.
+/// Which document a row belongs to: the workspace (page tree), one page's blocks, or one database.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DocKey {
     /// The workspace document, stored as `doc_id = 'workspace'`.
     Workspace,
     /// A page's blocks, stored under the page's ID.
     Page(PageId),
+    /// A database's columns, rows and cells (Phase 1, ADR 0066), stored as `database:<id>` so it can never be
+    /// mistaken for a page.
+    Database(DatabaseId),
 }
+
+/// What a database's `doc_id` starts with.
+pub(crate) const DATABASE_PREFIX: &str = "database:";
 
 impl fmt::Display for DocKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Workspace => f.write_str("workspace"),
             Self::Page(page) => page.fmt(f),
+            Self::Database(database) => write!(f, "{DATABASE_PREFIX}{database}"),
         }
     }
 }
@@ -105,6 +112,7 @@ macro_rules! document {
 
 document!(Workspace);
 document!(PageDoc);
+document!(Database);
 
 impl Store {
     /// Writes `doc`'s unsaved changes under `key`, at `now` (Unix milliseconds, from the caller so

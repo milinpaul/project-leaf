@@ -56,15 +56,14 @@ impl WorkspaceEditor {
         // Depth-first with an explicit stack (children pushed in reverse), so a very deep tree can't
         // overflow the call stack.
         let mut stack: Vec<(PageId, usize)> = self
-            .workspace
-            .root_pages()?
+            .sidebar_pages(self.workspace.root_pages()?)?
             .into_iter()
             .rev()
             .map(|page| (page, 0))
             .collect();
         while let Some((page, depth)) = stack.pop() {
             let meta = self.workspace.page(page)?;
-            let children = self.workspace.children(page)?;
+            let children = self.sidebar_pages(self.workspace.children(page)?)?;
             let expanded = self.expanded.contains(&page);
             if expanded {
                 stack.extend(children.iter().rev().map(|&child| (child, depth + 1)));
@@ -84,6 +83,17 @@ impl WorkspaceEditor {
             });
         }
         Ok(items)
+    }
+
+    /// `pages` without database rows, which the sidebar leaves out (ADR 0066 answer 1): the table lists them.
+    fn sidebar_pages(&self, pages: Vec<PageId>) -> Result<Vec<PageId>, EditorError> {
+        let mut shown = Vec::with_capacity(pages.len());
+        for page in pages {
+            if self.workspace.page(page)?.row_of.is_none() {
+                shown.push(page);
+            }
+        }
+        Ok(shown)
     }
 
     /// Whether `page`'s children are listed in the sidebar.

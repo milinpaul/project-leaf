@@ -206,6 +206,29 @@ and body live in the workspace and the page's own document (E09-S03 stores them)
 row IDs, order and property values, so a table view never opens a document per row. See BLOCK_MODEL.md "Database
 doc".
 
+Databases are saved like pages, under `database:<id>` (`DocKey::Database`, E09-S03). A database page's meta names its
+database, and each row page's meta names the database it belongs to. Row pages sit under the database page and the
+sidebar leaves them out, but search finds them like any page. `WorkspaceEditor` (`workspace_editor/databases.rs`) adds
+and deletes rows. The database document decides which rows exist, and each row page's trash state follows it:
+- the row pages' part is written outside the workspace's undo (`Workspace::apply_unrecorded`), so adding or deleting a
+  row is one undo step, the database's;
+- after a database undo or redo, `reconcile_rows` trashes or restores row pages to match;
+- restoring a row page from the Trash restores its row where it was.
+
+A database is shown as a table through `leaf_editor::DatabaseEditor` (`database_view.rs`, E09-S04), which keeps the
+cells it has read:
+- **Reading:** rows are read a chunk at a time in the database's order (`read_more`, from the UI's idle ticks), so the
+  first screen needs only its own rows.
+- **Keeping up:** `Database::take_changes` (from Loro's events) says which rows, columns or view settings changed, so
+  after an edit, undo, redo or merge only those rows are read again.
+- **The view:** `view()` builds a `TableView` with:
+  - the shown columns and their widths;
+  - a title column from the row pages;
+  - the rows filtered, then sorted (stable, with empty cells last);
+  - each cell as a `CellDisplay`, converted for its column's current type (ADR 0066 answer 3).
+
+`WorkspaceEditor` keeps one `DatabaseEditor` per loaded database.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.

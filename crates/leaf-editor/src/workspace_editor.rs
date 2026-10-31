@@ -5,7 +5,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use leaf_core::PageId;
+use leaf_core::{DatabaseId, PageId};
 use leaf_model::{ModelError, PageDoc, Workspace, WorkspaceCommand};
 
 use crate::{BuiltinCover, PageCover, PageEditor};
@@ -23,6 +23,11 @@ pub enum EditorError {
     /// The model rejected the command or could not read a page.
     #[error(transparent)]
     Model(#[from] ModelError),
+
+    /// The database's document isn't loaded yet; the caller loads it from disk and hands it over with
+    /// [`WorkspaceEditor::insert_database`] first.
+    #[error("database {0} is not loaded")]
+    DatabaseNotLoaded(DatabaseId),
 }
 
 /// One row of the sidebar's page tree, ready to draw.
@@ -56,6 +61,8 @@ pub struct WorkspaceEditor {
     recent: Vec<PageId>,
     /// Pages whose title, icon or cover changed since the last [`WorkspaceEditor::stamp_edits`].
     retitled: HashSet<PageId>,
+    /// The databases loaded so far (from disk, or new), Phase 1.
+    databases: HashMap<DatabaseId, crate::DatabaseEditor>,
 }
 
 impl WorkspaceEditor {
@@ -69,6 +76,7 @@ impl WorkspaceEditor {
             expanded: HashSet::new(),
             recent: Vec::new(),
             retitled: HashSet::new(),
+            databases: HashMap::new(),
         }
     }
 
@@ -256,6 +264,7 @@ impl WorkspaceEditor {
 }
 
 mod breadcrumb;
+mod databases;
 mod favourites;
 mod last_page;
 mod page_menu;

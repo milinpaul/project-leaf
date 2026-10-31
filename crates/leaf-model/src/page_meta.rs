@@ -3,7 +3,7 @@
 //! Keys match `docs/architecture/BLOCK_MODEL.md` ("Workspace doc"). Titles live here rather than in
 //! the page's own doc so the sidebar can render without opening every page.
 
-use leaf_core::PageId;
+use leaf_core::{DatabaseId, PageId};
 use loro::{LoroMap, LoroValue, ValueOrContainer};
 
 use crate::ModelError;
@@ -18,6 +18,8 @@ pub(crate) mod keys {
     pub const CREATED_AT: &str = "created_at";
     pub const EDITED_AT: &str = "edited_at";
     pub const TRASHED_AT: &str = "trashed_at";
+    pub const DATABASE: &str = "database";
+    pub const ROW_OF: &str = "row_of";
 }
 
 /// What the app needs to show a page in the sidebar, switcher or header.
@@ -43,6 +45,11 @@ pub struct PageMeta {
     /// When the page was moved to the trash, in Unix milliseconds. `None` means not in the trash.
     /// A page inside a trashed page is hidden too, even if its own value is `None`.
     pub trashed_at: Option<i64>,
+    /// The database this page is, when it is a full-page database (Phase 1, ADR 0066).
+    pub database: Option<DatabaseId>,
+    /// The database this page is a row of. The sidebar leaves such pages out (ADR 0066 answer 1); the table
+    /// lists them.
+    pub row_of: Option<DatabaseId>,
 }
 
 impl PageMeta {
@@ -89,6 +96,14 @@ impl PageMeta {
             Some(_) => return Err(invalid(keys::TRASHED_AT, "is not a whole number")),
             None => None,
         };
+        let database_id = |field| match value(meta, field) {
+            Some(LoroValue::String(s)) => s
+                .parse::<DatabaseId>()
+                .map(Some)
+                .map_err(|_| invalid(field, "is not a database ID")),
+            Some(_) => Err(invalid(field, "is not text")),
+            None => Ok(None),
+        };
         Ok(Self {
             id,
             title,
@@ -98,6 +113,8 @@ impl PageMeta {
             created_at,
             edited_at,
             trashed_at,
+            database: database_id(keys::DATABASE)?,
+            row_of: database_id(keys::ROW_OF)?,
         })
     }
 }

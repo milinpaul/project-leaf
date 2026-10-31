@@ -207,6 +207,7 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        self.load_row_database(page);
         if let Err(err) = self.editor.restore(page) {
             return report("could not restore the page", err);
         }

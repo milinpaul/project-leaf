@@ -120,3 +120,21 @@ fn a_deleted_row_added_again_comes_back_with_its_cells_where_asked() {
     );
     checked(&db);
 }
+
+#[test]
+fn a_deleted_row_is_restored_where_it_was() {
+    let mut db = database();
+    let rows: Vec<PageId> = (0..3).map(|_| add_row(&mut db)).collect();
+    db.apply(DatabaseCommand::DeleteRow { row: rows[1] }).unwrap();
+    db.apply(DatabaseCommand::RestoreRow { row: rows[1] }).unwrap();
+    assert_eq!(db.rows(), rows, "back in the middle, where it was");
+    assert!(matches!(
+        db.apply(DatabaseCommand::RestoreRow { row: rows[1] }),
+        Err(ModelError::DuplicateRow(_))
+    ));
+    assert!(matches!(
+        db.apply(DatabaseCommand::RestoreRow { row: PageId::new() }),
+        Err(ModelError::RowNotFound(_))
+    ));
+    checked(&db);
+}

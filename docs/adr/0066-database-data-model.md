@@ -157,3 +157,13 @@ way; that is harmless (an extra option in the list) and left as it is.
 
 The spike's tree test now runs both cases.
 
+## Undo across the two documents (2026-10-30, E09-S03)
+
+A row lives in two documents: its row in the database and its page in the workspace. Adding or deleting a row must be
+one undo step, so the database document decides which rows exist and the row page's trash state follows it:
+- the workspace writes for row pages (creating one, trashing or restoring it to match) go outside the workspace's undo
+  (`Workspace::apply_unrecorded`);
+- after any database change, undo or redo, `WorkspaceEditor::reconcile_rows` brings the row pages in line;
+- restoring a row page from the Trash is the one way in from the other side: it restores the row too, where it was
+  (`DatabaseCommand::RestoreRow`).
+
