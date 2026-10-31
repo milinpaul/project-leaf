@@ -41,6 +41,14 @@ impl PageDoc {
         if old == *kind {
             return Ok(PageOutcome::Changed); // nothing to write; apply reports Unchanged
         }
+        // A bookmark of the same address is the same bookmark: its fetched preview isn't the owner's to
+        // clear by "turning it into" itself. Clearing it would be an undo step over a preview the undo
+        // history never saw, which loses redo steps (E17-S14).
+        if let (BlockKind::WebBookmark { url: was, .. }, BlockKind::WebBookmark { url, .. }) = (&old, kind)
+            && was == url
+        {
+            return Ok(PageOutcome::Changed);
+        }
         let text = self.text_container(id)?;
         let words = text.as_ref().is_some_and(|t| t.len_unicode() > 0);
         if let BlockKind::WebBookmark { url, .. } = kind
