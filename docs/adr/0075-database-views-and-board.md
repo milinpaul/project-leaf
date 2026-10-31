@@ -1,6 +1,6 @@
 # 0075. Database views: saved views as tabs, and a board layout
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Type:** Architecture
 - **Date:** 2026-10-31
 - **Story:** E22-S01
@@ -17,7 +17,7 @@ running it, must keep working (architecture rule 5: never drop unknown data).
 
 The spike (`crates/leaf-model/tests/views_spike/`, Loro directly, no production code) tried the model below.
 
-## Decision (proposed)
+## Decision
 
 Two new containers in the database's own document; nothing existing moves:
 
@@ -87,7 +87,19 @@ Two new containers in the database's own document; nothing existing moves:
   (when the view has no sort) needs no new data. A card dragged within a group moves its row, so a table view with no
   sort sees the same order.
 
-## Open questions for the owner
+## Owner's answers (2026-10-31)
+
+All four as recommended:
+
+1. **Phase:** Phase 1, after the rest of E09 (sort and filter, open a row, inline database).
+2. **Group by:** select columns only, for now. Checkbox and multi-select can come later.
+3. **Board column order:** follows the option order. Dragging a board column reorders the options (E09-S11).
+4. **Per view:** everything, as in Notion. That covers layout, sort, filters, hidden properties, column widths,
+   grouping, hidden groups and what cards show.
+
+The defaults below stand as proposed.
+
+### The questions as asked
 
 1. **Phase.** The spec puts board views in Phase 2. Recommended: build E22 in Phase 1, right after E09 (sort and
    filter, open a row, inline database), since you asked for it now.

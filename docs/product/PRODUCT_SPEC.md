@@ -67,11 +67,15 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ## Phase 1 — MVP
 
-- **Database (single view type: Table)**
+- **Database (table first, then board and saved views)**
   - Property types: text, number, select, multi-select, date, checkbox, URL.
   - Add, rename, reorder, hide columns. Sort and filter. Inline cell editing.
   - Each row is a page (open it to write content).
   - Database as a full page and inline inside a page.
+  - **Saved views** (E22, after the table): tabs above a database, each a table or a board with its own layout,
+    sort, filters, hidden properties, widths and grouping. Add, rename, duplicate, reorder and delete views.
+  - **Board view** (E22): cards in columns, one per option of a select property (plus "No value"), in the option
+    order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR 0075).
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
 - **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
@@ -84,7 +88,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ## Phase 2
 
-Board, calendar and gallery views; relations and rollups; toggles, columns; templates; graph view;
+Calendar and gallery views; boards grouped by other property types; relations and rollups; toggles, columns; templates; graph view;
 cloud sync and team workspaces; read-only web viewer (E13); MCP server.
 
 ## Phase 3
