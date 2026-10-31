@@ -205,7 +205,10 @@ selection from one cell into another is `Selection::Cells`, the rectangle betwee
 (`leaf-ui/src/shell/table_row.rs`, E16-S03) the table's row draws the whole grid and the cell rows after it draw
 nothing, so the list stays in step with the view; each cell uses the same rich-text drawing as any block, so clicks,
 the caret, selection and marks work unchanged. Columns are a fixed 160 px; a table wider than the page scrolls
-sideways inside its own box (a horizontal swipe or Shift+wheel), never the page. Hover controls ("+" under and
+sideways inside its own box (a horizontal swipe, Shift+wheel, or its scrollbar, which stays at the bottom of the
+window when the table runs past it), never the page. Keeping the caret in view uses where its cell was drawn, not
+the cell's own empty row, so a click never moves the page and Tab or an arrow brings an off-screen row or column in
+(E16-S05). Hover controls ("+" under and
 beside the grid, a handle per row and column with a menu) call `PageEditor::edit_table` with a `TableEdit`: one
 table command and one undo step, the caret following the edit. Tables come in and go out through `/table` (a 3 × 3
 table with a header row) and the clipboard (E16-S04): pasting a Markdown table builds one with the table commands,
