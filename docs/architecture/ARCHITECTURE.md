@@ -313,6 +313,13 @@ bytes, and records its type (read from its first bytes, not its name) and size i
 written atomically before its row, and the same picture is stored once (ADR 0047). Image blocks refer to it by
 that hash (`AssetId`).
 
+**Staying inside the workspace folder (E08-S13).** Every file Leaf writes in a workspace has a fixed name
+(`workspace.sqlite`, `leaf.lock`, `view.json`, `search/index.sqlite`) or is named by an `AssetId`, a typed hash
+that can't hold `..` or a slash. Before taking the lock, `Workspace::open` refuses a folder whose top level,
+`assets/` or `search/` holds a symlink, since a write would follow it out of the folder
+(`StoreError::LinkInWorkspace`; nothing is changed). New workspace names can't hold path characters, start
+with a dot, or be a Windows device name such as `CON` (ADR 0074).
+
 **Search (E11).** The index is a separate, throwaway SQLite file (ADR 0019). `leaf-search` reads pages through a
 `PageSource` (the UI supplies one over a second `leaf-store` connection, `Workspace::reader`), so it never sees
 unsaved text and can always be rebuilt from disk. On open, a new, damaged or half-built index is rebuilt in the
