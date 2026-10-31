@@ -1,4 +1,4 @@
-# ADR-XXX. Faster tests and builds: test depth per OS, a split round trip, and slimmer debug info
+# ADR-082. Faster tests and builds: test depth per OS, a split round trip, and slimmer debug info
 
 - **Status:** Accepted
 - **Type:** Architecture
