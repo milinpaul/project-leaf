@@ -18,6 +18,7 @@
 
 mod fragment;
 pub(crate) mod markdown;
+mod page_links;
 
 pub use fragment::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 
@@ -148,6 +149,15 @@ impl PageEditor {
     /// becomes blocks, a paragraph per plain line. Into a code block it goes exactly as it is. One
     /// undo step, like [`PageEditor::paste`].
     pub fn paste_text(&mut self, text: &str) -> Result<Option<Caret>, EditorError> {
+        self.paste_text_with(text, None)
+    }
+
+    /// [`PageEditor::paste_text`], linking `[[Title]]`s through `find` when given.
+    fn paste_text_with(
+        &mut self,
+        text: &str,
+        find: Option<page_links::FindPage<'_>>,
+    ) -> Result<Option<Caret>, EditorError> {
         let into_code = match (self.caret()?, self.selection()?) {
             (Some(caret), None | Some(Selection::Text { .. })) => {
                 matches!(self.doc.kind(caret.block)?, BlockKind::Code { .. })
@@ -163,7 +173,11 @@ impl PageEditor {
                 marks: leaf_model::Marks::default(),
             }])
         } else {
-            markdown::fragment_from_text(text)
+            let fragment = markdown::fragment_from_text(text);
+            match find {
+                Some(find) => fragment.with_titles_linked(find),
+                None => fragment,
+            }
         };
         self.paste(&fragment)
     }

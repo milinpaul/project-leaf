@@ -28,6 +28,7 @@ mod input;
 mod keys;
 mod link;
 mod page_editor;
+mod page_link;
 mod search_bar;
 mod selection;
 mod shortcuts;
@@ -63,6 +64,7 @@ pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use link::openable_url;
 pub use page_editor::{Backspace, Caret, PageEditor};
+pub use page_link::{DrawnLink, LinkState, LinkTarget, LinkedText};
 pub use search_bar::{
     BlockMatch, Destination, ExcerptRow, Marked, PageRow, SEARCH_DELAY_MS, SearchBar, SearchHit, SearchKey,
     SearchOutcome, SearchRequest, SearchRow, Shortcut, ShortcutAction, shortcut_action,

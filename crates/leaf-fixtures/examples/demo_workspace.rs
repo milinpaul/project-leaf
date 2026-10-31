@@ -1,5 +1,5 @@
 //! Writes a small, hand-written workspace that shows Leaf off: a trip to Japan planned in pages with
-//! icons and a cover, using most block kinds and marks. The README's screenshots are made from it:
+//! icons and a cover, using most block kinds and marks, and links to its own pages. The README's screenshots are made from it:
 //! `just demo <new folder>`, then `just screenshot <folder> <out.png>`. Due dates are set relative
 //! to today, so one action item is always overdue and one always coming up.
 
@@ -65,13 +65,24 @@ fn demo() -> Result<(Fixture, PageId), FixtureError> {
     let now = now_ms();
     let mut workspace = Workspace::new();
     let mut first = None;
+    let mut made: Vec<(&str, PageId)> = Vec::new();
     for (index, ((icon, title), children)) in TREE.iter().enumerate() {
         let page = create(&mut workspace, None, index, icon, title, now)?;
         first.get_or_insert(page);
         for (child_index, (icon, title)) in children.iter().enumerate() {
-            create(&mut workspace, Some(page), child_index, icon, title, now)?;
+            made.push((
+                title,
+                create(&mut workspace, Some(page), child_index, icon, title, now)?,
+            ));
         }
     }
+    let find = |wanted: &str| {
+        made.iter()
+            .find(|(title, _)| *title == wanted)
+            .map(|(_, page)| *page)
+            .ok_or_else(|| FixtureError::Unexpected(format!("no page {wanted}")))
+    };
+    let links = [find("Itinerary")?, find("Bookings")?, find("Budget")?];
     let trip = first.ok_or_else(|| FixtureError::Unexpected("no pages".into()))?;
     workspace.apply(WorkspaceCommand::SetPageCover {
         page: trip,
@@ -80,7 +91,7 @@ fn demo() -> Result<(Fixture, PageId), FixtureError> {
     workspace.apply(WorkspaceCommand::AddFavourite { page: trip })?;
     let fixture = Fixture {
         workspace,
-        pages: vec![(trip, trip_page(now)?)],
+        pages: vec![(trip, trip_page(now, links)?)],
     };
     Ok((fixture, trip))
 }
@@ -110,7 +121,7 @@ fn create(
 }
 
 /// The page the screenshots show.
-fn trip_page(now: i64) -> Result<PageDoc, FixtureError> {
+fn trip_page(now: i64, links: [PageId; 3]) -> Result<PageDoc, FixtureError> {
     let today = now.div_euclid(86_400_000);
     let mut page = Writer {
         doc: PageDoc::new(),
@@ -120,6 +131,10 @@ fn trip_page(now: i64) -> Result<PageDoc, FixtureError> {
         BlockKind::Paragraph,
         "Two weeks in April for the cherry blossoms: Tokyo, Hakone, Kyoto and Osaka. Sakura season books up early, so hotels and the ryokan come first.",
         &[("Two weeks in April", Mark::Bold), ("Sakura season books up early", Mark::Italic)],
+    )?;
+    page.with_links(
+        "Plan each day in @, keep confirmations in @ and track spending in @.",
+        &links,
     )?;
     page.add(BlockKind::Heading { level: 2 }, "Before we go", &[])?;
     page.add(
@@ -226,6 +241,22 @@ impl Writer {
             })?;
         }
         Ok(id)
+    }
+
+    /// Adds a paragraph with a link to each of `pages` where `template` has `@`, in order.
+    fn with_links(&mut self, template: &str, pages: &[PageId]) -> Result<(), FixtureError> {
+        let id = self.add(BlockKind::Paragraph, &template.replace('@', ""), &[])?;
+        let spots = template
+            .chars()
+            .enumerate()
+            .filter(|(_, c)| *c == '@')
+            .map(|(at, _)| at);
+        // Each link takes the one place its `@` took, so the template's positions hold as they go in.
+        for (pos, page) in spots.zip(pages) {
+            self.doc
+                .apply(PageCommand::InsertPageLink { id, pos, page: *page })?;
+        }
+        Ok(())
     }
 
     /// Adds a table with a header row and fills its cells.

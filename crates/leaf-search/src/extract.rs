@@ -1,7 +1,7 @@
 //! Reading a page's searchable text out of the documents.
 
 use leaf_core::PageId;
-use leaf_model::{PageDoc, Workspace};
+use leaf_model::{PAGE_LINK, PageDoc, Workspace};
 
 use crate::{BlockText, PageText, SearchError};
 
@@ -13,7 +13,7 @@ pub const UNTITLED: &str = "Untitled";
 /// (directly or under a trashed page), since trashed pages are never searched.
 ///
 /// Only reads: nothing in either document changes. Blocks come in document order, nested blocks
-/// right after their parent. Blocks with no words (dividers, empty blocks) give no row. Blocks of
+/// right after their parent. Blocks with no words (dividers, empty blocks, a lone page link) give no row. Blocks of
 /// kinds this version doesn't know are still indexed if they carry text, so a page from a newer
 /// Leaf stays findable.
 pub fn page_text(
@@ -30,7 +30,9 @@ pub fn page_text(
     // Depth-first, children before later siblings: a stack holding siblings in reverse.
     let mut stack: Vec<_> = doc.root_blocks().into_iter().rev().collect();
     while let Some(block) = stack.pop() {
-        if let Some(text) = doc.plain_text(block)?
+        // Page links are left out (ADR 0071): their placeholder isn't a word, and pages are found by
+        // their own titles.
+        if let Some(text) = doc.plain_text(block)?.map(|text| text.replace(PAGE_LINK, ""))
             && !text.trim().is_empty()
         {
             let kind = doc.kind(block)?.type_name().to_owned();
