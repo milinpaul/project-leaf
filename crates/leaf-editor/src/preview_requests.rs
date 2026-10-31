@@ -40,6 +40,28 @@ impl PageEditor {
         }
     }
 
+    /// Whether a bookmark is waiting for its preview, allowed or not: the app asks the owner the first
+    /// time this happens before they have answered (E15-S06).
+    #[must_use]
+    pub fn has_preview_requests(&self) -> bool {
+        !self.previews.waiting.is_empty()
+    }
+
+    /// Asks a preview for every web bookmark on the page that never had one fetched: when the page opens,
+    /// or when the owner allows previews. A preview that was fetched (here or on another device, arriving
+    /// by sync) is never fetched again on its own; "Refresh preview" does that.
+    pub fn request_missing_previews(&mut self) -> Result<(), EditorError> {
+        for row in self.rows()? {
+            if let leaf_model::BlockKind::WebBookmark { url, preview } = self.doc.kind(row.id)?
+                && preview.fetched_at.is_none()
+                && preview.is_empty()
+            {
+                self.want_preview(row.id, &url);
+            }
+        }
+        Ok(())
+    }
+
     /// Notes that `block`, a bookmark of `url`, wants its preview.
     pub(crate) fn want_preview(&mut self, block: BlockId, url: &str) {
         let waiting = &mut self.previews.waiting;

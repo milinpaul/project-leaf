@@ -83,6 +83,7 @@ gpui_kit_assets::icon_assets!(
         Repeat,
         RotateCcw,
         Search,
+        ShieldCheck,
         SquareCheck,
         SquareCode,
         SquarePen,

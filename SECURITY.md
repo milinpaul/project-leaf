@@ -14,8 +14,9 @@ within a week. Once a fix is merged, we'll credit you in the advisory unless you
 
 ## Scope
 
-Leaf is a local, offline app. It makes no network requests today; web bookmark previews (Phase 1) will fetch a
-page's title and pictures only after you allow it, within the limits in ADR-080. The most relevant problems are files
+Leaf is a local, offline app. Its only network requests fetch web bookmark previews (a page's title, description and
+pictures), and only after you allow it, within the limits in ADR-080: public addresses only, small and quick
+downloads, no scripts. That fetcher (`crates/leaf-fetch`) is in scope too. The most relevant problems are files
 that crash Leaf or make it lose data when opened (a crafted workspace, image or pasted content), and anything
 that lets Leaf read or write outside the workspace folder you chose.
 

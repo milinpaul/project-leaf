@@ -91,6 +91,8 @@ impl Shell {
             cx.subscribe_in(&title, window, Self::on_title_event),
             crate::theme::follow_system(window),
             Self::track_window(window, cx),
+            // Previews just allowed: the open page's bookmarks get theirs (E15-S06).
+            crate::settings::observe(cx, |shell: &mut Self, cx| shell.fetch_missing_previews(cx)),
         ];
         Self::start_edited_clock(cx);
         let focus = cx.focus_handle();
@@ -151,6 +153,8 @@ impl Shell {
     pub(super) fn load_and_show_selected(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.load_selected_page();
         self.show_selected(window, cx);
+        // Bookmarks that never had a preview get one, if previews are allowed (E15-S06).
+        self.fetch_missing_previews(cx);
     }
 
     /// Loads the open page's title into the title field and focuses it. `set_value` does not emit
@@ -294,6 +298,7 @@ mod page_list;
 mod page_list_window_tests;
 mod page_menu;
 mod preview_fetch;
+mod previews_question;
 mod rich_text;
 #[cfg(test)]
 mod scrollbar_tests;
@@ -315,6 +320,7 @@ mod window;
 
 pub(crate) use database_page::bind as bind_database_keys;
 pub(crate) use page_keys::bind as bind_page_keys;
+pub(crate) use previews_question::EXPLANATION as PREVIEWS_EXPLANATION;
 pub use storage::Storage;
 
 impl Drop for Shell {
