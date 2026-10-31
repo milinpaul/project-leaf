@@ -61,6 +61,7 @@ gpui_kit_assets::icon_assets!(
         ImagePlus,
         Info,
         Italic,
+        Lightbulb,
         Link,
         List,
         ListOrdered,

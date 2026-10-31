@@ -262,6 +262,7 @@ mod block_drag;
 mod block_menu;
 mod block_row;
 mod blocks;
+mod callout;
 mod cover;
 mod database_page;
 mod favourites;
