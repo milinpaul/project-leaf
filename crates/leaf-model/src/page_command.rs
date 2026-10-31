@@ -5,7 +5,7 @@ use std::ops::Range;
 
 use leaf_core::{BlockId, PageId};
 
-use crate::{BlockKind, BlockProp, Mark, MarkKind};
+use crate::{BlockKind, BlockProp, Mark, MarkKind, WebPreview};
 
 /// A change to a page document.
 ///
@@ -115,6 +115,19 @@ pub enum PageCommand {
         id: BlockId,
         /// The property and its new value; it must belong to the block's kind.
         prop: BlockProp,
+    },
+    /// Fills in a web bookmark's preview once it has been fetched (ADR-080). The fetch took a while,
+    /// so the page may have moved on: if the block is gone, is no longer a web bookmark, or now holds
+    /// another address, nothing changes. It isn't an edit the owner made, so it is kept off the undo
+    /// history: undo never removes a preview on its own, and undoing the bookmark's creation takes the
+    /// preview with it.
+    SetWebBookmarkPreview {
+        /// The web bookmark.
+        id: BlockId,
+        /// The address that was fetched.
+        url: String,
+        /// What was found; it replaces the whole preview.
+        preview: WebPreview,
     },
     /// Tab: each block becomes the last child of the block just above it. Blocks with nothing above
     /// them, or whose block above can't hold children, stay put.

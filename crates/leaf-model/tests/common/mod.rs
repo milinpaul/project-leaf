@@ -6,11 +6,11 @@
 use leaf_core::{AssetId, BlockId, PageId};
 use leaf_model::{
     BlockKind, BlockProp, CalloutTone, DueDate, DueTime, Mark, MarkKind, PageCommand, PageDoc, Priority,
-    TextSpan,
+    TextSpan, WebPreview,
 };
 use proptest::prelude::*;
 
-pub(crate) fn kinds() -> [BlockKind; 16] {
+pub(crate) fn kinds() -> [BlockKind; 18] {
     [
         BlockKind::Paragraph,
         BlockKind::Heading { level: 1 },
@@ -48,7 +48,30 @@ pub(crate) fn kinds() -> [BlockKind; 16] {
         BlockKind::Callout {
             tone: CalloutTone::Warning,
         },
+        // The same address as the link mark, so a block that is only that link can become one.
+        BlockKind::WebBookmark {
+            url: "https://leaf.app".into(),
+            preview: WebPreview::default(),
+        },
+        BlockKind::WebBookmark {
+            url: "https://example.com/a".into(),
+            preview: WebPreview {
+                title: Some("A".into()),
+                ..WebPreview::default()
+            },
+        },
     ]
+}
+
+/// What a fetch finds, for [`Step::Preview`].
+pub(crate) fn fetched() -> WebPreview {
+    WebPreview {
+        title: Some("Leaf".into()),
+        description: Some("A local-first editor".into()),
+        image: Some(AssetId::of(b"cover")),
+        favicon: None,
+        fetched_at: Some(1_793_000_000_000),
+    }
 }
 
 /// Pages that links point at: fixed, so a shrunk failing case reads the same every time.
@@ -84,7 +107,7 @@ pub(crate) fn mark_kinds() -> [MarkKind; 6] {
     ]
 }
 
-pub(crate) fn props() -> [BlockProp; 16] {
+pub(crate) fn props() -> [BlockProp; 18] {
     [
         BlockProp::TableHeaderRow(true),
         BlockProp::TableHeaderRow(false),
@@ -102,6 +125,8 @@ pub(crate) fn props() -> [BlockProp; 16] {
         BlockProp::TaskPriority(None),
         BlockProp::CalloutTone(CalloutTone::Error),
         BlockProp::CalloutTone(CalloutTone::Note),
+        BlockProp::WebAddress("https://leaf.app".into()),
+        BlockProp::WebAddress("https://example.com/b".into()),
     ]
 }
 
@@ -187,6 +212,12 @@ pub(crate) enum Step {
         columns: usize,
         header_row: bool,
     },
+    /// A fetched preview arriving for a block: for the address it holds now, or (`stale`) one it held
+    /// before, as when the owner changed it while fetching.
+    Preview {
+        block: usize,
+        stale: bool,
+    },
     /// A row or column command (`op` picks which) on a table on the page.
     Reshape {
         table: usize,
@@ -229,6 +260,7 @@ pub(crate) fn step() -> impl Strategy<Value = Step> {
             |(parent, index, rows, columns, header_row)| Step::InsertTable { parent, index, rows, columns, header_row }
         ),
         3 => (n(), 0..6_usize, n(), n()).prop_map(|(table, op, a, b)| Step::Reshape { table, op, a, b }),
+        1 => (n(), any::<bool>()).prop_map(|(block, stale)| Step::Preview { block, stale }),
     ]
 }
 
@@ -370,6 +402,18 @@ pub(crate) fn command(step: Step, page: &PageDoc) -> Option<PageCommand> {
             }
         }
         Step::Reshape { table, op, a, b } => reshape(page, table, op, a, b)?,
+        Step::Preview { block, stale } => {
+            let id = p.block(block)?;
+            let url = match page.kind(id).ok()? {
+                BlockKind::WebBookmark { url, .. } if !stale => url,
+                _ => "https://leaf.app/old".into(),
+            };
+            PageCommand::SetWebBookmarkPreview {
+                id,
+                url,
+                preview: fetched(),
+            }
+        }
         text_step => return text_command(text_step, &p),
     })
 }

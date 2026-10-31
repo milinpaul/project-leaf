@@ -107,10 +107,20 @@ and rebuilds that index after undo, redo and import.
 | `table_cell` | — | yes | no |
 | `task` | `done`: bool, `due`: `YYYY-MM-DD`?, `due_time`: `HH:MM`? (only with `due`), `priority`: `high` \| `medium` \| `low`? | yes | yes |
 | `callout` | `tone`: `info` \| `success` \| `warning` \| `error` \| `note` (another name is kept; missing reads as `info`) | yes | no |
+| `web_bookmark` | `url`: http(s) String, then once fetched `title`?, `description`?, `image`: AssetId?, `favicon`: AssetId?, `fetched_at`: i64? (unix ms) | no (keeps an empty container) | no |
 
 **Callouts (E21, ADR-070).** A `callout` is text with marks in a tinted box with an icon; its lines are separated by
 `\n` in its one text, like a code block, and nothing nests inside. The `tone` is stored by name; a tone from a newer
 version reads as `CalloutTone::Other` and is written back unchanged.
+
+**Web bookmarks (E15, ADR-080, ADR-XXX-E15-S02).** A `web_bookmark` is a web address drawn as a card. The address must be `http` or
+`https` with a host and no spaces or password (`check_web_address`). The preview arrives later through
+`SetWebBookmarkPreview`, only if fetching is allowed; a preview part that is missing or unreadable reads as absent and
+stays stored. Turned into a text kind, it becomes its address as linked text (plain in code); a block whose whole
+text is one link to the address, or that is empty, can become one. It keeps an empty text container from its
+creation, so these conversions are plain text edits: a container made in a later step than its block loses its
+content when undo re-creates the block and redo replays the step (the Loro behaviour in ADR-007). `PageDoc::text`
+reads `None` for it.
 
 **Action items (E19, ADR-068).** A `task` is a to-do with a due date, an optional wall-clock time and a priority.
 Dates and times have no time zone: due Friday stays due Friday. An absent prop means "not set"; a time needs a date.
@@ -213,7 +223,11 @@ validate, write, commit once; `Unchanged` when nothing would change)
   children lets them out right after the block, in order; known props the new kind doesn't use are removed, props
   from newer versions kept; unknown kinds can't be converted
 - `SetProp { id, prop: BlockProp }`: typed (`Checked`, `HeadingLevel`, `Language`, `ImageWidth`, `ImageAlt`,
-  `TableHeaderRow`), and must belong to the block's kind
+  `TableHeaderRow`, `TaskDone`, `TaskDue`, `TaskTime`, `TaskPriority`, `CalloutTone`, `WebAddress`), and must belong
+  to the block's kind. A new `WebAddress` clears the preview, which belonged to the old one.
+- `SetWebBookmarkPreview { id, url, preview }`: fills in a fetched preview; nothing happens if the block is gone, isn't
+  a web bookmark or now holds another address. Its commit's origin (`leaf-web-preview`) is left out of the undo
+  history: undo never removes a preview on its own, and undoing the bookmark's creation takes it along (ADR-080).
 - `InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets, checked against the
   text length; blocks without text (dividers, unknown kinds) are refused
 - `ReplaceText { id, range, text }`: one commit replacing `range` (typing over a selection, committing an input-method
@@ -287,7 +301,7 @@ property test (E02-S08). Two copies editing at once and swapping changes must en
 holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that break a rule are repaired (ADR-044).
 
 1. Every tree node has a `type` in its meta.
-2. `text` exists exactly for text-bearing types.
+2. `text` exists exactly for text-bearing types; a `web_bookmark` may keep an empty one.
 3. Types that disallow children have no children; a `table` holds only `table_row`s and a `table_row` only
    `table_cell`s.
 4. `heading.level` ∈ 1..=3.
@@ -388,6 +402,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | callout | GitHub alert: `> [!NOTE]` (info), `> [!TIP]` (success), `> [!IMPORTANT]` (note), `> [!WARNING]`, `> [!CAUTION]` (error), then each line as `> line` |
 | code | fenced block with language |
 | divider | `---` |
+| web bookmark | `[title](url)` on its own line, or the address alone; pasted back it is a paragraph with that link |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
 | table | GitHub-style Markdown table, first row as the header; `\|` for a pipe and `<br>` for a line break in a cell |
 | page link (inline) | `[[Title]]`; pasted back, a link when exactly one page outside the trash has that title, else text (ADR-071) |

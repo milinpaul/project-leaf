@@ -85,6 +85,13 @@ pub enum BlockStyle {
         /// Whether it is in the table's header row.
         header: bool,
     },
+    /// A web bookmark (E15): a web address drawn as a card. The row holds no text.
+    WebBookmark {
+        /// The page's address.
+        url: String,
+        /// What was fetched for it; empty until then.
+        preview: leaf_model::WebPreview,
+    },
     /// A kind from a newer version, drawn read-only.
     Unknown {
         /// The stored type name.
@@ -117,6 +124,7 @@ impl BlockStyle {
             BlockKind::Code { language } => Self::Code { language },
             BlockKind::Divider => Self::Divider,
             BlockKind::Image { asset, width, alt } => Self::Image { asset, width, alt },
+            BlockKind::WebBookmark { url, preview } => Self::WebBookmark { url, preview },
             BlockKind::Unknown { type_name } => Self::Unknown { type_name },
             // Placed by the walk, which knows the grid; these are only what a table part reads as alone.
             BlockKind::Table { header_row } => Self::Table {

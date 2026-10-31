@@ -159,6 +159,10 @@ pub enum ModelError {
     #[error("a due time needs a due date")]
     TimeWithoutDate,
 
+    /// A web bookmark's address isn't one it can hold (not `http`/`https`, no host, spaces, a password).
+    #[error("not a web address: {0}")]
+    InvalidWebAddress(String),
+
     /// A link needs an address.
     #[error("a link needs an address")]
     EmptyLink,

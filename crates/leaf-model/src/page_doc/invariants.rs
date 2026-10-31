@@ -84,12 +84,14 @@ impl PageDoc {
             if matches!(kind, BlockKind::Unknown { .. }) {
                 continue; // a newer version's rules are unknown here; such blocks are left as they are
             }
-            // 2: a text container exactly when the kind has text.
+            // 2: a text container exactly when the kind has text; a web bookmark may keep an empty one.
             let text = match meta.get(keys::TEXT) {
                 Some(ValueOrContainer::Container(Container::Text(text))) => Some(text),
                 _ => None,
             };
-            if text.is_some() != kind.has_text() {
+            let kept_empty =
+                kind.keeps_text_container() && text.as_ref().is_some_and(|t| t.len_unicode() == 0);
+            if text.is_some() != kind.has_text() && !kept_empty {
                 let has = if text.is_some() { "has" } else { "lacks" };
                 report(2, node, format!("{} {has} a text container", kind.type_name()));
             }

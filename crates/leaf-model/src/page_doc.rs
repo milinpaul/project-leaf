@@ -192,12 +192,12 @@ impl PageDoc {
     /// The block's text as runs of equally formatted characters, or `None` for blocks without text
     /// (dividers, unknown kinds).
     pub fn text(&self, block: BlockId) -> Result<Option<Vec<TextSpan>>, ModelError> {
-        Ok(self.text_container(block)?.map(|text| spans(&text)))
+        Ok(self.shown_text(block)?.map(|text| spans(&text)))
     }
 
     /// The block's text without formatting, or `None` for blocks without text.
     pub fn plain_text(&self, block: BlockId) -> Result<Option<String>, ModelError> {
-        Ok(self.text_container(block)?.map(|text| text.to_string()))
+        Ok(self.shown_text(block)?.map(|text| text.to_string()))
     }
 
     /// Whether `block` is on this page.
@@ -216,6 +216,14 @@ impl PageDoc {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.index.by_block.is_empty()
+    }
+
+    /// The block's text container, except a web bookmark's, which is kept empty and isn't text.
+    fn shown_text(&self, block: BlockId) -> Result<Option<LoroText>, ModelError> {
+        if matches!(self.kind(block)?, BlockKind::WebBookmark { .. }) {
+            return Ok(None);
+        }
+        self.text_container(block)
     }
 
     pub(super) fn text_container(&self, block: BlockId) -> Result<Option<LoroText>, ModelError> {
@@ -330,3 +338,5 @@ mod callout_tests;
 mod task_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod web_bookmark_tests;

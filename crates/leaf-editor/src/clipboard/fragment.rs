@@ -183,6 +183,20 @@ enum WireKind {
     Callout {
         tone: String,
     },
+    /// A web bookmark (E15): its address and the preview fetched for it, so a copy needs no new fetch.
+    WebBookmark {
+        url: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        title: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        image: Option<AssetId>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        favicon: Option<AssetId>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        fetched_at: Option<i64>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -234,6 +248,14 @@ impl WireBlock {
             BlockKind::Callout { tone } => WireKind::Callout {
                 tone: tone.as_str().to_owned(),
             },
+            BlockKind::WebBookmark { url, preview } => WireKind::WebBookmark {
+                url: url.clone(),
+                title: preview.title.clone(),
+                description: preview.description.clone(),
+                image: preview.image,
+                favicon: preview.favicon,
+                fetched_at: preview.fetched_at,
+            },
             BlockKind::Unknown { .. } => return None,
         };
         Some(Self {
@@ -272,6 +294,27 @@ impl WireBlock {
             WireKind::Callout { tone } => BlockKind::Callout {
                 tone: leaf_model::CalloutTone::parse(&tone),
             },
+            // An address no bookmark may hold makes the copy unreadable rather than half pasted.
+            WireKind::WebBookmark {
+                url,
+                title,
+                description,
+                image,
+                favicon,
+                fetched_at,
+            } => {
+                leaf_model::check_web_address(&url).ok()?;
+                BlockKind::WebBookmark {
+                    url,
+                    preview: leaf_model::WebPreview {
+                        title,
+                        description,
+                        image,
+                        favicon,
+                        fetched_at,
+                    },
+                }
+            }
         };
         Some(FragmentBlock {
             kind,

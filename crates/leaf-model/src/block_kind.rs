@@ -8,7 +8,7 @@ use leaf_core::AssetId;
 use loro::{LoroMap, LoroValue};
 
 use crate::page_meta::value;
-use crate::{CalloutTone, DueDate, DueTime, ModelError, Priority};
+use crate::{CalloutTone, DueDate, DueTime, ModelError, Priority, WebPreview, web_bookmark};
 
 /// One property of a block, for [`PageCommand::SetProp`](crate::PageCommand::SetProp). Each belongs to
 /// one kind: setting it on another kind is an error rather than a silent no-op.
@@ -36,6 +36,8 @@ pub enum BlockProp {
     TaskPriority(Option<Priority>),
     /// A callout's tone.
     CalloutTone(CalloutTone),
+    /// A web bookmark's address. A different address clears the preview, which belonged to the old one.
+    WebAddress(String),
 }
 
 impl BlockProp {
@@ -54,12 +56,13 @@ impl BlockProp {
             Self::TaskTime(_) => "due time",
             Self::TaskPriority(_) => "priority",
             Self::CalloutTone(_) => "tone",
+            Self::WebAddress(_) => "web address",
         }
     }
 }
 
 /// Every known prop key, for removing the ones a new kind no longer uses.
-pub(crate) const KNOWN_PROP_KEYS: [&str; 12] = [
+pub(crate) const KNOWN_PROP_KEYS: [&str; 18] = [
     keys::LEVEL,
     keys::CHECKED,
     keys::LANGUAGE,
@@ -72,6 +75,12 @@ pub(crate) const KNOWN_PROP_KEYS: [&str; 12] = [
     keys::DUE_TIME,
     keys::PRIORITY,
     keys::TONE,
+    keys::URL,
+    keys::TITLE,
+    keys::DESCRIPTION,
+    keys::IMAGE,
+    keys::FAVICON,
+    keys::FETCHED_AT,
 ];
 
 /// Meta and props key names.
@@ -91,6 +100,12 @@ pub(crate) mod keys {
     pub const DUE_TIME: &str = "due_time";
     pub const PRIORITY: &str = "priority";
     pub const TONE: &str = "tone";
+    pub const URL: &str = "url";
+    pub const TITLE: &str = "title";
+    pub const DESCRIPTION: &str = "description";
+    pub const IMAGE: &str = "image";
+    pub const FAVICON: &str = "favicon";
+    pub const FETCHED_AT: &str = "fetched_at";
 }
 
 /// What kind of block this is, with its type-specific properties.
@@ -160,6 +175,14 @@ pub enum BlockKind {
         /// Its colour scheme and icon.
         tone: CalloutTone,
     },
+    /// A web address shown as a card with the page's title, description and pictures (E15, ADR-080).
+    /// Has no text and nothing nested. The preview arrives later, if fetching is allowed.
+    WebBookmark {
+        /// The page's address, `http` or `https`.
+        url: String,
+        /// What was fetched for it; empty until then.
+        preview: WebPreview,
+    },
     /// A kind this version of Leaf does not know, probably from a newer version. It is shown as a
     /// read-only placeholder and its data is never rewritten, so nothing is lost.
     Unknown {
@@ -187,6 +210,7 @@ impl BlockKind {
             Self::TableCell => "table_cell",
             Self::Task { .. } => "task",
             Self::Callout { .. } => "callout",
+            Self::WebBookmark { .. } => "web_bookmark",
             Self::Unknown { type_name } => type_name,
         }
     }
@@ -212,8 +236,21 @@ impl BlockKind {
     pub fn has_text(&self) -> bool {
         !matches!(
             self,
-            Self::Divider | Self::Unknown { .. } | Self::Table { .. } | Self::TableRow
+            Self::Divider
+                | Self::Unknown { .. }
+                | Self::Table { .. }
+                | Self::TableRow
+                | Self::WebBookmark { .. }
         )
+    }
+
+    /// Whether the block keeps a text container in its meta. Text kinds do; so does a web bookmark, whose
+    /// container is always empty: made with the block, it lets the bookmark turn into its address as
+    /// linked text and back with plain text edits. A container made in a later step than its block loses
+    /// what is written into it when undo re-creates the block and redo replays the step (ADR-007).
+    #[must_use]
+    pub(crate) fn keeps_text_container(&self) -> bool {
+        self.has_text() || matches!(self, Self::WebBookmark { .. })
     }
 
     /// Whether this is a row or cell, which only exist inside a table and only change through the
@@ -263,6 +300,7 @@ impl BlockKind {
             Self::Callout {
                 tone: CalloutTone::Other(name),
             } if name.is_empty() => Err(ModelError::InvalidKind("a callout's tone can't be empty".into())),
+            Self::WebBookmark { url, .. } => web_bookmark::check_web_address(url),
             _ => Ok(()),
         }
     }
@@ -277,6 +315,14 @@ impl BlockKind {
             Self::Table { .. } => &[keys::HEADER_ROW],
             Self::Task { .. } => &[keys::DONE, keys::DUE, keys::DUE_TIME, keys::PRIORITY],
             Self::Callout { .. } => &[keys::TONE],
+            Self::WebBookmark { .. } => &[
+                keys::URL,
+                keys::TITLE,
+                keys::DESCRIPTION,
+                keys::IMAGE,
+                keys::FAVICON,
+                keys::FETCHED_AT,
+            ],
             _ => &[],
         }
     }
@@ -297,6 +343,15 @@ impl BlockKind {
             (Self::Image { asset, width, .. }, BlockProp::ImageAlt(alt)) => Self::Image { asset, width, alt },
             (Self::Table { .. }, BlockProp::TableHeaderRow(header_row)) => Self::Table { header_row },
             (Self::Callout { .. }, BlockProp::CalloutTone(tone)) => Self::Callout { tone },
+            (Self::WebBookmark { url, preview }, BlockProp::WebAddress(new)) => {
+                web_bookmark::check_web_address(&new)?;
+                let preview = if new == url {
+                    preview
+                } else {
+                    WebPreview::default()
+                };
+                Self::WebBookmark { url: new, preview }
+            }
             (
                 Self::Task {
                     done,
@@ -386,6 +441,10 @@ impl BlockKind {
                 },
                 Some(_) => return Err((keys::TONE, "is not text".into())),
             },
+            "web_bookmark" => {
+                let (url, preview) = web_bookmark::read(meta)?;
+                Self::WebBookmark { url, preview }
+            }
             _ => Self::Unknown { type_name },
         })
     }
@@ -412,6 +471,7 @@ impl BlockKind {
             }
             Self::Table { header_row } => meta.insert(keys::HEADER_ROW, *header_row)?,
             Self::Callout { tone } => meta.insert(keys::TONE, tone.as_str())?,
+            Self::WebBookmark { url, preview } => web_bookmark::write(meta, url, preview)?,
             Self::Task {
                 done,
                 due,
