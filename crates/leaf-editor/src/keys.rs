@@ -198,7 +198,10 @@ impl PageEditor {
                         pos: at.at,
                         text: "\n".into(),
                     })?;
-                    Ok(Caret { at: at.at + 1, ..at })
+                    Ok(Caret {
+                        at: at.at.saturating_add(1),
+                        ..at
+                    })
                 }
                 BlockKind::Image { .. } => Ok(Caret {
                     block: insert_after(doc, at.block, BlockKind::Paragraph)?,
@@ -253,7 +256,10 @@ impl PageEditor {
                     range,
                     text: "\n".into(),
                 })?;
-                Caret { block, at: at + 1 }
+                Caret {
+                    block,
+                    at: at.saturating_add(1),
+                }
             }
             // Ticks the box, as in Notion (E19-S02); the caret stays.
             BlockKind::Todo { .. } | BlockKind::Task { .. } if modified => {
@@ -287,7 +293,7 @@ impl PageEditor {
             if trim > 0 {
                 doc.apply(PageCommand::DeleteText {
                     id: block,
-                    range: len - trim..len,
+                    range: len.saturating_sub(trim)..len,
                 })?;
             }
             Ok(Caret {

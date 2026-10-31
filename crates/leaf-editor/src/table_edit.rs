@@ -77,15 +77,15 @@ impl PageEditor {
             TableEdit::MoveColumn { from, to } if place.is_some() => Some((row, moved(column, from, to), at)),
             _ => place,
         };
-        if let Some((row, column, at)) = target {
-            let cells = &grid[row.min(grid.len().saturating_sub(1))];
-            if let Some(&block) = cells.get(column.min(cells.len().saturating_sub(1))) {
-                let len = self.doc.plain_text(block)?.map_or(0, |t| t.chars().count());
-                self.set_caret(Caret {
-                    block,
-                    at: at.min(len),
-                })?;
-            }
+        if let Some((row, column, at)) = target
+            && let Some(cells) = grid.get(row.min(grid.len().saturating_sub(1)))
+            && let Some(&block) = cells.get(column.min(cells.len().saturating_sub(1)))
+        {
+            let len = self.doc.plain_text(block)?.map_or(0, |t| t.chars().count());
+            self.set_caret(Caret {
+                block,
+                at: at.min(len),
+            })?;
         }
         self.finish()?;
         self.caret()
@@ -97,9 +97,9 @@ fn moved(at: usize, from: usize, to: usize) -> usize {
     if at == from {
         to
     } else if from < at && at <= to {
-        at - 1
+        at.saturating_sub(1)
     } else if to <= at && at < from {
-        at + 1
+        at.saturating_add(1)
     } else {
         at
     }

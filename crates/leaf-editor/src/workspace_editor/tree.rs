@@ -66,7 +66,12 @@ impl WorkspaceEditor {
             let children = self.sidebar_pages(self.workspace.children(page)?)?;
             let expanded = self.expanded.contains(&page);
             if expanded {
-                stack.extend(children.iter().rev().map(|&child| (child, depth + 1)));
+                stack.extend(
+                    children
+                        .iter()
+                        .rev()
+                        .map(|&child| (child, depth.saturating_add(1))),
+                );
             }
             items.push(SidebarItem {
                 page,
@@ -157,6 +162,10 @@ impl WorkspaceEditor {
             title: String::new(),
             created_at: now_ms,
         };
+        #[expect(
+            clippy::unreachable,
+            reason = "the workspace's CreatePage always answers PageCreated"
+        )]
         let Outcome::PageCreated(page) = self.workspace.apply(command)? else {
             unreachable!("CreatePage always reports the page it created");
         };
@@ -236,7 +245,7 @@ impl WorkspaceEditor {
                 .iter()
                 .position(|&slot| slot == target)
                 .unwrap_or(slots.len());
-            Ok((parent, if after { at + 1 } else { at }))
+            Ok((parent, if after { at.saturating_add(1) } else { at }))
         };
         match place {
             DropPlace::Inside(target) => Ok((Some(target), slots(Some(target))?.len())),

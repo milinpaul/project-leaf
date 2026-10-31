@@ -158,9 +158,11 @@ impl PageEditor {
             return Ok(None);
         };
         let text_row = |row: &BlockRow| row.text.as_ref().map(|text| (row.id, text.chars().count()));
+        let (before, rest) = rows.split_at_checked(here).unwrap_or((rows, &[]));
+        let after = rest.get(1..).unwrap_or_default();
         Ok(match direction {
-            Direction::Back => rows[..here].iter().rev().find_map(text_row),
-            Direction::Forward => rows[here + 1..].iter().find_map(text_row),
+            Direction::Back => before.iter().rev().find_map(text_row),
+            Direction::Forward => after.iter().find_map(text_row),
         })
     }
 }
@@ -185,12 +187,12 @@ fn start_of(row: &BlockRow) -> Option<Caret> {
 /// Where a caret goes when its block (once at `row`) was deleted: the end of the nearest text block
 /// above, else the start of the first text block below, else any block.
 pub(crate) fn nearest_above(rows: &[BlockRow], row: usize) -> Option<Caret> {
-    let split = row.min(rows.len());
-    rows[..split]
+    let (above, below) = rows.split_at_checked(row).unwrap_or((rows, &[]));
+    above
         .iter()
         .rev()
         .find_map(end_of)
-        .or_else(|| rows[split..].iter().find_map(start_of))
+        .or_else(|| below.iter().find_map(start_of))
         .or_else(|| {
             rows.first().map(|first| Caret {
                 block: first.id,

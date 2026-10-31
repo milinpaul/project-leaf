@@ -152,10 +152,10 @@ impl SearchBar {
             return;
         }
         query.clone_into(&mut self.query);
-        self.latest += 1;
+        self.latest = self.latest.wrapping_add(1);
         self.hits = None;
         self.titles.set_query(query);
-        self.due_at = (!blank(query)).then_some(now + self.delay);
+        self.due_at = (!blank(query)).then_some(now.saturating_add(self.delay));
         self.selected = 0;
         self.rebuild();
     }
@@ -226,11 +226,14 @@ impl SearchBar {
         let count = self.rows.len();
         match key {
             SearchKey::Up if count > 0 => {
-                self.selected = (self.selected + count - 1) % count;
+                self.selected = self
+                    .selected
+                    .checked_sub(1)
+                    .map_or(count.saturating_sub(1), |prev| prev.min(count.saturating_sub(1)));
                 SearchOutcome::Nothing
             }
             SearchKey::Down if count > 0 => {
-                self.selected = (self.selected + 1) % count;
+                self.selected = self.selected.saturating_add(1).checked_rem(count).unwrap_or(0);
                 SearchOutcome::Nothing
             }
             SearchKey::Enter => self.selected_row().map_or(SearchOutcome::Nothing, |row| {

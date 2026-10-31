@@ -114,7 +114,7 @@ impl PageEditor {
         };
         let (old, new): (Vec<char>, Vec<char>) = (old.chars().collect(), text.chars().collect());
         let prefix = old.iter().zip(&new).take_while(|(a, b)| a == b).count();
-        let max_suffix = old.len().min(new.len()) - prefix;
+        let max_suffix = old.len().min(new.len()).saturating_sub(prefix);
         let suffix = old
             .iter()
             .rev()
@@ -122,11 +122,15 @@ impl PageEditor {
             .take(max_suffix)
             .take_while(|(a, b)| a == b)
             .count();
-        let removed = prefix..old.len() - suffix;
+        let removed = prefix..old.len().saturating_sub(suffix);
         if !removed.is_empty() {
             self.doc.apply(PageCommand::DeleteText { id, range: removed })?;
         }
-        let added: String = new[prefix..new.len() - suffix].iter().collect();
+        let added: String = new
+            .get(prefix..new.len().saturating_sub(suffix))
+            .unwrap_or_default()
+            .iter()
+            .collect();
         if !added.is_empty() {
             self.doc.apply(PageCommand::InsertText {
                 id,
@@ -232,7 +236,7 @@ impl PageEditor {
             .iter()
             .position(|&b| b == id)
             .and_then(|p| p.checked_sub(1))
-            .map(|p| order[p]))
+            .and_then(|p| order.get(p).copied()))
     }
 
     /// The block just below `id` in reading order, for the down arrow.
@@ -241,7 +245,8 @@ impl PageEditor {
         Ok(order
             .iter()
             .position(|&b| b == id)
-            .and_then(|p| order.get(p + 1))
+            .and_then(|p| p.checked_add(1))
+            .and_then(|p| order.get(p))
             .copied())
     }
 
@@ -292,6 +297,10 @@ pub(crate) fn enter_in(doc: &mut PageDoc, id: BlockId, at: usize) -> Result<Care
         insert_before(doc, id, BlockKind::Paragraph)?;
         return Ok(Caret { block: id, at: 0 });
     }
+    #[expect(
+        clippy::unreachable,
+        reason = "the model's SplitBlock always answers BlockCreated"
+    )]
     let PageOutcome::BlockCreated(block) = doc.apply(PageCommand::SplitBlock { id, pos: at })? else {
         unreachable!("SplitBlock always reports the block it created");
     };
@@ -319,7 +328,7 @@ pub(crate) fn insert_after(doc: &mut PageDoc, id: BlockId, kind: BlockKind) -> R
     let index = siblings
         .iter()
         .position(|&b| b == id)
-        .map_or(siblings.len(), |p| p + 1);
+        .map_or(siblings.len(), |p| p.saturating_add(1));
     insert_block(doc, parent, index, kind)
 }
 
@@ -335,6 +344,10 @@ pub(crate) fn insert_block(
         kind,
         text: String::new(),
     };
+    #[expect(
+        clippy::unreachable,
+        reason = "the model's InsertBlock always answers BlockCreated"
+    )]
     let PageOutcome::BlockCreated(id) = doc.apply(command)? else {
         unreachable!("InsertBlock always reports the block it created");
     };
@@ -356,6 +369,10 @@ pub(crate) fn insert_table(
         columns,
         header_row,
     };
+    #[expect(
+        clippy::unreachable,
+        reason = "the model's InsertTable always answers BlockCreated"
+    )]
     let PageOutcome::BlockCreated(id) = doc.apply(command)? else {
         unreachable!("InsertTable always reports the table it created");
     };

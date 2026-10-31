@@ -67,10 +67,10 @@ impl PageEditor {
     pub fn select_word_at(&mut self, caret: Caret) -> Result<Option<Selection>, EditorError> {
         use unicode_segmentation::UnicodeSegmentation as _;
         let text = self.doc.plain_text(caret.block)?.unwrap_or_default();
-        let mut start = 0;
+        let mut start = 0usize;
         let mut found = None;
         for segment in text.split_word_bounds() {
-            let end = start + segment.chars().count();
+            let end = start.saturating_add(segment.chars().count());
             // A click on a boundary belongs to the segment after it, except at the very end.
             if caret.at < end || end == text.chars().count() {
                 found = Some(start..end);
@@ -207,7 +207,10 @@ impl PageEditor {
     pub(crate) fn blocks_between(&mut self, start: Caret, end: Caret) -> Result<Vec<BlockId>, EditorError> {
         let order = self.order()?;
         let at = |b| order.iter().position(|&x| x == b).unwrap_or(0);
-        Ok(order[at(start.block)..=at(end.block)].to_vec())
+        Ok(order
+            .get(at(start.block)..=at(end.block))
+            .unwrap_or_default()
+            .to_vec())
     }
 
     fn tail_or_caret(&mut self) -> Result<Option<Caret>, EditorError> {
@@ -271,7 +274,9 @@ pub(crate) fn delete_span(
     }
     let position = |b: BlockId| order.iter().position(|&x| x == b).unwrap_or(0);
     // A table in between goes whole, so its cells aren't listed on their own.
-    let between: Vec<BlockId> = order[position(start.block) + 1..position(end.block)]
+    let between: Vec<BlockId> = order
+        .get(position(start.block).saturating_add(1)..position(end.block))
+        .unwrap_or_default()
         .iter()
         .copied()
         .filter(|&b| table_of(doc, b).is_ok_and(|table| table.is_none()))
@@ -324,7 +329,10 @@ fn delete_around_tables(
         parent = doc.parent(p)?;
     }
     let mut doomed: Vec<BlockId> = start_table.into_iter().chain(end_table).collect();
-    for &block in &order[position(start.block) + 1..position(end.block)] {
+    let inside = order
+        .get(position(start.block).saturating_add(1)..position(end.block))
+        .unwrap_or_default();
+    for &block in inside {
         let whole = table_of(doc, block)?.is_none() && !holders.contains(&block);
         if whole && !doomed.contains(&block) {
             doomed.push(block);
@@ -359,8 +367,12 @@ fn delete_around_tables(
         });
     }
     // Both ends were in tables: the nearest text after them, else before, else a new paragraph.
-    let after = order[position(end.block)..].iter();
-    let before = order[..position(start.block)].iter().rev();
+    let after = order.get(position(end.block)..).unwrap_or_default().iter();
+    let before = order
+        .get(..position(start.block))
+        .unwrap_or_default()
+        .iter()
+        .rev();
     for &block in after.chain(before) {
         if doc.contains(block) && doc.plain_text(block)?.is_some() && table_of(doc, block)?.is_none() {
             return Ok(Caret { block, at: 0 });

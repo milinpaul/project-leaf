@@ -58,7 +58,7 @@ pub(super) fn watch(doc: &LoroDoc, pending: &Arc<Mutex<Pending>>) -> Subscriptio
                     let is_cells =
                         |id: &ContainerID| matches!(id, ContainerID::Root { name, .. } if name.as_str() == containers::CELLS);
                     if let Some(at) = diff.path.iter().position(|(id, _)| is_cells(id))
-                        && let Some((_, Index::Key(key))) = diff.path.get(at + 1)
+                        && let Some((_, Index::Key(key))) = at.checked_add(1).and_then(|next| diff.path.get(next))
                         && let Ok(row) = key.parse::<PageId>()
                     {
                         changes.rows.insert(row);

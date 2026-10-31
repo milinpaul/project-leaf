@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leaf web editor spike</title>
+<style>
+  :root { --paper:#FBFAF7; --ink:#2B2A28; --muted:#8A857C; --green:#167A4E; --line:#E7E3DC; --code:#F2F0EB; }
+  @media (prefers-color-scheme: dark) { :root { --paper:#1F1F1E; --ink:#ECEAE6; --muted:#9A968F; --green:#46C68C; --line:#34332F; --code:#2A2927; } }
+  body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.6 Inter, system-ui, sans-serif; }
+  header { padding:10px 24px; border-bottom:1px solid var(--line); color:var(--muted); font-size:13px; display:flex; gap:18px; }
+  #page { max-width:720px; margin:40px auto; padding:0 24px; cursor:text; outline:none; }
+  .row { margin:2px 0; min-height:1.6em; white-space:pre-wrap; }
+  h1.row { font-size:30px; line-height:1.3; margin-top:18px; } h2.row { font-size:23px; } h3.row { font-size:19px; }
+  .bullet::before { content:"•"; display:inline-block; width:22px; color:var(--muted); }
+  .numbered::before { content:attr(data-n); display:inline-block; width:22px; color:var(--muted); }
+  .todo::before { content:"☐"; display:inline-block; width:22px; } .todo.done::before { content:"☑"; } .todo.done { color:var(--muted); text-decoration:line-through; }
+  blockquote.row { border-left:3px solid var(--line); padding-left:14px; margin-left:0; }
+  pre.row { background:var(--code); padding:10px 12px; border-radius:6px; font:14px/1.5 "JetBrains Mono", monospace; }
+  code { background:var(--code); padding:0 3px; border-radius:4px; font-family:"JetBrains Mono", monospace; font-size:.9em; }
+  .caret { display:inline-block; width:2px; height:1.2em; margin:0 -1px; vertical-align:text-bottom; background:var(--green); animation:blink 1s steps(1) infinite; }
+  #page:not(.focused) .caret { visibility:hidden; }
+  @keyframes blink { 50% { opacity:0; } }
+  #input { position:fixed; left:-1000px; top:0; opacity:0; }
+</style>
+</head>
+<body>
+<header><span id="who"></span><span id="load"></span><span id="key"></span><span id="sync"></span></header>
+<div id="page"></div>
+<textarea id="input" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+<script type="module" src="main.js"></script>
+</body>
+</html>

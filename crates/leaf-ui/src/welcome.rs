@@ -248,7 +248,7 @@ impl Welcome {
                 Ok(Ok(_)) | Err(_) => {} // cancelled, or the picker went away
                 Ok(Err(err)) => {
                     // Some Linux desktops have no folder picker service; the details go to the log.
-                    eprintln!("leaf: no folder picker: {err:#}");
+                    crate::log::log(format_args!("no folder picker: {err:#}"));
                     welcome.show_problem(
                         Some(
                             "This system has no folder picker. Start Leaf with the folder instead: leaf <folder>"

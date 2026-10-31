@@ -89,7 +89,10 @@ pub(crate) fn cell_rect(
     }
     let rows = from.row.min(to.row)..=from.row.max(to.row);
     let columns = from.column.min(to.column)..=from.column.max(to.column);
-    let cells = from.grid[rows]
+    let cells = from
+        .grid
+        .get(rows)
+        .unwrap_or_default()
         .iter()
         .flat_map(|row| row.iter().enumerate())
         .filter(|(column, _)| columns.contains(column))
@@ -202,7 +205,7 @@ impl PageEditor {
         let flat: Vec<BlockId> = place.grid.concat();
         let here = flat.iter().position(|&c| c == caret.block).unwrap_or(0);
         let outcome = match key {
-            Key::Tab => match flat.get(here + 1) {
+            Key::Tab => match flat.get(here.saturating_add(1)) {
                 Some(&next) => end_of(next)?,
                 None => self.add_row_below(place.table, place.grid.len())?,
             },
@@ -212,7 +215,7 @@ impl PageEditor {
             },
             Key::Enter | Key::ModEnter => {
                 let range = self.text_range()?.map_or(caret.at..caret.at, |s| s.range);
-                let at = range.start + 1;
+                let at = range.start.saturating_add(1);
                 self.doc.apply(PageCommand::ReplaceText {
                     id: caret.block,
                     range,

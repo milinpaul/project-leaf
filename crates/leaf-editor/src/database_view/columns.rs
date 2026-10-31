@@ -86,11 +86,11 @@ impl DatabaseEditor {
     pub fn column_menu(&self, column: ColumnId) -> Result<ColumnMenu, ModelError> {
         let columns = self.all_columns()?;
         let shown = Self::shown_positions(&columns);
-        let at = columns
+        let (at, found) = columns
             .iter()
-            .position(|c| c.id == column)
+            .enumerate()
+            .find(|(_, c)| c.id == column)
             .ok_or(ModelError::ColumnNotFound(column))?;
-        let found = &columns[at];
         Ok(ColumnMenu {
             column,
             name: found.name.clone(),
@@ -121,7 +121,7 @@ impl DatabaseEditor {
         let base = type_label(&kind);
         let taken = |name: &str| columns.iter().any(|c| c.name.eq_ignore_ascii_case(name));
         // One more candidate than there are columns: at least one is free.
-        let name = (1..=columns.len() + 1)
+        let name = (1..=columns.len().saturating_add(1))
             .map(|n| {
                 if n == 1 {
                     base.to_owned()
@@ -137,6 +137,10 @@ impl DatabaseEditor {
             kind,
         })? {
             DatabaseOutcome::ColumnCreated(column) => Ok(column),
+            #[expect(
+                clippy::unreachable,
+                reason = "the model's AddColumn always answers ColumnCreated"
+            )]
             _ => unreachable!("AddColumn always reports the column it created"),
         }
     }
@@ -188,11 +192,14 @@ impl DatabaseEditor {
         let (Some(&at), Some(&target)) = (shown.get(from), shown.get(to)) else {
             return Ok(false);
         };
+        let Some(moved) = columns.get(at) else {
+            return Ok(false);
+        };
         if from == to {
             return Ok(false);
         }
         self.db.apply(DatabaseCommand::MoveColumn {
-            column: columns[at].id,
+            column: moved.id,
             index: target,
         })?;
         Ok(true)

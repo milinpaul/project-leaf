@@ -136,13 +136,15 @@ impl PageEditor {
                 let change = if key == Key::Tab {
                     signed(CODE_INDENT)
                 } else {
-                    -signed(
-                        text[line..]
+                    signed(
+                        text.get(line..)
+                            .unwrap_or_default()
                             .iter()
                             .take(CODE_INDENT)
                             .take_while(|c| **c == ' ')
                             .count(),
                     )
+                    .saturating_neg()
                 };
                 if change != 0 {
                     edits.push((line, change));
@@ -160,7 +162,7 @@ impl PageEditor {
                 } else {
                     PageCommand::DeleteText {
                         id: block,
-                        range: at..at + change.unsigned_abs(),
+                        range: at..at.saturating_add(change.unsigned_abs()),
                     }
                 };
                 doc.apply(command)?;
@@ -171,10 +173,10 @@ impl PageEditor {
             let mut new = signed(pos);
             for &(at, change) in &edits {
                 if change > 0 && at <= pos {
-                    new += change;
+                    new = new.saturating_add(change);
                 } else if change < 0 && at < pos {
                     // Removed spaces before `pos` pull it back, but never before the line start.
-                    new -= signed(pos - at).min(-change);
+                    new = new.saturating_sub(signed(pos.saturating_sub(at)).min(change.saturating_neg()));
                 }
             }
             usize::try_from(new).unwrap_or(0)
@@ -206,13 +208,14 @@ impl PageEditor {
 /// touch that line, as in code editors.
 fn line_starts(text: &[char], range: Range<usize>) -> Vec<usize> {
     let start_of = |pos: usize| {
-        text[..pos.min(text.len())]
+        text.get(..pos)
+            .unwrap_or(text)
             .iter()
             .rposition(|c| *c == '\n')
-            .map_or(0, |i| i + 1)
+            .map_or(0, |i| i.saturating_add(1))
     };
     let last = if range.end > range.start && start_of(range.end) == range.end {
-        range.end - 1
+        range.end.saturating_sub(1)
     } else {
         range.end
     };
@@ -224,7 +227,7 @@ fn line_starts(text: &[char], range: Range<usize>) -> Vec<usize> {
         .skip(range.start)
     {
         if *c == '\n' {
-            starts.push(i + 1);
+            starts.push(i.saturating_add(1));
         }
     }
     starts

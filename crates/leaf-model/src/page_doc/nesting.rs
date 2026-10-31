@@ -38,7 +38,10 @@ impl PageDoc {
             };
             let siblings = self.tree.children(parent).unwrap_or_default();
             let position = siblings.iter().position(|&n| n == node).unwrap_or(0);
-            let followers = siblings[position + 1..].to_vec();
+            let followers = siblings
+                .get(position.saturating_add(1)..)
+                .map(<[TreeID]>::to_vec)
+                .unwrap_or_default();
             if !followers.is_empty() && !self.node_kind(node)?.allows_children() {
                 continue;
             }

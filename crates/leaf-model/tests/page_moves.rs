@@ -3,6 +3,7 @@
 //! Random command sequences, valid and invalid, run against both `Workspace` and a tiny reference
 //! model that spells out what should happen. After every step both must agree on which commands are
 //! rejected and on the order of pages under every parent, and a save and load must change nothing.
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 use std::collections::HashMap;
 

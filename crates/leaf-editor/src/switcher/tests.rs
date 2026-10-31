@@ -195,7 +195,7 @@ fn opening_and_typing_with_5000_pages_is_quick() {
             })
             .unwrap()
         else {
-            unreachable!()
+            panic!("expected a new page")
         };
         parents.push(Some(page));
     }

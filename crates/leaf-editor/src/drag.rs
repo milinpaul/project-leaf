@@ -75,14 +75,14 @@ impl PageEditor {
             return Ok(None);
         };
         let row_kept = outline.rows.get(before).is_some_and(|(b, _)| *b == row.block);
-        let mut gap = before + usize::from(below_row && row_kept);
+        let mut gap = before.saturating_add(usize::from(below_row && row_kept));
         // Nothing goes between a table's cells: a drop there lands right after the table, which the
         // row above then stands for (its cells are listed one level deeper than it).
         while let Some(&(cell, _)) = outline.rows.get(gap) {
             if !self.doc.kind(cell)?.is_table_part() {
                 break;
             }
-            gap += 1;
+            gap = gap.saturating_add(1);
         }
         let above = match gap.checked_sub(1).and_then(|i| outline.rows.get(i)).copied() {
             Some((cell, depth)) => match crate::table::table_of(&self.doc, cell)? {
@@ -96,10 +96,10 @@ impl PageEditor {
             None => (0, 0),
             Some((block, depth)) => {
                 let nests = self.doc.kind(block)?.allows_children();
-                (next_depth, depth + usize::from(nests))
+                (next_depth, depth.saturating_add(usize::from(nests)))
             }
         };
-        #[allow(
+        #[expect(
             clippy::cast_possible_truncation,
             clippy::cast_sign_loss,
             reason = "truncation is the point: each full indent step is one level; negatives are 0"
@@ -156,7 +156,7 @@ impl PageEditor {
             .collect();
         let index = match drop.after {
             Some(after) => match others.iter().position(|&b| b == after) {
-                Some(at) => at + 1,
+                Some(at) => at.saturating_add(1),
                 None => return Ok(false), // the page changed under the drag
             },
             None => 0,
@@ -164,12 +164,10 @@ impl PageEditor {
         // Already there: the roots sit together in `parent`, right after `index` other siblings.
         let first = siblings.iter().position(|b| outline.roots.contains(b));
         let in_place = first.is_some_and(|first| {
-            siblings.get(first..first + outline.roots.len()) == Some(outline.roots.as_slice())
-                && siblings[..first]
-                    .iter()
-                    .filter(|b| !outline.roots.contains(b))
-                    .count()
-                    == index
+            siblings.get(first..first.saturating_add(outline.roots.len())) == Some(outline.roots.as_slice())
+                && siblings.get(..first).is_some_and(|before| {
+                    before.iter().filter(|b| !outline.roots.contains(b)).count() == index
+                })
         });
         if in_place {
             return Ok(false);

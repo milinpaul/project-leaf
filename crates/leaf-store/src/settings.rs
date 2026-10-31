@@ -192,7 +192,10 @@ impl AppSettings {
 }
 
 // serde's `skip_serializing_if` passes a reference, whatever the type's size.
-#[allow(clippy::trivially_copy_pass_by_ref)]
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's `skip_serializing_if` passes a reference"
+)]
 fn is_system(appearance: &Appearance) -> bool {
     *appearance == Appearance::System
 }

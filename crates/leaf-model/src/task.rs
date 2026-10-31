@@ -74,7 +74,7 @@ impl FromStr for DueDate {
     fn from_str(text: &str) -> Result<Self, Self::Err> {
         let bad = || ModelError::InvalidDate(text.to_owned());
         let bytes = text.as_bytes();
-        if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-' {
+        if bytes.len() != 10 || bytes.get(4) != Some(&b'-') || bytes.get(7) != Some(&b'-') {
             return Err(bad());
         }
         let number = |range: std::ops::Range<usize>| -> Result<u16, ModelError> {
@@ -135,7 +135,7 @@ impl FromStr for DueTime {
         let bad = || ModelError::InvalidTime(text.to_owned());
         let bytes = text.as_bytes();
         if bytes.len() != 5
-            || bytes[2] != b':'
+            || bytes.get(2) != Some(&b':')
             || !text[..2]
                 .bytes()
                 .chain(text[3..].bytes())

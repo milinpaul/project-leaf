@@ -13,6 +13,7 @@ mod app;
 mod cover_picker;
 pub mod covers;
 mod icon_picker;
+pub mod log;
 pub mod menus;
 mod notice;
 mod scrollbar;

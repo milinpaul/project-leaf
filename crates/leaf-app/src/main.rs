@@ -25,7 +25,7 @@ fn window_icon() -> Option<std::sync::Arc<image::RgbaImage>> {
     match image::load_from_memory_with_format(png, image::ImageFormat::Png) {
         Ok(icon) => Some(std::sync::Arc::new(icon.into_rgba8())),
         Err(err) => {
-            eprintln!("leaf: could not load the window icon: {err}");
+            leaf_ui::log::log(format_args!("could not load the window icon: {err}"));
             None
         }
     }
@@ -86,10 +86,10 @@ fn report_first_frame(started: Instant, window: &mut gpui::Window) {
     window.on_next_frame(move |window, _| {
         window.refresh();
         window.on_next_frame(move |_, _| {
-            eprintln!(
-                "leaf: first frame drawn {} ms after launch",
+            leaf_ui::log::log(format_args!(
+                "first frame drawn {} ms after launch",
                 started.elapsed().as_millis()
-            );
+            ));
         });
     });
 }
@@ -120,7 +120,7 @@ fn main() {
                 report_first_frame(started, window);
                 leaf_ui::app_root(named.clone(), default_location(), window, cx)
             }) {
-                eprintln!("leaf: could not open a window: {err:#}");
+                leaf_ui::log::log(format_args!("could not open a window: {err:#}"));
                 cx.quit();
                 return;
             }

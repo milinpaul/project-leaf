@@ -82,6 +82,9 @@ These are checked in review and will block a PR:
 
 - Rust edition 2024 with the workspace lints on (clippy pedantic; warnings are errors).
 - No `unwrap()` or `expect()` outside tests: return errors with `thiserror` types. No `unsafe`.
+- No hidden panics: no `panic!` or `unreachable!` outside tests, and the core crates also check slice indexing
+  and arithmetic (clippy enforces it). Where something truly can't fail, say why with
+  `#[expect(lint, reason = "...")]` on the smallest item. Every `#[allow]` or `#[expect]` needs a reason.
 - Public items get doc comments that explain *why*, not just *what*.
 - Small modules (under about 400 lines), one concept per file.
 - A new dependency needs a reason in the PR description, and `just deny` must pass.

@@ -1,0 +1,23 @@
+# Throwaway spike for E14-S01 (web editor): not part of the workspace build, CI, coverage or `just check`.
+# Build with `./build.sh` (needs the wasm32 target and `wasm-bindgen-cli` 0.2.129); see README.md.
+[package]
+name = "leaf-web-spike"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+leaf-model = { path = "../../crates/leaf-model" }
+leaf-editor = { path = "../../crates/leaf-editor" }
+wasm-bindgen = "=0.2.129"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+# Its own workspace, so the main one never builds it.
+[workspace]

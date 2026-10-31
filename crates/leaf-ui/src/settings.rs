@@ -75,6 +75,9 @@ pub fn save(cx: &mut App) {
     };
     match loaded.settings.save(&path) {
         Ok(()) => cx.global_mut::<Loaded>().dirty = false,
-        Err(err) => eprintln!("leaf: could not save the settings to {}: {err}", path.display()),
+        Err(err) => crate::log::log(format_args!(
+            "could not save the settings to {}: {err}",
+            path.display()
+        )),
     }
 }

@@ -29,7 +29,7 @@ fn pieces(input: &str) -> Vec<String> {
         if let Some(after_quote) = rest.strip_prefix('"') {
             let end = after_quote.find('"').unwrap_or(after_quote.len());
             pieces.push(after_quote[..end].trim().to_owned());
-            rest = after_quote.get(end + 1..).unwrap_or("");
+            rest = after_quote.get(end.saturating_add(1)..).unwrap_or("");
         } else {
             let end = rest
                 .find(|c: char| c.is_whitespace() || c == '"')

@@ -1,4 +1,5 @@
 //! Saving and loading documents through a workspace folder (E03-S03).
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 mod common;
 

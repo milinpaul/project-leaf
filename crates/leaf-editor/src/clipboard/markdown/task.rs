@@ -23,7 +23,7 @@ pub(super) struct Fields {
 /// text doesn't end in such a group.
 pub(super) fn read(text: &str) -> Option<(Fields, &str)> {
     let start = group_start(text)?;
-    let inside = text[start + 1..].strip_suffix(')')?;
+    let inside = text.get(start..)?.strip_prefix('(')?.strip_suffix(')')?;
     let mut fields = Fields::default();
     let mut marked = false;
     for part in inside.split(',').map(str::trim) {
@@ -47,7 +47,7 @@ pub(super) fn read(text: &str) -> Option<(Fields, &str)> {
             return None;
         }
     }
-    Some((fields, text[..start].trim_end()))
+    Some((fields, text.get(..start)?.trim_end()))
 }
 
 /// A to-do line whose text ends in an action item's fields is that action item, without the group;
@@ -78,7 +78,7 @@ fn group_start(text: &str) -> Option<usize> {
     if text.starts_with('(') && !text[1..].contains('(') {
         return Some(0);
     }
-    text.rfind(" (").map(|at| at + 1)
+    text.rfind(" (").and_then(|at| at.checked_add(1))
 }
 
 /// The group written after an action item's text (with the space before it when there is text).

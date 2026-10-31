@@ -46,7 +46,10 @@ pub(crate) fn configure_marks(doc: &LoroDoc) {
 
 /// The inline formatting on a run of text.
 // Each mark is independent and maps one-to-one to a stored key, so plain flags read best here.
-#[allow(clippy::struct_excessive_bools)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "each mark is an independent flag stored under its own key"
+)]
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Marks {
     /// **Bold.**

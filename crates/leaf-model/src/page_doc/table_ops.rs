@@ -216,11 +216,18 @@ impl PageDoc {
         if from == to {
             return Ok(());
         }
-        let moving = nodes[from];
+        let Some(&moving) = nodes.get(from) else {
+            return Err(ModelError::IndexOutOfRange {
+                index: from,
+                len: nodes.len(),
+            });
+        };
         let others: Vec<TreeID> = nodes.iter().copied().filter(|&n| n != moving).collect();
-        match others.get(to) {
-            Some(&next) => self.tree.mov_before(moving, next)?,
-            None => self.tree.mov_after(moving, others[others.len() - 1])?,
+        match (others.get(to), others.last()) {
+            (Some(&next), _) => self.tree.mov_before(moving, next)?,
+            (None, Some(&last)) => self.tree.mov_after(moving, last)?,
+            // Nothing else to move it past.
+            (None, None) => {}
         }
         Ok(())
     }

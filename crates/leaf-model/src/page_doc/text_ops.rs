@@ -64,7 +64,7 @@ impl PageDoc {
             return Ok(PageOutcome::Changed);
         }
         container.insert(range.start, text)?;
-        let added = range.start..range.start + text.chars().count();
+        let added = range.start..range.start.saturating_add(text.chars().count());
         // The expand rules gave the new text the marks of its neighbours; make them the replaced
         // text's instead. Unknown marks from newer versions are carried over too.
         let got = attributes_at(&container, range.start)?;
@@ -173,7 +173,7 @@ fn mark_values(
 /// The marks on the character at `pos`, as stored (absent and null both mean "not set").
 fn attributes_at(text: &LoroText, pos: usize) -> Result<HashMap<String, LoroValue>, ModelError> {
     Ok(text
-        .slice_delta(pos, pos + 1, PosType::Unicode)?
+        .slice_delta(pos, pos.saturating_add(1), PosType::Unicode)?
         .into_iter()
         .find_map(|delta| match delta {
             TextDelta::Insert { attributes, .. } => attributes,
