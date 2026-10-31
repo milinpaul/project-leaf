@@ -41,3 +41,9 @@ allow-wildcard-paths = true
 unknown-registry = "deny"
 # Every crate comes from crates.io today. A git dependency must be listed in `allow-git` on purpose.
 unknown-git = "deny"
+
+# Web bookmark previews (E15-S05, ADR-080): Mozilla's list of trusted certificate authorities, as data, through ureq's
+# rustls. CDLA-Permissive-2.0 is a permissive licence for data; allowed for this one crate only.
+[[licenses.exceptions]]
+crate = "webpki-roots"
+allow = ["CDLA-Permissive-2.0"]

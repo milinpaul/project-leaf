@@ -113,8 +113,11 @@ impl QuickSwitcher {
             return;
         }
         self.selected = match direction {
-            Vertical::Up => (self.selected + count - 1) % count,
-            Vertical::Down => (self.selected + 1) % count,
+            Vertical::Up => self
+                .selected
+                .checked_sub(1)
+                .map_or(count.saturating_sub(1), |prev| prev.min(count.saturating_sub(1))),
+            Vertical::Down => self.selected.saturating_add(1).checked_rem(count).unwrap_or(0),
         };
     }
 

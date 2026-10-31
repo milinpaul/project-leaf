@@ -1,5 +1,6 @@
 //! Nothing stored in, or typed for, a workspace can make Leaf touch a path outside the workspace
 //! folder (E08-S13, ADR-074).
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 mod common;
 

@@ -64,7 +64,11 @@ impl PageEditor {
             self.slash = None;
             return Ok(None);
         }
-        let query: String = text[at.at + 1..caret.at.min(text.len())].iter().collect();
+        let query: String = text
+            .get(at.at.saturating_add(1)..caret.at.min(text.len()))
+            .unwrap_or_default()
+            .iter()
+            .collect();
         let items = items::filter(&items::all_items(), &query);
         let Some(slash) = &mut self.slash else {
             return Ok(None);
@@ -92,8 +96,11 @@ impl PageEditor {
             && let Some(slash) = &mut self.slash
         {
             slash.selected = match direction {
-                Vertical::Up => (menu.selected + count - 1) % count,
-                Vertical::Down => (menu.selected + 1) % count,
+                Vertical::Up => menu
+                    .selected
+                    .checked_sub(1)
+                    .map_or(count.saturating_sub(1), |prev| prev.min(count.saturating_sub(1))),
+                Vertical::Down => menu.selected.saturating_add(1).checked_rem(count).unwrap_or(0),
             };
         }
         self.slash_menu()
@@ -147,7 +154,12 @@ impl PageEditor {
         self.slash = None;
         self.begin()?;
         let block = menu.at.block;
-        let typed = menu.at.at..menu.at.at + 1 + menu.query.chars().count();
+        let typed = menu.at.at
+            ..menu
+                .at
+                .at
+                .saturating_add(1)
+                .saturating_add(menu.query.chars().count());
         let kind = match item.action {
             SlashAction::Block(kind) => kind,
             SlashAction::Image => {
@@ -178,7 +190,7 @@ impl PageEditor {
                 })?;
                 let caret = self.set_caret(Caret {
                     block,
-                    at: typed.start + 2,
+                    at: typed.start.saturating_add(2),
                 })?;
                 self.finish()?;
                 self.open_link_menu(Caret {
@@ -301,7 +313,7 @@ fn table_in_place_of(
     let replace = doc.kind(block)? == BlockKind::Paragraph
         && doc.plain_text(block)?.is_none_or(|t| t.is_empty())
         && doc.children(block)?.is_empty();
-    let table = insert_table(doc, parent, index + 1, NEW_TABLE, true)?;
+    let table = insert_table(doc, parent, index.saturating_add(1), NEW_TABLE, true)?;
     if replace {
         doc.apply(PageCommand::DeleteBlocks { ids: vec![block] })?;
     }

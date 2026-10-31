@@ -21,8 +21,10 @@ use super::{Fragment, FragmentBlock};
 /// What the start of a line says the block is, and where its text starts.
 fn block_start(line: &str) -> Option<(BlockKind, &str)> {
     let hashes = line.chars().take_while(|&c| c == '#').count();
-    if (1..=6).contains(&hashes) && line[hashes..].starts_with(' ') {
-        let text = line[hashes + 1..].trim_end().trim_end_matches('#').trim_end();
+    if (1..=6).contains(&hashes)
+        && let Some(rest) = line.get(hashes..).and_then(|r| r.strip_prefix(' '))
+    {
+        let text = rest.trim_end().trim_end_matches('#').trim_end();
         let level = u8::try_from(hashes.min(3)).unwrap_or(3);
         return Some((BlockKind::Heading { level }, text));
     }
@@ -50,8 +52,12 @@ fn block_start(line: &str) -> Option<(BlockKind, &str)> {
         }
     }
     let digits = line.chars().take_while(char::is_ascii_digit).count();
-    if (1..=9).contains(&digits) && (line[digits..].starts_with(". ") || line[digits..].starts_with(") ")) {
-        return Some((BlockKind::NumberedList, &line[digits + 2..]));
+    if (1..=9).contains(&digits)
+        && let Some(text) = line
+            .get(digits..)
+            .and_then(|r| r.strip_prefix(". ").or_else(|| r.strip_prefix(") ")))
+    {
+        return Some((BlockKind::NumberedList, text));
     }
     if let Some(rest) = line.strip_prefix('>') {
         return Some((BlockKind::Quote, rest.strip_prefix(' ').unwrap_or(rest)));
@@ -91,7 +97,8 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
     let lines: Vec<&str> = text.split('\n').collect();
     let mut next = 0;
     while let Some(&line) = lines.get(next) {
-        next += 1;
+        let at = next;
+        next = next.saturating_add(1);
         if let Some((marker, fence_indent, language, lines)) = &mut fence {
             if line.trim_start().starts_with(marker.as_str())
                 && line.trim().chars().all(|c| c == '`' || c == '~')
@@ -122,7 +129,7 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
             open_item = None;
             continue;
         }
-        if let Some((table, after)) = table::read(&lines, next - 1) {
+        if let Some((table, after)) = table::read(&lines, at) {
             rows.push((columns / 2, table));
             open_item = None;
             next = after;
@@ -254,14 +261,16 @@ fn is_item(kind: &BlockKind) -> bool {
 
 fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
     let pad = "  ".repeat(depth);
-    let mut number = 0;
-    for (i, block) in blocks.iter().enumerate() {
+    let mut number: usize = 0;
+    let mut previous: Option<&FragmentBlock> = None;
+    for block in blocks {
+        let before = previous.replace(block);
         // Top-level blocks are separated by a blank line, except within a run of list items.
-        if depth == 0 && i > 0 && !(is_item(&block.kind) && is_item(&blocks[i - 1].kind)) {
+        if depth == 0 && before.is_some_and(|p| !(is_item(&block.kind) && is_item(&p.kind))) {
             out.push(String::new());
         }
         number = if block.kind == BlockKind::NumberedList {
-            number + 1
+            number.saturating_add(1)
         } else {
             0
         };
@@ -309,7 +318,7 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                     .map(|l| l.chars().take_while(|&c| c == '`').count())
                     .max()
                     .unwrap_or(0);
-                let fence = "`".repeat(longest.max(2) + 1);
+                let fence = "`".repeat(longest.max(2).saturating_add(1));
                 out.push(format!("{pad}{fence}{language}"));
                 out.extend(body.split('\n').map(|l| format!("{pad}{l}")));
                 out.push(format!("{pad}{fence}"));
@@ -346,7 +355,7 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                 out.push(format!("{pad}{}", escape_start(&text)));
             }
         }
-        write_blocks(&block.children, depth + 1, out);
+        write_blocks(&block.children, depth.saturating_add(1), out);
     }
 }
 

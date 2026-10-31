@@ -17,6 +17,7 @@ leaf-editor = { path = "crates/leaf-editor" }
 leaf-store = { path = "crates/leaf-store" }
 leaf-export = { path = "crates/leaf-export" }
 leaf-search = { path = "crates/leaf-search" }
+leaf-fetch = { path = "crates/leaf-fetch" }
 leaf-fixtures = { path = "crates/leaf-fixtures" }
 leaf-bench = { path = "crates/leaf-bench" }
 leaf-ui = { path = "crates/leaf-ui" }
@@ -52,6 +53,14 @@ roxmltree = "0.21"
 # Local time zone offset for the top bar's "edited" hover time (E18-S03). Already in the tree through
 # gpui-component (with its `clock` feature); no new crate.
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+# Web bookmark previews (E15-S05, ADR-080), in leaf-fetch only. ureq: a small blocking HTTP client with rustls and
+# Mozilla's root certificates; pinned exactly because the resolver hook that refuses local-network addresses is in its
+# semver-exempt `unversioned` module. html5ever: the HTML tokenizer gpui-component already brings, same version.
+# url and encoding_rs are already in the tree through GPUI.
+ureq = { version = "=3.5.0", default-features = false, features = ["rustls", "gzip"] }
+html5ever = "=0.27.0"
+url = "2.5"
+encoding_rs = "0.8"
 # dev
 proptest = "1"
 insta = "1"
@@ -71,6 +80,15 @@ todo = "warn"
 dbg_macro = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
+# Hidden panics and smells (E08-S15, ADR-XXX-E08-S15). Core crates also lint indexing and arithmetic, in their
+# `lib.rs`. Tests may panic, index and print (clippy.toml); examples and benches may print.
+allow_attributes_without_reason = "warn"
+panic = "warn"
+unreachable = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"
 
 # Development and test builds keep only line tables (file and line in panics and backtraces), not full debug info:
 # linking is faster and `target/` far smaller (E08-S17). For a debugger session, build with

@@ -233,7 +233,7 @@ impl PageView {
         let mut kind_changed = false;
         for &id in &changes.blocks {
             let fresh = Content::read(doc, id)?;
-            self.reads += 1;
+            self.reads = self.reads.saturating_add(1);
             kind_changed |= self.content.get(&id).is_none_or(|old| old.kind != fresh.kind);
             self.content.insert(id, fresh);
         }
@@ -241,8 +241,9 @@ impl PageView {
             return self.layout(doc);
         }
         for id in changes.blocks {
-            if let (Some(&at), Some(content)) = (self.position.get(&id), self.content.get(&id)) {
-                let row = &mut self.rows[at];
+            if let (Some(&at), Some(content)) = (self.position.get(&id), self.content.get(&id))
+                && let Some(row) = self.rows.get_mut(at)
+            {
                 let style = row.style.clone();
                 *row = content.row(id, row.depth, numbered(&row.style));
                 // Where a cell sits in its grid didn't change (that would be a structure change).
@@ -274,17 +275,17 @@ impl PageView {
         seen: &mut HashSet<BlockId>,
     ) -> Result<(), ModelError> {
         // Consecutive numbered siblings count up; anything else between them starts again at 1.
-        let mut number = 0;
+        let mut number = 0usize;
         for id in blocks {
             let content = match self.content.entry(id) {
                 Entry::Occupied(cached) => cached.into_mut(),
                 Entry::Vacant(slot) => {
-                    self.reads += 1;
+                    self.reads = self.reads.saturating_add(1);
                     slot.insert(Content::read(doc, id)?)
                 }
             };
             number = if content.kind == BlockKind::NumberedList {
-                number + 1
+                number.saturating_add(1)
             } else {
                 0
             };
@@ -293,7 +294,7 @@ impl PageView {
             if let BlockKind::Table { header_row } = content.kind {
                 self.walk_table(doc, id, header_row, depth, rows, seen)?;
             } else {
-                self.walk(doc, doc.children(id)?, depth + 1, rows, seen)?;
+                self.walk(doc, doc.children(id)?, depth.saturating_add(1), rows, seen)?;
             }
         }
         Ok(())
@@ -324,11 +325,11 @@ impl PageView {
                 let content = match self.content.entry(id) {
                     Entry::Occupied(cached) => cached.into_mut(),
                     Entry::Vacant(slot) => {
-                        self.reads += 1;
+                        self.reads = self.reads.saturating_add(1);
                         slot.insert(Content::read(doc, id)?)
                     }
                 };
-                let mut row = content.row(id, depth + 1, 0);
+                let mut row = content.row(id, depth.saturating_add(1), 0);
                 row.style = BlockStyle::TableCell {
                     row: r,
                     column,

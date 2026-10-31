@@ -7,6 +7,10 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends only on `leaf-core` and `leaf-model`.
 
+// Core crates must not panic on bad input, so indexing and arithmetic are checked here (E08-S15).
+// Unit tests are exempt, like the workspace exempts them from unwrap/expect.
+#![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
+
 #[cfg(test)]
 mod tests {
     /// Placeholder so the coverage gate has something to measure while the crate is empty.

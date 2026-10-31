@@ -169,7 +169,7 @@ impl DatabaseEditor {
     fn read_row(&mut self, row: PageId) -> Result<(), ModelError> {
         let values = self.db.row_values(row)?.into_iter().collect();
         self.cells.insert(row, values);
-        self.reads += 1;
+        self.reads = self.reads.saturating_add(1);
         Ok(())
     }
 

@@ -1,0 +1,18 @@
+[package]
+name = "leaf-fetch"
+description = "Fetches web bookmark previews within strict limits: the only Leaf crate that goes online"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+leaf-model.workspace = true
+ureq.workspace = true
+html5ever.workspace = true
+url.workspace = true
+encoding_rs.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

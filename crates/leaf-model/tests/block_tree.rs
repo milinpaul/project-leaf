@@ -3,6 +3,11 @@
 //! Random inserts, deletes, multi-block moves, indents and outdents, valid and invalid, run against both `PageDoc` and
 //! a small reference model. After every step both must agree on which commands are rejected and on
 //! every block's children in order; a save and load at the end must change nothing.
+#![allow(
+    clippy::panic,
+    clippy::unreachable,
+    reason = "test helpers fail a test by panicking"
+)]
 
 use std::collections::{HashMap, HashSet};
 

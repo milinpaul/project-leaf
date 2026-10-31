@@ -35,9 +35,9 @@ pub(crate) fn tone(name: &str) -> Option<CalloutTone> {
 /// the tone and that text.
 fn start(text: &str) -> Option<(CalloutTone, &str)> {
     let rest = text.trim_start().strip_prefix("[!")?;
-    let close = rest.find(']')?;
-    let tone = tone(&rest[..close])?;
-    Some((tone, rest[close + 1..].trim_start()))
+    let (name, after) = rest.split_once(']')?;
+    let tone = tone(name)?;
+    Some((tone, after.trim_start()))
 }
 
 /// A pasted quote line with text `text` at indentation `columns`: the next line of the callout `open`

@@ -82,8 +82,11 @@ impl WorkspaceEditor {
         let count = menu.choices.len();
         if count > 0 {
             let next = match direction {
-                Vertical::Up => (menu.selected + count - 1) % count,
-                Vertical::Down => (menu.selected + 1) % count,
+                Vertical::Up => menu
+                    .selected
+                    .checked_sub(1)
+                    .map_or(count.saturating_sub(1), |prev| prev.min(count.saturating_sub(1))),
+                Vertical::Down => menu.selected.saturating_add(1).checked_rem(count).unwrap_or(0),
             };
             self.set_link_selected(next)?;
         }
@@ -127,6 +130,10 @@ impl WorkspaceEditor {
     fn new_linked_page(&mut self, title: &str, now_ms: i64) -> Result<PageId, EditorError> {
         let parent = self.selected();
         let index = self.workspace.child_slots(parent)?.len();
+        #[expect(
+            clippy::unreachable,
+            reason = "the workspace's CreatePage always answers PageCreated"
+        )]
         let Outcome::PageCreated(page) = self.workspace.apply(WorkspaceCommand::CreatePage {
             parent,
             index,

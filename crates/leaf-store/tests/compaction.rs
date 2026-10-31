@@ -1,6 +1,7 @@
 //! Compaction (E03-S05): past 200 saved updates, a save folds them into one fresh snapshot, in one
 //! transaction, without changing the document; an interrupted compaction or an unreadable update
 //! leaves everything as it was.
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 mod common;
 

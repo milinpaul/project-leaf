@@ -17,13 +17,19 @@ const WEEKDAYS: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /// when it isn't this year's ("Sat 30 Oct 2027"). A time follows as 24-hour "14:30".
 #[must_use]
 pub fn due_label(due: DueDate, time: Option<DueTime>, today: DueDate) -> String {
-    let date = match days(due) - days(today) {
+    let date = match days(due).saturating_sub(days(today)) {
         0 => "Today".to_owned(),
         1 => "Tomorrow".to_owned(),
         -1 => "Yesterday".to_owned(),
         _ => {
-            let weekday = WEEKDAYS[usize::try_from(weekday(due)).unwrap_or(0)];
-            let month = MONTHS[usize::from(due.month() - 1)];
+            let weekday = WEEKDAYS
+                .get(usize::try_from(weekday(due)).unwrap_or(0))
+                .copied()
+                .unwrap_or("Mon");
+            let month = MONTHS
+                .get(usize::from(due.month().saturating_sub(1)))
+                .copied()
+                .unwrap_or("Jan");
             if due.year() == today.year() {
                 format!("{weekday} {} {month}", due.day())
             } else {
@@ -56,6 +62,10 @@ pub fn is_overdue(
 
 /// Days from 1 January 1970 to `date`: Howard Hinnant's `days_from_civil`, the inverse of the one in
 /// `edited`.
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "inputs are a u16 year, month 1-12 and day 1-31, so every value stays within about ±25 million"
+)]
 pub(crate) fn days(date: DueDate) -> i64 {
     let (month, day) = (i64::from(date.month()), i64::from(date.day()));
     let year = i64::from(date.year()) - i64::from(month <= 2);
@@ -69,7 +79,7 @@ pub(crate) fn days(date: DueDate) -> i64 {
 /// `date` moved by `n` days (back for negative `n`), or `None` past the years a due date can have.
 #[must_use]
 pub fn add_days(date: DueDate, n: i64) -> Option<DueDate> {
-    let (year, month, day) = crate::edited::civil_from_days(days(date) + n);
+    let (year, month, day) = crate::edited::civil_from_days(days(date).checked_add(n)?);
     DueDate::new(
         u16::try_from(year).ok()?,
         u8::try_from(month).ok()?,
@@ -80,7 +90,7 @@ pub fn add_days(date: DueDate, n: i64) -> Option<DueDate> {
 
 /// The day of the week, 0 for Monday to 6 for Sunday. 1 January 1970 was a Thursday.
 pub(crate) fn weekday(date: DueDate) -> i64 {
-    (days(date) + 3).rem_euclid(7)
+    days(date).saturating_add(3).rem_euclid(7)
 }
 
 #[cfg(test)]

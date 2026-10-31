@@ -107,12 +107,12 @@ impl LinkedText {
         let mut starts = vec![0];
         let mut links = Vec::new();
         let mut web = Vec::new();
-        let mut drawn = 0;
+        let mut drawn = 0usize;
         for span in spans {
             let Some(page) = span.marks.page else {
                 let start = drawn;
                 for _ in span.text.chars() {
-                    drawn += 1;
+                    drawn = drawn.saturating_add(1);
                     starts.push(drawn);
                 }
                 if span.marks.link.is_some() && drawn > start {
@@ -132,12 +132,12 @@ impl LinkedText {
                 let len = text.chars().count();
                 if let Some(state) = state {
                     links.push(DrawnLink {
-                        range: drawn..drawn + len,
+                        range: drawn..drawn.saturating_add(len),
                         page,
                         state,
                     });
                 }
-                drawn += len;
+                drawn = drawn.saturating_add(len);
                 starts.push(drawn);
                 out.push(TextSpan {
                     text,
@@ -176,8 +176,9 @@ impl LinkedText {
     pub fn to_page(&self, drawn: usize) -> usize {
         let after = self.starts.partition_point(|&start| start <= drawn);
         let at = after.saturating_sub(1);
-        match (self.starts.get(at), self.starts.get(at + 1)) {
-            (Some(&start), Some(&end)) if drawn > start && drawn - start > end - drawn => at + 1,
+        let next = at.saturating_add(1);
+        match (self.starts.get(at), self.starts.get(next)) {
+            (Some(&start), Some(&end)) if drawn.saturating_sub(start) > end.saturating_sub(drawn) => next,
             _ => at,
         }
     }

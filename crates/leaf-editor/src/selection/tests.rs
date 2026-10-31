@@ -43,7 +43,10 @@ fn at(block: BlockId, at: usize) -> Caret {
 }
 
 /// `Some(text selection)`, wrapped to compare with `selection()` directly.
-#[allow(clippy::unnecessary_wraps)]
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "wrapped to compare with `selection()` directly"
+)]
 fn text(start: Caret, end: Caret) -> Option<Selection> {
     Some(Selection::Text { start, end })
 }

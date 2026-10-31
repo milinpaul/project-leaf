@@ -9,6 +9,10 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends on `leaf-core` and `leaf-model`. Never writes to Loro directly; it issues commands.
 
+// Core crates must not panic on bad input, so indexing and arithmetic are checked here (E08-S15).
+// Unit tests are exempt, like the workspace exempts them from unwrap/expect.
+#![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
+
 mod block_actions;
 mod block_menu;
 mod bookmark_card;
@@ -32,6 +36,7 @@ mod link;
 mod link_menu;
 mod page_editor;
 mod page_link;
+mod preview_requests;
 mod search_bar;
 mod selection;
 mod shortcuts;

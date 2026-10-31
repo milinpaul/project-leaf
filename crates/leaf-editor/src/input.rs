@@ -66,10 +66,15 @@ impl PageEditor {
                     text: text.to_owned(),
                 })?;
             }
-            apply_pending(doc, start.block, start.at..start.at + typed, &pending)
+            apply_pending(
+                doc,
+                start.block,
+                start.at..start.at.saturating_add(typed),
+                &pending,
+            )
         })?;
         let after = self.set_caret(Caret {
-            at: start.at + typed,
+            at: start.at.saturating_add(typed),
             ..start
         })?;
         if !pending.is_empty() {

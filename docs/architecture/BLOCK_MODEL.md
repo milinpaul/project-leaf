@@ -118,7 +118,8 @@ version reads as `CalloutTone::Other` and is written back unchanged.
 `https` with a host and no spaces or password (`check_web_address`). The preview arrives later through
 `SetWebBookmarkPreview`, only if fetching is allowed; a preview part that is missing or unreadable reads as absent and
 stays stored. Turned into a text kind, it becomes its address as linked text (plain in code); a block whose whole
-text is one link to the address, or that is empty, can become one. It keeps an empty text container from its
+text is one link to the address, or that is empty, can become one; turning a bookmark into a bookmark of the same
+address changes nothing, so its fetched preview is never cleared by an undo step (E17-S14). It keeps an empty text container from its
 creation, so these conversions are plain text edits: a container made in a later step than its block loses its
 content when undo re-creates the block and redo replays the step (the Loro behaviour in ADR-007). `PageDoc::text`
 reads `None` for it.

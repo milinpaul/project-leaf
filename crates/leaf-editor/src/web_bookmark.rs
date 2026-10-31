@@ -75,12 +75,12 @@ impl PageEditor {
             (offer.start.clone(), offer.len, offer.url.clone(), offer.selected);
         let start = self.doc.resolve(&anchor)?;
         let at = start.map(|start| Caret {
-            at: start.at + len,
+            at: start.at.saturating_add(len),
             ..start
         });
         let standing = match (at, self.caret()?, self.selection()?) {
             (Some(at), Some(caret), None) if caret == at => char_marks(&self.doc, at.block)?
-                .get(at.at - len..at.at)
+                .get(at.at.saturating_sub(len)..at.at)
                 .is_some_and(|marks| marks.iter().all(|m| m.link.as_deref() == Some(url.as_str()))),
             _ => false,
         };
@@ -101,8 +101,11 @@ impl PageEditor {
         if let Some(offer) = &mut self.offer {
             let n = BOOKMARK_OFFER_CHOICES.len();
             offer.selected = match direction {
-                Vertical::Down => (offer.selected + 1) % n,
-                Vertical::Up => (offer.selected + n - 1) % n,
+                Vertical::Down => offer.selected.saturating_add(1).checked_rem(n).unwrap_or(0),
+                Vertical::Up => offer
+                    .selected
+                    .checked_sub(1)
+                    .map_or(n.saturating_sub(1), |prev| prev.min(n.saturating_sub(1))),
             };
         }
     }
@@ -136,17 +139,19 @@ impl PageEditor {
         }
         let len = offer.len;
         let start = Caret {
-            at: offer.at.at - len,
+            at: offer.at.at.saturating_sub(len),
             ..offer.at
         };
         self.begin()?;
+        let url = offer.url;
         let bookmark = BlockKind::WebBookmark {
-            url: offer.url,
+            url: url.clone(),
             preview: WebPreview::default(),
         };
-        let caret = self
+        let (caret, made) = self
             .doc
             .as_separate_step(|doc| place_bookmark(doc, start, len, bookmark))?;
+        self.want_preview(made, &url);
         let caret = self.set_caret(caret)?;
         self.finish()?;
         Ok(Some(caret))
@@ -210,12 +215,13 @@ impl PageEditor {
         };
         self.begin()?;
         let bookmark = BlockKind::WebBookmark {
-            url,
+            url: url.clone(),
             preview: WebPreview::default(),
         };
-        let caret = self
+        let (caret, made) = self
             .doc
             .as_separate_step(|doc| place_bookmark(doc, target, 0, bookmark))?;
+        self.want_preview(made, &url);
         let caret = self.set_caret(caret)?;
         self.finish()?;
         Ok(Some(caret))
@@ -255,13 +261,13 @@ pub(crate) fn only_link(doc: &PageDoc, block: BlockId) -> Result<Option<String>,
 }
 
 /// Puts `bookmark` in place of the `len` characters at `start`: the whole block when that empties it
-/// and it can change kind, else a new block below. Returns where the caret goes.
+/// and it can change kind, else a new block below. Returns where the caret goes and the bookmark.
 fn place_bookmark(
     doc: &mut PageDoc,
     start: Caret,
     len: usize,
     bookmark: BlockKind,
-) -> Result<Caret, EditorError> {
+) -> Result<(Caret, BlockId), EditorError> {
     let block = start.block;
     let text = doc.plain_text(block)?.unwrap_or_default();
     let whole = start.at == 0 && text.chars().count() == len;
@@ -273,20 +279,21 @@ fn place_bookmark(
             id: block,
             kind: bookmark,
         })?;
-        return Ok(Caret {
+        let caret = Caret {
             block: insert_after(doc, block, BlockKind::Paragraph)?,
             at: 0,
-        });
+        };
+        return Ok((caret, block));
     }
     if len > 0 {
         doc.apply(PageCommand::DeleteText {
             id: block,
-            range: start.at..start.at + len,
+            range: start.at..start.at.saturating_add(len),
         })?;
     }
     let below: BlockId = crate::table::table_of(doc, block)?.unwrap_or(block);
-    insert_after(doc, below, bookmark)?;
-    Ok(start)
+    let made = insert_after(doc, below, bookmark)?;
+    Ok((start, made))
 }
 
 #[cfg(test)]

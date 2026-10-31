@@ -30,7 +30,7 @@ impl PageDoc {
             let index = siblings
                 .iter()
                 .position(|&n| n == root)
-                .map_or(siblings.len(), |p| p + 1);
+                .map_or(siblings.len(), |p| p.saturating_add(1));
             created.push(self.copy_subtree(root, parent, index)?);
         }
         Ok(PageOutcome::BlocksCreated(created))

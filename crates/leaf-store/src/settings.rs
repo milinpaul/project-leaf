@@ -98,6 +98,10 @@ pub struct AppSettings {
         deserialize_with = "recent::readable_entries"
     )]
     recent_workspaces: Vec<recent::Saved>,
+    /// Whether Leaf may go online to fetch web bookmark previews (ADR-080): `None` until the owner is
+    /// asked, then their answer. Off unless they said yes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    web_previews: Option<bool>,
     /// Fields from a newer Leaf, kept as they were.
     #[serde(flatten)]
     other: Map<String, Value>,
@@ -168,10 +172,30 @@ impl AppSettings {
     pub fn set_appearance(&mut self, appearance: Appearance) {
         self.appearance = appearance;
     }
+
+    /// Whether Leaf may fetch web bookmark previews: only when the owner said yes (ADR-080).
+    #[must_use]
+    pub fn web_previews_allowed(&self) -> bool {
+        self.web_previews == Some(true)
+    }
+
+    /// Whether the owner has answered the question about web bookmark previews, yes or no.
+    #[must_use]
+    pub fn web_previews_answered(&self) -> bool {
+        self.web_previews.is_some()
+    }
+
+    /// Records the owner's answer: whether Leaf may fetch web bookmark previews.
+    pub fn set_web_previews(&mut self, allowed: bool) {
+        self.web_previews = Some(allowed);
+    }
 }
 
 // serde's `skip_serializing_if` passes a reference, whatever the type's size.
-#[allow(clippy::trivially_copy_pass_by_ref)]
+#[allow(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's `skip_serializing_if` passes a reference"
+)]
 fn is_system(appearance: &Appearance) -> bool {
     *appearance == Appearance::System
 }

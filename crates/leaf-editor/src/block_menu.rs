@@ -61,6 +61,8 @@ pub enum MenuEntry {
     ToLink,
     /// On a block that is only a link to a web address: turn it into a web bookmark for it.
     ToWebBookmark(String),
+    /// On a web bookmark, when previews are allowed: fetch its preview again (E15-S05).
+    RefreshPreview,
 }
 
 impl MenuEntry {
@@ -76,6 +78,7 @@ impl MenuEntry {
             Self::Kind(kind) => kind_label(kind),
             Self::ToLink => "Turn into link",
             Self::ToWebBookmark(_) => "Turn into web bookmark",
+            Self::RefreshPreview => "Refresh preview",
         }
     }
 }
@@ -227,6 +230,9 @@ impl PageEditor {
             !matches!(kind, BlockKind::Unknown { .. }),
         )];
         items.extend(self.link_swap(open.block, &kind)?.map(|entry| item(entry, true)));
+        if matches!(kind, BlockKind::WebBookmark { .. }) && self.previews.allowed {
+            items.push(item(MenuEntry::RefreshPreview, true));
+        }
         items.extend([
             item(MenuEntry::Duplicate, true),
             item(MenuEntry::MoveUp, self.can_move(open.block, true)?),
@@ -326,7 +332,7 @@ impl PageEditor {
         };
         let moved = open.hovered != Some(Hovered::Main(at));
         open.hovered = Some(Hovered::Main(at));
-        let enabled = menu.items[at].enabled;
+        let enabled = menu.items.get(at).is_some_and(|i| i.enabled);
         let change = match (menu.kinds.is_some(), *entry == MenuEntry::TurnInto) {
             (false, turn_into) => {
                 if enabled {
@@ -394,6 +400,13 @@ impl PageEditor {
             MenuEntry::Delete => BlockAction::Delete,
             MenuEntry::Kind(kind) => BlockAction::TurnInto(kind),
             MenuEntry::ToLink => BlockAction::TurnInto(BlockKind::Paragraph),
+            MenuEntry::RefreshPreview => {
+                self.menu = None;
+                if let BlockKind::WebBookmark { url, .. } = self.doc.kind(menu.block)? {
+                    self.want_preview(menu.block, &url);
+                }
+                return Ok(None);
+            }
             MenuEntry::ToWebBookmark(url) => BlockAction::TurnInto(BlockKind::WebBookmark {
                 url,
                 preview: leaf_model::WebPreview::default(),
@@ -409,14 +422,15 @@ impl PageEditor {
 fn step(items: &[MenuItem], from: usize, up: bool) -> usize {
     let count = items.len();
     (1..=count)
-        .map(|n| {
-            if up {
-                (from + count * 2 - n) % count
+        .filter_map(|n| {
+            let ahead = if up {
+                from.checked_add(count.checked_mul(2)?)?.checked_sub(n)?
             } else {
-                (from + n) % count
-            }
+                from.checked_add(n)?
+            };
+            ahead.checked_rem(count)
         })
-        .find(|&i| items[i].enabled)
+        .find(|&i| items.get(i).is_some_and(|item| item.enabled))
         .unwrap_or(from)
 }
 

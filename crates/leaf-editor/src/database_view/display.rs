@@ -48,10 +48,10 @@ const DAY_MS: i64 = 86_400_000;
 /// A date as the table shows it, in the device's time zone (`offset_minutes` east of UTC).
 #[must_use]
 pub fn date_label(at: i64, offset_minutes: i32) -> String {
-    let local = at + i64::from(offset_minutes) * MINUTE_MS;
+    let local = at.saturating_add(i64::from(offset_minutes).saturating_mul(MINUTE_MS));
     let (year, month, day) = civil_from_days(local.div_euclid(DAY_MS));
     let month = MONTHS
-        .get(usize::try_from(month - 1).unwrap_or(0))
+        .get(usize::try_from(month.saturating_sub(1)).unwrap_or(0))
         .copied()
         .unwrap_or("Jan");
     format!("{day} {month} {year}")

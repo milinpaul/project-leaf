@@ -35,12 +35,12 @@ pub fn edited_ago(now: i64, at: i64) -> String {
 /// locale.
 #[must_use]
 pub fn edited_on(at: i64, offset_minutes: i32) -> String {
-    let local = at.saturating_add(i64::from(offset_minutes) * MINUTE);
+    let local = at.saturating_add(i64::from(offset_minutes).saturating_mul(MINUTE));
     let days = local.div_euclid(DAY);
     let of_day = local.rem_euclid(DAY);
     let (year, month, day) = civil_from_days(days);
     let month = MONTHS
-        .get(usize::try_from(month - 1).unwrap_or(0))
+        .get(usize::try_from(month.saturating_sub(1)).unwrap_or(0))
         .copied()
         .unwrap_or("Jan");
     format!(
@@ -53,8 +53,13 @@ pub fn edited_on(at: i64, offset_minutes: i32) -> String {
 /// Year, month (1 to 12) and day (1 to 31) of the day `days` after 1 January 1970, in the
 /// proleptic Gregorian calendar. Howard Hinnant's `civil_from_days`, valid far beyond any real
 /// timestamp.
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "z saturates; doe and everything after it stay below 146_097, and era is at most \
+              i64::MAX / 146_097, so era * 400 and the year sum cannot overflow"
+)]
 pub(crate) fn civil_from_days(days: i64) -> (i64, i64, i64) {
-    let z = days + 719_468;
+    let z = days.saturating_add(719_468);
     let era = z.div_euclid(146_097);
     let doe = z.rem_euclid(146_097);
     let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;

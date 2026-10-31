@@ -46,24 +46,26 @@ fn match_word(text: &[char], word: &[char]) -> Option<(u32, Vec<usize>)> {
     }
     let starts: Vec<usize> = match word.first() {
         Some(&first) => (0..text.len())
-            .filter(|&at| text[at] == first && text[at..].starts_with(word))
+            .filter(|&at| {
+                text.get(at) == Some(&first) && text.get(at..).is_some_and(|rest| rest.starts_with(word))
+            })
             .collect(),
         None => Vec::new(),
     };
-    let span = |at: usize| (at..at + word.len()).collect::<Vec<_>>();
+    let span = |at: usize| (at..at.saturating_add(word.len())).collect::<Vec<_>>();
     // Earlier and shorter is better within each kind; the adjustments never reach the next kind.
     let closeness = |at: usize| 999u32.saturating_sub(u32::try_from(at).unwrap_or(u32::MAX));
     if starts.first() == Some(&0) {
         let shorter = 999u32.saturating_sub(u32::try_from(text.len()).unwrap_or(u32::MAX));
-        return Some((PREFIX + shorter, span(0)));
+        return Some((PREFIX.saturating_add(shorter), span(0)));
     }
     if let Some(&at) = starts.iter().find(|&&at| is_word_start(text, at)) {
-        return Some((WORD_START + closeness(at), span(at)));
+        return Some((WORD_START.saturating_add(closeness(at)), span(at)));
     }
     if let Some(&at) = starts.first() {
-        return Some((INSIDE + closeness(at), span(at)));
+        return Some((INSIDE.saturating_add(closeness(at)), span(at)));
     }
-    in_order(text, word).map(|(closeness, positions)| (IN_ORDER + closeness, positions))
+    in_order(text, word).map(|(closeness, positions)| (IN_ORDER.saturating_add(closeness), positions))
 }
 
 /// Whether the word's letters appear in order in `text`; if so, a closeness score (higher the fewer
@@ -72,23 +74,31 @@ fn in_order(text: &[char], word: &[char]) -> Option<(u32, Vec<usize>)> {
     let mut positions = Vec::with_capacity(word.len());
     let mut at = 0;
     for &wanted in word {
-        let found = (at..text.len()).find(|&i| text[i] == wanted)?;
+        let found = (at..text.len()).find(|&i| text.get(i) == Some(&wanted))?;
         positions.push(found);
-        at = found + 1;
+        at = found.saturating_add(1);
     }
     let first = positions.first().copied().unwrap_or(0);
-    let gaps = positions.last().copied().unwrap_or(0) - first + 1 - positions.len();
+    // Positions rise strictly, so the span from first to last holds at least `positions.len()` letters.
+    let gaps = positions
+        .last()
+        .copied()
+        .unwrap_or(0)
+        .saturating_sub(first)
+        .saturating_add(1)
+        .saturating_sub(positions.len());
     let starts = positions.iter().filter(|&&i| is_word_start(text, i)).count();
     let score = 500u32
-        .saturating_sub(u32::try_from(gaps * 10 + first).unwrap_or(u32::MAX))
-        .saturating_add(u32::try_from(starts * 50).unwrap_or(u32::MAX))
+        .saturating_sub(u32::try_from(gaps.saturating_mul(10).saturating_add(first)).unwrap_or(u32::MAX))
+        .saturating_add(u32::try_from(starts.saturating_mul(50)).unwrap_or(u32::MAX))
         .min(999);
     Some((score, positions))
 }
 
 /// Whether the letter at `at` begins a word: the first letter, or one after a space or punctuation.
 fn is_word_start(text: &[char], at: usize) -> bool {
-    at == 0 || text.get(at - 1).is_some_and(|c| !c.is_alphanumeric())
+    at.checked_sub(1)
+        .is_none_or(|before| text.get(before).is_some_and(|c| !c.is_alphanumeric()))
 }
 
 /// A character's lowercase form, one character for one, so positions line up with the original.
@@ -108,18 +118,18 @@ impl Lowered {
     pub(crate) fn new(text: &str) -> Self {
         let (chars, bytes) = text
             .char_indices()
-            .map(|(at, c)| (lower(c), at..at + c.len_utf8()))
+            .map(|(at, c)| (lower(c), at..at.saturating_add(c.len_utf8())))
             .unzip();
         Self { chars, bytes }
     }
 
     /// Matches the prepared query `words` (from [`query_words`]); see [`fuzzy_match`].
     pub(crate) fn matches(&self, words: &[Vec<char>]) -> Option<FuzzyMatch> {
-        let mut score = 0;
+        let mut score: u32 = 0;
         let mut matched: Vec<usize> = Vec::new(); // char indices
         for word in words {
             let (word_score, positions) = match_word(&self.chars, word)?;
-            score += word_score;
+            score = score.saturating_add(word_score);
             matched.extend(positions);
         }
         matched.sort_unstable();

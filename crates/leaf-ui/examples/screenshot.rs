@@ -25,6 +25,11 @@
 //! - `drag=B:T[:L]`: drag block B by its handle onto the lower half of block T, L indents in (default
 //!   0), and keep holding: shows the drop line and the preview.
 //! - `bench`: time frames while scrolling and while typing, and print the results.
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "a command-line tool reports on the terminal"
+)]
 
 fn main() {
     #[cfg(target_os = "macos")]

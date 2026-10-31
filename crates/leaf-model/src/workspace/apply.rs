@@ -25,7 +25,7 @@ impl Workspace {
                 index,
                 title,
                 created_at,
-            } => self.create_page(parent, index, &title, created_at)?,
+            } => Outcome::PageCreated(self.create_page(parent, index, &title, created_at)?),
             WorkspaceCommand::RenamePage { page, title } => {
                 let node = self.node(page)?;
                 if self.page(page)?.title != title {
@@ -131,9 +131,7 @@ impl Workspace {
         title: &str,
         created_at: i64,
     ) -> Result<Outcome, ModelError> {
-        let Outcome::PageCreated(page) = self.create_page(parent, index, title, created_at)? else {
-            unreachable!("create_page always reports the page it created");
-        };
+        let page = self.create_page(parent, index, title, created_at)?;
         let database = DatabaseId::new();
         self.tree
             .get_meta(self.node(page)?)?
@@ -149,13 +147,11 @@ impl Workspace {
             .ok_or(ModelError::NotADatabasePage(database_page))?;
         let node = self.node(database_page)?;
         let index = self.tree.children_num(Some(node)).unwrap_or(0);
-        let outcome = self.create_page(Some(database_page), index, "", created_at)?;
-        if let Outcome::PageCreated(page) = outcome {
-            self.tree
-                .get_meta(self.node(page)?)?
-                .insert(keys::ROW_OF, database.to_string())?;
-        }
-        Ok(outcome)
+        let page = self.create_page(Some(database_page), index, "", created_at)?;
+        self.tree
+            .get_meta(self.node(page)?)?
+            .insert(keys::ROW_OF, database.to_string())?;
+        Ok(Outcome::PageCreated(page))
     }
 
     fn create_page(
@@ -164,7 +160,7 @@ impl Workspace {
         index: usize,
         title: &str,
         created_at: i64,
-    ) -> Result<Outcome, ModelError> {
+    ) -> Result<PageId, ModelError> {
         let parent_node = parent.map(|p| self.node(p)).transpose()?;
         if let (Some(parent), Some(node)) = (parent, parent_node)
             && self.in_trash(node)?
@@ -183,7 +179,7 @@ impl Workspace {
         meta.insert(keys::CREATED_AT, LoroValue::I64(created_at))?;
         meta.insert(keys::EDITED_AT, LoroValue::I64(created_at))?;
         self.index.insert(page, node);
-        Ok(Outcome::PageCreated(page))
+        Ok(page)
     }
 
     fn move_page(

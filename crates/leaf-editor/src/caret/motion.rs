@@ -32,9 +32,9 @@ fn cursor(text: &str, at: usize) -> (GraphemeCursor, usize, usize) {
 /// than from the start of the text.
 fn moved(text: &str, at: usize, byte: usize, to: usize) -> usize {
     if to >= byte {
-        at + text[byte..to].chars().count()
+        at.saturating_add(text[byte..to].chars().count())
     } else {
-        at - text[to..byte].chars().count()
+        at.saturating_sub(text[to..byte].chars().count())
     }
 }
 
@@ -79,9 +79,9 @@ pub fn previous_grapheme(text: &str, at: usize) -> usize {
 /// it has its word. Spaces and punctuation between them are not words.
 fn words(text: &str) -> impl Iterator<Item = std::ops::Range<usize>> + '_ {
     text.split_word_bounds()
-        .scan(0, |pos, segment| {
+        .scan(0_usize, |pos, segment| {
             let start = *pos;
-            *pos += segment.chars().count();
+            *pos = start.saturating_add(segment.chars().count());
             Some((start..*pos, segment))
         })
         .filter(|(_, segment)| segment.chars().any(char::is_alphanumeric))
@@ -114,7 +114,7 @@ pub fn line_start(text: &str, at: usize) -> usize {
         .enumerate()
         .filter(|&(_, c)| c == '\n')
         .last()
-        .map_or(0, |(i, _)| i + 1)
+        .map_or(0, |(i, _)| i.saturating_add(1))
 }
 
 /// End: the end of the line the caret is on, before its newline.

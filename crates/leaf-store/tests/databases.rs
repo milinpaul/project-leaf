@@ -1,4 +1,5 @@
 //! Saving, loading and recovering a database document, like a page (E09-S03).
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 mod common;
 

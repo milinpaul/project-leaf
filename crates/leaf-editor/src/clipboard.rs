@@ -200,15 +200,10 @@ impl PageEditor {
             },
         }]))?;
         let len = text.chars().count();
-        if let Some(end) = caret.filter(|end| end.at >= len) {
-            self.offer_bookmark(
-                Caret {
-                    at: end.at - len,
-                    ..end
-                },
-                len,
-                href,
-            )?;
+        if let Some(end) = caret
+            && let Some(at) = end.at.checked_sub(len)
+        {
+            self.offer_bookmark(Caret { at, ..end }, len, href)?;
         }
         Ok(caret)
     }
@@ -236,7 +231,7 @@ impl PageEditor {
         let rows = self.rows()?;
         let from = rows.iter().position(|r| r.id == start.block).unwrap_or(0);
         let to = rows.iter().position(|r| r.id == end.block).unwrap_or(from);
-        let rows = &rows[from..=to];
+        let rows = rows.get(from..=to).unwrap_or_default();
         let base = rows.iter().map(|r| r.depth).min().unwrap_or(0);
         let mut flat = Vec::new();
         for row in rows {
@@ -251,7 +246,7 @@ impl PageEditor {
                 text: spans_in(&self.doc, row.id, range)?,
                 children: Vec::new(),
             };
-            flat.push((row.depth - base, block));
+            flat.push((row.depth.saturating_sub(base), block));
         }
         Ok(nest(flat))
     }
@@ -391,7 +386,7 @@ fn top_level_after(
     let index = siblings
         .iter()
         .position(|&b| b == top)
-        .map_or(siblings.len(), |p| p + 1);
+        .map_or(siblings.len(), |p| p.saturating_add(1));
     Ok((parent, index))
 }
 
@@ -409,7 +404,7 @@ fn insert_tree(
             block: table,
             end: None,
         };
-        return Ok(index + 1);
+        return Ok(index.saturating_add(1));
     }
     let id = insert_block(doc, parent, index, block.kind.clone())?;
     let end = if block.kind.has_text() {
@@ -423,10 +418,10 @@ fn insert_tree(
     };
     if block.kind.allows_children() {
         insert_children(doc, id, &block.children, last)?;
-        Ok(index + 1)
+        Ok(index.saturating_add(1))
     } else {
         // Children under a kind that can't hold them: they follow it instead.
-        let mut next = index + 1;
+        let mut next = index.saturating_add(1);
         for child in &block.children {
             next = insert_tree(doc, parent, next, child, last)?;
         }
@@ -508,7 +503,7 @@ pub(crate) fn insert_spans(
         let len = match link {
             Some(page) => {
                 let count = span.text.chars().filter(|&c| c == PAGE_LINK).count();
-                for at in pos..pos + count {
+                for at in pos..pos.saturating_add(count) {
                     doc.apply(PageCommand::InsertPageLink {
                         id: block,
                         pos: at,
@@ -528,7 +523,7 @@ pub(crate) fn insert_spans(
             }
         };
         if marks_allowed {
-            let range = pos..pos + len;
+            let range = pos..pos.saturating_add(len);
             let flags = [
                 (MarkKind::Bold, span.marks.bold.then_some(Mark::Bold)),
                 (MarkKind::Italic, span.marks.italic.then_some(Mark::Italic)),
@@ -552,7 +547,7 @@ pub(crate) fn insert_spans(
                 })?;
             }
         }
-        pos += len;
+        pos = pos.saturating_add(len);
     }
     Ok(pos)
 }
@@ -563,14 +558,19 @@ fn spans_in(doc: &PageDoc, block: BlockId, range: Range<usize>) -> Result<Vec<Te
     let mut offset = 0;
     for span in doc.text(block)?.unwrap_or_default() {
         let len = span.text.chars().count();
-        let (from, to) = (range.start.max(offset), range.end.min(offset + len));
+        let (from, to) = (range.start.max(offset), range.end.min(offset.saturating_add(len)));
         if from < to {
             out.push(TextSpan {
-                text: span.text.chars().skip(from - offset).take(to - from).collect(),
+                text: span
+                    .text
+                    .chars()
+                    .skip(from.saturating_sub(offset))
+                    .take(to.saturating_sub(from))
+                    .collect(),
                 marks: span.marks,
             });
         }
-        offset += len;
+        offset = offset.saturating_add(len);
     }
     Ok(out)
 }
@@ -607,7 +607,7 @@ fn nest(rows: Vec<(usize, FragmentBlock)>) -> Vec<FragmentBlock> {
                 break;
             };
             // Keep what the block already holds (a table's rows) ahead of what nests under it.
-            let nested = take(rows, d + 1);
+            let nested = take(rows, d.saturating_add(1));
             block.children.extend(nested);
             out.push(block);
         }

@@ -22,17 +22,21 @@ pub(super) fn read(lines: &[&str], at: usize) -> Option<(FragmentBlock, usize)> 
     if !header.contains('|') {
         return None;
     }
-    let delimiter = next_filled(lines, at + 1)?;
+    let delimiter = next_filled(lines, at.checked_add(1)?)?;
+    let delimiter_line = lines.get(delimiter)?;
     let header = cells(header);
-    if !is_delimiter(lines[delimiter]) || cells(lines[delimiter].trim()).len() != header.len() {
+    if !is_delimiter(delimiter_line) || cells(delimiter_line.trim()).len() != header.len() {
         return None;
     }
     let columns = header.len();
     let mut rows = vec![row(&header, columns)];
-    let mut end = delimiter + 1;
+    let mut end = delimiter.checked_add(1)?;
     while let Some(next) = next_filled(lines, end) {
-        let line = lines[next].trim();
-        let starts_table = next_filled(lines, next + 1).is_some_and(|d| is_delimiter(lines[d]));
+        let line = lines.get(next)?.trim();
+        let after = next.checked_add(1)?;
+        let starts_table = next_filled(lines, after)
+            .and_then(|d| lines.get(d))
+            .is_some_and(|l| is_delimiter(l));
         let after_blank = next > end;
         if !line.contains('|')
             || (after_blank && !line.starts_with('|'))
@@ -42,7 +46,7 @@ pub(super) fn read(lines: &[&str], at: usize) -> Option<(FragmentBlock, usize)> 
             break;
         }
         rows.push(row(&cells(line), columns));
-        end = next + 1;
+        end = after;
     }
     let table = FragmentBlock {
         kind: BlockKind::Table { header_row: true },
@@ -54,7 +58,12 @@ pub(super) fn read(lines: &[&str], at: usize) -> Option<(FragmentBlock, usize)> 
 
 /// The index of the first non-blank line at or after `from`.
 fn next_filled(lines: &[&str], from: usize) -> Option<usize> {
-    (from..lines.len()).find(|&i| !lines[i].trim().is_empty())
+    lines
+        .iter()
+        .enumerate()
+        .skip(from)
+        .find(|(_, line)| !line.trim().is_empty())
+        .map(|(i, _)| i)
 }
 
 /// Whether `line` is a delimiter line: every cell is dashes, with an optional colon at either end.
@@ -132,20 +141,21 @@ fn split_breaks(text: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut from = 0;
     let mut search = 0;
-    while let Some(found) = lower[search..].find("<br") {
-        let start = search + found;
-        let rest = &lower[start + 3..];
+    // Offsets in `lower` are offsets in `text`: lowercasing ASCII keeps every byte length.
+    while let Some(found) = lower.get(search..).and_then(|rest| rest.find("<br")) {
+        let start = search.saturating_add(found);
+        let after_tag = start.saturating_add("<br".len());
+        let rest = lower.get(after_tag..).unwrap_or_default();
         let close = rest.trim_start().trim_start_matches('/').trim_start();
-        if close.starts_with('>') {
-            let end = start + 3 + (rest.len() - close.len()) + 1;
-            out.push(text[from..start].to_owned());
-            from = end;
-            search = end;
+        if let Some(after) = close.strip_prefix('>') {
+            out.push(text.get(from..start).unwrap_or_default().to_owned());
+            from = lower.len().saturating_sub(after.len());
+            search = from;
         } else {
-            search = start + 3;
+            search = after_tag;
         }
     }
-    out.push(text[from..].to_owned());
+    out.push(text.get(from..).unwrap_or_default().to_owned());
     out
 }
 

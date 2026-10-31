@@ -98,6 +98,7 @@ pub(super) fn icon_of(entry: &MenuEntry) -> IconName {
         MenuEntry::Kind(kind) => kind_icon(kind),
         MenuEntry::ToLink => IconName::Link,
         MenuEntry::ToWebBookmark(_) => IconName::Bookmark,
+        MenuEntry::RefreshPreview => IconName::RotateCcw,
     }
 }
 

@@ -57,7 +57,7 @@ pub fn open(
     let bar = match SearchBar::open(editor.workspace(), editor.recent_pages()) {
         Ok(bar) => bar,
         Err(err) => {
-            eprintln!("leaf: could not list pages for search: {err}");
+            crate::log::log(format_args!("could not list pages for search: {err}"));
             return None;
         }
     };
@@ -157,7 +157,7 @@ impl SearchPanel {
     fn receive(&mut self, id: u64, found: Result<Vec<SearchHit>, String>, cx: &mut Context<Self>) {
         let hits = found.unwrap_or_else(|err| {
             if !self.reported {
-                eprintln!("leaf: search is unavailable for now: {err}");
+                crate::log::log(format_args!("search is unavailable for now: {err}"));
                 self.reported = true;
             }
             Vec::new()
