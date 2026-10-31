@@ -39,6 +39,8 @@ pub struct Shell {
     icon_picker: Option<(Entity<crate::icon_picker::IconPickerPanel>, Subscription)>,
     /// The cover picker while it is open, and the subscription to what is picked in it.
     cover_picker: Option<(Entity<crate::cover_picker::CoverPickerPanel>, Subscription)>,
+    /// The open database page's table and editors (E09-S05), while a database page is open.
+    database: Option<database_page::DatabasePage>,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
     storage: Option<Storage>,
     /// Focus for the window itself, so menu actions and shortcuts reach the shell even when no text
@@ -98,6 +100,7 @@ impl Shell {
             tree: tree::TreeState::default(),
             icon_picker: None,
             cover_picker: None,
+            database: None,
             storage,
             focus,
             subscriptions,
@@ -202,7 +205,11 @@ impl Render for Shell {
             v_flex()
                 .size_full()
                 .child(bar)
-                .child(div().flex_1().min_h_0().child(self.render_page(window, cx)))
+                .child(div().flex_1().min_h_0().child(if self.showing_database() {
+                    self.render_database_page(window, cx)
+                } else {
+                    self.render_page(window, cx)
+                }))
                 .into_any_element()
         } else {
             column(
@@ -256,6 +263,7 @@ mod block_menu;
 mod block_row;
 mod blocks;
 mod cover;
+mod database_page;
 mod favourites;
 mod format_bar;
 mod found;
@@ -288,6 +296,7 @@ mod trash;
 mod tree;
 mod window;
 
+pub(crate) use database_page::bind as bind_database_keys;
 pub(crate) use page_keys::bind as bind_page_keys;
 pub use storage::Storage;
 

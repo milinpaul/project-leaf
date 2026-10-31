@@ -151,7 +151,7 @@ fn options_are_created_in_turn_coloured_picked_and_found_by_name() {
         None,
         "an exact name isn't offered again"
     );
-    assert!(e.option_picker(row, c[0], "zzz").unwrap().choices.is_empty());
+    assert_eq!(e.option_picker(row, c[0], "zzz").unwrap().choices, Vec::new());
 
     // Picking the picked option in a select lets it go; picking another replaces it.
     e.toggle_option(row, c[0], done).unwrap();
