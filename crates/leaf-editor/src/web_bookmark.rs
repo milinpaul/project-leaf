@@ -1,4 +1,4 @@
-//! Making web bookmarks in the editor (E15-S03, ADR-XXX-E15-S03): the offer after pasting a lone web
+//! Making web bookmarks in the editor (E15-S03, ADR-087): the offer after pasting a lone web
 //! address, the address asked for by the slash menu's "Web bookmark", and where a new bookmark goes.
 //!
 //! A pasted address goes in as a link first (E17-S10), so nothing changes unless the owner asks. The
