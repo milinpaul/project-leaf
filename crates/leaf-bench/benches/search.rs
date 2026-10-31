@@ -1,8 +1,9 @@
-//! Search against its budget on the full-size workspace (E11-S07): 5,000 pages, 100,000 blocks.
+//! Search against its budget on the full-size workspace (E11-S07): 5,000 pages, 100,000 blocks, and
+//! 25,000 page links for backlinks (E10-S06).
 //!
 //! Measures a full rebuild of the index, typed queries through the search bar's read-only
 //! connection (p95 must stay under 50 ms) and re-indexing one edited page the way the background
-//! worker does after a save (p95 under 20 ms). Prints the numbers and fails when a budget is missed,
+//! worker does after a save (p95 under 20 ms), and backlinks lookups (p95 under 5 ms). Prints the numbers and fails when a budget is missed,
 //! unless `LEAF_BENCH_RECORD_ONLY` is set: CI only records them, since shared runners are too noisy
 //! to judge a budget by (ADR-056). Run with `just bench` or `just bench-search`; timings only mean
 //! something in the optimised build `cargo bench` uses.
@@ -15,7 +16,7 @@ use std::time::{Duration, Instant};
 
 use leaf_bench::{SEED, Scratch};
 use leaf_core::PageId;
-use leaf_fixtures::{BIG_WORKSPACE_PAGES, BLOCKS_PER_PAGE, big_workspace};
+use leaf_fixtures::{BIG_WORKSPACE_PAGES, BLOCKS_PER_PAGE, LINKS_PER_PAGE, add_links, big_workspace};
 use leaf_model::{PageDoc, Workspace};
 use leaf_search::{PageSource, PageVersion, SavedVersions, SearchIndex, Searcher, SourceError, Syncer};
 
@@ -23,6 +24,10 @@ use leaf_search::{PageSource, PageVersion, SavedVersions, SearchIndex, Searcher,
 const QUERY_BUDGET: Duration = Duration::from_millis(50);
 /// Budget for re-indexing one edited page, at the 95th percentile.
 const REINDEX_BUDGET: Duration = Duration::from_millis(20);
+/// Budget for listing one page's backlinks, at the 95th percentile (E10-S06).
+const BACKLINKS_BUDGET: Duration = Duration::from_millis(5);
+/// Pages whose backlinks are listed.
+const BACKLINKS_RUNS: usize = 500;
 /// Times each query is run.
 const QUERY_RUNS: usize = 20;
 /// Edits re-indexed.
@@ -133,9 +138,10 @@ fn report(what: &str, times: &mut [Duration], budget: Duration) -> bool {
 
 fn run() -> Result<bool, Box<dyn Error + Send + Sync>> {
     let started = Instant::now();
-    let fixture = big_workspace(SEED, BIG_WORKSPACE_PAGES, BLOCKS_PER_PAGE)?;
+    let mut fixture = big_workspace(SEED, BIG_WORKSPACE_PAGES, BLOCKS_PER_PAGE)?;
+    let links = add_links(&mut fixture, LINKS_PER_PAGE, SEED)?;
     println!(
-        "fixture: {} pages, {} blocks (seed {SEED}), built in {:.1} s",
+        "fixture: {} pages, {} blocks, {links} links (seed {SEED}), built in {:.1} s",
         fixture.pages.len(),
         fixture.block_count(),
         started.elapsed().as_secs_f64()
@@ -171,6 +177,22 @@ fn run() -> Result<bool, Box<dyn Error + Send + Sync>> {
     }
     let queries_ok = report("query", &mut times, QUERY_BUDGET);
 
+    // Every page links to a few others, so each has about LINKS_PER_PAGE backlinks.
+    let mut times = Vec::with_capacity(BACKLINKS_RUNS);
+    let mut found = 0;
+    for (page, _) in fixture
+        .pages
+        .iter()
+        .step_by(fixture.pages.len() / BACKLINKS_RUNS)
+        .take(BACKLINKS_RUNS)
+    {
+        let started = Instant::now();
+        found += searcher.backlinks(*page)?.len();
+        times.push(started.elapsed());
+    }
+    println!("  backlinks: {found} over {} pages", times.len());
+    let backlinks_ok = report("backlinks", &mut times, BACKLINKS_BUDGET);
+
     // Two different pages' blocks, saved in turn under one page, so every round really changes it.
     let (edited, first) = &fixture.pages[0];
     let (_, second) = &fixture.pages[1];
@@ -183,7 +205,7 @@ fn run() -> Result<bool, Box<dyn Error + Send + Sync>> {
         times.push(started.elapsed());
     }
     let reindex_ok = report("re-index one edited page", &mut times, REINDEX_BUDGET);
-    Ok(queries_ok && reindex_ok)
+    Ok(queries_ok && reindex_ok && backlinks_ok)
 }
 
 fn main() -> ExitCode {

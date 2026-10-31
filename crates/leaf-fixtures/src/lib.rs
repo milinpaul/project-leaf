@@ -11,12 +11,14 @@
 //! workspace folder through `leaf-store`). No GPUI and no `leaf-ui`.
 
 mod disk;
+mod links;
 mod page;
 mod rng;
 mod words;
 mod workspace;
 
 pub use disk::save_to_folder;
+pub use links::add_links;
 pub use page::{big_page, fill_page};
 pub use rng::Rng;
 pub use workspace::{Fixture, big_workspace, page_tree};
@@ -31,6 +33,9 @@ pub const BIG_WORKSPACE_PAGES: usize = 5_000;
 /// Blocks per page in the full-size workspace: with [`BIG_WORKSPACE_PAGES`] pages, about 100,000
 /// blocks in all, the search budget's fixture (E11-S07).
 pub const BLOCKS_PER_PAGE: usize = 20;
+
+/// Links each page of the full-size workspace gets for the backlinks budget: 25,000 in all (E10-S06).
+pub const LINKS_PER_PAGE: usize = 5;
 
 /// Why a fixture couldn't be built or saved. Building only fails if the model rejects a command,
 /// which would be a bug in the generator or the model.

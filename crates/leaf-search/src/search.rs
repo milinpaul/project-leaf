@@ -99,6 +99,12 @@ impl Searcher {
     pub fn search(&self, query: &str) -> Result<Vec<PageHit>, SearchError> {
         search(&self.conn, query)
     }
+
+    /// The blocks that link to `page` (E10-S06): each linking page's blocks in reading order, pages by
+    /// title. Pages in the trash aren't indexed, so they never appear.
+    pub fn backlinks(&self, page: PageId) -> Result<Vec<crate::Backlink>, SearchError> {
+        crate::backlinks::backlinks(&self.conn, page)
+    }
 }
 
 /// A page being assembled from title and block matches.

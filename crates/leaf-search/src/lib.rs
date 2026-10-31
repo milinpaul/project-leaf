@@ -18,6 +18,7 @@
 //! **Boundaries:** core crate, native only. No GPUI and no `leaf-ui`. Depends only on
 //! `leaf-core` and `leaf-model`; the store is reached through [`PageSource`].
 
+mod backlinks;
 mod error;
 mod extract;
 mod index;
@@ -29,10 +30,11 @@ mod source;
 mod sync;
 mod worker;
 
+pub use backlinks::Backlink;
 pub use error::SearchError;
-pub use extract::{UNTITLED, page_text};
+pub use extract::{LINK_CONTEXT, UNTITLED, page_text};
 pub use index::{INDEX_FILE, IndexState, IndexedPage, SEARCH_DIR, SearchIndex};
-pub use page_text::{BlockText, PageText, PageVersion};
+pub use page_text::{BlockText, LinkText, PageText, PageVersion};
 pub use schema::INDEX_VERSION;
 pub use search::{BLOCKS_PER_PAGE, BlockHit, Highlighted, MAX_PAGES, PageHit, RANKED_BLOCKS, Searcher};
 pub use source::{PageSource, SavedVersions, SourceError};
