@@ -93,10 +93,13 @@ fn the_date_picker_sets_a_day_a_time_and_clears_them(cx: &mut TestAppContext) {
         matches!(task(&shell, cx, id), BlockKind::Task { due: Some(d), time: None, .. } if d == tomorrow)
     );
 
-    // A day on the calendar.
+    // A day on the calendar. It reopens on tomorrow's month (not today's, on a month's last day), so
+    // pick another day in that month.
+    let other = if tomorrow.day() == 15 { 16 } else { 15 };
+    let picked = DueDate::new(tomorrow.year(), tomorrow.month(), other).unwrap();
     click(cx, &format!("task-date-{id}"));
-    click(cx, &format!("day-{today}"));
-    assert!(matches!(task(&shell, cx, id), BlockKind::Task { due: Some(d), .. } if d == today));
+    click(cx, &format!("day-{picked}"));
+    assert!(matches!(task(&shell, cx, id), BlockKind::Task { due: Some(d), .. } if d == picked));
 
     // A typed time, with Enter.
     click(cx, &format!("task-date-{id}"));
