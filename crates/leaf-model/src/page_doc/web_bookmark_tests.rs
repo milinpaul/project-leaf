@@ -470,3 +470,62 @@ fn a_divider_turned_into_a_web_bookmark_and_then_text_keeps_the_address_through_
     );
     page.check_invariants().unwrap();
 }
+
+/// E17-S14, found by the `main` CI run for #241: turning a bookmark into a bookmark of the same address
+/// cleared its preview as an undo step; with a preview arriving after it, redo lost that step.
+#[test]
+fn turning_a_bookmark_into_itself_changes_nothing_and_redo_keeps_every_step() {
+    let mut page = PageDoc::new();
+    page.set_undo_merge_interval(0);
+    let id = insert(&mut page, bookmark(LEAF), "");
+    set_preview(&mut page, id, LEAF, fetched());
+    let same = page
+        .apply(PageCommand::SetBlockKind {
+            id,
+            kind: bookmark(LEAF),
+        })
+        .unwrap();
+    assert_eq!(same, PageOutcome::Unchanged, "the same bookmark");
+    assert_eq!(preview_of(&page, id), fetched(), "its preview stays");
+    set_preview(&mut page, id, LEAF, fetched());
+    assert!(matches!(page.undo().unwrap(), crate::History::Done { .. }));
+    assert!(page.is_empty());
+    assert!(matches!(page.redo().unwrap(), crate::History::Done { .. }));
+    assert_eq!(
+        page.redo().unwrap(),
+        crate::History::Nothing,
+        "one step, and it came back"
+    );
+}
+
+/// E17-S14: undoing an address change must not show the new address's preview under the old address.
+#[test]
+fn undo_never_shows_a_preview_fetched_for_another_address() {
+    let mut page = PageDoc::new();
+    page.set_undo_merge_interval(0);
+    let id = insert(&mut page, bookmark(LEAF), "");
+    set_preview(&mut page, id, LEAF, fetched());
+    page.apply(PageCommand::SetProp {
+        id,
+        prop: BlockProp::WebAddress("https://example.com".into()),
+    })
+    .unwrap();
+    let other = WebPreview {
+        title: Some("Example".into()),
+        fetched_at: Some(2),
+        ..WebPreview::default()
+    };
+    set_preview(&mut page, id, "https://example.com", other.clone());
+    page.undo().unwrap();
+    let BlockKind::WebBookmark { url, preview } = page.kind(id).unwrap() else {
+        panic!("not a bookmark");
+    };
+    assert_eq!(url, LEAF);
+    assert_ne!(preview, other, "not the other address's preview");
+    page.redo().unwrap();
+    assert_eq!(
+        preview_of(&page, id),
+        other,
+        "redo: the new address with its own preview"
+    );
+}
