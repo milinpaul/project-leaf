@@ -110,6 +110,10 @@ Measured with 5,000 pages × 20 blocks and 25,000 links, release build, Apple M1
   and the highlight; the workspace editor lists the pages (the quick switcher's fuzzy matcher, at most 8, not the open
   page, not the trash) and adds "New page" when no title is exactly the query.
 - **"New page"** makes the page inside the open page, titled with the query, and stays on the open page.
+- **"Link to page" in the floating bar (E10-S10, owner's request):** a separate button with a page icon, next to Link
+  (which stays for web addresses). It turns the selected words into a `[[` query in a step of its own and opens the
+  same menu; Escape undoes that step, and choosing a page undoes it first and then swaps the words for the link, so
+  one undo gives the words back.
 
 ## Alternatives considered
 

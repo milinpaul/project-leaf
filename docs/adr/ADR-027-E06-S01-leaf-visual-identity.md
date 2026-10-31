@@ -63,4 +63,4 @@ Before, light and dark:
 
 ## Update 2026-10-31 (E08-S08)
 
-Code blocks and inline code use a bundled monospace face, JetBrains Mono NL, instead of the system's (ADR-XXX-E08-S08).
+Code blocks and inline code use a bundled monospace face, JetBrains Mono NL, instead of the system's (ADR-077).

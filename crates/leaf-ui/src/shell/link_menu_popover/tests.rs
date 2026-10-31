@@ -114,3 +114,47 @@ fn a_click_on_new_page_makes_and_links_it(cx: &mut TestAppContext) {
     let title = shell.update(cx, |shell, _| shell.editor.link_target(made[0].1).title);
     assert_eq!(title, "Kyoto");
 }
+
+/// "trip" typed and selected in the open page's first line, the floating bar drawn.
+fn select_trip(shell: &gpui::Entity<Shell>, cx: &mut VisualTestContext, block: BlockId) {
+    cx.simulate_input("see trip now");
+    shell.update(cx, |shell, _| shell.page().unwrap().select(block, 4..8).unwrap());
+    draw(cx);
+    draw(cx);
+}
+
+#[gpui::test]
+fn the_floating_bar_links_selected_words_to_a_page(cx: &mut TestAppContext) {
+    let (shell, cx, block, [trip, _]) = open(cx);
+    select_trip(&shell, cx, block);
+    let button = cx
+        .debug_bounds("format-link-to-page")
+        .expect("Link to page in the floating bar")
+        .center();
+    cx.simulate_click(button, Modifiers::none());
+    draw(cx);
+    assert!(
+        cx.debug_bounds("link-menu").is_some(),
+        "the page list, searching for the words"
+    );
+    cx.simulate_keystrokes("enter");
+    draw(cx);
+    assert_eq!(links(&shell, cx), vec![(block, trip)]);
+    assert_eq!(
+        text(&shell, cx, block),
+        format!("see {} now", leaf_model::PAGE_LINK)
+    );
+}
+
+#[gpui::test]
+fn escape_from_the_floating_bar_list_gives_the_words_back(cx: &mut TestAppContext) {
+    let (shell, cx, block, _) = open(cx);
+    select_trip(&shell, cx, block);
+    let button = cx.debug_bounds("format-link-to-page").unwrap().center();
+    cx.simulate_click(button, Modifiers::none());
+    draw(cx);
+    cx.simulate_keystrokes("escape");
+    draw(cx);
+    assert!(cx.debug_bounds("link-menu").is_none());
+    assert_eq!(text(&shell, cx, block), "see trip now");
+}

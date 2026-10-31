@@ -22,7 +22,7 @@ use crate::settings;
 /// same on every OS. One family keeps the page calm; hierarchy comes from size and weight.
 pub const UI_FONT: &str = "Inter";
 
-/// The monospace face for code blocks and inline code, bundled too (E08-S08, ADR-XXX-E08-S08). Naming a
+/// The monospace face for code blocks and inline code, bundled too (E08-S08, ADR-077). Naming a
 /// bundled face also keeps gpui-component from listing every installed font at startup to check the
 /// platform's default, which cost about 220 ms of a 500 ms cold-start budget. The "NL" cut has no
 /// ligatures, so `->` stays two characters to move the caret through.

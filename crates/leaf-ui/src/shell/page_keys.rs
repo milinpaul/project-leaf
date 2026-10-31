@@ -286,8 +286,8 @@ impl Shell {
 
     fn on_escape(&mut self, _: &Escape, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(page) = self.page() {
-            if page.link_query().ok().flatten().is_some() {
-                page.link_menu_close();
+            if page.link_menu_escape().unwrap_or(false) {
+                // Closed; a menu opened from selected words gave them back.
             } else if page.slash_menu().ok().flatten().is_some() {
                 page.slash_close();
             } else if let Some(caret) = page.caret().ok().flatten() {
