@@ -1,5 +1,5 @@
-//! A table's sideways scrolling (E16-S05): the horizontal scrollbar under its grid, shown while the pointer is
-//! over the table, and bringing the caret's column into the box when Tab or an arrow moves it out of view.
+//! A table's sideways scrolling (E16-S05): the horizontal scrollbar under its grid, shown while the grid is wider
+//! than its box, and bringing the caret's column into the box when Tab or an arrow moves it out of view.
 
 use gpui::{InteractiveElement as _, ParentElement, Pixels, SharedString, Styled, div, point, px};
 use gpui_component::scroll::{Scrollbar, ScrollbarMode};
@@ -9,7 +9,8 @@ use super::super::Shell;
 use super::{CELL_WIDTH, HANDLE};
 
 impl Shell {
-    /// The horizontal scrollbar under `table`'s grid, shown while the pointer is over the table. A table taller
+    /// The horizontal scrollbar under `table`'s grid. It shows whenever the grid is wider than its box (a thumb only
+    /// appears then), so a mouse user can see the table scrolls. A table taller
     /// than the window would leave it out of sight below the fold, so then it sits at the bottom of the window
     /// instead, over the table (where the table was drawn last frame).
     pub(super) fn table_scrollbar(&self, table: BlockId, scroll: &gpui::ScrollHandle) -> gpui::Div {
@@ -31,7 +32,7 @@ impl Shell {
         bar.child(
             Scrollbar::horizontal(scroll)
                 .id(SharedString::from(format!("table-scrollbar-{table}")))
-                .mode(ScrollbarMode::Hover),
+                .mode(ScrollbarMode::Always),
         )
     }
 

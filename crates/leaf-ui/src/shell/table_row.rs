@@ -8,8 +8,8 @@
 //! `PageEditor`'s; the controls here only forward to [`leaf_editor::PageEditor::edit_table`].
 //!
 //! Columns have a fixed width, and the grid sits in a box that scrolls sideways, so a wide table never
-//! makes the page wider than its column. A horizontal scrollbar under the grid shows while the pointer is over
-//! the table, and the caret moving into a column out of view scrolls it in (E16-S05).
+//! makes the page wider than its column. A horizontal scrollbar under the grid shows while it is wider than the
+//! page, and the caret moving into a column out of view scrolls it in (E16-S05).
 
 mod scroll;
 
