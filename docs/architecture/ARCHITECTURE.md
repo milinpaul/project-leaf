@@ -253,7 +253,7 @@ hidden one (`database_page/header.rs`, `column_menu.rs`, `columns.rs`). What eac
 `leaf-editor` `database_view/columns.rs`. Each database command is its own undo step; `Database::group` makes an action
 of several commands one step. Cmd/Ctrl+Z on a database page undoes the database.
 
-Sorting and filtering (E09-S07, ADR-XXX-E09-S07): a bar above the table (`database_page/query_bar.rs`, `query.rs`) shows a
+Sorting and filtering (E09-S07, ADR-079): a bar above the table (`database_page/query_bar.rs`, `query.rs`) shows a
 chip per sort and filter and opens their pop-ups. `leaf-editor` `database_view/query.rs` decides each type's
 conditions and what each change writes. A filter's typed value is a draft the table shows at once and the database
 gets when the pop-up closes.

@@ -1,4 +1,4 @@
-# ADR-XXX. Sorting and filtering a database: a bar above the table, and typed filters written once
+# ADR-079. Sorting and filtering a database: a bar above the table, and typed filters written once
 
 - **Status:** Accepted
 - **Type:** Feature
