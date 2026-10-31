@@ -88,6 +88,17 @@ class AdrNumberTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.read("scripts/test_adr_number.py"), before)
 
+    def test_any_argument_prints_help_and_changes_nothing(self) -> None:
+        self.write("docs/adr/ADR-XXX-E08-S08-bundled-code-font.md", "# ADR-XXX. Bundled code font\n")
+        git(self.root, "add", "-A")
+        result = subprocess.run(
+            [sys.executable, str(self.root / "scripts" / "adr_number.py"), "--help"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Usage:", result.stdout)
+        self.assertTrue((self.adr / "ADR-XXX-E08-S08-bundled-code-font.md").exists(), "nothing is renamed")
+
     def test_nothing_waiting_is_not_an_error(self) -> None:
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)
