@@ -118,6 +118,7 @@ Mobile; P2P collaboration (maybe).
 | Arrow up/down at first/last visual line | Move to previous/next block, keeping horizontal position. |
 | Paste multi-line text | Each line becomes a paragraph; markdown syntax is converted. |
 | Paste a Markdown table (header, `|---|` line, rows) | Becomes a table with a header row; cells keep their formatting. Rows separated by blank lines still join it when they start with `|`. Pasted into a cell, its cells go in as lines of text. |
+| Copy or paste an action item as Markdown | Written as `- [ ] Send invoice (due 2026-10-31 14:00, high)` (`(action item)` when it has no date or priority); pasting such a line makes an action item. Other brackets stay text, and plain `- [ ]` lines stay to-dos. |
 | Copy a table, or selected cells | Other apps get a Markdown table (plain text: tab-separated rows); pasted back into Leaf it is a table again. |
 | Paste a lone web address (`https://…`, `www.…`) | It goes in as a link whose text is the address; over selected text, that text becomes a link to it. Into a code block it stays plain text. |
 | Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |

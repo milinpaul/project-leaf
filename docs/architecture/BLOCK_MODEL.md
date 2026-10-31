@@ -368,7 +368,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | heading n | `#` × n |
 | bulleted / numbered | `- ` / `1. `, children indented 2 spaces |
 | todo | `- [ ] ` / `- [x] ` |
-| task | `- [ ] ` / `- [x] ` for now; its date and priority get a Markdown form in E19-S04 |
+| task | `- [ ] ` / `- [x] ` then its fields in a final group: `(due 2026-10-31 14:00, high)`, or `(action item)` with none (ADR 0032) |
 | quote | `> ` |
 | code | fenced block with language |
 | divider | `---` |
