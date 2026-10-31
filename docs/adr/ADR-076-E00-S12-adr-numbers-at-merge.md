@@ -1,4 +1,4 @@
-# ADR-XXX. Decision records are numbered when they merge, by a workflow
+# ADR-076. Decision records are numbered when they merge, by a workflow
 
 - **Status:** Accepted
 - **Type:** Architecture
@@ -43,3 +43,11 @@ never two with the same number (2026-10-31).
   carry the same name until the workflow renames them together.
 - Plain English: new decision records get their number automatically when their PR is merged, in the order they land,
   so two can never share a number and nobody has to fix clashes by hand.
+
+## Update 2026-10-31: numbered in the follow-up PR, not by a workflow
+
+The workflow's first run numbered the records correctly, but `main`'s ruleset requires every change to come through
+a pull request, so its push was refused; the owner keeps that rule. The workflow is removed. Instead, the small PR
+that marks a story done after its merge (made from the newest `main`) runs `scripts/adr_number.py`. Two such PRs open
+at once could still pick the same number for different records; whichever merges second is renumbered. CI stays
+read-only (ADR-073).

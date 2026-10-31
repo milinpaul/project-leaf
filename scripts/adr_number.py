@@ -2,9 +2,9 @@
 """Gives new decision records their number once they reach `main` (E00-S12).
 
 On a branch a new record is `docs/adr/ADR-XXX-<story>-<title>.md`, mentioned elsewhere as `ADR-XXX-<story>`, so
-branches never pick the same number. After a merge the `ADR numbers` workflow runs this: each `ADR-XXX` file gets the
-next number after the highest one, in name order, and every link and mention in the repository's tracked text files
-follows. Nothing to do is not an error. Standard library only, like `backlog.py`.
+branches never pick the same number. After a merge, the follow-up PR that marks the story done runs this on the newest
+`main`: each `ADR-XXX` file gets the next number after the highest one, in name order, and every link and mention in
+the repository's tracked text files follows. Nothing to do is not an error. Standard library only, like `backlog.py`.
 
 Usage: python3 scripts/adr_number.py   (from anywhere in the repository; prints what it renamed)
 """
