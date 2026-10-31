@@ -1,5 +1,9 @@
 //! The limits from ADR-080, against a local server: no test reaches the real internet.
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    reason = "the test server's helpers panic on failure, as the tests do"
+)]
 
 use std::io::{BufRead as _, BufReader, Write as _};
 use std::net::{IpAddr, SocketAddr, TcpListener};
