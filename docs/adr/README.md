@@ -90,3 +90,4 @@ Records cover two kinds of decision:
 | [0071](0071-page-links-and-backlinks.md) | Page links: one placeholder character with a `page` mark; backlinks in the search index | Architecture | Accepted |
 | [0072](0072-database-column-menu.md) | Database columns: header menus, and each database command its own undo step | Feature | Accepted |
 | [0073](0073-ci-and-supply-chain-policy.md) | CI and supply chain: read-only CI, pinned actions, deny on new duplicates and git sources | Architecture | Accepted |
+| [0075](0075-database-views-and-board.md) | Database views: saved views as tabs, and a board layout | Architecture | Accepted |
