@@ -103,10 +103,20 @@ Measured with 5,000 pages × 20 blocks and 25,000 links, release build, Apple M1
   text the title. Pasted `[[Title]]` becomes a link when exactly one page outside the trash has that title.
 - **Search** drops the placeholder from indexed text; pages are found by their own titles.
 
+## Notes from building it (E10-S07)
+
+- **Index version 5:** other links in a backlink's words now read as their pages' titles rather than leaving gaps.
+- **"3 backlinks" under the title** opens the list in place (not a popover), as the owner chose (answer 3). Each
+  row: the linking page's icon and title, then the words around the link with the link in the link colour. A click
+  opens the page at the block through the search results' path (`Shell::open_at`).
+- **Freshness without a signal from the indexer:** the index is asked when a page opens, once more a moment later
+  (in case a link to it was saved just before), and at most once a second on later draws. A lookup is well under a
+  millisecond. Titles and icons come from the workspace on every draw, so renames show at once.
+
 ## Notes from building it (E10-S06)
 
 - **The `links` table** (index version 4) holds, per link, the linking page and block, the target, its place in the
-  page's reading order, and up to 60 characters of the block's words on each side (other links left out, "…" where
+  page's reading order, and up to 60 characters of the block's words on each side (other links as their pages' titles, "…" where
   cut), so the backlinks list needs no page loaded. One row per block and target.
 - **`backlinks(page)`** lists linking pages by title, each page's blocks in reading order, without a page's links to
   itself. Pages in the trash aren't indexed, so they never appear.

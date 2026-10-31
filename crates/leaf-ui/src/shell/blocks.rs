@@ -43,6 +43,8 @@ pub(super) struct PageState {
     blink: Option<Task<()>>,
     /// Where a mouse drag started, while the button is down.
     pub(super) drag: Option<Caret>,
+    /// The open page's backlinks (E10-S07).
+    pub(super) backlinks: super::backlinks::BacklinksState,
     /// The row whose link the pointer is over, drawn with a pointing-hand cursor (E10-S11).
     pub(super) link_hover: Option<BlockId>,
     /// What the block menu hangs from, set when it opens: the left edge and the top and bottom of the
@@ -270,7 +272,9 @@ impl Shell {
                     .child(input)
                     .child(Self::wheel_glide_layer(cx))
                     .child(Self::select_scroll_layer(cx))
-                    .child(rows),
+                    .child(rows)
+                    // Where you are in the page, at its right edge (E07-S14).
+                    .child(crate::scrollbar::slim(&self.blocks.list.state, cx).id("page-scrollbar")),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
             .child(menu)

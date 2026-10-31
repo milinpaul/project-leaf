@@ -62,7 +62,8 @@ the block schema and reading text with formatting (E02-S01), inserting, deleting
 editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
 block's kind and properties (E02-S04). The page is a **virtual list** (E07-S01, ADR-035): only the rows on screen are laid out,
 and each frame's rows are compared with the last to re-measure or splice just what changed, so a 10,000-block page
-scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR-038): GPUI `StyledText` runs carry the marks,
+scrolls smoothly. A slim scrollbar at its right edge (`leaf-ui/src/scrollbar.rs`, E07-S14) shows where you are; the
+sidebar's page tree uses the same one. Blocks are drawn by a **rich text view** (E07-S02, ADR-038): GPUI `StyledText` runs carry the marks,
 the selection is a run background, an overlay draws the blinking caret and records the painted layout, which answers
 the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E07-S03, ADR-040): keys are actions
 bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); typed text, input-method drafts and the
@@ -322,7 +323,9 @@ itself (ADR-018).
    version of each document is saved (`Store::saved_versions`), compares that and the page titles and trash with
    what it indexed, and re-reads only the pages that changed into `search/index.sqlite`. An edit is searchable
    well within a second (ADR-024). The same pass records each page's links to other pages in the index's `links`
-   table, which `Searcher::backlinks` reads to list the blocks linking to a page (E10-S06, ADR-071).
+   table, which `Searcher::backlinks` reads to list the blocks linking to a page (E10-S06, ADR-071). Under the page
+   title, `shell::backlinks` asks it when a page opens and at most once a second after that, and
+   `WorkspaceEditor::backlinks` turns the result into rows with the linking pages' current titles and icons (E10-S07).
 
 Undo runs the same path backwards: the model reverses the last step and the editor redraws.
 

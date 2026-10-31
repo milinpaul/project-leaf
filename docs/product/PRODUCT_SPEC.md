@@ -107,10 +107,11 @@ Mobile; P2P collaboration (maybe).
 
 | Situation | Result |
 |---|---|
-| `Enter` mid-text | Split block at cursor; new block keeps the type for lists/to-dos, becomes paragraph for headings/quote. |
+| `Enter` mid-text | Split block at cursor; new block keeps the type for lists/to-dos, becomes paragraph for headings. |
+| `Enter` at the start of a paragraph or heading with text | Add an empty paragraph above; the block keeps its type and the caret stays at its start. |
 | `Enter` on empty list item / to-do / action item | Outdent one level; at root, convert to paragraph. |
 | `Enter` in code block | Newline inside the block. `Cmd/Ctrl+Enter` or `Enter` on two trailing empty lines exits. |
-| `Enter` in a callout | Line break inside the callout. `Enter` on an empty last line (or in an empty callout) removes that line and adds a paragraph after it; `Cmd/Ctrl+Enter` leaves from anywhere. |
+| `Enter` in a callout or quote | Line break inside it. `Enter` on an empty last line (or in an empty one) removes that line and adds a paragraph after it; `Cmd/Ctrl+Enter` leaves from anywhere. |
 | `Backspace` at start of non-paragraph block | Convert to paragraph (keep text). |
 | `Enter` in an action item | Split like a to-do: the new action item is not done and has no date, and keeps the priority. |
 | `Cmd/Ctrl+Enter` in a to-do or action item | Tick it off, or back on; the caret stays. |
@@ -127,6 +128,7 @@ Mobile; P2P collaboration (maybe).
 | Copy a table, or selected cells | Other apps get a Markdown table (plain text: tab-separated rows); pasted back into Leaf it is a table again. |
 | Paste a lone web address (`https://…`, `www.…`) | It goes in as a link whose text is the address; over selected text, that text becomes a link to it. Into a code block it stays plain text. |
 | `[[` typed in text (not code) | Opens a list of pages under it, filtered as you type (fuzzy, by title, with each page's icon and where it lives); pages in the trash and the open page aren't offered. Up/Down choose, `Enter` or a click links the page in place of the `[[` and what was typed (one undo step), `Escape` closes it and leaves the text. When no title is exactly what was typed, the last entry is "New page", which makes that page inside the open one and links it. The slash menu's "Link to page" opens the same list. |
+| Other pages link to the open page (E10-S07) | "3 backlinks" shows under the title (nothing when none). A click opens the list in place: each linking page's icon and title, and the words around its link with the link in the link colour; pages in the trash aren't listed. Choosing one opens that page at the linking block, as a search result does. The list catches up within a second or two of a save. |
 | A link to a page in the text (E10) | Shown as the page's icon and current title, underlined in the link colour; a page in the trash shows greyed as "Title (in trash)", a deleted one as "Deleted page". A plain click opens the page (not for a deleted one), and the pointer turns to a hand over it, as over a web link (E10-S11). The caret steps over it in one press, `Backspace`/`Delete` remove it whole, and typing beside it never joins it. Copied out as `[[Title]]` (Markdown) or the title (plain text); pasting `[[Title]]` links it when exactly one page outside the trash has that title. Search leaves links out. |
 | Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |
