@@ -248,6 +248,11 @@ hidden one (`database_page/header.rs`, `column_menu.rs`, `columns.rs`). What eac
 `leaf-editor` `database_view/columns.rs`. Each database command is its own undo step; `Database::group` makes an action
 of several commands one step. Cmd/Ctrl+Z on a database page undoes the database.
 
+Sorting and filtering (E09-S07, ADR 0077): a bar above the table (`database_page/query_bar.rs`, `query.rs`) shows a
+chip per sort and filter and opens their pop-ups. `leaf-editor` `database_view/query.rs` decides each type's
+conditions and what each change writes. A filter's typed value is a draft the table shows at once and the database
+gets when the pop-up closes.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.

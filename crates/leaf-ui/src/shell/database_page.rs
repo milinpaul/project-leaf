@@ -12,6 +12,10 @@
 //! Columns (E09-S06): a header opens its column's menu (name, type, move, hide, delete); the "+" at the end adds a
 //! column or shows a hidden one. Headers drag to reorder and their edges drag to resize. Cmd/Ctrl+Z undoes the
 //! database's last step.
+//!
+//! Sorting and filtering (E09-S07): a bar above the table shows a chip for each sort and filter, with "Sort" and
+//! "Filter" buttons; each opens a pop-up (`query_bar.rs`). A filter's typed value shows in the table at once and is
+//! saved when the pop-up closes.
 
 mod cells;
 mod column_menu;
@@ -19,6 +23,8 @@ mod columns;
 mod editing;
 mod header;
 mod options;
+mod query;
+mod query_bar;
 mod table;
 
 use std::time::Duration;
@@ -101,6 +107,11 @@ pub(super) struct DatabasePage {
     calendar: Entity<CalendarState>,
     /// The column menu's name field.
     column_name: Entity<InputState>,
+    /// The bar's open pop-up (E09-S07).
+    query_menu: Option<query::QueryMenu>,
+    /// The field a filter's value is typed into, and the calendar a date filter picks from.
+    filter_text: Entity<InputState>,
+    filter_calendar: Entity<CalendarState>,
     editing: Option<Editing>,
     reading: Option<Task<()>>,
     _subscriptions: Vec<Subscription>,
@@ -144,6 +155,7 @@ impl Shell {
         let query = cx.new(|cx| InputState::new(window, cx).placeholder("Search or create an option"));
         let calendar = cx.new(|cx| CalendarState::new(window, cx));
         let column_name = cx.new(|cx| InputState::new(window, cx).placeholder("Column name"));
+        let (filter_text, filter_calendar) = query::inputs(window, cx);
         let delegate = DatabaseTable {
             view: leaf_editor::TableView {
                 columns: Vec::new(),
@@ -176,6 +188,8 @@ impl Shell {
             cx.subscribe_in(&query, window, Self::on_option_query_event),
             cx.subscribe_in(&calendar, window, Self::on_calendar_event),
             cx.subscribe_in(&column_name, window, Self::on_column_name_event),
+            cx.subscribe_in(&filter_text, window, Self::on_filter_text_event),
+            cx.subscribe_in(&filter_calendar, window, Self::on_filter_calendar_event),
         ];
         self.database = Some(DatabasePage {
             page,
@@ -185,6 +199,9 @@ impl Shell {
             query,
             calendar,
             column_name,
+            query_menu: None,
+            filter_text,
+            filter_calendar,
             editing: None,
             reading: None,
             _subscriptions: subscriptions,
@@ -261,6 +278,7 @@ impl Shell {
         let rows = u16::try_from(table.read(cx).delegate().view.rows.len()).unwrap_or(u16::MAX);
         let height = ROW_HEIGHT * (f32::from(rows) + 1.0) + TABLE_BORDERS;
         let header = self.render_page_header(false, cx);
+        let query_bar = self.render_query_bar(cx);
         let theme = cx.theme();
         let new_row = h_flex()
             .id("database-new-row")
@@ -298,6 +316,7 @@ impl Shell {
                     .on_action(cx.listener(|shell, _: &RedoDatabase, window, cx| {
                         shell.database_history(false, window, cx);
                     }))
+                    .child(query_bar)
                     .child(
                         div()
                             .h(px(height))
@@ -350,7 +369,9 @@ impl Shell {
 
     /// Escape: closes a column menu if one is open, otherwise drops the cell being edited.
     pub(super) fn stop_editing(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.column_menu_open(cx) {
+        if self.query_menu().is_some() {
+            self.close_query_menu(cx);
+        } else if self.column_menu_open(cx) {
             self.close_column_menus(window, cx);
         } else {
             self.cancel_cell_edit(window, cx);

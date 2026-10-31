@@ -15,15 +15,17 @@ mod columns;
 mod display;
 mod edit;
 mod order;
+mod query;
 
 pub use columns::{COLUMN_TYPES, ColumnMenu, HiddenColumn, type_label};
 pub use display::{CellDisplay, Chip, date_label, display};
 pub use edit::{CellEditor, OPTION_COLORS, OptionChoice, OptionPicker, TextCommit};
+pub use query::{FilterChip, FilterInput, QueryBar, SortChip, direction_label, filter_ops, op_label};
 
 use std::collections::{HashMap, HashSet};
 
 use leaf_core::{ColumnId, PageId};
-use leaf_model::{Database, DatabaseCommand, DatabaseOutcome, ModelError, PropertyType};
+use leaf_model::{Database, DatabaseCommand, DatabaseOutcome, Filter, ModelError, PropertyType};
 
 use order::Values;
 
@@ -79,6 +81,9 @@ pub struct DatabaseEditor {
     cells: HashMap<PageId, Values>,
     /// How many times a row's cells were read, for tests and measurements.
     reads: usize,
+    /// A filter being typed: its position in the filters and what it would be. The table shows it; the database
+    /// gets it when it is committed (`query.rs`), so typing a word is one undo step.
+    draft: Option<(usize, Filter)>,
 }
 
 impl DatabaseEditor {
@@ -96,6 +101,7 @@ impl DatabaseEditor {
             order,
             cells: HashMap::new(),
             reads: 0,
+            draft: None,
         }
     }
 
@@ -112,11 +118,14 @@ impl DatabaseEditor {
 
     /// Undoes the database's last step. Returns `false` when there was nothing to undo.
     pub fn undo(&mut self) -> Result<bool, ModelError> {
+        // A filter being typed refers to a position in the filters as they were; undo can change them.
+        self.draft = None;
         self.db.undo()
     }
 
     /// Redoes the database's last undone step. Returns `false` when there was nothing to redo.
     pub fn redo(&mut self) -> Result<bool, ModelError> {
+        self.draft = None;
         self.db.redo()
     }
 
@@ -206,7 +215,7 @@ impl DatabaseEditor {
     ) -> Result<TableView, ModelError> {
         self.refresh()?;
         let columns = self.db.columns()?;
-        let (sorts, filters) = (self.db.sort(), self.db.filters());
+        let (sorts, filters) = (self.db.sort(), self.filters());
         let complete = self.order.iter().all(|row| self.cells.contains_key(row));
         let empty = Values::new();
         let mut rows: Vec<PageId> = self

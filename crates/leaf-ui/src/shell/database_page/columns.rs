@@ -280,7 +280,7 @@ impl Shell {
         let Some((page, _)) = self.open_database() else {
             return;
         };
-        self.close_column_menus(window, cx);
+        self.close_menus(window, cx);
         self.cancel_cell_edit(window, cx);
         let done = if undo {
             self.editor.undo_database(page, now_ms())
