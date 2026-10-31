@@ -95,6 +95,9 @@ pub(super) struct PageState {
     pub(super) address: Option<super::web_bookmark::OpenAddress>,
     /// Web bookmarks whose preview is being fetched, drawn with a loading state (E15-S04; filled by E15-S05).
     pub(super) fetching: std::collections::HashSet<BlockId>,
+    /// The fetcher for web bookmark previews, made on first use (E15-S05). Tests put one in that may
+    /// reach their local server.
+    pub(super) fetcher: Option<std::sync::Arc<leaf_fetch::Fetcher>>,
 }
 
 impl Shell {

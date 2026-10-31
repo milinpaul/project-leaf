@@ -333,3 +333,29 @@ fn unreadable_recent_entries_are_skipped_not_fatal() {
     assert!(AppSettings::load(&path).last_workspace().is_none());
     assert!(path.exists(), "not treated as a damaged file");
 }
+
+/// E15-S05, ADR-080: Leaf never goes online for previews unless the owner said yes.
+#[test]
+fn web_previews_are_off_until_the_owner_says_yes() {
+    let dir = TempDir::new();
+    let path = dir.0.join("settings.json");
+    let mut settings = AppSettings::default();
+    assert!(
+        !settings.web_previews_allowed() && !settings.web_previews_answered(),
+        "off, and never asked"
+    );
+    settings.set_web_previews(false);
+    assert!(
+        !settings.web_previews_allowed() && settings.web_previews_answered(),
+        "said no: off, not asked again"
+    );
+    settings.set_web_previews(true);
+    settings.save(&path).unwrap();
+    let reopened = AppSettings::load(&path);
+    assert!(reopened.web_previews_allowed(), "the answer is kept");
+    assert!(
+        fs::read_to_string(&path)
+            .unwrap()
+            .contains("\"web_previews\": true")
+    );
+}

@@ -140,13 +140,15 @@ impl PageEditor {
             ..offer.at
         };
         self.begin()?;
+        let url = offer.url;
         let bookmark = BlockKind::WebBookmark {
-            url: offer.url,
+            url: url.clone(),
             preview: WebPreview::default(),
         };
-        let caret = self
+        let (caret, made) = self
             .doc
             .as_separate_step(|doc| place_bookmark(doc, start, len, bookmark))?;
+        self.want_preview(made, &url);
         let caret = self.set_caret(caret)?;
         self.finish()?;
         Ok(Some(caret))
@@ -210,12 +212,13 @@ impl PageEditor {
         };
         self.begin()?;
         let bookmark = BlockKind::WebBookmark {
-            url,
+            url: url.clone(),
             preview: WebPreview::default(),
         };
-        let caret = self
+        let (caret, made) = self
             .doc
             .as_separate_step(|doc| place_bookmark(doc, target, 0, bookmark))?;
+        self.want_preview(made, &url);
         let caret = self.set_caret(caret)?;
         self.finish()?;
         Ok(Some(caret))
@@ -255,13 +258,13 @@ pub(crate) fn only_link(doc: &PageDoc, block: BlockId) -> Result<Option<String>,
 }
 
 /// Puts `bookmark` in place of the `len` characters at `start`: the whole block when that empties it
-/// and it can change kind, else a new block below. Returns where the caret goes.
+/// and it can change kind, else a new block below. Returns where the caret goes and the bookmark.
 fn place_bookmark(
     doc: &mut PageDoc,
     start: Caret,
     len: usize,
     bookmark: BlockKind,
-) -> Result<Caret, EditorError> {
+) -> Result<(Caret, BlockId), EditorError> {
     let block = start.block;
     let text = doc.plain_text(block)?.unwrap_or_default();
     let whole = start.at == 0 && text.chars().count() == len;
@@ -273,10 +276,11 @@ fn place_bookmark(
             id: block,
             kind: bookmark,
         })?;
-        return Ok(Caret {
+        let caret = Caret {
             block: insert_after(doc, block, BlockKind::Paragraph)?,
             at: 0,
-        });
+        };
+        return Ok((caret, block));
     }
     if len > 0 {
         doc.apply(PageCommand::DeleteText {
@@ -285,8 +289,8 @@ fn place_bookmark(
         })?;
     }
     let below: BlockId = crate::table::table_of(doc, block)?.unwrap_or(block);
-    insert_after(doc, below, bookmark)?;
-    Ok(start)
+    let made = insert_after(doc, below, bookmark)?;
+    Ok((start, made))
 }
 
 #[cfg(test)]

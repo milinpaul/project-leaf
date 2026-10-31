@@ -289,6 +289,7 @@ mod page_list;
 #[cfg(test)]
 mod page_list_window_tests;
 mod page_menu;
+mod preview_fetch;
 mod rich_text;
 #[cfg(test)]
 mod scrollbar_tests;
