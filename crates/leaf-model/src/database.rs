@@ -155,7 +155,7 @@ impl Database {
 
     /// Merges changes from another copy of this database (another device, later: sync).
     pub fn import_changes(&mut self, bytes: &[u8]) -> Result<(), ModelError> {
-        self.doc.import(bytes)?;
+        crate::loro_import::import(&self.doc, bytes)?;
         self.reindex()
     }
 

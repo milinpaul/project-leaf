@@ -37,6 +37,14 @@ deny:
 wasm:
     cargo check --locked --target wasm32-unknown-unknown -p leaf-core -p leaf-model -p leaf-editor
 
+# Fuzz one target for a while: `just fuzz paste 600` (targets: doc_bytes, workspace_db, asset_kind, paste).
+# Needs nightly Rust and cargo-fuzz (`rustup toolchain install nightly`, `cargo install cargo-fuzz`). Each input
+# gets 5 seconds and 2 GB; past that counts as a hang or a memory blow-up. Findings land in fuzz/artifacts/.
+# AddressSanitizer only for workspace_db, the one target that runs C code (SQLite); Leaf's Rust has no `unsafe`.
+fuzz target seconds="60":
+    test -d fuzz/corpus/{{target}} || cargo run -q --locked -p leaf-fixtures --example fuzz_seeds -- fuzz/corpus
+    cd fuzz && cargo +nightly fuzz run --sanitizer {{ if target == "workspace_db" { "address" } else { "none" } }} {{target}} -- -max_total_time={{seconds}} -timeout=5 -rss_limit_mb=2048
+
 # Validate backlog and regenerate backlog.json (local only, gitignored)
 backlog:
     python3 scripts/backlog.py

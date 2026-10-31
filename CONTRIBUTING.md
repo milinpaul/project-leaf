@@ -51,6 +51,7 @@ tests on push.
 | `just demo <folder>` | Make the demo workspace shown in the README |
 | `just fixture <folder>` | Make a large test workspace (5,000 pages) to try performance |
 | `just screenshot <workspace> <out.png>` | Draw a workspace to an image without opening a window (macOS) |
+| `just fuzz <target> [seconds]` | Fuzz one input reader (`doc_bytes`, `workspace_db`, `asset_kind`, `paste`); needs nightly Rust and `cargo install cargo-fuzz` |
 
 ## How the code is organised
 
@@ -92,6 +93,7 @@ These are checked in review and will block a PR:
 - `proptest` for command sequences, undo round-trips and two-peer convergence; `insta` for view-model
   snapshots (review snapshot diffs, never accept them blindly).
 - Core crates stay at 90% line coverage or above (`just cov`).
+- Code that reads outside input (files, saved bytes, pasted text) gets a fuzz target in `fuzz/` (`just fuzz`).
 
 ## The backlog
 

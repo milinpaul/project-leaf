@@ -1,0 +1,59 @@
+name: Fuzz
+
+# Feeds random and mutated input to the code that reads outside data: saved documents, workspace databases,
+# dropped files and pasted text (E08-S11, ADR-XXX-E08-S11). Never on pull requests: it runs for minutes and
+# needs nightly Rust. Weekly on main, or "Run workflow" in the Actions tab for any branch.
+on:
+  schedule:
+    - cron: "17 3 * * 1" # Mondays, 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per target
+        default: "300"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: doc_bytes
+            sanitizer: none
+          # The one target that runs C code (SQLite), so the one worth AddressSanitizer's slowdown.
+          - target: workspace_db
+            sanitizer: address
+          - target: asset_kind
+            sanitizer: none
+          - target: paste
+            sanitizer: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+      - name: Nightly Rust (cargo-fuzz needs it)
+        run: rustup toolchain install nightly --profile minimal
+      - uses: taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68 # v2.88.1
+        with:
+          tool: cargo-fuzz
+      - name: Seed corpus
+        run: cargo run -q --locked -p leaf-fixtures --example fuzz_seeds -- fuzz/corpus
+      - name: Fuzz
+        working-directory: fuzz
+        run: >-
+          cargo +nightly fuzz run --sanitizer ${{ matrix.sanitizer }} ${{ matrix.target }} --
+          -max_total_time=${{ inputs.seconds || '300' }} -timeout=5 -rss_limit_mb=2048
+      - name: Keep what it found
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-${{ matrix.target }}
+          path: fuzz/artifacts

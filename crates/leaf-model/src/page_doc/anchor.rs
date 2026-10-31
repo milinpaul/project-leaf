@@ -78,7 +78,7 @@ impl PageDoc {
     /// same way on every copy (ADR-044). Phase 0 has no sync; tests use this to check that carets
     /// and views follow other peers' edits and that copies converge.
     pub fn import_changes(&mut self, bytes: &[u8]) -> Result<(), ModelError> {
-        self.doc.import(bytes)?;
+        crate::loro_import::import(&self.doc, bytes)?;
         self.index = super::BlockIndex::build(&self.tree)?;
         self.repair()?;
         Ok(())
