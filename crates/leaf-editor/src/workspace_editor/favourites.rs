@@ -1,4 +1,4 @@
-//! Favourite pages, as the sidebar's Favourites section and the top bar's star show them (ADR 0060).
+//! Favourite pages, as the sidebar's Favourites section and the top bar's star show them (ADR-060).
 
 use leaf_core::PageId;
 use leaf_model::WorkspaceCommand;

@@ -273,6 +273,7 @@ mod image;
 mod image_row;
 mod ime;
 mod language_picker;
+mod link_menu_popover;
 mod link_popover;
 #[cfg(test)]
 mod long_document_tests;

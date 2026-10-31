@@ -166,7 +166,7 @@ impl Database {
     }
 
     /// Deletes the column's schema, which is what makes it a column. Its node stays in the order tree (a move on
-    /// another device must not bring it back) and its cells stay too (ADR 0066), unread.
+    /// another device must not bring it back) and its cells stay too (ADR-066), unread.
     fn delete_column(&mut self, column: ColumnId) -> Result<DatabaseOutcome, ModelError> {
         self.column_node(column)?;
         self.schema().delete(&column.to_string())?;

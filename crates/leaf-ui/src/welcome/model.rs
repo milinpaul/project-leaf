@@ -77,6 +77,16 @@ pub fn open_problem(name: &str, err: &StoreError) -> String {
         StoreError::SchemaTooNew { .. } => {
             format!("“{name}” was saved by a newer Leaf. Update Leaf to open it.")
         }
+        StoreError::LinkInWorkspace(link) => {
+            let what = link
+                .file_name()
+                .map_or_else(String::new, |file| file.to_string_lossy().into_owned());
+            format!(
+                "“{name}” contains a link to another place on disk (“{what}”). Leaf won't open a \
+                 workspace with links in it, so it never writes outside the folder. Remove the link \
+                 and try again."
+            )
+        }
         other => format!("Leaf couldn't open “{name}”: {other}"),
     }
 }

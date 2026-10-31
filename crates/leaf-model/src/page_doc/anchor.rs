@@ -3,9 +3,9 @@
 //! into the position that now holds the same spot in the text.
 //!
 //! An anchor holds a Loro cursor, which is tied to a character rather than a number, plus the caret
-//! it was made from. Undo can re-create a block under a new Loro container (ADR 0006), which the
+//! it was made from. Undo can re-create a block under a new Loro container (ADR-006), which the
 //! cursor cannot follow; the block keeps its `BlockId`, so the anchor falls back to the old position,
-//! clamped to the text that is there now (ADR 0015).
+//! clamped to the text that is there now (ADR-015).
 
 use leaf_core::BlockId;
 use loro::ContainerTrait;
@@ -75,7 +75,7 @@ impl PageDoc {
     /// [`PageDoc::unsaved_changes`] or [`PageDoc::to_bytes`]). The changes are reported by
     /// [`PageDoc::take_changes`] like local ones and are not undoable here. Edits made at the same
     /// time on both copies can merge into a page that breaks the invariants; it is then repaired the
-    /// same way on every copy (ADR 0044). Phase 0 has no sync; tests use this to check that carets
+    /// same way on every copy (ADR-044). Phase 0 has no sync; tests use this to check that carets
     /// and views follow other peers' edits and that copies converge.
     pub fn import_changes(&mut self, bytes: &[u8]) -> Result<(), ModelError> {
         self.doc.import(bytes)?;

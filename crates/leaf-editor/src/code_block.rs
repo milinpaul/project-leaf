@@ -1,4 +1,4 @@
-//! Code blocks (E07-S09, ADR 0054): the language picker's list, and Tab and Shift+Tab inside code,
+//! Code blocks (E07-S09, ADR-054): the language picker's list, and Tab and Shift+Tab inside code,
 //! which indent lines with spaces instead of nesting the block.
 //!
 //! A language is stored as the short name a Markdown code fence uses (`rust`, `python`), so pasting

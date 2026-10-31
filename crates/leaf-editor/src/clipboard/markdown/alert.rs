@@ -1,4 +1,4 @@
-//! GitHub's alert syntax, which Leaf uses for callouts in Markdown (E21, ADR 0070): a quote whose first
+//! GitHub's alert syntax, which Leaf uses for callouts in Markdown (E21, ADR-070): a quote whose first
 //! line is `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]`, its other lines the
 //! callout's lines.
 

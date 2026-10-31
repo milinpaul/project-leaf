@@ -1,5 +1,5 @@
 //! The clipboard fragment: copied content as versioned JSON, so it survives the trip through the
-//! system clipboard and a paste into another Leaf window, or a newer Leaf (ADR 0030).
+//! system clipboard and a paste into another Leaf window, or a newer Leaf (ADR-030).
 //!
 //! ```json
 //! {"leaf_fragment": 1, "blocks": [{"type": "heading", "level": 2,
@@ -100,7 +100,7 @@ struct WireSpan {
     code: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     link: Option<String>,
-    /// The page a page link points at (ADR 0071).
+    /// The page a page link points at (ADR-071).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     page: Option<PageId>,
 }

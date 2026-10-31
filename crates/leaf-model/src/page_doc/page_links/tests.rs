@@ -1,4 +1,4 @@
-//! Tests for page links in the page model (E10-S02, ADR 0071).
+//! Tests for page links in the page model (E10-S02, ADR-071).
 
 use leaf_core::{BlockId, PageId};
 use loro::{Container, ExpandType, LoroDoc, LoroText, StyleConfig, ValueOrContainer};

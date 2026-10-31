@@ -155,7 +155,7 @@ fn deleting_the_slash_or_moving_away_closes_it() {
 #[test]
 fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
     let items = all_items();
-    assert_eq!(labels(&filter(&items, "")).len(), 18);
+    assert_eq!(labels(&filter(&items, "")).len(), 19);
     assert_eq!(
         labels(&filter(&items, "h")),
         vec![

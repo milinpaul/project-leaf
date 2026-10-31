@@ -6,7 +6,7 @@
 //!   from one shown position to another lands next to the column it was dropped on. Hidden columns keep their place.
 //! - A new column is named after its type ("Text", then "Text 2", …), so its name never clashes.
 //! - Renaming to blank text keeps the old name.
-//! - Changing the type keeps every stored value; the table converts them for display (ADR 0066 answer 3).
+//! - Changing the type keeps every stored value; the table converts them for display (ADR-066 answer 3).
 
 use leaf_core::ColumnId;
 use leaf_model::{Column, DatabaseCommand, DatabaseOutcome, ModelError, PropertyType};

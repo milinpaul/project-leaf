@@ -1,7 +1,7 @@
 //! Two-way maps between a database's permanent column and row IDs and Loro's current `TreeID`s.
 //!
 //! Rebuilt from the IDs in node meta on load, after undo and redo, and after merging, because those can
-//! re-create nodes under new `TreeID`s (ADR 0006). A merge can leave one ID on two nodes; the first in order
+//! re-create nodes under new `TreeID`s (ADR-006). A merge can leave one ID on two nodes; the first in order
 //! counts, and [`live`] reads each ID once.
 
 use std::collections::{HashMap, HashSet};

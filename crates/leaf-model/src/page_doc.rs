@@ -2,7 +2,7 @@
 //!
 //! One `PageDoc` owns one Loro document holding the `"blocks"` tree. Like the workspace, it talks
 //! about blocks by permanent `BlockId`s and keeps Loro's `TreeID`s private, because undo and redo
-//! can re-create nodes under new ones (ADR 0006).
+//! can re-create nodes under new ones (ADR-006).
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -30,7 +30,7 @@ pub struct PageDoc {
     index: BlockIndex,
     undo: UndoManager,
     saved: SavedVersion,
-    /// The version last recorded as the page's edited time (ADR 0059). Same bookkeeping as `saved`.
+    /// The version last recorded as the page's edited time (ADR-059). Same bookkeeping as `saved`.
     stamped: SavedVersion,
     pending: Arc<std::sync::Mutex<changes::Pending>>,
     _events: loro::Subscription,

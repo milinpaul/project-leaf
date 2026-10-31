@@ -2,7 +2,7 @@
 //! blocks, and pasting one back at the caret.
 //!
 //! The editor never touches the system clipboard; the UI puts [`Fragment::to_json`] there and hands
-//! back what it reads (ADR 0030). Pasting is one undo step, whatever it takes:
+//! back what it reads (ADR-030). Pasting is one undo step, whatever it takes:
 //!
 //! - **Text** from inside one block goes in at the caret, keeping its formatting.
 //! - **A whole block** is copied as a block, kind and all (E17-S05): all of its text selected, or just
@@ -485,7 +485,7 @@ pub(crate) fn insert_spans(
     let marks_allowed = doc.kind(block)?.allows_marks();
     for span in spans.iter().filter(|s| !s.text.is_empty()) {
         // A page link pastes as a link where marks are allowed; a placeholder without a page (or in code)
-        // is a link to nothing and is left out (ADR 0071).
+        // is a link to nothing and is left out (ADR-071).
         let link = span.marks.page.filter(|_| marks_allowed);
         let text: String = span.text.chars().filter(|&c| c != PAGE_LINK).collect();
         let len = match link {

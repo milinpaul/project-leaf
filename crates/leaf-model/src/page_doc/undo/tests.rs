@@ -235,7 +235,7 @@ fn nothing_to_undo_or_redo_and_loaded_history_is_not_undoable() {
 
 #[test]
 fn redoing_a_kind_change_on_a_re_created_block_keeps_its_properties() {
-    // Regression (ADR 0007): undo both steps, then redo both. Redoing the insert re-creates the block
+    // Regression (ADR-007): undo both steps, then redo both. Redoing the insert re-creates the block
     // under a new TreeID; the kind change's properties must still land on it.
     for to in [
         BlockKind::Todo { checked: true },

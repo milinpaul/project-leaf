@@ -49,6 +49,12 @@ pub enum StoreError {
     #[error("{} is already open in another Leaf window", .0.display())]
     AlreadyOpen(PathBuf),
 
+    /// The workspace folder, or its `assets/` or `search/` folder, holds a link (symlink or
+    /// junction) at this path. Leaf would write through it to wherever it points, so the workspace
+    /// is refused and left as it is (ADR-074).
+    #[error("{} is a link to another place; Leaf only opens workspaces without links", .0.display())]
+    LinkInWorkspace(PathBuf),
+
     /// A file offered as an image isn't one Leaf recognises (PNG, JPEG, GIF, WebP, BMP, TIFF, AVIF,
     /// HEIC or SVG). Its type is read from its content, not its name.
     #[error("not an image Leaf can store")]

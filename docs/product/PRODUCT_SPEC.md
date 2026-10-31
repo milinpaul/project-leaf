@@ -75,7 +75,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
   - **Saved views** (E22, after the table): tabs above a database, each a table or a board with its own layout,
     sort, filters, hidden properties, widths and grouping. Add, rename, duplicate, reorder and delete views.
   - **Board view** (E22): cards in columns, one per option of a select property (plus "No value"), in the option
-    order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR 0075).
+    order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR-075).
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
 - **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
@@ -125,6 +125,7 @@ Mobile; P2P collaboration (maybe).
 | Copy or paste an action item as Markdown | Written as `- [ ] Send invoice (due 2026-10-31 14:00, high)` (`(action item)` when it has no date or priority); pasting such a line makes an action item. Other brackets stay text, and plain `- [ ]` lines stay to-dos. |
 | Copy a table, or selected cells | Other apps get a Markdown table (plain text: tab-separated rows); pasted back into Leaf it is a table again. |
 | Paste a lone web address (`https://…`, `www.…`) | It goes in as a link whose text is the address; over selected text, that text becomes a link to it. Into a code block it stays plain text. |
+| `[[` typed in text (not code) | Opens a list of pages under it, filtered as you type (fuzzy, by title, with each page's icon and where it lives); pages in the trash and the open page aren't offered. Up/Down choose, `Enter` or a click links the page in place of the `[[` and what was typed (one undo step), `Escape` closes it and leaves the text. When no title is exactly what was typed, the last entry is "New page", which makes that page inside the open one and links it. The slash menu's "Link to page" opens the same list. |
 | A link to a page in the text (E10) | Shown as the page's icon and current title, underlined in the link colour; a page in the trash shows greyed as "Title (in trash)", a deleted one as "Deleted page". A plain click opens the page (not for a deleted one). The caret steps over it in one press, `Backspace`/`Delete` remove it whole, and typing beside it never joins it. Copied out as `[[Title]]` (Markdown) or the title (plain text); pasting `[[Title]]` links it when exactly one page outside the trash has that title. Search leaves links out. |
 | Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |
@@ -133,7 +134,7 @@ Mobile; P2P collaboration (maybe).
 | `Enter` in a table cell | Line break inside the cell. |
 | `Backspace` at start of a table cell / `Delete` at its end | Nothing (cells never merge). If every cell is empty, `Backspace` deletes the table (one undo step). |
 | `Backspace` / `Delete` next to a table, or with it selected | The table is selected first; pressed again, it is deleted (one undo step). |
-| Text selected (mouse or keyboard), in one block or across blocks | A floating bar appears just above the selection (below it when there is no room): Turn into, Bold, Italic, Strikethrough, Code, Link. A mark button is on when all the selected text has the mark; a click toggles it like its shortcut and keeps the selection. Link opens the link popover; Turn into changes every block the selection touches. No mark buttons in a code block, no Turn into when a selected block can't change kind. The bar goes when the selection collapses, while dragging, or when a menu or the link popover is open. |
+| Text selected (mouse or keyboard), in one block or across blocks | A floating bar appears just above the selection (below it when there is no room): Turn into, Bold, Italic, Strikethrough, Code, Link, and Link to page (a page icon; for words in one block, E10-S10: it opens the `[[` page list searching for the selected words, and the chosen page's link replaces them in one undo step; Escape gives the words back). A mark button is on when all the selected text has the mark; a click toggles it like its shortcut and keeps the selection. Link opens the link popover; Turn into changes every block the selection touches. No mark buttons in a code block, no Turn into when a selected block can't change kind. The bar goes when the selection collapses, while dragging, or when a menu or the link popover is open. |
 | Selecting from one cell into another | Selects whole cells (the rectangle between them). `Backspace`/`Delete`/typing empty them, copy gives them as a table, formatting applies to all of it. A selection reaching from outside into a table takes the table whole. |
 
 Numbered list numbers are computed when rendering, never stored.

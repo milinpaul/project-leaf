@@ -1,4 +1,4 @@
-//! Tables (E16, ADR 0061): building a grid of cells and reshaping it by rows and columns.
+//! Tables (E16, ADR-061): building a grid of cells and reshaping it by rows and columns.
 //!
 //! A table block holds row blocks, which hold cell blocks; a cell is a text block like any other, so
 //! its text and marks change through the usual text commands. Columns are positions within rows.

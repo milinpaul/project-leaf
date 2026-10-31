@@ -9,6 +9,7 @@ use crate::assets::{self, Asset, Assets};
 use crate::{Store, StoreError};
 
 mod folders;
+mod links;
 
 pub use folders::{FolderKind, NameProblem, inspect, new_workspace_path};
 
@@ -133,9 +134,14 @@ impl Workspace {
         Store::open(&self.root.join(DATABASE))
     }
 
-    /// Takes the lock first, so a second app can't touch the database at all, then makes sure the
-    /// subfolders exist (a user may have deleted an empty one) and opens the database.
+    /// Refuses a folder holding a link (see `links`), then takes the lock, so a second app can't
+    /// touch the database at all, then makes sure the subfolders exist (a user may have deleted an
+    /// empty one) and opens the database.
     fn open_folder(path: &Path) -> Result<Self, StoreError> {
+        // Before the lock: opening the lock file would already follow a planted link.
+        if let Some(link) = links::first_link(path)? {
+            return Err(StoreError::LinkInWorkspace(link));
+        }
         let lock = File::options()
             .create(true)
             .truncate(false)

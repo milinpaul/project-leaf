@@ -5,18 +5,18 @@
 | Area | Choice | Notes |
 |---|---|---|
 | Language | Rust 1.99.1, edition 2024 | Pinned in `rust-toolchain.toml`; CI and dev machines use the same version. Bump deliberately in its own PR. |
-| UI | GPUI + `gpui-component` (Longbridge) | `gpui-component =0.8.1` with the gpui it pins (`gpui-pre =0.3.10`) and `gpui-pre-platform =0.3.10`; see [ADR 0002](../adr/0002-gpui-and-gpui-component.md). All GPUI usage stays inside `leaf-ui` and `leaf-app`. |
+| UI | GPUI + `gpui-component` (Longbridge) | `gpui-component =0.8.1` with the gpui it pins (`gpui-pre =0.3.10`) and `gpui-pre-platform =0.3.10`; see [ADR-002](../adr/ADR-002-E00-S03-gpui-and-gpui-component.md). All GPUI usage stays inside `leaf-ui` and `leaf-app`. |
 | Document model | `loro` 1.x | `LoroTree` for page and block hierarchy, `LoroText` for rich text, `UndoManager` for undo. |
 | Persistence | SQLite via `rusqlite` (`bundled`) | Stores Loro snapshots + incremental updates, plus index tables. |
-| Search | SQLite FTS5 (in the bundled SQLite, via `rusqlite`) | Full-text index in its own disposable file, rebuilt from documents if lost ([ADR 0019](../adr/0019-sqlite-fts5-search.md)). |
+| Search | SQLite FTS5 (in the bundled SQLite, via `rusqlite`) | Full-text index in its own disposable file, rebuilt from documents if lost ([ADR-019](../adr/ADR-019-E11-S01-sqlite-fts5-search.md)). |
 | Markdown (Phase 1) | `comrak` | Import/export only. |
-| IDs | `uuid` v7 for pages and blocks (`PageId`, `BlockId`); BLAKE3 hash for assets (`AssetId`) | In `leaf-core`; see [BLOCK_MODEL.md](BLOCK_MODEL.md) and [ADR 0006](../adr/0006-stable-block-ids.md). On `wasm32-unknown-unknown`, `uuid`'s `js` feature supplies the clock and randomness. |
+| IDs | `uuid` v7 for pages and blocks (`PageId`, `BlockId`); BLAKE3 hash for assets (`AssetId`) | In `leaf-core`; see [BLOCK_MODEL.md](BLOCK_MODEL.md) and [ADR-006](../adr/ADR-006-E02-S10-stable-block-ids.md). On `wasm32-unknown-unknown`, `uuid`'s `js` feature supplies the clock and randomness. |
 | Hashing | `blake3` | Content-addressed image assets. |
-| Text segmentation | `unicode-segmentation` | Grapheme and word boundaries (UAX #29) for caret movement in `leaf-editor`; see [ADR 0015](../adr/0015-caret-anchors-and-grapheme-motion.md). |
-| Emoji data | `emojis` | Emoji list, names, groups and GitHub shortcodes for the page icon picker in `leaf-editor`; pure data, wasm-ok; see [ADR 0034](../adr/0034-page-icon-picker.md). |
+| Text segmentation | `unicode-segmentation` | Grapheme and word boundaries (UAX #29) for caret movement in `leaf-editor`; see [ADR-015](../adr/ADR-015-E04-S02-caret-anchors-and-grapheme-motion.md). |
+| Emoji data | `emojis` | Emoji list, names, groups and GitHub shortcodes for the page icon picker in `leaf-editor`; pure data, wasm-ok; see [ADR-034](../adr/ADR-034-E06-S05-page-icon-picker.md). |
 | Errors | `thiserror` (libraries), `anyhow` (app binary only) | |
 | Logging | `tracing`, `tracing-subscriber` | |
-| Serialization | `serde`, `serde_json` | Settings and the clipboard fragment format (`leaf-editor`, ADR 0030). |
+| Serialization | `serde`, `serde_json` | Settings and the clipboard fragment format (`leaf-editor`, ADR-030). |
 | Later: server | `axum`, `tokio`, Postgres, S3 | Cloud sync and team workspaces. |
 
 ## Crate layout
@@ -44,7 +44,7 @@ crates/
 4. Dependency direction: `core ← model ← editor ← ui ← app`, with `store`, `export`, `search` depending only on `core`/`model`.
 5. Every new third-party dependency needs a one-line justification in the PR and must pass `cargo-deny`.
 6. No git dependencies and no new duplicate crate versions without a reasoned entry in `deny.toml`; CI actions are pinned
-   to commit SHAs (ADR 0073).
+   to commit SHAs (ADR-073).
 
 ## Workspace `Cargo.toml` (starter)
 

@@ -39,15 +39,15 @@ pub struct PageMeta {
     pub full_width: bool,
     /// When the page was created, in Unix milliseconds.
     pub created_at: i64,
-    /// When the page's blocks, title, icon or cover last changed, in Unix milliseconds (ADR 0059).
+    /// When the page's blocks, title, icon or cover last changed, in Unix milliseconds (ADR-059).
     /// Pages written before Leaf recorded it read as their creation time.
     pub edited_at: i64,
     /// When the page was moved to the trash, in Unix milliseconds. `None` means not in the trash.
     /// A page inside a trashed page is hidden too, even if its own value is `None`.
     pub trashed_at: Option<i64>,
-    /// The database this page is, when it is a full-page database (Phase 1, ADR 0066).
+    /// The database this page is, when it is a full-page database (Phase 1, ADR-066).
     pub database: Option<DatabaseId>,
-    /// The database this page is a row of. The sidebar leaves such pages out (ADR 0066 answer 1); the table
+    /// The database this page is a row of. The sidebar leaves such pages out (ADR-066 answer 1); the table
     /// lists them.
     pub row_of: Option<DatabaseId>,
 }

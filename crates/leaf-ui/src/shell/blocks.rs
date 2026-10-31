@@ -1,6 +1,6 @@
 //! The open page: the header (icon, cover, title), then the blocks, as a virtual list drawn by the
 //! rich text view. A block's type is changed with the slash menu, the block handle's "Turn into" or
-//! Markdown shortcuts (there is no toolbar, ADR 0057). The page takes the keyboard itself (E07-S03): keys become editor actions
+//! Markdown shortcuts (there is no toolbar, ADR-057). The page takes the keyboard itself (E07-S03): keys become editor actions
 //! (`page_keys`), typed text and input-method drafts arrive through the platform's text input
 //! (`ime`), and the mouse places the caret and selects (`rich_text`). Every decision is
 //! `PageEditor`'s; this module only forwards and draws.
@@ -191,6 +191,7 @@ impl Shell {
         self.blink_while(caret.is_some(), cx);
         // Placed by where the `/` was drawn last frame: this frame's layout is only known once painted.
         let slash = self.render_slash_popover(window, cx);
+        let link_menu = self.render_link_menu_popover(window, cx);
         let format_bar = self.render_format_bar(window, cx);
         self.blocks.painted.clear();
         self.blocks.drawn.clear();
@@ -253,6 +254,7 @@ impl Shell {
             .children(tones)
             .children(task_picker)
             .children(slash)
+            .children(link_menu)
             .children(format_bar);
         let page = Self::with_block_menu_action(page, cx);
         let page = Self::with_task_picker_actions(page, cx);

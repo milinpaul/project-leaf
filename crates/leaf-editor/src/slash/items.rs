@@ -1,7 +1,7 @@
 //! What the slash menu offers, and how a query picks and orders it.
 //!
 //! The filter is a small fuzzy match, written here rather than taken from a crate: the list is a
-//! dozen entries, and the ranking rules are few enough to state and test (ADR 0026). A query matches
+//! dozen entries, and the ranking rules are few enough to state and test (ADR-026). A query matches
 //! an entry when its letters appear in order in the entry's name or one of its keywords. Better
 //! matches come first:
 //!
@@ -34,6 +34,8 @@ pub enum SlashAction {
     Image,
     /// Adds a 3 × 3 table with a header row, in place of an empty line or below the block (E16-S04).
     Table,
+    /// Types `[[` in place of the `/` and query and opens the page-link menu there (E10-S05).
+    LinkToPage,
 }
 
 /// A callout block of `tone`.
@@ -125,6 +127,11 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             label: "Table",
             keywords: &["grid", "rows", "|"],
             action: SlashAction::Table,
+        },
+        SlashItem {
+            label: "Link to page",
+            keywords: &["page", "mention", "[["],
+            action: SlashAction::LinkToPage,
         },
     ]
 }

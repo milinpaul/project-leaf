@@ -1,11 +1,11 @@
 //! The block menu: what the ⋮⋮ handle beside a block (or `Cmd/Ctrl+/`) opens. It offers the block
 //! actions (Turn into, Duplicate, Move up, Move down, Delete) for that block, or for the selection
-//! when the block is part of it (ADR 0028).
+//! when the block is part of it (ADR-028).
 //!
 //! Like the slash menu, the editor keeps only what can't be read from the page: which block the menu
 //! is for and which entry is highlighted. Which entries are available is worked out each time, so the
 //! menu never offers a move the page no longer allows. Keys and clicks both go through here, so the
-//! whole menu is testable without a window; the UI only draws it (ADR 0041).
+//! whole menu is testable without a window; the UI only draws it (ADR-041).
 
 use leaf_core::BlockId;
 use leaf_model::BlockKind;

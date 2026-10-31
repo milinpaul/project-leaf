@@ -1,6 +1,6 @@
 //! Databases in the workspace (Phase 1, E09-S03): database pages, and rows that are pages.
 //!
-//! A database's own document decides which rows exist (ADR 0066). Each row is also a page in the workspace,
+//! A database's own document decides which rows exist (ADR-066). Each row is also a page in the workspace,
 //! under the database's page and left out of the sidebar, and its trash state follows the row:
 //! - adding a row creates its page and the row;
 //! - deleting a row deletes the row and trashes its page;

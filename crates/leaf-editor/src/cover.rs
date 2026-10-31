@@ -1,6 +1,6 @@
 //! Page covers: the built-in catalogue, and what a page's stored cover name means.
 //!
-//! A page stores its cover as a name such as `builtin:dawn` (ADR 0045). The model keeps any name it is
+//! A page stores its cover as a name such as `builtin:dawn` (ADR-045). The model keeps any name it is
 //! given; this module decides which names this version can draw. A name it doesn't know, from a newer
 //! version or a future "upload your own", stays on the page untouched and reads as
 //! [`PageCover::Unknown`], which the UI shows as a plain band.

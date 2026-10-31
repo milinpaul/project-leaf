@@ -4,7 +4,7 @@
 //! The `/` and the query are ordinary typed text in the page, so they show while the menu is open and
 //! stay if the menu closes without applying. The editor only remembers where the `/` is (an anchor,
 //! so edits elsewhere don't lose it) and which entry is highlighted. Everything else is read from the
-//! text each time, so the menu can never disagree with what is on the page (ADR 0026).
+//! text each time, so the menu can never disagree with what is on the page (ADR-026).
 
 mod items;
 
@@ -149,6 +149,25 @@ impl PageEditor {
                 })?;
                 self.finish()?;
                 self.request_image(caret)?;
+                return Ok(Some(caret));
+            }
+            SlashAction::LinkToPage => {
+                self.doc.as_separate_step(|doc| {
+                    doc.apply(PageCommand::ReplaceText {
+                        id: block,
+                        range: typed.clone(),
+                        text: "[[".into(),
+                    })
+                })?;
+                let caret = self.set_caret(Caret {
+                    block,
+                    at: typed.start + 2,
+                })?;
+                self.finish()?;
+                self.open_link_menu(Caret {
+                    block,
+                    at: typed.start,
+                })?;
                 return Ok(Some(caret));
             }
             SlashAction::Table => {

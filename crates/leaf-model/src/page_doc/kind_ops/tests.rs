@@ -36,7 +36,7 @@ fn set_prop(page: &mut PageDoc, id: BlockId, prop: BlockProp) -> Result<PageOutc
     page.apply(PageCommand::SetProp { id, prop })
 }
 
-/// The block's meta, where its properties live (ADR 0007).
+/// The block's meta, where its properties live (ADR-007).
 fn props(page: &PageDoc, id: BlockId) -> LoroMap {
     page.tree.get_meta(page.node(id).unwrap()).unwrap()
 }

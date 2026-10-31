@@ -147,7 +147,7 @@ impl WorkspaceEditor {
     /// Records the edited time of every page that changed since the last call: its blocks (including
     /// undo and redo), title, icon or cover. The UI calls it from its save timer, before saving, so the
     /// recorded time is within a tick of the change. Each page gets its own commit that undo skips
-    /// (ADR 0059).
+    /// (ADR-059).
     pub fn stamp_edits(&mut self, now: i64) -> Result<(), EditorError> {
         let mut edited: Vec<PageId> = self.retitled.drain().collect();
         edited.extend(
@@ -267,6 +267,7 @@ mod breadcrumb;
 mod databases;
 mod favourites;
 mod last_page;
+mod link_menu;
 mod page_links;
 mod page_menu;
 mod page_width;
@@ -274,6 +275,7 @@ mod trash;
 mod tree;
 
 pub use breadcrumb::{Crumb, MAX_CRUMBS};
+pub use link_menu::{LinkChoice, LinkMenu, MAX_LINK_CHOICES};
 pub use page_menu::{MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon};
 pub use trash::{TrashItem, TrashList, trashed_ago};
 pub use tree::DropPlace;
