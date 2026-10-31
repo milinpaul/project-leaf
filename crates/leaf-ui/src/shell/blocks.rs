@@ -270,7 +270,9 @@ impl Shell {
                     .child(input)
                     .child(Self::wheel_glide_layer(cx))
                     .child(Self::select_scroll_layer(cx))
-                    .child(rows),
+                    .child(rows)
+                    // Where you are in the page, at its right edge (E07-S14).
+                    .child(crate::scrollbar::slim(&self.blocks.list.state, cx).id("page-scrollbar")),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
             .child(menu)

@@ -249,6 +249,7 @@ impl Shell {
         div()
             .id("page-tree-area")
             .debug_selector(|| "page-tree-area".into())
+            .relative()
             .flex_1()
             .min_h_0()
             .on_drag_move(cx.listener(|shell, event: &DragMoveEvent<DraggedPage>, _, cx| {
@@ -261,6 +262,7 @@ impl Shell {
                 shell.drop_page(dragged.page, DropPlace::End, cx);
             }))
             .child(list)
+            .child(crate::scrollbar::slim(&self.tree.scroll, cx).id("page-tree-scrollbar"))
             .into_any_element()
     }
 }
