@@ -59,6 +59,7 @@ gpui_kit_assets::icon_assets!(
         Heading3,
         Image,
         ImagePlus,
+        Info,
         Italic,
         Link,
         List,

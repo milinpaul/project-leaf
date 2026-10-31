@@ -179,8 +179,8 @@ impl PageEditor {
         let caret = self.doc.as_one_step(|doc| -> Result<Caret, EditorError> {
             let at = delete_span(doc, &order, start, end)?;
             match doc.kind(at.block)? {
-                // A cell takes a line break; it is never split.
-                BlockKind::Code { .. } | BlockKind::TableCell => {
+                // A cell takes a line break; it is never split. So do code blocks and callouts.
+                BlockKind::Code { .. } | BlockKind::TableCell | BlockKind::Callout { .. } => {
                     doc.apply(PageCommand::InsertText {
                         id: at.block,
                         pos: at.at,
@@ -221,11 +221,17 @@ impl PageEditor {
         let len = text.chars().count();
         let at = selection.as_ref().map_or(caret.at, |s| s.range.start);
         let outcome = match kind {
-            BlockKind::Code { .. } if modified => self.leave_code(block, 0)?,
+            BlockKind::Code { .. } | BlockKind::Callout { .. } if modified => self.leave_block(block, 0)?,
             BlockKind::Code { .. } if selection.is_none() && caret.at == len && text.ends_with("\n\n") => {
-                self.leave_code(block, 2)?
+                self.leave_block(block, 2)?
             }
-            BlockKind::Code { .. } => {
+            // A callout holds lines: Enter on an empty last line (or in an empty callout) leaves it.
+            BlockKind::Callout { .. }
+                if selection.is_none() && caret.at == len && (text.is_empty() || text.ends_with('\n')) =>
+            {
+                self.leave_block(block, usize::from(!text.is_empty()))?
+            }
+            BlockKind::Code { .. } | BlockKind::Callout { .. } => {
                 let range = selection.map_or(caret.at..caret.at, |s| s.range);
                 self.doc.apply(PageCommand::ReplaceText {
                     id: block,
@@ -258,8 +264,9 @@ impl PageEditor {
         Ok(KeyOutcome::Caret(outcome))
     }
 
-    /// Leaves a code block into a new paragraph below it, after removing `trim` trailing newlines.
-    fn leave_code(&mut self, block: BlockId, trim: usize) -> Result<Caret, EditorError> {
+    /// Leaves a code block or callout into a new paragraph below it, after removing `trim` trailing
+    /// newlines.
+    fn leave_block(&mut self, block: BlockId, trim: usize) -> Result<Caret, EditorError> {
         let len = self.doc.plain_text(block)?.map_or(0, |t| t.chars().count());
         self.doc.as_one_step(|doc| {
             if trim > 0 {

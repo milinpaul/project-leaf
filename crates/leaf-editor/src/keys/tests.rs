@@ -535,4 +535,5 @@ fn enter_on_a_divider_adds_a_paragraph_below() {
     assert_eq!(below.at, 0);
 }
 
+mod callouts;
 mod tasks;

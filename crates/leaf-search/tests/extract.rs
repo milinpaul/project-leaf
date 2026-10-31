@@ -167,7 +167,7 @@ fn unknown_kinds_are_indexed_by_their_text_and_left_untouched() {
     tree.enable_fractional_index(0);
     let meta = tree.get_meta(tree.create(None).unwrap()).unwrap();
     meta.insert("id", with_text.to_string()).unwrap();
-    meta.insert("type", "callout").unwrap();
+    meta.insert("type", "sticky_note").unwrap();
     meta.ensure_mergeable_text("text")
         .unwrap()
         .insert(0, "Remember the keys")
@@ -183,7 +183,7 @@ fn unknown_kinds_are_indexed_by_their_text_and_left_untouched() {
     let page = new_page(&mut ws, None, "From the future");
     let text = page_text(&ws, page, &doc).unwrap().unwrap();
 
-    assert_eq!(rows(&text.blocks), [("callout", "Remember the keys")]);
+    assert_eq!(rows(&text.blocks), [("sticky_note", "Remember the keys")]);
     assert_eq!(text.blocks[0].block, with_text);
     assert!(
         !doc.has_unsaved_changes(),

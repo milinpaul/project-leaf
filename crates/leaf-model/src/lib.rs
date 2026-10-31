@@ -9,6 +9,7 @@
 //! Depends only on `leaf-core`. Unknown data from newer app versions is preserved, never dropped.
 
 mod block_kind;
+mod callout;
 mod command;
 mod database;
 mod error;
@@ -21,6 +22,7 @@ mod text;
 mod workspace;
 
 pub use block_kind::{BlockKind, BlockProp};
+pub use callout::CalloutTone;
 pub use command::{Outcome, WorkspaceCommand};
 pub use database::{
     CellValue, Column, Database, DatabaseChanges, DatabaseCommand, DatabaseOutcome, Extra, Filter, FilterOp,

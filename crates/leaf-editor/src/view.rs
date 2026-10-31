@@ -45,6 +45,11 @@ pub enum BlockStyle {
     },
     /// A quotation.
     Quote,
+    /// A callout, drawn in its tone's colours (E21).
+    Callout {
+        /// Its tone; one from a newer version is drawn like a note.
+        tone: leaf_model::CalloutTone,
+    },
     /// Code, shown in a monospace font.
     Code {
         /// Language label; may be empty.
@@ -108,6 +113,7 @@ impl BlockStyle {
                 priority,
             },
             BlockKind::Quote => Self::Quote,
+            BlockKind::Callout { tone } => Self::Callout { tone },
             BlockKind::Code { language } => Self::Code { language },
             BlockKind::Divider => Self::Divider,
             BlockKind::Image { asset, width, alt } => Self::Image { asset, width, alt },
