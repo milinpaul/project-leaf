@@ -44,6 +44,9 @@ anyhow = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
 embed-resource = "3"
 tracing = "0.1"
+# XML parser to check an SVG before GPUI draws it (ADR-078). The same version usvg uses inside
+# GPUI, so no new crate; pure Rust, no dependencies.
+roxmltree = "0.21"
 # Local time zone offset for the top bar's "edited" hover time (E18-S03). Already in the tree through
 # gpui-component (with its `clock` feature); no new crate.
 chrono = { version = "0.4", default-features = false, features = ["clock"] }

@@ -97,9 +97,9 @@ impl Storage {
         self.folder.import_asset(bytes, now_ms()).map(|asset| asset.id)
     }
 
-    /// Where the picture `id` is kept, for drawing it.
-    pub(super) fn asset_path(&self, id: AssetId) -> std::path::PathBuf {
-        self.folder.asset_path(id)
+    /// Where the picture `id` is kept, if it is safe to draw (an SVG is checked first, ADR-078).
+    pub(super) fn drawable_asset(&self, id: AssetId) -> Result<std::path::PathBuf, leaf_store::SvgProblem> {
+        self.folder.drawable_asset(id)
     }
 
     /// Copies the image file at `path` into the workspace's `assets/` folder and returns its id.

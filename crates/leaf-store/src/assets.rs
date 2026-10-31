@@ -19,8 +19,10 @@ use rusqlite::{OptionalExtension, params};
 use crate::{Store, StoreError};
 
 mod kind;
+mod svg;
 
 pub use kind::image_mime;
+pub use svg::{SvgProblem, check_svg};
 
 /// What the workspace knows about one stored image.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -93,6 +95,36 @@ pub(crate) fn find(store: &Store, id: AssetId) -> Result<Option<Asset>, StoreErr
 /// Where the file for `id` lives inside `folder`.
 pub(crate) fn path_of(folder: &Path, id: AssetId) -> PathBuf {
     folder.join(id.to_string())
+}
+
+/// Why [`check_drawable`] doesn't clear a file.
+pub(crate) enum Drawable {
+    /// The file couldn't be read (missing, permissions); nothing is known about it.
+    Unreadable,
+    /// It is an SVG Leaf won't hand to GPUI.
+    Refused(SvgProblem),
+}
+
+/// Clears the image file at `path` for drawing: raster pictures by their first bytes, anything else
+/// (which GPUI would read as an SVG) by [`check_svg`]. Only the first bytes of a raster file are read.
+pub(crate) fn check_drawable(path: &Path) -> Result<(), Drawable> {
+    use std::io::Read as _;
+    let mut file = fs::File::open(path).map_err(|_| Drawable::Unreadable)?;
+    let mut head = Vec::new();
+    (&mut file)
+        .take(64)
+        .read_to_end(&mut head)
+        .map_err(|_| Drawable::Unreadable)?;
+    if image_mime(&head).is_some_and(|mime| mime != "image/svg+xml") {
+        return Ok(());
+    }
+    let size = file.metadata().map_err(|_| Drawable::Unreadable)?.len();
+    if usize::try_from(size).map_or(true, |size| size > svg::MAX_BYTES) {
+        return Err(Drawable::Refused(SvgProblem::TooLarge));
+    }
+    let mut bytes = head;
+    file.read_to_end(&mut bytes).map_err(|_| Drawable::Unreadable)?;
+    check_svg(&bytes).map_err(Drawable::Refused)
 }
 
 /// Whether `path` already holds exactly the bytes named `id`. A damaged or truncated copy (from a
