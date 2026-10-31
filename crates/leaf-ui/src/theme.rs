@@ -125,8 +125,8 @@ pub const DARK: Palette = Palette {
     danger: "#FF7B72",
 };
 
-/// The bundled font files, embedded so Leaf needs nothing installed. Inter and JetBrains Mono are
-/// under the SIL Open Font License; the licences sit next to the files.
+/// The bundled font files, embedded so Leaf needs nothing installed: Inter and the code face. Both
+/// are under the SIL Open Font License; the licences sit next to the files.
 const FONTS: [&[u8]; 7] = [
     include_bytes!("../assets/fonts/Inter-Regular.ttf"),
     include_bytes!("../assets/fonts/Inter-Italic.ttf"),
@@ -154,12 +154,13 @@ pub fn install(cx: &mut App) {
         // The system font stands in; the app still works, only the look is off.
         eprintln!("leaf: could not load the bundled fonts: {err:#}");
     }
-    let mut theme = Theme::default();
-    theme.light_theme = Rc::new(config(ThemeMode::Light, &LIGHT));
-    theme.dark_theme = Rc::new(config(ThemeMode::Dark, &DARK));
-    theme.font_family = UI_FONT.into();
-    theme.mono_font_family = CODE_FONT.into();
-    cx.set_global(theme);
+    cx.set_global(Theme {
+        light_theme: Rc::new(config(ThemeMode::Light, &LIGHT)),
+        dark_theme: Rc::new(config(ThemeMode::Dark, &DARK)),
+        font_family: UI_FONT.into(),
+        mono_font_family: CODE_FONT.into(),
+        ..Theme::default()
+    });
 }
 
 /// Switches to the appearance the owner chose in Settings (following the system by default;

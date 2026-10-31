@@ -239,7 +239,7 @@ fn callout_text_and_icons_stay_readable_in_every_tone() {
 /// listing never runs. (The test platform's text system lists no fonts, so that the bundled files hold
 /// these faces is checked from the files themselves, above.)
 #[gpui::test]
-fn the_library_setup_finds_leafs_fonts_already_in_place(cx: &mut TestAppContext) {
+fn the_library_setup_finds_the_leaf_fonts_in_place(cx: &mut TestAppContext) {
     cx.update(|cx| {
         super::install(cx);
         gpui_component::init(cx);
