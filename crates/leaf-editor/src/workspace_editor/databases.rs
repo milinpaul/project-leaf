@@ -16,7 +16,7 @@ use leaf_core::{DatabaseId, PageId};
 use leaf_model::{Database, DatabaseCommand, ModelError, Outcome, WorkspaceCommand};
 
 use super::{EditorError, WorkspaceEditor};
-use crate::DatabaseEditor;
+use crate::{DatabaseEditor, TableView};
 
 impl WorkspaceEditor {
     /// Adds an empty database page at the end of `parent`'s pages (or the top level), with its database
@@ -41,7 +41,7 @@ impl WorkspaceEditor {
             unreachable!("CreateDatabasePage always reports the page it created");
         };
         self.databases
-            .insert(database, DatabaseEditor::new(Database::new()));
+            .insert(database, DatabaseEditor::new(starter_database()?));
         Ok((page, database))
     }
 
@@ -67,6 +67,23 @@ impl WorkspaceEditor {
     /// Every loaded database, for saving.
     pub fn loaded_databases(&self) -> impl Iterator<Item = (DatabaseId, &Database)> {
         self.databases.iter().map(|(id, db)| (*id, db.database()))
+    }
+
+    /// The database as a table, with each row's title from its page (E09-S05). `offset_minutes` is the device's
+    /// time zone, for dates.
+    pub fn database_view(&mut self, id: DatabaseId, offset_minutes: i32) -> Result<TableView, EditorError> {
+        let workspace = &self.workspace;
+        let database = self
+            .databases
+            .get_mut(&id)
+            .ok_or(EditorError::DatabaseNotLoaded(id))?;
+        let title = |row| workspace.page(row).map(|meta| meta.title).unwrap_or_default();
+        Ok(database.view(title, offset_minutes)?)
+    }
+
+    /// Reads the cells of up to `rows` more rows of a loaded database; returns whether all are read.
+    pub fn read_database(&mut self, id: DatabaseId, rows: usize) -> Result<bool, EditorError> {
+        Ok(self.loaded_mut(id)?.read_more(rows)?)
     }
 
     /// The database `page` is, when it is a database page.
@@ -182,6 +199,18 @@ impl WorkspaceEditor {
         }
         Ok(())
     }
+}
+
+/// What a new database starts with: a multi-select "Tags" column beside the title, as Notion's do, so there is
+/// something to fill in. Loaded back from its bytes so making it isn't an undo step.
+fn starter_database() -> Result<Database, ModelError> {
+    let mut db = Database::new();
+    db.apply(DatabaseCommand::AddColumn {
+        index: 0,
+        name: "Tags".into(),
+        kind: leaf_model::PropertyType::MultiSelect,
+    })?;
+    Database::from_bytes(&db.to_bytes()?)
 }
 
 #[cfg(test)]

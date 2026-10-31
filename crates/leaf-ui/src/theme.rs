@@ -256,3 +256,28 @@ fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {
 
 #[cfg(test)]
 mod tests;
+
+/// Background and text colours of a select option's chip, by colour name (`leaf_editor::OPTION_COLORS`), soft in
+/// both modes. Names this version doesn't know (from a newer Leaf) draw as gray.
+#[expect(clippy::unreadable_literal, reason = "colours read best as plain 0xRRGGBB")]
+pub fn option_colors(name: &str, cx: &gpui::App) -> (gpui::Hsla, gpui::Hsla) {
+    use gpui_component::ActiveTheme as _;
+    // (light background, light text, dark background, dark text) as 0xRRGGBB.
+    let (lb, lf, db, df) = match name {
+        "brown" => (0xF1E6DD, 0x6B4A32, 0x4A3A2E, 0xE8D3C2),
+        "orange" => (0xFBE6D3, 0x8A4B12, 0x55391F, 0xF4C9A0),
+        "yellow" => (0xF7EDC8, 0x77600D, 0x4F4620, 0xEEDB98),
+        "green" => (0xDCEFE2, 0x235E3B, 0x24452F, 0xB7E1C3),
+        "blue" => (0xDDE9F6, 0x24507E, 0x233A52, 0xBBD3EE),
+        "purple" => (0xE9E1F4, 0x553482, 0x3A2F4F, 0xD6C6EE),
+        "pink" => (0xF6E0EA, 0x84305A, 0x4E2C3C, 0xF0C2D7),
+        "red" => (0xF8DEDC, 0x8E2B25, 0x55302D, 0xF2BFBA),
+        _ => (0xECEAE6, 0x4D4A45, 0x3A3835, 0xDAD6CF),
+    };
+    let (background, text) = if cx.theme().mode.is_dark() {
+        (db, df)
+    } else {
+        (lb, lf)
+    };
+    (gpui::rgb(background).into(), gpui::rgb(text).into())
+}

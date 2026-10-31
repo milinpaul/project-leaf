@@ -135,6 +135,13 @@ impl Shell {
             .xsmall()
             .tooltip("Add a page")
             .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.new_page(window, cx)));
+        let add_database = crate::theme::button("add-database")
+            .debug_selector(|| "add-database".into())
+            .icon(Icon::new(IconName::Table))
+            .ghost()
+            .xsmall()
+            .tooltip("Add a database")
+            .on_click(cx.listener(|shell, _: &ClickEvent, window, cx| shell.new_database(window, cx)));
         h_flex()
             .id("pages-heading")
             .group("pages-heading")
@@ -154,6 +161,8 @@ impl Shell {
                 div()
                     .opacity(0.0)
                     .group_hover("pages-heading", |style| style.opacity(1.0))
+                    .flex()
+                    .child(add_database)
                     .child(add),
             )
             .into_any_element()

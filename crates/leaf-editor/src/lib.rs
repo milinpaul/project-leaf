@@ -46,8 +46,8 @@ pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, language_label};
 pub use cover::{BuiltinCover, CoverSection, PageCover};
 pub use database_view::{
-    CellDisplay, Chip, DEFAULT_COLUMN_WIDTH, DatabaseEditor, FIRST_SCREEN_ROWS, TableView, ViewColumn,
-    ViewRow, date_label,
+    CellDisplay, CellEditor, Chip, DEFAULT_COLUMN_WIDTH, DatabaseEditor, FIRST_SCREEN_ROWS, OPTION_COLORS,
+    OptionChoice, OptionPicker, TableView, TextCommit, ViewColumn, ViewRow, date_label,
 };
 pub use drag::{BlockDrop, RowBox};
 pub use edited::{edited_ago, edited_on};

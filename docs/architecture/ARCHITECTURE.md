@@ -224,6 +224,12 @@ cells it has read:
 
 `WorkspaceEditor` keeps one `DatabaseEditor` per loaded database.
 
+A database page is drawn by `leaf_ui::shell::database_page` (E09-S05, ADR 0069): gpui-component's data table, filled
+from that `TableView` through a delegate, with a "New" line under the last row. The first screen of rows is read when
+the page opens and the rest on a timer. Editing a cell asks `DatabaseEditor` (`database_view/edit.rs`) which editor the
+cell opens (a text line, a checkbox, the option picker or a calendar), and hands what was typed, ticked, picked or
+chosen back to it as `DatabaseCommand`s. The sidebar's table button beside "+" adds a database page.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.
