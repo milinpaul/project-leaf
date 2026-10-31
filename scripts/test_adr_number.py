@@ -79,6 +79,15 @@ class AdrNumberTest(unittest.TestCase):
             "/// The code face (E08-S08, ADR-076). Not ADR-XXX-E11-S02.\n",
         )
 
+    def test_the_script_and_its_tests_are_left_alone(self) -> None:
+        # Their example names would otherwise be "numbered" too, breaking the tests on main.
+        shutil.copy(REPO / "scripts" / "test_adr_number.py", self.root / "scripts")
+        self.write("docs/adr/ADR-XXX-E08-S08-bundled-code-font.md", "# ADR-XXX. Bundled code font\n")
+        before = self.read("scripts/test_adr_number.py")
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.read("scripts/test_adr_number.py"), before)
+
     def test_nothing_waiting_is_not_an_error(self) -> None:
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)

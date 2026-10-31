@@ -26,9 +26,13 @@ class AdrError(Exception):
     pass
 
 
+# This script and its tests spell out `ADR-XXX` names as examples; they are never rewritten.
+SKIP = {"scripts/adr_number.py", "scripts/test_adr_number.py"}
+
+
 def tracked_text_files(root: Path) -> list[Path]:
     out = subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True, check=True).stdout
-    return [root / name for name in out.splitlines() if name.endswith(TEXT)]
+    return [root / name for name in out.splitlines() if name.endswith(TEXT) and name not in SKIP]
 
 
 def plan(adr: Path) -> list[tuple[str, str, str | None]]:
