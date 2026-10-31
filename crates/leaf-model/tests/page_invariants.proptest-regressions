@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 9dbd5f9e38fd10fca1fdff16448d507174758de6223d3221af317aea55713659 # shrinks to steps = [Insert { parent: None, index: 0, kind: 40, text: "" }, SetKind { block: 0, kind: 19 }]
+cc ce7f3bdb477b907acbde2248820e9a855075517b961044bba1ae983526c3e897 # shrinks to steps = [Insert { parent: None, index: 0, kind: 16, text: "" }, SetKind { block: 0, kind: 0 }]

@@ -138,6 +138,8 @@ pub(super) fn manager(doc: &LoroDoc, slots: &Arc<CaretSlots>) -> UndoManager {
     undo.set_merge_interval(DEFAULT_UNDO_MERGE_MS);
     // Repairs after a merge put the page's rules back; they aren't the user's edits to undo.
     undo.add_exclude_origin_prefix(super::repair::REPAIR_ORIGIN);
+    // A fetched preview isn't the owner's edit either (ADR-080).
+    undo.add_exclude_origin_prefix(super::kind_ops::PREVIEW_ORIGIN);
     let record = Arc::clone(slots);
     undo.set_on_push(Some(Box::new(move |_, _, _| {
         // After a pop, this push is the same step moving to the other stack.

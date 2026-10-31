@@ -38,6 +38,9 @@ impl PageDoc {
                 BlockKind::Table { header_row } => self.set_header_row(id, header_row)?,
                 kind => self.set_kind(id, &kind)?,
             },
+            PageCommand::SetWebBookmarkPreview { id, url, preview } => {
+                self.set_web_bookmark_preview(id, &url, &preview)?
+            }
             PageCommand::SplitBlock { id, pos } => self.split_block(id, pos)?,
             PageCommand::MergeIntoPrevious { id } => self.merge_into_previous(id)?,
             PageCommand::DuplicateBlocks { ids } => self.duplicate_blocks(&ids)?,
@@ -107,9 +110,11 @@ impl PageDoc {
         let meta = self.tree.get_meta(node)?;
         meta.insert(keys::ID, block.to_string())?;
         kind.write(&meta)?;
-        // Mergeable: two peers creating it concurrently get one shared container (ADR-001).
-        let text = if kind.has_text() {
-            Some(meta.ensure_mergeable_text(keys::TEXT)?)
+        // Mergeable: two peers creating it concurrently get one shared container (ADR-001). A web
+        // bookmark's stays empty; only text kinds get it back to write into.
+        let text = if kind.keeps_text_container() {
+            let text = meta.ensure_mergeable_text(keys::TEXT)?;
+            kind.has_text().then_some(text)
         } else {
             None
         };
