@@ -1,0 +1,28 @@
+name: Feature request
+description: An idea to make Leaf better
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [roadmap](https://github.com/milinpaul/project-leaf#roadmap) and the
+        [product spec](https://github.com/milinpaul/project-leaf/blob/main/docs/product/PRODUCT_SPEC.md) first:
+        your idea may already be planned for a later phase.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: Describe what you are trying to do and what gets in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or examples
+      description: Workarounds you use now, or how other apps (Notion, Obsidian…) handle it.
