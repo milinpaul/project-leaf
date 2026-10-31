@@ -84,6 +84,14 @@ fn open_problems_are_explained_in_plain_words() {
         ),
         "“Work” was saved by a newer Leaf. Update Leaf to open it."
     );
+    assert_eq!(
+        open_problem(
+            "Work",
+            &StoreError::LinkInWorkspace(std::env::temp_dir().join("Work.leaf").join("assets"))
+        ),
+        "“Work” contains a link to another place on disk (“assets”). Leaf won't open a workspace \
+         with links in it, so it never writes outside the folder. Remove the link and try again."
+    );
     let io = StoreError::Io(std::io::Error::other("disk on fire"));
     assert_eq!(
         open_problem("Work", &io),
