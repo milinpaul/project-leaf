@@ -2,6 +2,11 @@
 //! folder per target. `just fuzz` runs it when the corpus is missing. Seeds are real Leaf data (fixture
 //! pages with links, a workspace tree, a database, a saved workspace folder) plus small images, SVGs,
 //! Markdown and clipboard fragments, so the fuzzer starts from inputs that get deep into the code.
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "a command-line tool reports on the terminal"
+)]
 
 use std::error::Error;
 use std::fs;

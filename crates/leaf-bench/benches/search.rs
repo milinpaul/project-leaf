@@ -7,6 +7,11 @@
 //! unless `LEAF_BENCH_RECORD_ONLY` is set: CI only records them, since shared runners are too noisy
 //! to judge a budget by (ADR-056). Run with `just bench` or `just bench-search`; timings only mean
 //! something in the optimised build `cargo bench` uses.
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "a command-line tool reports on the terminal"
+)]
 
 use std::collections::HashMap;
 use std::error::Error;

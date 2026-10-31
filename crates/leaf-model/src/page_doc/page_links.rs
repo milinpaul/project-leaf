@@ -30,7 +30,7 @@ impl PageDoc {
         }
         check_range(&container, pos..pos)?;
         container.insert(pos, &PAGE_LINK.to_string())?;
-        container.mark(pos..pos + 1, marks::PAGE, page.to_string())?;
+        container.mark(pos..pos.saturating_add(1), marks::PAGE, page.to_string())?;
         Ok(PageOutcome::Changed)
     }
 
@@ -81,13 +81,13 @@ pub(super) fn check_plain(text: &str) -> Result<(), ModelError> {
 
 /// Each run of `text` as (start, length in characters, page mark value), in order.
 fn runs(text: &LoroText) -> Vec<(usize, String, Option<LoroValue>)> {
-    let mut at = 0;
+    let mut at = 0_usize;
     text.to_delta()
         .into_iter()
         .filter_map(|delta| match delta {
             TextDelta::Insert { insert, attributes } => {
                 let start = at;
-                at += insert.chars().count();
+                at = at.saturating_add(insert.chars().count());
                 let page = attributes
                     .and_then(|mut attrs| attrs.remove(marks::PAGE))
                     .filter(|value| !matches!(value, LoroValue::Null));
@@ -120,7 +120,7 @@ pub(super) fn mark_run(
 ) -> Result<(), ModelError> {
     if key == marks::PAGE {
         for at in range {
-            text.mark(at..at + 1, key, value.clone())?;
+            text.mark(at..at.saturating_add(1), key, value.clone())?;
         }
     } else {
         text.mark(range, key, value)?;
@@ -144,17 +144,16 @@ pub(super) fn repair_links(text: &LoroText, keep_links: bool) -> Result<bool, Mo
     let mut changed = false;
     // Back to front, so deleting a placeholder doesn't move the runs still to visit.
     for (start, insert, page) in runs(text).into_iter().rev() {
-        let mut offset = insert.chars().count();
-        for c in insert.chars().rev() {
-            offset -= 1;
-            let at = start + offset;
+        let chars: Vec<char> = insert.chars().collect();
+        for (offset, &c) in chars.iter().enumerate().rev() {
+            let at = start.saturating_add(offset);
             if c == PAGE_LINK {
                 if !keep_links || page.is_none() {
                     text.delete(at, 1)?;
                     changed = true;
                 }
             } else if page.is_some() {
-                text.unmark(at..at + 1, marks::PAGE)?;
+                text.unmark(at..at.saturating_add(1), marks::PAGE)?;
                 changed = true;
             }
         }

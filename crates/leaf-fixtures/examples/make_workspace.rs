@@ -1,6 +1,11 @@
 //! Writes a full-size fixture workspace to a folder, to open in Leaf or point a benchmark at:
 //! `just fixture <folder> [seed]` (5,000 pages, 100,000 blocks). Two more numbers give a different
 //! size: `make_workspace <folder> 2026 1 10000` is one 10,000-block page, for the typing budget.
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "a command-line tool reports on the terminal"
+)]
 
 use std::path::PathBuf;
 use std::process::ExitCode;

@@ -249,7 +249,10 @@ fn text_commands_refuse_bad_input_and_write_nothing() {
         attempt(&mut page, PageCommand::DeleteText { id, range: 2..9 }),
         Err(ModelError::TextOutOfRange { end: 9, len: 4 })
     ));
-    #[allow(clippy::reversed_empty_ranges)]
+    #[expect(
+        clippy::reversed_empty_ranges,
+        reason = "a backwards range is the input under test"
+    )]
     let backwards = 3..1;
     assert!(matches!(
         attempt(&mut page, PageCommand::DeleteText { id, range: backwards }),

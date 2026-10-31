@@ -1,4 +1,5 @@
 //! Opening, recreating and writing the search index file (E11-S01).
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 mod common;
 

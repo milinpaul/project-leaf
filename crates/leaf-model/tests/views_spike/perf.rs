@@ -4,6 +4,7 @@
 //! ```text
 //! cargo test --release -p leaf-model --test views_spike -- --ignored --nocapture
 //! ```
+#![allow(clippy::print_stdout, reason = "the spike prints its timings")]
 
 use std::time::{Duration, Instant};
 

@@ -158,7 +158,11 @@ impl PageDoc {
         let mut cursor = parent_node;
         while let Some(current) = cursor {
             if moving.contains(&current) {
-                let block = self.index.by_node[&current];
+                let Some(&block) = self.index.by_node.get(&current) else {
+                    return Err(ModelError::Damaged(format!(
+                        "moved node {current:?} has no block"
+                    )));
+                };
                 let new_parent = new_parent.unwrap_or(block);
                 return Err(ModelError::BlockMoveIntoOwnSubtree { block, new_parent });
             }

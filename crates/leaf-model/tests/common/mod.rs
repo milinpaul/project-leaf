@@ -1,7 +1,7 @@
 //! Random page commands for property tests (E02-S07, E02-S09): a `Step` strategy that picks real
 //! blocks and in-range positions on the page as it is, so most commands are valid.
 
-#![allow(dead_code)] // each test file uses part of this
+#![allow(dead_code, reason = "each test file uses part of this")]
 
 use leaf_core::{AssetId, BlockId, PageId};
 use leaf_model::{

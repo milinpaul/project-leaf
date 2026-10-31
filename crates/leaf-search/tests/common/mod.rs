@@ -1,5 +1,6 @@
 //! Helpers shared by the integration tests. Each test binary uses only some of them.
-#![allow(dead_code)]
+#![allow(dead_code, reason = "each test binary uses only some of the helpers")]
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 use std::collections::HashMap;
 use std::path::PathBuf;

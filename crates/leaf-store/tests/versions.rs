@@ -1,4 +1,5 @@
 //! Saved versions, which search compares to decide what to re-index (E11-S04).
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 mod common;
 

@@ -76,12 +76,12 @@ fn link_titles(span: &TextSpan, find: FindPage<'_>) -> Vec<TextSpan> {
     let mut out = Vec::new();
     let mut rest = span.text.as_str();
     let mut words = String::new();
-    while let Some(open) = rest.find("[[") {
-        let after = &rest[open + 2..];
-        let Some(close) = after.find("]]") else { break };
-        let title = &after[..close];
+    while let Some((before, after)) = rest.split_once("[[") {
+        let Some((title, after_close)) = after.split_once("]]") else {
+            break;
+        };
         if let Some(page) = find(title.trim()) {
-            words.push_str(&rest[..open]);
+            words.push_str(before);
             if !words.is_empty() {
                 out.push(TextSpan {
                     text: std::mem::take(&mut words),
@@ -96,9 +96,10 @@ fn link_titles(span: &TextSpan, find: FindPage<'_>) -> Vec<TextSpan> {
                     ..span.marks.clone()
                 },
             });
-            rest = &after[close + 2..];
+            rest = after_close;
         } else {
-            words.push_str(&rest[..open + 2]);
+            words.push_str(before);
+            words.push_str("[[");
             rest = after;
         }
     }

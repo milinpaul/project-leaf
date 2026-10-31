@@ -45,13 +45,13 @@ impl PageDoc {
                 siblings
                     .iter()
                     .position(|&n| n == node)
-                    .map_or(siblings.len(), |p| p + 1),
+                    .map_or(siblings.len(), |p| p.saturating_add(1)),
             )
         };
         let tail = text.slice_delta(pos, len, PosType::Unicode)?;
         let (new, new_text) = self.create_block(parent, index, &new_kind)?;
         if pos < len {
-            text.delete(pos, len - pos)?;
+            text.delete(pos, len.saturating_sub(pos))?;
             if let Some(new_text) = new_text {
                 append_delta(&new_text, tail)?;
             }

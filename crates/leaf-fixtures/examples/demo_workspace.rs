@@ -2,6 +2,11 @@
 //! icons and a cover, using most block kinds and marks, and links to its own pages. The README's screenshots are made from it:
 //! `just demo <new folder>`, then `just screenshot <folder> <out.png>`. Due dates are set relative
 //! to today, so one action item is always overdue and one always coming up.
+#![allow(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "a command-line tool reports on the terminal"
+)]
 
 use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};

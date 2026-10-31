@@ -104,6 +104,10 @@ pub(super) struct CaretSlots {
 impl CaretSlots {
     /// A number for a new step, remembering `current` as its "before".
     fn new_step(&self) -> i64 {
+        #[expect(
+            clippy::arithmetic_side_effects,
+            reason = "one step per recorded edit from 0: a session can't make i64::MAX of them"
+        )]
         let id = self.next.lock().map_or(0, |mut next| {
             *next += 1;
             *next

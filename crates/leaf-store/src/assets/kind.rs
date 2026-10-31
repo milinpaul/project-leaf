@@ -39,8 +39,9 @@ fn iso_image(brand: &[u8]) -> Option<&'static str> {
 /// SVG is text: an `<svg` element near the start, after an optional byte-order mark, XML
 /// declaration, comments or doctype.
 fn is_svg(bytes: &[u8]) -> bool {
-    let head = &bytes[..bytes.len().min(1024)];
-    let Ok(text) = std::str::from_utf8(head).or_else(|err| std::str::from_utf8(&head[..err.valid_up_to()]))
+    let head = bytes.get(..1024).unwrap_or(bytes);
+    let Ok(text) = std::str::from_utf8(head)
+        .or_else(|err| std::str::from_utf8(head.get(..err.valid_up_to()).unwrap_or_default()))
     else {
         return false;
     };

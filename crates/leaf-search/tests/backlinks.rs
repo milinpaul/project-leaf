@@ -1,4 +1,5 @@
 //! Backlinks (E10-S06): which blocks link to a page, read from the index that page text fills.
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 use std::path::PathBuf;
 

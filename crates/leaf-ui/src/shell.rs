@@ -342,7 +342,7 @@ pub(crate) fn now_ms() -> i64 {
 /// UI actions have no caller to return errors to. They only fail on a corrupt workspace, so log
 /// and keep the window usable. A proper error surface arrives with notifications (E06).
 fn report(what: &str, err: impl Display) {
-    eprintln!("leaf: {what}: {err}");
+    crate::log::log(format_args!("{what}: {err}"));
 }
 
 #[cfg(test)]

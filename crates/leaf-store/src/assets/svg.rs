@@ -87,7 +87,7 @@ fn check_depth(root: Node<'_, '_>) -> Result<(), SvgProblem> {
         stack.extend(
             node.children()
                 .filter(Node::is_element)
-                .map(|child| (child, depth + 1)),
+                .map(|child| (child, depth.saturating_add(1))),
         );
     }
     Ok(())
@@ -118,7 +118,7 @@ fn check_css(css: &str) -> Result<(), SvgProblem> {
     }
     let mut rest = css;
     while let Some(start) = rest.find("url(") {
-        let after = &rest[start + 4..];
+        let after = &rest[start.saturating_add("url(".len())..];
         let end = after.find(')').unwrap_or(after.len());
         let target = after[..end].trim().trim_matches(['"', '\'']).trim();
         check_reference(target)?;

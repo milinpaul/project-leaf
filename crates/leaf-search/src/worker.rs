@@ -88,7 +88,7 @@ fn run<S: PageSource>(root: &std::path::Path, source: S, inbox: &Receiver<()>, s
     };
     let mut syncer = Syncer::new(index, source);
     let mut rebuild = state == IndexState::NeedsRebuild;
-    let mut failures = 0;
+    let mut failures = 0_u32;
     let stopping = || stop.load(Ordering::Relaxed);
     loop {
         let result = if rebuild {
@@ -111,7 +111,7 @@ fn run<S: PageSource>(root: &std::path::Path, source: S, inbox: &Receiver<()>, s
                     return;
                 }
                 rebuild = true;
-                failures += 1;
+                failures = failures.saturating_add(1);
                 if failures <= RETRIES {
                     continue;
                 }

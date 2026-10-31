@@ -83,11 +83,14 @@ pub(crate) fn run(conn: &mut Connection, migrations: &[&str]) -> Result<(), Stor
         let Some(sql) = usize::try_from(found).ok().and_then(|n| migrations.get(n)) else {
             return Ok(()); // up to date; dropping `tx` rolls back the empty transaction
         };
+        let next = found
+            .checked_add(1)
+            .ok_or_else(|| StoreError::BadSchemaVersion(found.to_string()))?;
         tx.execute_batch(sql)?;
         tx.execute(
             "INSERT INTO meta (key, value) VALUES ('schema_version', ?1)
              ON CONFLICT (key) DO UPDATE SET value = excluded.value",
-            [(found + 1).to_string()],
+            [next.to_string()],
         )?;
         tx.commit()?;
     }
