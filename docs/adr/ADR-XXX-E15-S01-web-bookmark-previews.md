@@ -1,6 +1,6 @@
 # ADR-XXX. Web bookmark previews: opt-in network access, safety limits and libraries
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Type:** Architecture
 - **Date:** 2026-10-31
 - **Story:** E15-S01
@@ -28,7 +28,7 @@ branch `spike/E15-S01-trial`, `crates/web-bookmark-spike/`, and is never merged.
 `settings.json`. It belongs to the device, not the workspace, because it is about this computer's connection. The
 first time a web bookmark is created, Leaf asks once: "Fetch a preview? Leaf visits the address from this computer,
 so the site sees your IP address." The choices are **Allow** and **Not now**. The answer is saved and Leaf doesn't
-ask again; Settings changes it. With the setting off, no request is ever made. The card then shows the address and
+ask again (owner's answer below); Settings changes it. With the setting off, no request is ever made. The card then shows the address and
 domain.
 
 **When a fetch happens.** Only on this device, and only for:
@@ -63,7 +63,7 @@ A preview that arrived by sync is never fetched again. Opening a page never re-f
 | Time | 5 s to connect; 10 s for the whole request, redirects included |
 | Size | Response headers 64 KiB; HTML: the first 512 KiB only; preview image 5 MiB; icon 1 MiB |
 | Content type | The page must say `text/html` or `application/xhtml+xml`; images must say `image/*` |
-| Proxy | Direct connection only; the system proxy is ignored (see Open questions) |
+| Proxy | Direct connection only; the system proxy is ignored (owner's answer below) |
 
 **Where it runs.**
 - A new native crate, **`leaf-fetch`**, is the only crate that goes online. It depends on `leaf-core` only and
@@ -134,8 +134,8 @@ The trial adds 10 crates to the app build: `ureq`, `ureq-proto`, `utf8-zero`, `h
   title, description and two small pictures, from the public internet only, with tight limits on time and size. It
   saves them in the page, so the card keeps working offline.
 
-## Open questions for the owner
+## Owner's answers (2026-10-31)
 
-1. **Proxy.** Ignore the system proxy (recommended for now, so the local-network check can't be bypassed), or use
-   it, for people whose network only allows the web through a proxy?
-2. **"Not now".** Never ask again (recommended), or ask again the next time a web bookmark is created?
+1. **Proxy:** ignore the system proxy; previews use a direct connection only, so the local-network check always
+   holds. Behind a proxy-only network, cards show the address and domain.
+2. **"Not now":** never ask again; Settings › Privacy turns previews on later.
