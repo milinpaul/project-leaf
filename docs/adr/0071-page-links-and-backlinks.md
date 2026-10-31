@@ -1,6 +1,6 @@
 # 0071. Page links: one placeholder character with a `page` mark; backlinks in the search index
 
-- **Status:** Proposed (spike, waiting for the owner's answers below)
+- **Status:** Accepted (owner accepted the recommended answers, 2026-10-31)
 - **Type:** Architecture
 - **Date:** 2026-10-31
 - **Story:** E10-S01
@@ -25,7 +25,7 @@ The constraints already in place:
 The spike (`crates/leaf-model/tests/links_spike/`) drove Loro directly to try a model before any production code
 exists.
 
-## Decision (proposed)
+## Decision
 
 **A page link is one placeholder character in the block's text, carrying a `page` mark.**
 - The character is U+FFFC, the object replacement character, the standard stand-in for an object inside text.
@@ -119,19 +119,14 @@ to, not that page's name. Leaf shows the page's current name in its place, so re
 it. To show "which pages link here", Leaf keeps a list beside its search index and updates it whenever a page is
 saved.
 
-## Open questions for the owner
+## The owner's answers (2026-10-31)
 
-My recommendation is listed first in each.
-
-1. **What triggers a link?** Recommended: typing `[[`, as the spec says. Alternatives: also `@` (Notion uses it for
-   pages, people and dates), or the slash menu's "Link to page" only. The slash menu gets a "Link to page" entry either
-   way.
-2. **Typing a title that doesn't exist:** recommended: the popover offers "New page 'Kyoto'", which creates it inside
-   the current page and links it, like Notion. Alternative: only existing pages.
-3. **Where backlinks show:** recommended: a "3 backlinks" line under the page title (hidden when there are none) that
-   opens a list. Each entry shows the page, its icon and the sentence with the link, and clicking it jumps there.
-   Alternatives: a section at the bottom of every page (Obsidian), or an entry in the `⋯` page menu.
-4. **Links to a block inside a page** (`(PageId, BlockId)`, reserved in `BLOCK_MODEL.md`): recommended: later, as
-   its own story; this design extends to it by a mark value with a block ID.
-5. **"Unlinked mentions"** (pages whose text contains this page's title without a link, Obsidian style): recommended:
-   later.
+The owner accepted every recommendation:
+1. **Typing `[[` starts a link,** and the slash menu gets a "Link to page" entry. `@` is not a trigger.
+2. **When no page matches,** the popover offers "New page '…'", which creates the page inside the current page and
+   links it.
+3. **Backlinks show as a "3 backlinks" line under the page title,** hidden when there are none, which opens a list. Each
+   entry shows the page, its icon and the sentence with the link, and clicking it jumps there.
+4. **Links to a block inside a page come later** (E10-S08, P2). This design extends to them with a mark value that
+   adds a block ID.
+5. **Unlinked mentions come later** (E10-S09, P2).
