@@ -92,3 +92,4 @@ Records cover two kinds of decision:
 | [0073](0073-ci-and-supply-chain-policy.md) | CI and supply chain: read-only CI, pinned actions, deny on new duplicates and git sources | Architecture | Accepted |
 | [0074](0074-workspace-files-stay-inside-the-folder.md) | Workspace files stay inside the folder: links refused on open, Windows device names refused | Architecture | Accepted |
 | [0075](0075-database-views-and-board.md) | Database views: saved views as tabs, and a board layout | Architecture | Accepted |
+| [0076](0076-svg-checked-before-drawing.md) | SVG images are checked before GPUI draws them: no outside references, size and complexity caps | Architecture | Accepted |

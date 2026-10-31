@@ -100,8 +100,17 @@ impl Shell {
             .get(block)
             .unwrap_or(theme::READING_WIDTH - COLUMN_PADDING - indent);
         let recorder = self.blocks.image_room.recorder(block);
-        let Some(path) = self.storage.as_ref().map(|storage| storage.asset_path(asset)) else {
+        let Some(storage) = self.storage.as_ref() else {
             return Self::frame(block, "Image not available in this window", None, cx);
+        };
+        let checked = self
+            .blocks
+            .drawable
+            .entry(asset)
+            .or_insert_with(|| storage.drawable_asset(asset));
+        let path = match checked {
+            Ok(path) => path.clone(),
+            Err(problem) => return Self::frame(block, &problem.to_string(), Some(recorder), cx),
         };
         let resource = Resource::Path(Arc::from(path.as_path()));
         let natural = match window.use_asset::<ImgResourceLoader>(&resource, cx) {

@@ -3951,6 +3951,7 @@ dependencies = [
  "leaf-core",
  "leaf-model",
  "proptest",
+ "roxmltree 0.21.2",
  "rusqlite",
  "serde",
  "serde_json",

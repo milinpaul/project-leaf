@@ -137,6 +137,46 @@ fn a_damaged_picture_shows_a_frame_saying_so(cx: &mut TestAppContext) {
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
 
+#[gpui::test]
+fn an_svg_that_names_an_outside_file_shows_a_frame_instead(cx: &mut TestAppContext) {
+    let path = temp_workspace("svg-outside");
+    let outside = path.parent().unwrap().join("private.png");
+    std::fs::write(&outside, png(10, 10)).unwrap();
+    let svg = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30"><image href="{}" width="40" height="30"/></svg>"#,
+        outside.display()
+    );
+    let (shell, cx, block) = open_with_picture(&path, svg.as_bytes(), cx);
+    load(cx);
+    assert!(cx.debug_bounds(selector("image-frame", block)).is_some());
+    assert!(cx.debug_bounds(selector("picture", block)).is_none());
+    let reason = shell.update(cx, |shell, _| {
+        shell
+            .blocks
+            .drawable
+            .values()
+            .find_map(|checked| checked.as_ref().err().cloned())
+    });
+    assert_eq!(
+        reason,
+        Some(leaf_store::SvgProblem::OutsideReference(
+            outside.display().to_string()
+        ))
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[gpui::test]
+fn a_self_contained_svg_is_drawn(cx: &mut TestAppContext) {
+    let path = temp_workspace("svg-ok");
+    let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30"><rect width="40" height="30" fill="#c87a5a"/></svg>"##;
+    let (_shell, cx, block) = open_with_picture(&path, svg.as_bytes(), cx);
+    load(cx);
+    assert!(cx.debug_bounds(selector("image-frame", block)).is_none());
+    assert!(cx.debug_bounds(selector("picture", block)).is_some());
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
 /// Presses on `from` and moves right by `by` in small steps, without letting go.
 fn drag_by(cx: &mut VisualTestContext, from: Point<gpui::Pixels>, by: f32) {
     cx.simulate_mouse_down(from, MouseButton::Left, Modifiers::none());

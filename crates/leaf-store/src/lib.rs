@@ -38,7 +38,7 @@ mod versions;
 mod view_state;
 mod workspace;
 
-pub use assets::{Asset, image_mime};
+pub use assets::{Asset, SvgProblem, check_svg, image_mime};
 pub use autosave::{Autosave, DEFAULT_AUTOSAVE_MS};
 pub use compaction::COMPACT_AFTER;
 pub use docs::{DocKey, Document, Recovered, Savable};
