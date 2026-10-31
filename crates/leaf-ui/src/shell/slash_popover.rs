@@ -128,6 +128,7 @@ impl Shell {
                             SlashAction::Table => IconName::Table,
                             SlashAction::LinkToPage => IconName::Link,
                             SlashAction::WebBookmark => IconName::Bookmark,
+                            SlashAction::Database => IconName::Database,
                         })
                         .small()
                         .text_color(muted),

@@ -165,6 +165,7 @@ impl Shell {
             input.focus(window, cx);
         });
         self.remember_open_page();
+        self.prune_database_views();
         cx.notify();
     }
 

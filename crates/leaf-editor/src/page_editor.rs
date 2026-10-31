@@ -88,6 +88,12 @@ impl PageEditor {
         &self.doc
     }
 
+    /// How close together, in milliseconds, edits must be to undo as one step (`0`: each its own). Window tests turn
+    /// merging off so a quick sequence of actions undoes one at a time.
+    pub fn set_undo_merge_interval(&mut self, ms: i64) {
+        self.doc.set_undo_merge_interval(ms);
+    }
+
     /// Every block in reading order, with its depth and style, built from scratch. For drawing use
     /// [`PageEditor::view`], which re-reads only what changed.
     pub fn rows(&self) -> Result<Vec<BlockRow>, EditorError> {
@@ -98,6 +104,10 @@ impl PageEditor {
     /// the last call.
     pub fn view(&mut self) -> Result<&[BlockRow], EditorError> {
         self.view.refresh(&self.doc)?;
+        if self.inline_seen.is_none() {
+            // The first drawing comes before any edit: the inline databases there are the ones the page opened with.
+            self.inline_seen = Some(crate::inline_database::databases_in(self.view.rows()).collect());
+        }
         Ok(self.view.rows())
     }
 

@@ -12,7 +12,7 @@ use leaf_core::PageId;
 use leaf_model::{BlockKind, Caret, PageCommand, PageDoc};
 
 use crate::page_editor::insert_after;
-use crate::{BlockStyle, EditorError, PageEditor};
+use crate::{BlockRow, BlockStyle, EditorError, PageEditor};
 
 /// What the page's inline databases did since they were last looked at.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -58,18 +58,11 @@ impl PageEditor {
 
     /// The databases shown on the page, in reading order.
     pub fn inline_databases(&mut self) -> Result<Vec<PageId>, EditorError> {
-        Ok(self
-            .view()?
-            .iter()
-            .filter_map(|row| match row.style {
-                BlockStyle::Database { page } => Some(page),
-                _ => None,
-            })
-            .collect())
+        Ok(databases_in(self.view()?).collect())
     }
 
-    /// Which inline databases left the page or came back since the last call. The first call only takes note of
-    /// what is there.
+    /// Which inline databases left the page or came back since the last call. The page's first drawing (or the
+    /// first call, if that comes sooner) only takes note of what is there.
     pub fn inline_database_changes(&mut self) -> Result<InlineDatabaseChanges, EditorError> {
         let now: HashSet<PageId> = self.inline_databases()?.into_iter().collect();
         let Some(before) = self.inline_seen.replace(now.clone()) else {
@@ -83,6 +76,14 @@ impl PageEditor {
         changes.back.sort_unstable();
         Ok(changes)
     }
+}
+
+/// The database pages shown by `rows`, in reading order.
+pub(crate) fn databases_in(rows: &[BlockRow]) -> impl Iterator<Item = PageId> + '_ {
+    rows.iter().filter_map(|row| match row.style {
+        BlockStyle::Database { page } => Some(page),
+        _ => None,
+    })
 }
 
 fn place_database(doc: &mut PageDoc, at: Caret, database: PageId) -> Result<Caret, EditorError> {

@@ -103,3 +103,24 @@ fn a_database_deleted_for_good_stays_gone_when_undo_brings_its_block_back() {
     assert!(!editor.sync_inline_databases(7).unwrap());
     assert!(!editor.workspace().contains(db));
 }
+
+#[test]
+fn with_no_page_open_or_drawn_there_is_nothing_to_do() {
+    let mut editor = WorkspaceEditor::new(Workspace::new());
+    assert_eq!(editor.make_requested_database(1).unwrap(), None);
+    assert!(!editor.sync_inline_databases(1).unwrap());
+    let page = editor.new_page_in(None, 1).unwrap();
+    editor.select(page).unwrap();
+    assert_eq!(
+        editor.make_requested_database(2).unwrap(),
+        None,
+        "the page isn't loaded"
+    );
+    assert!(!editor.sync_inline_databases(2).unwrap());
+    editor.open_page().unwrap();
+    assert_eq!(
+        editor.make_requested_database(3).unwrap(),
+        None,
+        "nothing asked for"
+    );
+}

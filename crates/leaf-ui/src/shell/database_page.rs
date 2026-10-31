@@ -19,23 +19,28 @@
 //!
 //! A row opens as a page (E09-S08): the "Open" button on its title cell, and its properties under the page's title
 //! (`row_page.rs`).
+//!
+//! A database can also sit inside a page as a block (E09-S09, `inline.rs`). Each database shown has its own view;
+//! the actions above work on the active one.
 
 mod cells;
 mod column_menu;
 mod columns;
 mod editing;
 mod header;
+mod inline;
 mod options;
 mod query;
 mod query_bar;
 pub(super) mod row_page;
 mod table;
+mod views;
 
 use std::time::Duration;
 
 use gpui::{
-    AnyElement, AppContext as _, Context, Entity, InteractiveElement as _, IntoElement, KeyBinding,
-    ParentElement, StatefulInteractiveElement as _, Styled, Subscription, Task, Window, actions, div, px,
+    AnyElement, Context, Entity, InteractiveElement as _, IntoElement, KeyBinding, ParentElement,
+    StatefulInteractiveElement as _, Styled, Subscription, Task, Window, actions, div, px,
 };
 use gpui_component::calendar::CalendarState;
 use gpui_component::input::InputState;
@@ -43,7 +48,6 @@ use gpui_component::table::{DataTable, TableEvent, TableState};
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, Size, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::{ColumnId, DatabaseId, PageId};
-use leaf_editor::FIRST_SCREEN_ROWS;
 
 use super::{Shell, now_ms, report};
 use table::DatabaseTable;
@@ -85,6 +89,7 @@ pub(crate) fn bind(cx: &mut gpui::App) {
     if !cfg!(target_os = "macos") {
         cx.bind_keys([KeyBinding::new("ctrl-y", RedoDatabase, Some(CONTEXT))]);
     }
+    inline::bind(cx);
 }
 
 /// A cell being edited: its view row and table column (0 is the title).
@@ -158,146 +163,6 @@ impl Shell {
         Some(id)
     }
 
-    /// The view of the active database: the one the person is working in, on its own page or inline (E09-S09).
-    pub(super) fn database_view(&self) -> Option<&DatabasePage> {
-        let page = self.active_database?;
-        self.databases.iter().find(|d| d.page == page)
-    }
-
-    pub(super) fn database_view_mut(&mut self) -> Option<&mut DatabasePage> {
-        let page = self.active_database?;
-        self.databases.iter_mut().find(|d| d.page == page)
-    }
-
-    /// Makes the database of `page` the one the table actions work on. Every press inside a database's view does
-    /// this first, so with several inline databases on a page each acts on its own.
-    pub(super) fn activate_database(&mut self, page: PageId) {
-        if self.active_database != Some(page) && self.databases.iter().any(|d| d.page == page) {
-            self.active_database = Some(page);
-        }
-    }
-
-    /// Makes sure the database page `page` (database `id`) has a view, loading the database the first time.
-    pub(super) fn ensure_database_view(
-        &mut self,
-        page: PageId,
-        id: DatabaseId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        if self.databases.iter().any(|d| d.page == page) {
-            return;
-        }
-        self.load_database(id);
-        let shell = cx.entity().downgrade();
-        let text = cx.new(|cx| InputState::new(window, cx));
-        let query = cx.new(|cx| InputState::new(window, cx).placeholder("Search or create an option"));
-        let calendar = cx.new(|cx| CalendarState::new(window, cx));
-        let column_name = cx.new(|cx| InputState::new(window, cx).placeholder("Column name"));
-        let (filter_text, filter_calendar) = query::inputs(window, cx);
-        let delegate = DatabaseTable {
-            view: leaf_editor::TableView {
-                columns: Vec::new(),
-                rows: Vec::new(),
-                complete: false,
-                total_rows: 0,
-            },
-            editing: None,
-            picker: None,
-            text: text.clone(),
-            query: query.clone(),
-            calendar: calendar.clone(),
-            column_menu: None,
-            add_menu: None,
-            column_name: column_name.clone(),
-            shell,
-        };
-        let table = cx.new(|cx| {
-            TableState::new(delegate, window, cx)
-                .cell_selectable(true)
-                .row_selectable(false)
-                .row_header(false)
-                .col_movable(true)
-                .col_resizable(true)
-                .sortable(false)
-        });
-        // Each event marks its own database active first, so the handler acts on the view it came from.
-        macro_rules! sub {
-            ($entity:expr, $handler:path) => {
-                cx.subscribe_in($entity, window, move |shell, e, event, window, cx| {
-                    shell.activate_database(page);
-                    $handler(shell, e, event, window, cx);
-                })
-            };
-        }
-        let subscriptions = vec![
-            sub!(&table, Self::on_table_event),
-            sub!(&text, Self::on_cell_text_event),
-            sub!(&query, Self::on_option_query_event),
-            sub!(&calendar, Self::on_calendar_event),
-            sub!(&column_name, Self::on_column_name_event),
-            sub!(&filter_text, Self::on_filter_text_event),
-            sub!(&filter_calendar, Self::on_filter_calendar_event),
-        ];
-        self.databases.push(DatabasePage {
-            page,
-            id,
-            table,
-            text,
-            query,
-            calendar,
-            column_name,
-            query_menu: None,
-            filter_text,
-            filter_calendar,
-            editing: None,
-            reading: None,
-            _subscriptions: subscriptions,
-        });
-        if let Err(err) = self.editor.read_database(id, FIRST_SCREEN_ROWS) {
-            report("could not read the database", err);
-        }
-        let active = self.active_database.replace(page);
-        self.refresh_database_table(cx);
-        self.read_rest_of_database(cx);
-        self.active_database = active.or(Some(page));
-    }
-
-    /// Hands the editor the database's saved document, if it has none in memory yet.
-    fn load_database(&mut self, id: DatabaseId) {
-        if self.editor.database(id).is_some() {
-            return;
-        }
-        let Some(storage) = &self.storage else {
-            return;
-        };
-        match storage.load_database(id) {
-            Ok(database) => self.editor.insert_database(id, database.unwrap_or_default()),
-            Err(err) => report("could not load the database", err),
-        }
-    }
-
-    /// Reads the rest of the database a chunk at a time, redrawing as rows arrive.
-    fn read_rest_of_database(&mut self, cx: &mut Context<Self>) {
-        let Some(database) = self.database_view_mut() else {
-            return;
-        };
-        let id = database.id;
-        database.reading = Some(cx.spawn(async move |shell, cx| {
-            loop {
-                cx.background_executor().timer(READ_TICK).await;
-                let done = shell.update(cx, |shell, cx| {
-                    let done = shell.editor.read_database(id, READ_CHUNK).unwrap_or(true);
-                    shell.refresh_database_table(cx);
-                    done
-                });
-                if !matches!(done, Ok(false)) {
-                    break;
-                }
-            }
-        }));
-    }
-
     /// Hands the table the database as it is now.
     pub(super) fn refresh_database_table(&mut self, cx: &mut Context<Self>) {
         let Some((id, table)) = self.database_parts() else {
@@ -311,6 +176,17 @@ impl Shell {
             table.delegate_mut().view = view;
             table.refresh(cx);
         });
+        // Inline, the block grows and shrinks with its rows. This can run while the page's list is drawing (a view
+        // is made on first drawing), so the list hears of it after.
+        if let Some(page) = self.active_database {
+            let shell = cx.entity();
+            cx.defer(move |cx| {
+                shell.update(cx, |shell, cx| {
+                    shell.blocks.list.remeasure_database(page);
+                    cx.notify();
+                });
+            });
+        }
         cx.notify();
     }
 
@@ -349,22 +225,7 @@ impl Shell {
             .gap_2()
             .child(header)
             .child(
-                v_flex()
-                    .flex_1()
-                    .min_h_0()
-                    .key_context(CONTEXT)
-                    .on_action(
-                        cx.listener(|shell, _: &EditCell, window, cx| shell.edit_selected_cell(window, cx)),
-                    )
-                    .on_action(
-                        cx.listener(|shell, _: &StopEditing, window, cx| shell.stop_editing(window, cx)),
-                    )
-                    .on_action(cx.listener(|shell, _: &UndoDatabase, window, cx| {
-                        shell.database_history(true, window, cx);
-                    }))
-                    .on_action(cx.listener(|shell, _: &RedoDatabase, window, cx| {
-                        shell.database_history(false, window, cx);
-                    }))
+                Self::with_database_actions(v_flex().flex_1().min_h_0().key_context(CONTEXT), cx)
                     .child(query_bar)
                     .child(
                         div()
@@ -382,6 +243,19 @@ impl Shell {
                     .child(new_row),
             )
             .into_any_element()
+    }
+
+    /// Attaches the table's actions (Enter, Escape, undo, redo) to `element`, the wrapper with the table's key context.
+    fn with_database_actions<E: gpui::InteractiveElement>(element: E, cx: &mut Context<Self>) -> E {
+        element
+            .on_action(cx.listener(|shell, _: &EditCell, window, cx| shell.edit_selected_cell(window, cx)))
+            .on_action(cx.listener(|shell, _: &StopEditing, window, cx| shell.stop_editing(window, cx)))
+            .on_action(cx.listener(|shell, _: &UndoDatabase, window, cx| {
+                shell.database_history(true, window, cx);
+            }))
+            .on_action(cx.listener(|shell, _: &RedoDatabase, window, cx| {
+                shell.database_history(false, window, cx);
+            }))
     }
 
     fn database_parts(&self) -> Option<(DatabaseId, Entity<TableState<DatabaseTable>>)> {
