@@ -26,12 +26,14 @@
 //! because undo can re-create nodes under new ones (ADR 0006).
 
 mod apply;
+mod changes;
 mod command;
 mod index;
 mod invariants;
 mod property;
 mod view;
 
+pub use changes::DatabaseChanges;
 pub use command::{DatabaseCommand, DatabaseOutcome};
 pub use property::{CellValue, Column, PropertyType, SelectOption};
 pub use view::{Extra, Filter, FilterOp, Sort};
@@ -69,6 +71,8 @@ pub struct Database {
     index: Index,
     undo: UndoManager,
     saved: SavedVersion,
+    pending: std::sync::Arc<std::sync::Mutex<changes::Pending>>,
+    _events: loro::Subscription,
 }
 
 impl Database {
@@ -113,6 +117,9 @@ impl Database {
         let mut undo = UndoManager::new(&doc);
         undo.set_merge_interval(DEFAULT_UNDO_MERGE_MS);
         let saved = SavedVersion::of(&doc);
+        // Watching starts after the load, so loading itself isn't reported as a change.
+        let pending = std::sync::Arc::default();
+        let events = changes::watch(&doc, &pending);
         Self {
             doc,
             columns,
@@ -120,6 +127,8 @@ impl Database {
             index,
             undo,
             saved,
+            pending,
+            _events: events,
         }
     }
 
@@ -244,6 +253,30 @@ impl Database {
             .row_cells(row)
             .and_then(|cells| cells.get(&column.to_string()))
             .and_then(|cell| CellValue::read(cell, &kind)))
+    }
+
+    /// Every value in `row`, by column, read in one go: what the table view caches per row. Includes values of
+    /// deleted columns (the caller keeps only the columns it shows). Empty for a row with nothing set.
+    pub fn row_values(&self, row: PageId) -> Result<Vec<(ColumnId, CellValue)>, ModelError> {
+        if !self.contains_row(row) {
+            return Err(ModelError::RowNotFound(row));
+        }
+        let Some(cells) = self.row_cells(row) else {
+            return Ok(Vec::new());
+        };
+        let mut values = Vec::new();
+        cells.for_each(|key, cell| {
+            let Ok(column) = key.parse::<ColumnId>() else {
+                return;
+            };
+            let kind = self.schema_of(column).map_or(PropertyType::Text, |schema| {
+                property::read_column(column, &schema).kind
+            });
+            if let Some(value) = CellValue::read(cell, &kind) {
+                values.push((column, value));
+            }
+        });
+        Ok(values)
     }
 
     /// The view's sort, first key first.

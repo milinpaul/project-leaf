@@ -23,8 +23,8 @@ mod workspace;
 pub use block_kind::{BlockKind, BlockProp};
 pub use command::{Outcome, WorkspaceCommand};
 pub use database::{
-    CellValue, Column, Database, DatabaseCommand, DatabaseOutcome, Extra, Filter, FilterOp, PropertyType,
-    SelectOption, Sort,
+    CellValue, Column, Database, DatabaseChanges, DatabaseCommand, DatabaseOutcome, Extra, Filter, FilterOp,
+    PropertyType, SelectOption, Sort,
 };
 pub use error::ModelError;
 pub use page_command::{PageCommand, PageOutcome};
