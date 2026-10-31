@@ -80,7 +80,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 - Markdown export (page and workspace) and import.
 - **Web bookmarks** (after the table view): paste a web address as a preview card (title, description, icon,
   image). Fetching previews is Leaf's first network access: opt-in, off by default, asked once, public internet
-  only, and only the page's preview is read (E15, ADR-XXX-E15-S01).
+  only, and only the page's preview is read (E15, ADR-080).
 - Trash: restore and permanent delete.
 - **Page top bar** (E18): the page's place (breadcrumb), when it was last edited, a Favourites star and a `⋯` menu.
   The edited time counts changes to the blocks (undo and redo included), title, icon and cover, not opening,
@@ -148,7 +148,7 @@ Numbered list numbers are computed when rendering, never stored.
   - Cold start to editable: < 500 ms.
 - **Reliability:** every edit is durable within 1 s; crash recovery loses nothing older than that.
 - **Privacy:** no telemetry without explicit opt-in. No network calls in Phase 0. From Phase 1 the only network
-  access is fetching web bookmark previews, and only after the owner allows it (ADR-XXX-E15-S01).
+  access is fetching web bookmark previews, and only after the owner allows it (ADR-080).
 - **Accessibility:** full keyboard navigation, respects system font scaling and light/dark mode.
 
 ## Non-goals (for now)

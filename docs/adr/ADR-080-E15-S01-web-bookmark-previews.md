@@ -1,4 +1,4 @@
-# ADR-XXX. Web bookmark previews: opt-in network access, safety limits and libraries
+# ADR-080. Web bookmark previews: opt-in network access, safety limits and libraries
 
 - **Status:** Accepted
 - **Type:** Architecture
