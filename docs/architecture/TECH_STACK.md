@@ -43,6 +43,8 @@ crates/
 3. `leaf-editor` contains **all** editing logic. `leaf-ui` only renders view models and forwards input events.
 4. Dependency direction: `core ← model ← editor ← ui ← app`, with `store`, `export`, `search` depending only on `core`/`model`.
 5. Every new third-party dependency needs a one-line justification in the PR and must pass `cargo-deny`.
+6. No git dependencies and no new duplicate crate versions without a reasoned entry in `deny.toml`; CI actions are pinned
+   to commit SHAs (ADR 0073).
 
 ## Workspace `Cargo.toml` (starter)
 

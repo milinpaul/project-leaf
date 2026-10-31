@@ -18,11 +18,26 @@ allow = [
 confidence-threshold = 0.9
 
 [bans]
-multiple-versions = "warn"
+# Two versions of one crate means a bigger, slower build and two copies to patch. New duplicates fail the build
+# (E08-S10, ADR 0073). GPUI's tree alone brings about 75, which only an upstream release can fix, so its crates are
+# skipped as whole subtrees:
+# a crate version reached only through them is not counted.
+multiple-versions = "deny"
+skip-tree = [
+  { crate = "gpui-pre", reason = "GPUI's own dependency tree; upgraded only with gpui-component (ADR 0002)" },
+  { crate = "gpui-pre-platform", reason = "GPUI's platform layer; same pin as gpui-pre" },
+  { crate = "gpui-component", reason = "pins gpui exactly; its tree moves with it" },
+  { crate = "gpui-kit-assets", reason = "icons pinned with gpui-component" },
+]
+skip = [
+  { crate = "enum-as-inner", reason = "loro 1.17 and its loro-delta use 0.6 and 0.5" },
+  { crate = "heapless", reason = "loro, loro-delta and postcard (inside loro) use 0.9, 0.8 and 0.7" },
+]
 wildcards = "deny"
 # Workspace crates depend on each other by path; they are never published (publish = false).
 allow-wildcard-paths = true
 
 [sources]
 unknown-registry = "deny"
-unknown-git = "warn"
+# Every crate comes from crates.io today. A git dependency must be listed in `allow-git` on purpose.
+unknown-git = "deny"

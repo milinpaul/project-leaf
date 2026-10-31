@@ -1,0 +1,21 @@
+# Keeps the pinned GitHub Actions and the Rust dependencies current (E08-S10, ADR 0073).
+# Weekly and grouped, so updates arrive as at most two PRs a week instead of one per crate.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Patch and minor releases together; a major version bump stays its own PR, since it can need code changes.
+      cargo-minor:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
