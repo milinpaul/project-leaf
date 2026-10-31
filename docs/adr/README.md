@@ -100,4 +100,4 @@ Records cover two kinds of decision:
 | [ADR-075](ADR-075-E22-S01-database-views-and-board.md) | Database views: saved views as tabs, and a board layout | Architecture | Accepted |
 | [ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md) | Decision records are numbered when they merge, by a workflow | Architecture | Accepted |
 | [ADR-077](ADR-077-E08-S08-bundled-code-font.md) | A bundled code font (JetBrains Mono NL), set before the UI library starts, for a fast cold start | Architecture | Accepted |
-| [ADR-XXX](ADR-XXX-E08-S12-svg-checked-before-drawing.md) | SVG images are checked before GPUI draws them: no outside references, size and complexity caps | Architecture | Accepted |
+| [ADR-078](ADR-078-E08-S12-svg-checked-before-drawing.md) | SVG images are checked before GPUI draws them: no outside references, size and complexity caps | Architecture | Accepted |
