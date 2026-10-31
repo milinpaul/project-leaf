@@ -1,4 +1,4 @@
-# ADR-XXX. Decision record index rows are added when records are numbered
+# ADR-084. Decision record index rows are added when records are numbered
 
 - **Status:** Accepted
 - **Type:** Architecture

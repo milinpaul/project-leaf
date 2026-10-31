@@ -6,7 +6,7 @@ Read these before any work: `docs/product/PRODUCT_SPEC.md` (what and why), `docs
 
 ## Current phase
 
-**Phase 1: MVP** (owner's decision, 2026-10-31, ADR-XXX-E00-S14): databases, page links, Markdown import and export,
+**Phase 1: MVP** (owner's decision, 2026-10-31, ADR-085): databases, page links, Markdown import and export,
 web bookmarks, the page top bar. Phase 0 (the page editor) is done apart from its open hardening stories, which are
 finished alongside. Do not build Phase 2 work (sync, other database views, the web viewer) unless the task says so.
 

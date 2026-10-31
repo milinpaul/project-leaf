@@ -1,4 +1,4 @@
-# ADR-XXX. A database row opens as a page with its properties under the title
+# ADR-086. A database row opens as a page with its properties under the title
 
 - **Status:** Accepted
 - **Type:** Feature
