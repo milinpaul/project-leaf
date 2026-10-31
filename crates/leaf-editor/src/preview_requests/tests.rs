@@ -140,3 +140,44 @@ fn a_fetched_preview_is_saved_off_the_undo_history_unless_the_bookmark_moved_on(
         "no longer a bookmark"
     );
 }
+
+#[test]
+fn missing_previews_are_asked_for_but_never_one_already_fetched() {
+    let (mut editor, ids) = page(&["", "", ""]);
+    for (block, url) in [
+        (ids[0], LEAF),
+        (ids[1], "https://example.com"),
+        (ids[2], "https://synced.example"),
+    ] {
+        editor.set_caret(Caret { block, at: 0 }).unwrap();
+        editor.insert_web_bookmark(url).unwrap();
+    }
+    // One was fetched here, one's preview arrived by sync; the first was never fetched.
+    let fetched = |at| WebPreview {
+        title: Some("Fetched".into()),
+        fetched_at: Some(at),
+        ..WebPreview::default()
+    };
+    editor
+        .set_web_bookmark_preview(ids[1], "https://example.com", fetched(1))
+        .unwrap();
+    editor
+        .set_web_bookmark_preview(ids[2], "https://synced.example", fetched(2))
+        .unwrap();
+    assert!(
+        editor.has_preview_requests(),
+        "they wait, so the app can ask the owner first"
+    );
+    assert_eq!(
+        editor.take_preview_requests(),
+        Vec::new(),
+        "none is handed out until allowed"
+    );
+    assert!(
+        !editor.has_preview_requests(),
+        "and taking them while not allowed drops them"
+    );
+    editor.set_previews_allowed(true);
+    editor.request_missing_previews().unwrap();
+    assert_eq!(editor.take_preview_requests(), vec![(ids[0], LEAF.to_owned())]);
+}
