@@ -110,3 +110,4 @@ Records cover two kinds of decision:
 | [ADR-085](ADR-085-E00-S14-phase-1-is-current.md) | Phase 1 is the current phase | Feature | Accepted |
 | [ADR-086](ADR-086-E09-S08-row-page-properties.md) | A database row opens as a page with its properties under the title | Feature | Accepted |
 | [ADR-087](ADR-087-E15-S03-making-web-bookmarks.md) | Making web bookmarks: an offer after a paste, and an address box from the slash menu | Feature | Accepted |
+| [ADR-088](ADR-088-E08-S11-fuzzing.md) | Fuzzing the code that reads outside input, with cargo-fuzz in its own crate | Architecture | Accepted |
