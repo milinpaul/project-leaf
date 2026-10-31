@@ -130,11 +130,7 @@ impl TableDelegate for DatabaseTable {
         }
         let shell = self.shell.clone();
         let content: AnyElement = match col_ix.checked_sub(1) {
-            None => div()
-                .font_weight(FontWeight::MEDIUM)
-                .truncate()
-                .child(row.title.clone())
-                .into_any_element(),
+            None => render_title(&row.title, row.row, row_ix, &shell, cx),
             Some(i) => match row.cells.get(i) {
                 Some(display) => render_display(display, row_ix, col_ix, &shell, cx),
                 None => div().into_any_element(),
@@ -144,7 +140,14 @@ impl TableDelegate for DatabaseTable {
         let cell = cell.child(content);
         let popover = match editing {
             Some(EditKind::Options) => self.picker.as_ref().map(|picker| {
-                super::cells::render_picker(picker, &self.query, &self.shell, cx).into_any_element()
+                super::cells::render_picker(
+                    picker,
+                    &self.query,
+                    &self.shell,
+                    super::cells::PickerFor::Table,
+                    cx,
+                )
+                .into_any_element()
             }),
             Some(EditKind::Date) => Some(super::cells::render_calendar(&self.calendar, window, cx)),
             _ => None,
@@ -267,5 +270,60 @@ pub(super) fn render_chip(chip: &Chip, cx: &App) -> AnyElement {
         .text_color(foreground)
         .whitespace_nowrap()
         .child(chip.name.clone())
+        .into_any_element()
+}
+
+/// The title cell: the row page's title, and an "Open" button that shows while the pointer is over the cell and
+/// opens the row as a page (E09-S08).
+fn render_title(
+    title: &str,
+    page: leaf_core::PageId,
+    row_ix: usize,
+    shell: &WeakEntity<Shell>,
+    cx: &mut Context<TableState<DatabaseTable>>,
+) -> AnyElement {
+    let theme = cx.theme();
+    let group = SharedString::from(format!("database-title-{row_ix}"));
+    let shell = shell.clone();
+    h_flex()
+        .group(group.clone())
+        .size_full()
+        .gap_1()
+        .items_center()
+        .child(
+            div()
+                .flex_1()
+                .min_w_0()
+                .font_weight(FontWeight::MEDIUM)
+                .truncate()
+                .child(title.to_owned()),
+        )
+        .child(
+            h_flex()
+                .id(SharedString::from(format!("database-open-{row_ix}")))
+                .debug_selector(move || format!("database-open-{row_ix}"))
+                .flex_none()
+                .h(px(22.0))
+                .px_1p5()
+                .gap_1()
+                .items_center()
+                .rounded_sm()
+                .border_1()
+                .border_color(theme.border)
+                .bg(theme.background)
+                .text_xs()
+                .text_color(theme.muted_foreground)
+                .cursor_pointer()
+                .opacity(0.0)
+                .group_hover(group, |s| s.opacity(1.0))
+                .child(Icon::new(IconName::ExternalLink).xsmall())
+                .child("Open")
+                .on_click(move |_, window, cx| {
+                    cx.stop_propagation();
+                    if let Some(shell) = shell.upgrade() {
+                        shell.update(cx, |shell, cx| shell.open(page, window, cx));
+                    }
+                }),
+        )
         .into_any_element()
 }

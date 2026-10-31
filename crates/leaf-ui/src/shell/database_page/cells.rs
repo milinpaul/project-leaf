@@ -31,12 +31,23 @@ pub(super) fn panel(cx: &App) -> gpui::Div {
         .occlude()
 }
 
+/// Where an option picker is open: on a table cell, or on a property of a row's page (E09-S08). Its choices go back
+/// to the one that opened it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum PickerFor {
+    /// A cell of the open database page's table.
+    Table,
+    /// A property on the open row page.
+    RowPage,
+}
+
 /// The option picker: a search field, the matching options (ticked when the cell has them), and "Create …" for
 /// a name that isn't there.
 pub(super) fn render_picker(
     picker: &OptionPicker,
     query: &Entity<InputState>,
     shell: &WeakEntity<Shell>,
+    picking_for: PickerFor,
     cx: &App,
 ) -> impl IntoElement {
     let theme = cx.theme();
@@ -70,7 +81,10 @@ pub(super) fn render_picker(
                 })
                 .on_click(move |_, window, cx| {
                     if let Some(shell) = shell.upgrade() {
-                        shell.update(cx, |shell, cx| shell.pick_database_option(option, window, cx));
+                        shell.update(cx, |shell, cx| match picking_for {
+                            PickerFor::Table => shell.pick_database_option(option, window, cx),
+                            PickerFor::RowPage => shell.pick_row_option(option, window, cx),
+                        });
                     }
                 }),
         );
@@ -93,7 +107,10 @@ pub(super) fn render_picker(
                 .child(format!("Create \u{201c}{name}\u{201d}"))
                 .on_click(move |_, window, cx| {
                     if let Some(shell) = shell.upgrade() {
-                        shell.update(cx, |shell, cx| shell.create_database_option(&name, window, cx));
+                        shell.update(cx, |shell, cx| match picking_for {
+                            PickerFor::Table => shell.create_database_option(&name, window, cx),
+                            PickerFor::RowPage => shell.create_row_option(&name, window, cx),
+                        });
                     }
                 }),
         );

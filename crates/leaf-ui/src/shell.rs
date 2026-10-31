@@ -41,6 +41,8 @@ pub struct Shell {
     cover_picker: Option<(Entity<crate::cover_picker::CoverPickerPanel>, Subscription)>,
     /// The open database page's table and editors (E09-S05), while a database page is open.
     database: Option<database_page::DatabasePage>,
+    /// The open row page's property editing (E09-S08), while a database row is open as a page.
+    row_page: Option<database_page::row_page::RowPage>,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
     storage: Option<Storage>,
     /// Focus for the window itself, so menu actions and shortcuts reach the shell even when no text
@@ -101,6 +103,7 @@ impl Shell {
             icon_picker: None,
             cover_picker: None,
             database: None,
+            row_page: None,
             storage,
             focus,
             subscriptions,
