@@ -134,7 +134,8 @@ runs the chosen action (E18-S04). Its "Full width" switch sets the page's `full_
 **Formatting bar (E07-S13, ADR 0067).** While text is selected, `shell::format_bar` floats a bar above the selection
 with Turn into and the mark buttons. `PageEditor::format_bar` says what it offers and which marks are on; clicks go
 through `toggle_mark`, the link popover and `BlockAction::TurnInto`, like the keyboard and the block menu. The Turn
-into list is drawn in the bar's overlay so the page keeps the keyboard and the selection.
+into list is drawn in the bar's overlay so the page keeps the keyboard and the selection. Its "Link to page" button
+(E10-S10) calls `PageEditor::link_selection_to_page`, which opens the `[[` page-link menu searching for the selected words.
 
 **Callouts (E21, ADR 0070).** `shell::callout` draws a callout row as a rounded box in its tone's soft colour
 (`theme::callout_colours`, contrast-tested in both appearances) with the tone's icon; the text inside is an

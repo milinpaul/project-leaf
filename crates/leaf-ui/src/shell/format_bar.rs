@@ -1,5 +1,5 @@
 //! The floating formatting bar over selected text (E07-S13, ADR 0067): "Turn into", then Bold, Italic,
-//! Strikethrough, Code and Link. What it offers, and which marks are on, is `PageEditor::format_bar`;
+//! Strikethrough, Code, Link and Link to page. What it offers, and which marks are on, is `PageEditor::format_bar`;
 //! this module places and draws it and runs a click the way the keyboard would (`toggle_mark`, the link
 //! popover, `BlockAction::TurnInto`), then gives the page the keyboard back with the selection kept.
 
@@ -101,11 +101,14 @@ impl Shell {
         let (background, border, radius) = (theme.popover, theme.border, theme.radius);
         let divider = || div().w(px(1.0)).h(px(20.0)).mx_0p5().bg(border);
         let turn_into = (!bar.kinds.is_empty()).then(|| Self::render_turn_into(bar, open, cx));
-        let marks: Vec<AnyElement> = bar
+        let mut marks: Vec<AnyElement> = bar
             .marks
             .iter()
             .map(|mark| Self::render_mark(*mark, cx))
             .collect();
+        if bar.link_to_page {
+            marks.push(Self::render_link_to_page(cx));
+        }
         let has_both = turn_into.is_some() && !marks.is_empty();
         h_flex()
             .id("format-bar")
@@ -190,6 +193,25 @@ impl Shell {
             .bg(background)
             .shadow_md()
             .children(rows)
+            .into_any_element()
+    }
+
+    /// "Link to page" (E10-S10): the selected words search the page list, and the chosen page's link takes
+    /// their place.
+    fn render_link_to_page(cx: &mut Context<Self>) -> AnyElement {
+        crate::theme::button("format-link-to-page")
+            .debug_selector(|| "format-link-to-page".into())
+            .ghost()
+            .small()
+            .icon(Icon::new(IconName::FileText))
+            .tooltip("Link to page")
+            .on_click(cx.listener(|shell, _, window, cx| {
+                if let Some(Err(err)) = shell.page().map(leaf_editor::PageEditor::link_selection_to_page) {
+                    report("could not link to a page", err);
+                }
+                shell.focus_page(window, cx);
+                shell.changed(window, cx);
+            }))
             .into_any_element()
     }
 

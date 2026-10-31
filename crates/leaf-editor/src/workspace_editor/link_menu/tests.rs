@@ -144,3 +144,85 @@ fn the_slash_menu_link_to_page_opens_the_menu() {
         "Japanese phrases"
     );
 }
+
+// ---- "Link to page" over selected words (E10-S10) ----
+
+/// The open page's first line set to `text`, with `range` selected.
+fn selected(editor: &mut WorkspaceEditor, block: BlockId, text: &str, range: std::ops::Range<usize>) {
+    let page = editor.open_page().unwrap().unwrap();
+    page.set_text(block, text).unwrap();
+    page.select(block, range).unwrap();
+}
+
+fn text_of(editor: &mut WorkspaceEditor, block: BlockId) -> String {
+    let page = editor.open_page().unwrap().unwrap();
+    page.doc().plain_text(block).unwrap().unwrap()
+}
+
+#[test]
+fn the_bar_offers_link_to_page_for_words_in_one_block() {
+    let (mut editor, _, block) = workspace();
+    selected(&mut editor, block, "see Trip to Japan now", 4..17);
+    let page = editor.open_page().unwrap().unwrap();
+    assert!(page.format_bar().unwrap().unwrap().link_to_page);
+    for (text, range) in [("a ] b", 0..5), ("   x", 0..3)] {
+        selected(&mut editor, block, text, range);
+        let page = editor.open_page().unwrap().unwrap();
+        assert!(!page.format_bar().unwrap().unwrap().link_to_page, "{text:?}");
+    }
+}
+
+#[test]
+fn linking_selected_words_searches_for_them_and_swaps_them_for_the_link() {
+    let (mut editor, [trip, ..], block) = workspace();
+    selected(&mut editor, block, "see Trip to Japan now", 4..17);
+    editor
+        .open_page()
+        .unwrap()
+        .unwrap()
+        .link_selection_to_page()
+        .unwrap();
+    let menu = editor.link_menu().unwrap().unwrap();
+    assert_eq!(menu.query, "Trip to Japan");
+    assert_eq!(
+        labels(&menu),
+        vec!["Trip to Japan"],
+        "an exact title: no New page"
+    );
+    editor.link_menu_apply(None, NOW).unwrap();
+    let page = editor.open_page().unwrap().unwrap();
+    assert_eq!(page.doc().page_links(), vec![(block, trip)]);
+    assert_eq!(
+        page.doc().plain_text(block).unwrap().unwrap(),
+        format!("see {} now", leaf_model::PAGE_LINK)
+    );
+    page.undo().unwrap();
+    assert_eq!(
+        text_of(&mut editor, block),
+        "see Trip to Japan now",
+        "one undo gives the words back"
+    );
+}
+
+#[test]
+fn escape_gives_the_selected_words_back() {
+    let (mut editor, _, block) = workspace();
+    selected(&mut editor, block, "see Kyoto now", 4..9);
+    let page = editor.open_page().unwrap().unwrap();
+    page.link_selection_to_page().unwrap();
+    assert_eq!(page.doc().plain_text(block).unwrap().unwrap(), "see [[Kyoto now");
+    assert!(page.link_menu_escape().unwrap());
+    assert_eq!(text_of(&mut editor, block), "see Kyoto now");
+    assert_eq!(editor.link_menu().unwrap(), None);
+    let page = editor.open_page().unwrap().unwrap();
+    assert!(!page.link_menu_escape().unwrap(), "nothing open any more");
+}
+
+#[test]
+fn escape_after_typing_brackets_just_closes() {
+    let (mut editor, _, block) = workspace();
+    typed(&mut editor, "[[ja");
+    let page = editor.open_page().unwrap().unwrap();
+    assert!(page.link_menu_escape().unwrap());
+    assert_eq!(text_of(&mut editor, block), "[[ja");
+}
