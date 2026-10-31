@@ -43,3 +43,10 @@ The repository is public and every pull request runs CI. A security review (2026
   and on purpose (ADR 0002).
 - In plain English: CI can only read the code, it runs exactly the tool versions we chose, and adding a second copy
   of a library, or a library from outside the official registry, is caught automatically.
+
+## Update 2026-10-31 (E08-S16): one run per main merge
+
+`main` runs shared one concurrency group, so a burst of merges cancelled the older waiting run, and the README badge
+(the newest finished `main` run) read "failing" with nothing broken. Each `main` push now gets its own group, keyed
+by its commit, so every merge is tested on all three OSes and none is cancelled. Pull request runs still cancel the
+run they supersede. The cost is CI time on busy days (free for a public repository), and results can queue longer.

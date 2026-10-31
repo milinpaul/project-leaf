@@ -8,8 +8,10 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
-  # Cancel superseded PR runs, but let every main run finish: main is where all three OSes get tested.
+  # A PR's runs share a group, so a new push cancels the one it supersedes. Each main push gets a group of its
+  # own (its commit), so no main run is ever cancelled or replaced while it waits: main is where all three OSes
+  # get tested, and the README badge shows the newest finished main run (E08-S16).
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Every job only reads the repository. A job that ever needs more (say, a release upload) asks for it itself.
