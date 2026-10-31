@@ -3,8 +3,8 @@
 //! caption below as editable text (E05-S07); the picture itself is drawn by `image_row` (E07-S08).
 
 use gpui::{
-    AnyElement, Context, ElementId, FontWeight, IntoElement, ParentElement, Pixels, SharedString, Styled,
-    Window, div, px,
+    AnyElement, Context, ElementId, FontWeight, InteractiveElement as _, IntoElement, ParentElement, Pixels,
+    SharedString, Styled, Window, div, px,
 };
 use gpui_component::checkbox::Checkbox;
 use gpui_component::{ActiveTheme as _, h_flex, v_flex};
@@ -157,7 +157,16 @@ impl Shell {
                     })
                     .into_any_element(),
             ),
-            BlockStyle::Quote => Some(div().w(px(3.0)).h_6().bg(cx.theme().border).into_any_element()),
+            // As tall as the quote's text, which can have several lines (E17-S13).
+            BlockStyle::Quote => Some(
+                div()
+                    .debug_selector(move || format!("quote-bar-{id}"))
+                    .w(px(3.0))
+                    .min_h_6()
+                    .self_stretch()
+                    .bg(cx.theme().border)
+                    .into_any_element(),
+            ),
             _ => None,
         }
     }
@@ -228,3 +237,6 @@ fn look_of(style: &BlockStyle) -> Look {
         _ => body,
     }
 }
+
+#[cfg(test)]
+mod tests;

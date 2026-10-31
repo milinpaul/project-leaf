@@ -80,6 +80,12 @@ impl PageDoc {
                 None
             }
             (text, true) => text,
+            // A divider becoming a web bookmark gets its empty container now, before anything is written
+            // into it: made and written in one step, redo would lose the words (ADR-007).
+            (None, false) if kind.keeps_text_container() => {
+                meta.ensure_mergeable_text(keys::TEXT)?;
+                None
+            }
             (None, false) => None,
         };
         // A web bookmark becomes its address, linked where the new kind takes marks.

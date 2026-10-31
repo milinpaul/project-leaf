@@ -62,7 +62,8 @@ the block schema and reading text with formatting (E02-S01), inserting, deleting
 editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
 block's kind and properties (E02-S04). The page is a **virtual list** (E07-S01, ADR-035): only the rows on screen are laid out,
 and each frame's rows are compared with the last to re-measure or splice just what changed, so a 10,000-block page
-scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR-038): GPUI `StyledText` runs carry the marks,
+scrolls smoothly. A slim scrollbar at its right edge (`leaf-ui/src/scrollbar.rs`, E07-S14) shows where you are; the
+sidebar's page tree uses the same one. Blocks are drawn by a **rich text view** (E07-S02, ADR-038): GPUI `StyledText` runs carry the marks,
 the selection is a run background, an overlay draws the blinking caret and records the painted layout, which answers
 the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E07-S03, ADR-040): keys are actions
 bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); typed text, input-method drafts and the
@@ -206,7 +207,10 @@ selection from one cell into another is `Selection::Cells`, the rectangle betwee
 (`leaf-ui/src/shell/table_row.rs`, E16-S03) the table's row draws the whole grid and the cell rows after it draw
 nothing, so the list stays in step with the view; each cell uses the same rich-text drawing as any block, so clicks,
 the caret, selection and marks work unchanged. Columns are a fixed 160 px; a table wider than the page scrolls
-sideways inside its own box (a horizontal swipe or Shift+wheel), never the page. Hover controls ("+" under and
+sideways inside its own box (a horizontal swipe, Shift+wheel, or its scrollbar, which stays at the bottom of the
+window when the table runs past it), never the page. Keeping the caret in view uses where its cell was drawn, not
+the cell's own empty row, so a click never moves the page and Tab or an arrow brings an off-screen row or column in
+(E16-S05). Hover controls ("+" under and
 beside the grid, a handle per row and column with a menu) call `PageEditor::edit_table` with a `TableEdit`: one
 table command and one undo step, the caret following the edit. Tables come in and go out through `/table` (a 3 × 3
 table with a header row) and the clipboard (E16-S04): pasting a Markdown table builds one with the table commands,

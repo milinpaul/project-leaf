@@ -447,3 +447,26 @@ fn two_devices_changing_the_address_and_fetching_agree() {
     assert_eq!(a.kind(id).unwrap(), b.kind(id).unwrap());
     a.check_invariants().unwrap();
 }
+
+#[test]
+fn a_divider_turned_into_a_web_bookmark_and_then_text_keeps_the_address_through_redo() {
+    let mut page = PageDoc::new();
+    page.set_undo_merge_interval(0);
+    let id = insert(&mut page, BlockKind::Divider, "");
+    for kind in [bookmark(LEAF), BlockKind::Paragraph] {
+        page.apply(PageCommand::SetBlockKind { id, kind }).unwrap();
+    }
+    let linked = page.text(id).unwrap();
+    for _ in 0..3 {
+        page.undo().unwrap();
+    }
+    for _ in 0..3 {
+        page.redo().unwrap();
+    }
+    assert_eq!(
+        page.text(id).unwrap(),
+        linked,
+        "the address comes back as linked text"
+    );
+    page.check_invariants().unwrap();
+}

@@ -107,10 +107,11 @@ Mobile; P2P collaboration (maybe).
 
 | Situation | Result |
 |---|---|
-| `Enter` mid-text | Split block at cursor; new block keeps the type for lists/to-dos, becomes paragraph for headings/quote. |
+| `Enter` mid-text | Split block at cursor; new block keeps the type for lists/to-dos, becomes paragraph for headings. |
+| `Enter` at the start of a paragraph or heading with text | Add an empty paragraph above; the block keeps its type and the caret stays at its start. |
 | `Enter` on empty list item / to-do / action item | Outdent one level; at root, convert to paragraph. |
 | `Enter` in code block | Newline inside the block. `Cmd/Ctrl+Enter` or `Enter` on two trailing empty lines exits. |
-| `Enter` in a callout | Line break inside the callout. `Enter` on an empty last line (or in an empty callout) removes that line and adds a paragraph after it; `Cmd/Ctrl+Enter` leaves from anywhere. |
+| `Enter` in a callout or quote | Line break inside it. `Enter` on an empty last line (or in an empty one) removes that line and adds a paragraph after it; `Cmd/Ctrl+Enter` leaves from anywhere. |
 | `Backspace` at start of non-paragraph block | Convert to paragraph (keep text). |
 | `Enter` in an action item | Split like a to-do: the new action item is not done and has no date, and keeps the priority. |
 | `Cmd/Ctrl+Enter` in a to-do or action item | Tick it off, or back on; the caret stays. |

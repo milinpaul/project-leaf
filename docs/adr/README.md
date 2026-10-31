@@ -103,4 +103,5 @@ Records cover two kinds of decision:
 | [ADR-078](ADR-078-E08-S12-svg-checked-before-drawing.md) | SVG images are checked before GPUI draws them: no outside references, size and complexity caps | Architecture | Accepted |
 | [ADR-079](ADR-079-E09-S07-database-sort-and-filter.md) | Sorting and filtering a database: a bar above the table, and typed filters written once | Feature | Accepted |
 | [ADR-080](ADR-080-E15-S01-web-bookmark-previews.md) | Web bookmark previews: opt-in network access, safety limits, ureq + html5ever | Architecture | Accepted |
+| [ADR-081](ADR-081-E17-S13-quotes-hold-lines.md) | A quote holds lines like a callout, and Enter at a block's start leaves the block alone | Feature | Accepted |
 | [ADR-XXX](ADR-XXX-E15-S02-web-bookmark-block.md) | The web bookmark block: an address, a preview off the undo history, and an empty text container | Architecture | Accepted |

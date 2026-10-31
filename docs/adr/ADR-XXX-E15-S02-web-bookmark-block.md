@@ -35,7 +35,8 @@ replays the step. The conversion created the paragraph's text container and wrot
   empty block, or one whose whole text is one link to the same address; anything else is refused, so no words are
   lost.
 - **Empty text container:** a bookmark keeps an empty text container from its creation (`keeps_text_container`), so
-  both conversions are plain text edits on a container that already exists. `PageDoc::text` reads `None` for it, and
+  both conversions are plain text edits on a container that already exists. A block without one (a divider) gets it,
+  empty, in the step that makes it a bookmark. `PageDoc::text` reads `None` for it, and
   invariant 2 allows it.
 
 ## Alternatives considered
@@ -50,8 +51,9 @@ replays the step. The conversion created the paragraph's text container and wrot
 - Undo and redo of every conversion keep the address. The page undo property test now generates bookmarks, address
   changes and previews (old and current address), comparing outlines with previews set aside, since they are never
   undone.
-- A bookmark that came from a divider, or from a merge that removed its container, has none. Turning it into text
-  then creates the container in a later step, the case ADR-007 can't cover either.
+- Only a bookmark whose container a merge removed has none; turning it into text then makes and writes the container
+  in one step, the case ADR-007 can't cover either. The property test found the divider case too (divider → bookmark
+  → paragraph, undo all, redo all), now covered.
 - E15-S03 (paste and menus), E15-S04 (the card) and E15-S05 (the fetcher) build on these commands. Until the card
   exists, a bookmark shows as one muted line with its title or address.
 - Plain English: a web bookmark remembers its address and, once fetched, the page's title, description and pictures.

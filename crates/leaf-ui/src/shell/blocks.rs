@@ -57,6 +57,9 @@ pub(super) struct PageState {
     pub(super) menu_hover: Option<Task<()>>,
     /// Each table's sideways scroll position (E16-S03), kept across frames.
     pub(super) table_scroll: HashMap<BlockId, gpui::ScrollHandle>,
+    /// Where the page's list showed on screen, taken before the rows are drawn: a row can't ask the list while
+    /// it is drawing (a wide table keeps its scrollbar inside it, E16-S05).
+    pub(super) viewport: gpui::Bounds<Pixels>,
     /// A mouse-wheel glide in progress (E17-S01).
     pub(super) wheel: super::smooth_scroll::WheelGlide,
     /// Scrolling while a text selection is dragged near an edge (E17-S02).
@@ -133,9 +136,25 @@ impl Shell {
     }
 
     /// Scrolls so the caret's block is on screen.
+    ///
+    /// A table's cells are drawn by the table's row; their own rows, listed after it, are empty. So for a
+    /// caret in a cell this keeps the cell itself on screen, where it was drawn last frame: up and down in the
+    /// page, and sideways in the table's box (E16-S05). Before the table has been drawn, its row is revealed.
     pub(super) fn reveal_caret(&mut self) {
-        if let Some(block) = self.caret_block() {
-            self.blocks.list.reveal(block);
+        let Some(caret) = self.page().and_then(|page| page.caret().ok().flatten()) else {
+            return;
+        };
+        let Some(table) = self.blocks.list.table_of(caret.block) else {
+            return self.blocks.list.reveal(caret.block);
+        };
+        match self.blocks.painted.caret_bounds(caret.block, caret.at) {
+            Some((at, line)) => {
+                // The cell's padding and border around its line, so the whole cell comes into view.
+                let room = px(super::table_row::CELL_ROOM);
+                self.blocks.list.reveal_span(at.y - room, at.y + line + room);
+                self.reveal_table_column(table, at.x);
+            }
+            None => self.blocks.list.reveal(table),
         }
     }
 
@@ -202,6 +221,7 @@ impl Shell {
         self.blocks.drawn.clear();
         self.end_stale_drag(cx);
         self.blocks.list.sync(self.editor.selected(), rows);
+        self.blocks.viewport = self.blocks.list.state.viewport_bounds();
 
         let rows = list(self.blocks.list.state.clone(), cx.processor(Self::render_item)).size_full();
         // The platform's text input (typing, input methods, the emoji picker) reaches the page
@@ -250,7 +270,9 @@ impl Shell {
                     .child(input)
                     .child(Self::wheel_glide_layer(cx))
                     .child(Self::select_scroll_layer(cx))
-                    .child(rows),
+                    .child(rows)
+                    // Where you are in the page, at its right edge (E07-S14).
+                    .child(crate::scrollbar::slim(&self.blocks.list.state, cx).id("page-scrollbar")),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
             .child(menu)

@@ -15,6 +15,7 @@ pub mod covers;
 mod icon_picker;
 pub mod menus;
 mod notice;
+mod scrollbar;
 mod search;
 pub mod settings;
 mod settings_dialog;
