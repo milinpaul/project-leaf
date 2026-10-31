@@ -180,7 +180,7 @@ pub(super) fn handle_place(row: &BlockRow) -> (Pixels, Pixels) {
     let first_line = look.line_height + look.pad * 2.0;
     // A callout's text starts below its box's padding.
     let inset = if matches!(row.style, BlockStyle::Callout { .. }) {
-        px(super::callout::PAD_Y)
+        px(super::callout::GAP_Y + super::callout::PAD_Y)
     } else {
         px(0.0)
     };

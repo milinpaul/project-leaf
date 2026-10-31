@@ -21,6 +21,13 @@ use crate::theme;
 pub(super) const PAD_X: f32 = 12.0;
 pub(super) const PAD_Y: f32 = 8.0;
 
+/// Space above and below the box, in pixels, so callouts in a row read as separate boxes.
+pub(super) const GAP_Y: f32 = 4.0;
+
+/// How far the icon sits below the top of the text, in pixels, to centre it on the first line (a
+/// 16 px icon on the body text's 28 px first line).
+const ICON_DROP: f32 = 6.0;
+
 /// The tone picker while it is open: which callout, and where it floats.
 pub(super) struct OpenTones {
     pub(super) block: BlockId,
@@ -65,7 +72,7 @@ impl Shell {
             .id(SharedString::from(format!("callout-icon-{id}")))
             .debug_selector(move || format!("callout-icon-{id}"))
             .flex_none()
-            .mt(px(3.0))
+            .mt(px(ICON_DROP))
             .rounded(radius)
             .cursor_pointer()
             .hover(|style| style.bg(accent.opacity(0.12)))
@@ -83,6 +90,7 @@ impl Shell {
         h_flex()
             .w_full()
             .pl(indent_of(row))
+            .py(px(GAP_Y))
             .child(
                 h_flex()
                     .debug_selector(move || format!("callout-{id}"))

@@ -117,3 +117,36 @@ fn a_click_elsewhere_closes_the_picker_without_changing_anything(cx: &mut TestAp
         }
     );
 }
+
+#[gpui::test]
+fn callouts_in_a_row_are_apart_and_the_icon_sits_on_the_first_line(cx: &mut TestAppContext) {
+    let (shell, cx, first) = open(cx, CalloutTone::Info);
+    let second = shell.update(cx, |shell, _| {
+        let page = shell.page().unwrap();
+        let second = page.enter(first).unwrap();
+        page.set_text(second, "Second").unwrap();
+        page.turn_into(
+            second,
+            BlockKind::Callout {
+                tone: CalloutTone::Error,
+            },
+        )
+        .unwrap();
+        second
+    });
+    draw(cx);
+    let a = cx.debug_bounds(selector(format!("callout-{first}"))).unwrap();
+    let b = cx.debug_bounds(selector(format!("callout-{second}"))).unwrap();
+    let gap = f32::from(b.top() - a.bottom());
+    assert!(gap >= 7.0, "a clear gap between the boxes: {gap}");
+
+    let icon = cx
+        .debug_bounds(selector(format!("callout-icon-{first}")))
+        .unwrap();
+    let from_top = f32::from(icon.top() - a.top());
+    // The box's padding, then the icon dropped onto the middle of the first 28 px line.
+    assert!(
+        (13.0..=15.0).contains(&from_top),
+        "icon {from_top} px below the box's top"
+    );
+}
