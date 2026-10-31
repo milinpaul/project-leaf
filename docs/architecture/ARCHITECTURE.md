@@ -42,6 +42,7 @@ the screen stays thin.
 | `leaf-store` | Saves and loads documents in a SQLite file; autosave and crash recovery. | Know about the screen. |
 | `leaf-export` | Markdown import/export (Phase 1). | Touch files or the screen. |
 | `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR-019). | Hold data that exists nowhere else. |
+| `leaf-fetch` | Fetches web bookmark previews (E15-S05): the page's `<head>`, its preview picture and icon, within ADR-080's limits (public internet only, checked in the DNS lookup; size and time caps; no scripts, cookies or proxy). The only crate that goes online, and only once the owner allows previews. Native, never wasm. | Touch documents or files, or run on the UI thread. |
 | `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR-055). Test support only. | Be used by the app. |
 | `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save, search), run by `just bench` and on every `main` push in CI (ADR-056, ADR-058). Test support only. | Be used by the app. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. Holds Leaf's look (colours, bundled fonts, sizes) in one `theme` module (ADR-027). | Contain editing logic. |
@@ -104,7 +105,11 @@ ADR-087): a pasted web address remembers an offer while the caret sits right aft
 the slash menu's "Web bookmark" asks for an address like "Image" asks for a file; `shell/web_bookmark.rs` draws the
 offer menu and the address box and forwards. A bookmark is drawn as a card (E15-S04, `shell/bookmark_card.rs`) from
 `leaf_editor::WebBookmarkCard`, which decides what shows; its pictures come from the asset store like an image's, and
-the blocks whose preview is being fetched (`PageState::fetching`, filled by the fetcher in E15-S05) show a loading line. A **code block** shows its language at the top right on hover; a click opens a searchable list
+the blocks whose preview is being fetched (`PageState::fetching`) show a loading line. **Previews** (E15-S05,
+ADR-XXX-E15-S05): the page editor notes a request when a bookmark is made on this device or "Refresh preview" is
+chosen; after each page action `shell/preview_fetch.rs` takes them, but only if the app setting allows previews (off
+until the owner says yes), runs `leaf_fetch::Fetcher` on a background thread, stores the pictures in the asset store and
+saves the preview with `SetWebBookmarkPreview`, which is never an undo step. A failed fetch changes nothing. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR-054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
 and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR-043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.

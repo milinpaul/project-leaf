@@ -92,7 +92,7 @@ impl PageEditor {
                     }
                 }
                 self.doc.as_one_step(|doc| -> Result<(), EditorError> {
-                    for id in convertible {
+                    for &id in &convertible {
                         doc.apply(PageCommand::SetBlockKind {
                             id,
                             kind: kind.clone(),
@@ -100,6 +100,12 @@ impl PageEditor {
                     }
                     Ok(())
                 })?;
+                // A block that became a web bookmark gets its preview, when that is allowed (E15-S05).
+                if let BlockKind::WebBookmark { url, .. } = &kind {
+                    for id in convertible {
+                        self.want_preview(id, url);
+                    }
+                }
             }
             BlockAction::Duplicate => {
                 if let PageOutcome::BlocksCreated(copies) =

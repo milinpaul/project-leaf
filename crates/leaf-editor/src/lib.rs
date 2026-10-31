@@ -31,6 +31,7 @@ mod link;
 mod link_menu;
 mod page_editor;
 mod page_link;
+mod preview_requests;
 mod search_bar;
 mod selection;
 mod shortcuts;

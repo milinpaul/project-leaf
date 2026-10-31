@@ -32,7 +32,7 @@ crates/
   leaf-export   markdown import/export (Phase 1)                    [core, wasm-ok]
   leaf-search   full-text index (SQLite FTS5)                       [core, native]
   leaf-fetch    web bookmark previews: the only crate that goes
-                online, opt-in (Phase 1, E15-S05)                   [native, network]
+                online, opt-in (E15-S05, ADR-080)                   [native, network]
   leaf-fixtures big seeded test documents for tests and benchmarks  [test support, native]
   leaf-bench    performance budget benchmarks (divan; search)       [test support, native]
   leaf-ui       GPUI components, theme, rendering of view models    [ui]

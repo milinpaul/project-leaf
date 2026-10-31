@@ -54,6 +54,8 @@ pub struct PageEditor {
     pub(crate) offer: Option<crate::web_bookmark::OfferState>,
     /// A web bookmark's address asked for from the slash menu, until it is given or cancelled.
     pub(crate) address: Option<crate::web_bookmark::AddressRequest>,
+    /// Web bookmarks waiting for their preview to be fetched, and whether fetching is allowed (E15-S05).
+    pub(crate) previews: crate::preview_requests::PreviewRequests,
 }
 
 impl PageEditor {
@@ -73,6 +75,7 @@ impl PageEditor {
             image: None,
             offer: None,
             address: None,
+            previews: crate::preview_requests::PreviewRequests::default(),
         }
     }
 
