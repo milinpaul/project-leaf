@@ -8,7 +8,10 @@
 //! `PageEditor`'s; the controls here only forward to [`leaf_editor::PageEditor::edit_table`].
 //!
 //! Columns have a fixed width, and the grid sits in a box that scrolls sideways, so a wide table never
-//! makes the page wider than its column.
+//! makes the page wider than its column. A horizontal scrollbar under the grid shows while the pointer is over
+//! the table, and the caret moving into a column out of view scrolls it in (E16-S05).
+
+mod scroll;
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
@@ -17,6 +20,7 @@ use gpui::{
 };
 use gpui_component::button::ButtonVariants as _;
 use gpui_component::menu::{DropdownMenu as _, PopupMenu, PopupMenuItem};
+use gpui_component::scroll::Scrollbar;
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
 use leaf_core::BlockId;
@@ -27,8 +31,11 @@ use super::{Shell, report};
 
 /// Width of every column: room for a few words, and a predictable grid to scroll sideways.
 pub(super) const CELL_WIDTH: f32 = 160.0;
+/// Room kept around the caret's line when a cell is scrolled into view: its padding and border, and a little
+/// more, so the whole cell shows rather than just its text.
+pub(super) const CELL_ROOM: f32 = 12.0;
 /// The slim strip before each row and above each column that holds its menu handle.
-const HANDLE: f32 = 18.0;
+pub(super) const HANDLE: f32 = 18.0;
 /// Thickness of the "+" bars that add a row (below) or a column (right).
 const ADD_BAR: f32 = 18.0;
 
@@ -109,13 +116,15 @@ impl Shell {
         // movement scrolls it (a horizontal swipe, or Shift+wheel); scrolling up and down over it
         // moves the page.
         let scroll = self.blocks.table_scroll.entry(table).or_default().clone();
-        div()
+        let scrollbar = Self::table_scrollbar(table, &scroll);
+        let frame = div()
             .id(SharedString::from(format!("table-scroll-{table}")))
             .debug_selector(move || format!("table-{table}"))
             .group(group)
             .w_full()
             .flex()
-            .ml(super::block_row::indent_of(row) - px(HANDLE))
+            // Room under the grid for the scrollbar, so it never covers the "+" bar.
+            .pb(Scrollbar::width())
             .track_scroll(&scroll)
             .overflow_x_scroll()
             .restrict_scroll_to_axis()
@@ -134,7 +143,13 @@ impl Shell {
                 }
             })
             .border_color(border)
-            .child(body)
+            .child(body);
+        div()
+            .relative()
+            .w_full()
+            .ml(super::block_row::indent_of(row) - px(HANDLE))
+            .child(frame)
+            .child(scrollbar)
             .into_any_element()
     }
 

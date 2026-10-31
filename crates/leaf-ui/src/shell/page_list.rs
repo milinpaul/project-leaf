@@ -9,9 +9,9 @@
 
 use std::ops::Range;
 
-use gpui::{ListAlignment, ListState, px};
+use gpui::{ListAlignment, ListState, Pixels, px};
 use leaf_core::{BlockId, PageId};
-use leaf_editor::BlockRow;
+use leaf_editor::{BlockRow, BlockStyle};
 
 /// Items before the first block row: the page title.
 pub(super) const HEADER_ITEMS: usize = 1;
@@ -74,6 +74,35 @@ impl PageList {
     /// The row drawn as list item `item`, if it is a block.
     pub(super) fn row(&self, item: usize) -> Option<&BlockRow> {
         item.checked_sub(HEADER_ITEMS).and_then(|i| self.rows.get(i))
+    }
+
+    /// The table `block` is a cell of: its rows are listed right after their table's (ADR-063), so it is the
+    /// nearest table row before it. `None` for a block that isn't a cell.
+    pub(super) fn table_of(&self, block: BlockId) -> Option<BlockId> {
+        let i = self.rows.iter().position(|row| row.id == block)?;
+        if !matches!(self.rows[i].style, BlockStyle::TableCell { .. }) {
+            return None;
+        }
+        self.rows[..i]
+            .iter()
+            .rev()
+            .find(|row| matches!(row.style, BlockStyle::Table { .. }))
+            .map(|row| row.id)
+    }
+
+    /// Scrolls just enough that `top..bottom` (window coordinates, where something was drawn in the last
+    /// frame) is on screen, and leaves the page alone if it already is. A table's cells are drawn by the
+    /// table's row, not their own, so this is how the caret in a cell is kept in view (E16-S05).
+    pub(super) fn reveal_span(&self, top: Pixels, bottom: Pixels) {
+        let view = self.state.viewport_bounds();
+        let distance = if top < view.top() {
+            top - view.top()
+        } else if bottom > view.bottom() {
+            (bottom - view.bottom()).min(top - view.top())
+        } else {
+            return;
+        };
+        self.state.scroll_by(distance);
     }
 
     /// Scrolls so the row of `block` is on screen, and leaves the page alone if it already is.

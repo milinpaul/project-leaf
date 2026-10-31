@@ -131,9 +131,25 @@ impl Shell {
     }
 
     /// Scrolls so the caret's block is on screen.
+    ///
+    /// A table's cells are drawn by the table's row; their own rows, listed after it, are empty. So for a
+    /// caret in a cell this keeps the cell itself on screen, where it was drawn last frame: up and down in the
+    /// page, and sideways in the table's box (E16-S05). Before the table has been drawn, its row is revealed.
     pub(super) fn reveal_caret(&mut self) {
-        if let Some(block) = self.caret_block() {
-            self.blocks.list.reveal(block);
+        let Some(caret) = self.page().and_then(|page| page.caret().ok().flatten()) else {
+            return;
+        };
+        let Some(table) = self.blocks.list.table_of(caret.block) else {
+            return self.blocks.list.reveal(caret.block);
+        };
+        match self.blocks.painted.caret_bounds(caret.block, caret.at) {
+            Some((at, line)) => {
+                // The cell's padding and border around its line, so the whole cell comes into view.
+                let room = px(super::table_row::CELL_ROOM);
+                self.blocks.list.reveal_span(at.y - room, at.y + line + room);
+                self.reveal_table_column(table, at.x);
+            }
+            None => self.blocks.list.reveal(table),
         }
     }
 
