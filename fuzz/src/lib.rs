@@ -12,7 +12,7 @@ use leaf_core::{BlockId, PageId};
 use leaf_model::{BlockKind, Database, PageDoc, Workspace};
 
 /// Puts Rust's normal panic hook back in place of libFuzzer's, which aborts on every panic, even one Leaf
-/// catches on purpose (a panic inside Loro becomes an error, ADR-XXX-E08-S11). A panic that escapes a target
+/// catches on purpose (a panic inside Loro becomes an error, ADR-088). A panic that escapes a target
 /// still aborts the run and counts as a finding: libFuzzer catches it at the top and aborts there. Call it
 /// first in every target.
 pub fn allow_caught_panics() {

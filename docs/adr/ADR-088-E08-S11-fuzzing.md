@@ -1,4 +1,4 @@
-# ADR-XXX. Fuzzing the code that reads outside input, with cargo-fuzz in its own crate
+# ADR-088. Fuzzing the code that reads outside input, with cargo-fuzz in its own crate
 
 - **Status:** Accepted
 - **Type:** Architecture

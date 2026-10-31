@@ -1,7 +1,7 @@
 name: Fuzz
 
 # Feeds random and mutated input to the code that reads outside data: saved documents, workspace databases,
-# dropped files and pasted text (E08-S11, ADR-XXX-E08-S11). Never on pull requests: it runs for minutes and
+# dropped files and pasted text (E08-S11, ADR-088). Never on pull requests: it runs for minutes and
 # needs nightly Rust. Weekly on main, or "Run workflow" in the Actions tab for any branch.
 on:
   schedule:

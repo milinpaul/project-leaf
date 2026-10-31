@@ -1,4 +1,4 @@
-# Fuzz targets for the code that reads outside input (E08-S11, ADR-XXX-E08-S11). Not part of the main workspace:
+# Fuzz targets for the code that reads outside input (E08-S11, ADR-088). Not part of the main workspace:
 # it needs nightly Rust and cargo-fuzz, so `just check` and normal builds never compile it. Run with `just fuzz`.
 [package]
 name = "leaf-fuzz"

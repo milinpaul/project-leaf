@@ -1,4 +1,4 @@
-//! Reading bytes into a Loro document without letting damaged bytes crash Leaf (E08-S11, ADR-XXX-E08-S11).
+//! Reading bytes into a Loro document without letting damaged bytes crash Leaf (E08-S11, ADR-088).
 //!
 //! Loro returns errors for most bad input, but fuzzing found bytes that trip an assertion inside its decoder
 //! instead (a panic). Saved bytes come from disk, where a bad sector, a half-copied folder or a crafted

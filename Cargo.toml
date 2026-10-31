@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
-# Fuzz targets build with nightly and cargo-fuzz only (`just fuzz`, ADR-XXX-E08-S11).
+# Fuzz targets build with nightly and cargo-fuzz only (`just fuzz`, ADR-088).
 exclude = ["fuzz"]
 
 [workspace.package]

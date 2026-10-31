@@ -51,7 +51,7 @@ The first six are **core crates**. They, `leaf-fixtures` and `leaf-bench` never 
 (`crates/leaf-app/tests/architecture.rs`) fails if one does. `leaf-core`, `leaf-model`, `leaf-editor` and
 `leaf-export` also build for WebAssembly, which keeps a web version possible later.
 
-**Fuzzing** (ADR-XXX-E08-S11) lives in `fuzz/`, a crate outside the workspace that needs nightly Rust. Its targets
+**Fuzzing** (ADR-088) lives in `fuzz/`, a crate outside the workspace that needs nightly Rust. Its targets
 feed random and damaged input to everything that reads data Leaf didn't make: saved document bytes, the workspace
 database file, dropped or pasted files, and pasted text. `just fuzz <target> [seconds]` runs one locally; a weekly
 CI job (`.github/workflows/fuzz.yml`) runs them all.
