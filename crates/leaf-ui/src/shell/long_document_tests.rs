@@ -154,10 +154,10 @@ impl Typist<'_> {
         self.keys("enter");
         self.block(0, "todo", &words.sentence(5));
         self.keys("enter enter");
-        // A quote; Enter after it is a paragraph.
+        // A quote: Enter is a new line inside it, and Enter on that empty line leaves it (E17-S13).
         self.text("> ");
         self.block(0, "quote", &words.sentence(20));
-        self.keys("enter");
+        self.keys("enter enter");
         // A numbered list.
         self.text("1. ");
         self.block(0, "number", &words.sentence(8));

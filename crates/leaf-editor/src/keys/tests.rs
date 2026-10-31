@@ -120,8 +120,8 @@ fn row_enter_mid_text_splits_and_lists_continue_but_headings_do_not() {
             row(0, BlockKind::BulletedList, "eggs"),
             row(0, BlockKind::Heading { level: 1 }, "Title"),
             row(0, BlockKind::Paragraph, " here"),
-            row(0, BlockKind::Quote, "to be"),
-            row(0, BlockKind::Paragraph, " or"),
+            // A quote holds lines, like a callout (E17-S13).
+            row(0, BlockKind::Quote, "to be\n or"),
         ]
     );
 }
@@ -535,5 +535,6 @@ fn enter_on_a_divider_adds_a_paragraph_below() {
     assert_eq!(below.at, 0);
 }
 
+mod block_start_and_quotes;
 mod callouts;
 mod tasks;

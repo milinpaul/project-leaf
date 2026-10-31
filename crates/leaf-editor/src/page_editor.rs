@@ -136,7 +136,8 @@ impl PageEditor {
 
     /// Enter with the cursor at `at` (a Unicode scalar position). Splits the block there: the text
     /// after the cursor moves, with its formatting, into a new block below, and the caret goes to its
-    /// start. Lists and to-dos continue; anything else continues as a paragraph.
+    /// start. Lists and to-dos continue; anything else continues as a paragraph. At the very start
+    /// of a block with text, an empty paragraph goes above instead and the block keeps its kind.
     ///
     /// On an **empty** list item or to-do, Enter leaves the list instead (`PRODUCT_SPEC.md` "Editor
     /// behaviour"): a nested item moves out one level, a top-level one becomes a paragraph, and no
@@ -274,10 +275,29 @@ pub(crate) fn enter_in(doc: &mut PageDoc, id: BlockId, at: usize) -> Result<Care
         }
         return Ok(Caret { block: id, at: 0 });
     }
+    // At the very start of a block with text, splitting would leave the empty half with the block's
+    // kind and move the text into a paragraph, so a heading would lose its style (E17-S13). Instead
+    // an empty paragraph goes above and the block stays as it is, caret and all. Lists already
+    // continue in their own kind, so they split as before.
+    if at == 0 && !text.is_empty() && !is_list {
+        insert_before(doc, id, BlockKind::Paragraph)?;
+        return Ok(Caret { block: id, at: 0 });
+    }
     let PageOutcome::BlockCreated(block) = doc.apply(PageCommand::SplitBlock { id, pos: at })? else {
         unreachable!("SplitBlock always reports the block it created");
     };
     Ok(Caret { block, at: 0 })
+}
+
+/// Adds an empty block of `kind` right before `id`, at the same level.
+pub(crate) fn insert_before(doc: &mut PageDoc, id: BlockId, kind: BlockKind) -> Result<BlockId, EditorError> {
+    let parent = doc.parent(id)?;
+    let siblings = match parent {
+        Some(parent) => doc.children(parent)?,
+        None => doc.root_blocks(),
+    };
+    let index = siblings.iter().position(|&b| b == id).unwrap_or(0);
+    insert_block(doc, parent, index, kind)
 }
 
 /// Adds an empty block of `kind` right after `id`, at the same level.
