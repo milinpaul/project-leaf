@@ -105,4 +105,4 @@ Records cover two kinds of decision:
 | [ADR-080](ADR-080-E15-S01-web-bookmark-previews.md) | Web bookmark previews: opt-in network access, safety limits, ureq + html5ever | Architecture | Accepted |
 | [ADR-081](ADR-081-E17-S13-quotes-hold-lines.md) | A quote holds lines like a callout, and Enter at a block's start leaves the block alone | Feature | Accepted |
 | [ADR-082](ADR-082-E08-S17-faster-tests-and-builds.md) | Faster tests and builds: test depth per OS, a split round trip, and slimmer debug info | Architecture | Accepted |
-| [ADR-XXX](ADR-XXX-E15-S02-web-bookmark-block.md) | The web bookmark block: an address, a preview off the undo history, and an empty text container | Architecture | Accepted |
+| [ADR-083](ADR-083-E15-S02-web-bookmark-block.md) | The web bookmark block: an address, a preview off the undo history, and an empty text container | Architecture | Accepted |

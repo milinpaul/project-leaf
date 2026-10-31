@@ -1,4 +1,4 @@
-//! Web bookmarks (E15, ADR-080, ADR-XXX-E15-S02): a web address shown as a card, and the preview fetched for it.
+//! Web bookmarks (E15, ADR-080, ADR-083): a web address shown as a card, and the preview fetched for it.
 //!
 //! The block stores the address and, once fetched, the page's title, description, preview image and
 //! icon (the images as workspace assets, so cards work offline). Fetching happens elsewhere, opt-in
