@@ -4,12 +4,14 @@
 //! Reading is line by line, following `BLOCK_MODEL.md` "Markdown mapping": `#`–`###` headings
 //! (deeper ones become heading 3), `-`/`*`/`+` bullets, `1.` numbers, `- [ ]`/`- [x]` to-dos, `>`
 //! quotes, fenced code with its language, `---` dividers, and nesting by indentation (two spaces a
-//! level), and tables ([`table`], E16-S04). Every other line is a paragraph of its own, as pasted
+//! level), tables ([`table`], E16-S04), and action items: a to-do line ending in its fields
+//! ([`task`], E19-S04). Every other line is a paragraph of its own, as pasted
 //! plain text expects; a line indented under a list item or quote without a marker of its own
 //! continues it. Inline formatting is read by [`inline`].
 
 pub(crate) mod inline;
 mod table;
+mod task;
 
 use leaf_model::{BlockKind, TextSpan};
 
@@ -133,10 +135,14 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
             last.text = inline::merge(std::mem::take(&mut last.text));
             continue;
         }
-        let (kind, text) = start.unwrap_or((BlockKind::Paragraph, content));
+        let (kind, text) = task::from_todo(start.unwrap_or((BlockKind::Paragraph, content)));
         open_item = matches!(
             kind,
-            BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. } | BlockKind::Quote
+            BlockKind::BulletedList
+                | BlockKind::NumberedList
+                | BlockKind::Todo { .. }
+                | BlockKind::Task { .. }
+                | BlockKind::Quote
         )
         .then_some(columns);
         let text = if kind == BlockKind::Divider {
@@ -234,7 +240,7 @@ impl Fragment {
 fn is_item(kind: &BlockKind) -> bool {
     matches!(
         kind,
-        BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. }
+        BlockKind::BulletedList | BlockKind::NumberedList | BlockKind::Todo { .. } | BlockKind::Task { .. }
     )
 }
 
@@ -258,10 +264,23 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
             }
             BlockKind::BulletedList => out.push(format!("{pad}- {text}")),
             BlockKind::NumberedList => out.push(format!("{pad}{number}. {text}")),
-            // An action item reads as a to-do line until its date and priority get a Markdown form
-            // (E19-S04).
-            BlockKind::Todo { checked: done } | BlockKind::Task { done, .. } => {
-                out.push(format!("{pad}- [{}] {text}", if *done { "x" } else { " " }));
+            BlockKind::Todo { checked } => {
+                let text = task::escape_todo(&text);
+                out.push(format!("{pad}- [{}] {text}", if *checked { "x" } else { " " }));
+            }
+            BlockKind::Task {
+                done,
+                due,
+                time,
+                priority,
+            } => {
+                let fields = task::Fields {
+                    due: *due,
+                    time: *time,
+                    priority: *priority,
+                };
+                let line = task::write(&text, fields);
+                out.push(format!("{pad}- [{}] {line}", if *done { "x" } else { " " }));
             }
             BlockKind::Quote => {
                 for line in text.split('\n') {
