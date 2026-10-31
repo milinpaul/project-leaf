@@ -236,50 +236,87 @@ fn run(editor: &mut PageEditor, step: Step) {
     }
 }
 
-proptest! {
-    #![proptest_config(ProptestConfig::with_cases(128))]
-
-    #[test]
-    fn undoing_every_action_gives_back_each_earlier_page_and_redo_replays_them(
-        steps in proptest::collection::vec(step(), 1..20)
-    ) {
-        let mut editor = page();
-        let mut history = vec![outline(&editor)];
-        // Whether an action wrote anything is read from the document's saved form, not from how the
-        // page looks: typing "x" over a selected "x" looks the same but is still an edit and a step.
-        let mut written = editor.doc().to_bytes().unwrap();
-        let mut record = |editor: &PageEditor, history: &mut Vec<Outline>| {
-            let now = editor.doc().to_bytes().unwrap();
-            if now != written {
-                written = now;
-                history.push(outline(editor));
+/// One random sequence of actions: undo them all, checking each earlier page comes back exactly, then
+/// redo them all.
+fn round_trip(steps: Vec<Step>) -> Result<(), TestCaseError> {
+    let mut editor = page();
+    let mut history = vec![outline(&editor)];
+    // Whether an action wrote anything is read from the document's saved form, not from how the
+    // page looks: typing "x" over a selected "x" looks the same but is still an edit and a step.
+    let mut written = editor.doc().to_bytes().unwrap();
+    let mut record = |editor: &PageEditor, history: &mut Vec<Outline>| {
+        let now = editor.doc().to_bytes().unwrap();
+        if now != written {
+            written = now;
+            history.push(outline(editor));
+        }
+    };
+    for step in steps {
+        // A cut and paste is two actions: check after each one.
+        if let Step::CutAndPaste(a, b, to) = step {
+            let (a, b) = (a.caret(&editor), b.caret(&editor));
+            if let Ok(Some(cut)) = editor.select_between(a, b).and_then(|()| editor.cut()) {
+                record(&editor, &mut history);
+                let _ = editor
+                    .set_caret(to.caret(&editor))
+                    .and_then(|_| editor.paste(&cut));
             }
-        };
-        for step in steps {
-            // A cut and paste is two actions: check after each one.
-            if let Step::CutAndPaste(a, b, to) = step {
-                let (a, b) = (a.caret(&editor), b.caret(&editor));
-                if let Ok(Some(cut)) = editor.select_between(a, b).and_then(|()| editor.cut()) {
-                    record(&editor, &mut history);
-                    let _ = editor.set_caret(to.caret(&editor)).and_then(|_| editor.paste(&cut));
-                }
-            } else {
-                run(&mut editor, step);
-            }
-            prop_assert_eq!(editor.doc().check_invariants(), Ok(()));
-            record(&editor, &mut history);
+        } else {
+            run(&mut editor, step);
         }
-
-        let last = history.len() - 1;
-        for (i, expected) in history[..last].iter().enumerate().rev() {
-            prop_assert!(editor.undo().unwrap(), "undo {} of {}", last - i, last);
-            prop_assert_eq!(&outline(&editor), expected, "after undoing back to step {}", i);
-        }
-        prop_assert!(!editor.undo().unwrap(), "one undo step per action, no more");
-        for (i, expected) in history.iter().enumerate().skip(1) {
-            prop_assert!(editor.redo().unwrap());
-            prop_assert_eq!(&outline(&editor), expected, "after redoing step {}", i);
-        }
-        prop_assert!(!editor.redo().unwrap());
+        prop_assert_eq!(editor.doc().check_invariants(), Ok(()));
+        record(&editor, &mut history);
     }
+
+    let last = history.len() - 1;
+    for (i, expected) in history[..last].iter().enumerate().rev() {
+        prop_assert!(editor.undo().unwrap(), "undo {} of {}", last - i, last);
+        prop_assert_eq!(&outline(&editor), expected, "after undoing back to step {}", i);
+    }
+    prop_assert!(!editor.undo().unwrap(), "one undo step per action, no more");
+    for (i, expected) in history.iter().enumerate().skip(1) {
+        prop_assert!(editor.redo().unwrap());
+        prop_assert_eq!(&outline(&editor), expected, "after redoing step {}", i);
+    }
+    prop_assert!(!editor.redo().unwrap());
+    Ok(())
+}
+
+/// The cases are shared by four tests that run side by side (E08-S17): each runs a quarter of
+/// `PROPTEST_CASES` (10,000 on CI's long run) or of 128 by default, so the whole set takes a quarter of
+/// the time. Each part draws its own random sequences.
+fn round_trip_part() {
+    let total = std::env::var("PROPTEST_CASES")
+        .ok()
+        .and_then(|cases| cases.parse::<u32>().ok())
+        .unwrap_or(128);
+    let config = ProptestConfig {
+        cases: total.div_ceil(4),
+        failure_persistence: None,
+        ..ProptestConfig::default()
+    };
+    let mut runner = proptest::test_runner::TestRunner::new(config);
+    if let Err(failure) = runner.run(&proptest::collection::vec(step(), 1..20), round_trip) {
+        panic!("{failure}");
+    }
+}
+
+#[test]
+fn undoing_every_action_gives_back_each_earlier_page_and_redo_replays_them_part_1() {
+    round_trip_part();
+}
+
+#[test]
+fn undoing_every_action_gives_back_each_earlier_page_and_redo_replays_them_part_2() {
+    round_trip_part();
+}
+
+#[test]
+fn undoing_every_action_gives_back_each_earlier_page_and_redo_replays_them_part_3() {
+    round_trip_part();
+}
+
+#[test]
+fn undoing_every_action_gives_back_each_earlier_page_and_redo_replays_them_part_4() {
+    round_trip_part();
 }
