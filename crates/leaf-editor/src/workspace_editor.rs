@@ -147,7 +147,7 @@ impl WorkspaceEditor {
     /// Records the edited time of every page that changed since the last call: its blocks (including
     /// undo and redo), title, icon or cover. The UI calls it from its save timer, before saving, so the
     /// recorded time is within a tick of the change. Each page gets its own commit that undo skips
-    /// (ADR 0059).
+    /// (ADR-059).
     pub fn stamp_edits(&mut self, now: i64) -> Result<(), EditorError> {
         let mut edited: Vec<PageId> = self.retitled.drain().collect();
         edited.extend(

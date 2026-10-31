@@ -1,7 +1,7 @@
 //! A table drawn in the page (E16-S03): a bordered grid of editable cells with a bold header row,
 //! controls to add a row or column, and a menu on each row and column.
 //!
-//! The editor lists a table's cells right after it (ADR 0063). The table's own row draws the whole
+//! The editor lists a table's cells right after it (ADR-063). The table's own row draws the whole
 //! grid; the cell rows draw nothing of their own (see `blocks.rs`), so the virtual list stays in step
 //! with the editor's rows. Each cell's text is drawn by the usual rich-text renderer, so the caret,
 //! selection, marks, clicks, drags and input methods work in cells as in any block. Every decision is

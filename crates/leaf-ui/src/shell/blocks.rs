@@ -1,6 +1,6 @@
 //! The open page: the header (icon, cover, title), then the blocks, as a virtual list drawn by the
 //! rich text view. A block's type is changed with the slash menu, the block handle's "Turn into" or
-//! Markdown shortcuts (there is no toolbar, ADR 0057). The page takes the keyboard itself (E07-S03): keys become editor actions
+//! Markdown shortcuts (there is no toolbar, ADR-057). The page takes the keyboard itself (E07-S03): keys become editor actions
 //! (`page_keys`), typed text and input-method drafts arrive through the platform's text input
 //! (`ime`), and the mouse places the caret and selects (`rich_text`). Every decision is
 //! `PageEditor`'s; this module only forwards and draws.

@@ -1,4 +1,4 @@
-//! Page links on the clipboard (E10-S03, ADR 0071). Leaf's own fragment keeps a link as itself; the text
+//! Page links on the clipboard (E10-S03, ADR-071). Leaf's own fragment keeps a link as itself; the text
 //! other apps get names it, `[[Title]]` in Markdown and the title in plain text. Text pasted from elsewhere
 //! turns `[[Title]]` back into a link when exactly one page has that title.
 

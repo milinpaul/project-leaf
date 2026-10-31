@@ -88,7 +88,7 @@ impl PageDoc {
         if into_kind.allows_marks() {
             append_delta(&target, source.to_delta())?;
         } else {
-            // Code keeps no marks, so no page links either (ADR 0071).
+            // Code keeps no marks, so no page links either (ADR-071).
             let words: String = source.to_string().chars().filter(|&c| c != PAGE_LINK).collect();
             target.insert(at, &words)?;
         }

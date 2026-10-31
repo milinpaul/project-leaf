@@ -3,7 +3,7 @@
 //! Leaf writes its database, lock, view state, images and search index by fixed names inside the
 //! workspace. If one of those names were a link, the write would land wherever the link points:
 //! a crafted workspace could make Leaf create or overwrite files anywhere the owner can write.
-//! The owner chose (ADR 0074) that such a workspace is refused rather than repaired, so nothing in
+//! The owner chose (ADR-074) that such a workspace is refused rather than repaired, so nothing in
 //! it is changed. The workspace folder itself may be a link: the owner picked it.
 
 use std::fs;

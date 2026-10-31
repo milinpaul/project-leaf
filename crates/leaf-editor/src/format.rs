@@ -3,7 +3,7 @@
 //! A toggle looks at the whole selection: if every selected character already has the mark, it is
 //! removed; otherwise it is applied to all of them. Code blocks take no marks and are left out, both
 //! when deciding and when applying. With no selection, a toggle changes what the *next typed text*
-//! gets instead, until the caret moves elsewhere (ADR 0022).
+//! gets instead, until the caret moves elsewhere (ADR-022).
 
 use std::ops::Range;
 
@@ -193,7 +193,7 @@ impl PageEditor {
             strike: before.strike,
             code: before.code && after.code,
             link: before.link.filter(|l| after.link.as_ref() == Some(l)),
-            // Typed text never becomes a page link (ADR 0071).
+            // Typed text never becomes a page link (ADR-071).
             page: None,
         };
         for (kind, on) in self.pending_at(caret).unwrap_or_default() {

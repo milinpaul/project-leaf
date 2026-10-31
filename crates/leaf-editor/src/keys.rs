@@ -2,7 +2,7 @@
 //!
 //! Each key follows the canonical rules in `PRODUCT_SPEC.md` "Editor behaviour", and each press is
 //! exactly one undo step, even when it needs several commands (Enter over a selection deletes it and
-//! splits the block). Undo puts the caret back where it was before the key (ADR 0020).
+//! splits the block). Undo puts the caret back where it was before the key (ADR-020).
 //!
 //! Blocks without text, dividers and images, can't hold the caret. Backspace right after one, or
 //! Delete right before one, selects it instead ([`KeyOutcome::SelectBlock`]); pressing it again

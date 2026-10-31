@@ -1,4 +1,4 @@
-//! Callouts (E21-S02, ADR 0070): a rounded box in its tone's soft colour with the tone's icon on the
+//! Callouts (E21-S02, ADR-070): a rounded box in its tone's soft colour with the tone's icon on the
 //! left, and a small picker of the five tones that opens from the icon. The text inside is drawn and
 //! edited like any other block's; the tone changes through `PageEditor::set_callout_tone`.
 

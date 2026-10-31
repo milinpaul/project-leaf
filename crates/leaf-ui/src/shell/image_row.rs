@@ -1,4 +1,4 @@
-//! Drawing an image block (E07-S08, ADR 0053): the picture from the workspace's asset store at the
+//! Drawing an image block (E07-S08, ADR-053): the picture from the workspace's asset store at the
 //! width the owner gave it (or its natural size), shrunk to fit the column, a placeholder while it
 //! loads, and a handle on its right edge to resize it. The sizes come from `leaf_editor`
 //! (`image_display_size`, `resized_image_width`); the width is saved once, when the drag ends, as one

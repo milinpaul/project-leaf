@@ -1,4 +1,4 @@
-//! How an action item looks in the page (E19-S03, ADR 0068): a round check before the text, and after
+//! How an action item looks in the page (E19-S03, ADR-068): a round check before the text, and after
 //! it a date chip (red once overdue) and a priority flag. An item with no date or priority shows faint
 //! "add" buttons only while the pointer is over it, so a plain task stays calm. Clicking the check
 //! ticks it; clicking the chip or the flag opens its picker (`task_pickers`). The words and the

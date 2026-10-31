@@ -1,7 +1,7 @@
 //! The platform's text input for the page: typed characters, input methods (Japanese, Chinese, Korean,
-//! Hindi and other keyboards that compose) and the emoji picker all arrive here (ADR 0040).
+//! Hindi and other keyboards that compose) and the emoji picker all arrive here (ADR-040).
 //!
-//! The input method works on one text: the caret's block, with the editor's draft (preedit, ADR 0017)
+//! The input method works on one text: the caret's block, with the editor's draft (preedit, ADR-017)
 //! shown in place of what it will replace. The draft lives only in the editor until committed, so
 //! this "virtual" text is what the view paints and what positions are measured on; offsets are in
 //! UTF-16, as platforms count them.

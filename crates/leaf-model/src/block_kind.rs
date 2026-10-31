@@ -130,7 +130,7 @@ pub enum BlockKind {
         /// Description for screen readers.
         alt: String,
     },
-    /// A grid of rich-text cells (E16, ADR 0061). Its children are [`BlockKind::TableRow`]s, theirs
+    /// A grid of rich-text cells (E16, ADR-061). Its children are [`BlockKind::TableRow`]s, theirs
     /// [`BlockKind::TableCell`]s; every row has the same number of cells. Built and reshaped only with
     /// the table commands ([`PageCommand::InsertTable`](crate::PageCommand::InsertTable) and friends);
     /// cell text is edited with the usual text commands.
@@ -142,7 +142,7 @@ pub enum BlockKind {
     TableRow,
     /// One cell of a table row: text with the usual marks, nothing nested.
     TableCell,
-    /// An action item (E19, ADR 0068): something to do, with an optional due date and time and a
+    /// An action item (E19, ADR-068): something to do, with an optional due date and time and a
     /// priority, ticked off when done. Drawn differently from a to-do; notes can nest under it.
     Task {
         /// Whether it is done.
@@ -154,7 +154,7 @@ pub enum BlockKind {
         /// How important it is.
         priority: Option<Priority>,
     },
-    /// A box with an icon that makes its text stand out (E21, ADR 0070): rich text, nothing nested,
+    /// A box with an icon that makes its text stand out (E21, ADR-070): rich text, nothing nested,
     /// drawn in its tone's colours.
     Callout {
         /// Its colour scheme and icon.
@@ -320,7 +320,7 @@ impl BlockKind {
             Some(_) => return Err((keys::TYPE, "is not text".into())),
             None => return Err((keys::TYPE, "is missing".into())),
         };
-        // Properties sit directly in the block's meta, next to `type` (ADR 0007).
+        // Properties sit directly in the block's meta, next to `type` (ADR-007).
         let prop = |key| value(meta, key);
         Ok(match type_name.as_str() {
             "paragraph" => Self::Paragraph,
@@ -395,7 +395,7 @@ impl BlockKind {
     ///
     /// Properties are plain values in the meta itself, not a nested map: a nested map created in a
     /// later step than its block loses its values when undo re-creates the block and redo replays
-    /// the step (ADR 0007).
+    /// the step (ADR-007).
     pub(crate) fn write(&self, meta: &LoroMap) -> loro::LoroResult<()> {
         meta.insert(keys::TYPE, self.type_name())?;
         match self {

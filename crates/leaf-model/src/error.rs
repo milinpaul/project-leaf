@@ -244,7 +244,7 @@ pub enum ModelError {
     },
 
     /// The column's type comes from a newer version of Leaf, so this version can't change its cells or
-    /// its type without losing what that version stored (ADR 0066).
+    /// its type without losing what that version stored (ADR-066).
     #[error("column {column} has a type this version doesn't know ({type_name}); it is read-only")]
     UnknownColumnType {
         /// The column.

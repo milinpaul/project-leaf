@@ -29,7 +29,7 @@ const EXCERPT_BLOCKS: i64 = 300;
 
 /// At most this many matching blocks are ranked: the most recently indexed ones. Ranking scores
 /// every match, about a millisecond per thousand, so a word in nearly every block (a single letter
-/// typed so far) would blow the 50 ms budget (E11-S07, ADR 0058). Below this, every match is
+/// typed so far) would blow the 50 ms budget (E11-S07, ADR-058). Below this, every match is
 /// ranked; above it, an older block can be missed, which only happens for words so common that
 /// the search bar couldn't show all their pages anyway. Titles are always all searched.
 pub const RANKED_BLOCKS: i64 = 10_000;

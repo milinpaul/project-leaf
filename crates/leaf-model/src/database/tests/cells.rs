@@ -144,7 +144,7 @@ fn a_retype_keeps_stored_values_and_changing_back_shows_them_again() {
         kind: PropertyType::Text,
     })
     .unwrap();
-    // Still the stored number: the editor converts it for display (ADR 0066 answer 3).
+    // Still the stored number: the editor converts it for display (ADR-066 answer 3).
     assert_eq!(db.cell(row, price).unwrap(), Some(CellValue::Number(12.0)));
     db.apply(DatabaseCommand::SetColumnType {
         column: price,

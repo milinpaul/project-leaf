@@ -21,14 +21,14 @@ LoroDoc (workspace)
           "id":         String  # PageId (uuid v7), stable forever
           "title":      String
           "icon":       String? # single emoji
-          "cover":      String? # cover name, e.g. "builtin:dawn"; unknown names kept (ADR 0045)
+          "cover":      String? # cover name, e.g. "builtin:dawn"; unknown names kept (ADR-045)
           "full_width": bool?   # true = title and blocks use the whole page area; missing = reading column (E18-S06)
           "created_at": i64     # unix ms
-          "edited_at":  i64?    # unix ms, last change to blocks/title/icon/cover; missing = created_at (ADR 0059)
+          "edited_at":  i64?    # unix ms, last change to blocks/title/icon/cover; missing = created_at (ADR-059)
           "trashed_at": i64?    # set = in trash (subtree hidden)
-          "database":   String? # DatabaseId: this page is a database (Phase 1, ADR 0066)
+          "database":   String? # DatabaseId: this page is a database (Phase 1, ADR-066)
           "row_of":     String? # DatabaseId: this page is a row of that database; left out of the sidebar
-└── "favourites": LoroMap      # PageId -> position (i64); listed by position, then id (ADR 0060)
+└── "favourites": LoroMap      # PageId -> position (i64); listed by position, then id (ADR-060)
 ```
 
 Titles live here, not in page docs, so the sidebar renders without opening pages.
@@ -40,15 +40,15 @@ LoroDoc (page, keyed by PageId)
 └── "blocks": LoroTree         # block hierarchy, fractional index ordering enabled
     └── node (TreeID: internal handle, may change on undo/redo)
         meta: LoroMap
-          "id":    String      # BlockId (uuid v7), stable forever; see ADR 0006
+          "id":    String      # BlockId (uuid v7), stable forever; see ADR-006
           "type":  String      # see Block types
-          level, checked, language, asset, width, alt, header_row   # type-specific properties, directly in meta (ADR 0007)
+          level, checked, language, asset, width, alt, header_row   # type-specific properties, directly in meta (ADR-007)
           "text":  LoroText    # present for text-bearing types; create with ensure_mergeable_text
 ```
 
 Root nodes of the `"blocks"` tree are the page's top-level blocks, in order.
 
-### Database doc (Phase 1, ADR 0066)
+### Database doc (Phase 1, ADR-066)
 
 ```
 LoroDoc (database, keyed by DatabaseId)
@@ -68,13 +68,13 @@ LoroDoc (database, keyed by DatabaseId)
 └── "view":    LoroMap          "sort": [{column, descending}], "filters": [{column, op, value}] (plain values)
 ```
 
-Order and existence are kept apart (ADR 0066, "Correction"):
+Order and existence are kept apart (ADR-066, "Correction"):
 - the trees only order; a column exists while its schema entry does, and a row until its node is marked `deleted`;
 - nodes never leave their trees, so a delete on one device survives a move of the same node on another;
 - cells of deleted rows and columns stay, unread, so undo brings them back whole.
 
 `Database` (`leaf-model/src/database.rs`) reads cells by what is stored. A value written under an earlier type reads
-back as itself, and the editor converts it for display (ADR 0066 answer 3).
+back as itself, and the editor converts it for display (ADR-066 answer 3).
 
 ## IDs
 
@@ -86,7 +86,7 @@ back as itself, and the editor converts it for display (ADR 0066 answer 3).
 | Asset | `AssetId` = blake3 hash of bytes | Content-addressed, deduplicated. |
 
 Loro's `TreeID` is **not** an ID: undo and redo re-create nodes under new `TreeID`s
-([ADR 0006](../adr/0006-stable-block-ids.md)). It never leaves `leaf-model`, which maps `BlockId → TreeID`
+([ADR-006](../adr/ADR-006-E02-S10-stable-block-ids.md)). It never leaves `leaf-model`, which maps `BlockId → TreeID`
 and rebuilds that index after undo, redo and import.
 
 ## Block types
@@ -108,14 +108,14 @@ and rebuilds that index after undo, redo and import.
 | `task` | `done`: bool, `due`: `YYYY-MM-DD`?, `due_time`: `HH:MM`? (only with `due`), `priority`: `high` \| `medium` \| `low`? | yes | yes |
 | `callout` | `tone`: `info` \| `success` \| `warning` \| `error` \| `note` (another name is kept; missing reads as `info`) | yes | no |
 
-**Callouts (E21, ADR 0070).** A `callout` is text with marks in a tinted box with an icon; its lines are separated by
+**Callouts (E21, ADR-070).** A `callout` is text with marks in a tinted box with an icon; its lines are separated by
 `\n` in its one text, like a code block, and nothing nests inside. The `tone` is stored by name; a tone from a newer
 version reads as `CalloutTone::Other` and is written back unchanged.
 
-**Action items (E19, ADR 0068).** A `task` is a to-do with a due date, an optional wall-clock time and a priority.
+**Action items (E19, ADR-068).** A `task` is a to-do with a due date, an optional wall-clock time and a priority.
 Dates and times have no time zone: due Friday stays due Friday. An absent prop means "not set"; a time needs a date.
 
-**Tables (E16, ADR 0061).** A simple table is a `table` block holding `table_row` blocks, each holding `table_cell`
+**Tables (E16, ADR-061).** A simple table is a `table` block holding `table_row` blocks, each holding `table_cell`
 blocks in column order; a cell is a text block, so its text and marks change with the usual text commands and the
 caret sits in it like in any block. Columns are positions within rows. Rows and cells exist only inside their table
 and change only through the table commands. Commands keep every table a full grid (every row the same length, at
@@ -156,7 +156,7 @@ Unknown `type` values (from a newer app version) are preserved and rendered as a
 | `link` | `href: String` | none |
 | `page` | the target's `PageId` as text | none |
 
-**Page links (E10, ADR 0071).** A link to a page is one `U+FFFC` placeholder character (`PAGE_LINK`) carrying a
+**Page links (E10, ADR-071).** A link to a page is one `U+FFFC` placeholder character (`PAGE_LINK`) carrying a
 `page` mark, made with `InsertPageLink`. The title isn't stored: it is looked up when drawing, so renaming a page updates
 every link to it. Each placeholder gets its own mark op, because Loro gives text typed *inside* a mark's span that mark
 whatever its expand rule, and two neighbouring links marked at once would take in text typed between them.
@@ -184,7 +184,7 @@ Defined as an enum in `leaf-model`. The editor (`leaf-editor`) translates key pr
   end of the top level so it doesn't stay hidden
 - `MarkEdited { page, at }`: sets `edited_at`. The editor applies it after a page's blocks, title, icon or cover
   change (`WorkspaceEditor::stamp_edits`), as its own commit with origin `leaf:edited`, which workspace undo skips:
-  undo is an edit too, so it never restores an older time (ADR 0059)
+  undo is an edit too, so it never restores an older time (ADR-059)
 - `DeletePagePermanently { page }`: only for pages in the trash; deletes the subtree (and its favourites) and returns
   every deleted `PageId` (`Outcome::PagesDeleted`) so storage can drop their page docs
 - `AddFavourite { page }`: stars the page, placing it last (highest position + 1); already starred → `Unchanged`;
@@ -217,7 +217,7 @@ validate, write, commit once; `Unchanged` when nothing would change)
 - `InsertText { id, pos, text }`, `DeleteText { id, range }`: positions are Unicode scalar offsets, checked against the
   text length; blocks without text (dividers, unknown kinds) are refused
 - `ReplaceText { id, range, text }`: one commit replacing `range` (typing over a selection, committing an input-method
-  composition); the new text takes the marks of the first replaced character; an empty range is `InsertText` (ADR 0017)
+  composition); the new text takes the marks of the first replaced character; an empty range is `InsertText` (ADR-017)
 - `InsertPageLink { id, pos, page }`: one placeholder with its `page` mark, as one step; refused where marks are
   (code). Plain text holding `U+FFFC` is refused by `InsertText`, `ReplaceText` and `InsertBlock`, and `ReplaceText`
   never carries `page` onto its new text. `SetMark(PageLink)` only re-points ranges made entirely of placeholders, and
@@ -233,7 +233,7 @@ validate, write, commit once; `Unchanged` when nothing would change)
   A divider, image or unknown block above is refused with `MergeTargetNotText { target }` so the editor can select it
 - `DuplicateBlocks { ids }` ("Duplicate" in the block menu): copies each outermost listed block, with everything nested
   in it, right after the original; every stored entry is copied (newer versions' properties, marks and containers
-  included), only IDs are new; returns `BlocksCreated(ids)` (ADR 0028)
+  included), only IDs are new; returns `BlocksCreated(ids)` (ADR-028)
 - `Indent { ids }`: each block becomes the last child of the block above it (skipped if there is none, or it can't
   hold children). `Outdent { ids }`: each block moves right after its parent and the blocks that followed it become
   its last children (skipped at the top level, or for a block that can't hold children but has followers). Several
@@ -256,9 +256,9 @@ validate, write, commit once; `Unchanged` when nothing would change)
 Positions are Unicode scalar offsets as used by Loro; the editor moves the caret between grapheme cluster
 boundaries so it never stops inside an emoji or a conjunct. A caret that must follow edits is an `Anchor`
 (`PageDoc::anchor` / `PageDoc::resolve`): a Loro cursor plus the original position, used (clamped) when undo re-created
-the block under a new container (ADR 0015). `PageDoc::import_changes` merges another copy's changes (tests only in
+the block under a new container (ADR-015). `PageDoc::import_changes` merges another copy's changes (tests only in
 Phase 0), then repairs anything the merge broke (invariants 2–5 and 9), the same way on every copy and outside the undo
-history (ADR 0044).
+history (ADR-044).
 
 ## Undo / redo
 
@@ -267,15 +267,15 @@ history (ADR 0044).
   blocks) as it was **before** the change and right **after** it. The editor calls `set_selection` before each action
   and `record_after` after it; `PageDoc::undo` returns the "before", `redo` the "after", in `History::Done { selection }`.
   Loro's step value holds a step number; the selections live in a table in `PageDoc`, by `BlockId` + position, since
-  `TreeID`s change on undo. Merged steps keep the first "before" and the last "after" (ADR 0023).
+  `TreeID`s change on undo. Merged steps keep the first "before" and the last "after" (ADR-023).
 - Workspace: `Workspace::undo`/`redo`. The manager is created after loading, so saved history is not undoable;
-  after each undo/redo the `PageId → TreeID` index is rebuilt (ADR 0006).
+  after each undo/redo the `PageId → TreeID` index is rebuilt (ADR-006).
 - Each command commits once, so it is one undo step. Continuous typing is grouped with the manager's merge interval (~500 ms).
 - A key that needs several commands (Enter over a selection: delete, then split; leaving a code block: trim, then add
-  a paragraph) wraps them in `PageDoc::as_one_step`, a Loro undo group, so it is still one undo step (ADR 0020).
+  a paragraph) wraps them in `PageDoc::as_one_step`, a Loro undo group, so it is still one undo step (ADR-020).
 - An automatic change right after typing (a Markdown shortcut converting `# ` into a heading) uses
   `PageDoc::as_separate_step`: one step that never merges with the typing before or after it, so undo gives back the
-  typed characters (ADR 0025).
+  typed characters (ADR-025).
 - `PageEditor::undo`/`redo` restore the whole selection, not just the caret.
 
 ## Invariants (checked in tests after every command)
@@ -284,7 +284,7 @@ history (ADR 0044).
 property test `crates/leaf-model/tests/page_invariants.rs` runs random sequences of every page command and calls it
 after each step (256 cases locally and on PRs, 10,000 in CI on `main`). Invariant 7 is checked by the page undo
 property test (E02-S08). Two copies editing at once and swapping changes must end identical with every invariant
-holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that break a rule are repaired (ADR 0044).
+holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that break a rule are repaired (ADR-044).
 
 1. Every tree node has a `type` in its meta.
 2. `text` exists exactly for text-bearing types.
@@ -317,13 +317,13 @@ On disk:
 ```
 MyWorkspace.leaf/
   workspace.sqlite
-  assets/<blake3-hash>       # image files, written atomically before their `assets` row (ADR 0047)
-  search/index.sqlite        # FTS5 search index (disposable, ADR 0019)
-  leaf.lock                  # OS file lock held by the app that has it open (ADR 0009)
-  view.json                  # sidebar view state on this computer: expanded pages (not a document, ADR 0031)
+  assets/<blake3-hash>       # image files, written atomically before their `assets` row (ADR-047)
+  search/index.sqlite        # FTS5 search index (disposable, ADR-019)
+  leaf.lock                  # OS file lock held by the app that has it open (ADR-009)
+  view.json                  # sidebar view state on this computer: expanded pages (not a document, ADR-031)
 ```
 
-A page deleted for good has its document removed with `Store::delete` after the workspace document is saved (ADR 0036).
+A page deleted for good has its document removed with `Store::delete` after the workspace document is saved (ADR-036).
 
 `Workspace::create` makes this layout, in a new path or an empty folder only. `Workspace::open` needs
 `workspace.sqlite` to be present, recreates missing subfolders, and refuses a workspace another Leaf has open.
@@ -357,23 +357,23 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 
 - **Autosave (`Autosave`):** each document is saved at most 300 ms after its *first* unsaved change (a throttle,
   so steady typing can't postpone it), and everything pending is saved on blur/quit. The policy takes the time
-  as an argument and runs no timer itself; the app does (ADR 0011).
-- **Compaction (`Store::compact`, ADR 0048):** the save that takes a doc past 200 updates folds them into a fresh
+  as an argument and runs no timer itself; the app does (ADR-011).
+- **Compaction (`Store::compact`, ADR-048):** the save that takes a doc past 200 updates folds them into a fresh
   snapshot (`leaf_model::fold_saved`, bytes only, so unknown data and history are kept) and deletes them, in one
   transaction; the doc's last-saved time is unchanged. A failed compaction is logged and leaves everything as it
   was; the next save tries again. An update that can't be read, or one waiting for a lost one, stops compaction,
-  so it is never folded away (ADR 0012).
+  so it is never folded away (ADR-012).
 - **Saving (`Store::save`):** a document's first save writes its snapshot; each later save appends one update with
   every commit since the previous save (`unsaved_changes` / `mark_saved` on `Workspace` and `PageDoc`). Nothing is
-  written when nothing changed. Keys: `workspace` or the page's `PageId` (ADR 0010).
+  written when nothing changed. Keys: `workspace` or the page's `PageId` (ADR-010).
 - **Loading (`Store::load`):** snapshot + updates in `seq` order (`from_saved`).
 - **Recovery:** if loading fails, each update is imported on its own and damaged ones are skipped, with a warning
   in the log (`Store::recover` reports their `seq`s). Skipped rows stay on disk. A damaged snapshot is still an
-  error (ADR 0012).
+  error (ADR-012).
 - **Opening:** `Store::open` sets `journal_mode=WAL`, `synchronous=NORMAL` and `foreign_keys=ON`, then migrates.
 - **Migrations:** `meta.schema_version` (0 for an empty file). `leaf-store/src/migrations.rs` holds a forward-only,
   append-only list; each step runs in one transaction with its version bump. A file newer than the app is refused
-  untouched (ADR 0008).
+  untouched (ADR-008).
 
 ## Markdown mapping (copy and paste now; page export in Phase 1)
 
@@ -383,16 +383,16 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | heading n | `#` × n |
 | bulleted / numbered | `- ` / `1. `, children indented 2 spaces |
 | todo | `- [ ] ` / `- [x] ` |
-| task | `- [ ] ` / `- [x] ` then its fields in a final group: `(due 2026-10-31 14:00, high)`, or `(action item)` with none (ADR 0032) |
+| task | `- [ ] ` / `- [x] ` then its fields in a final group: `(due 2026-10-31 14:00, high)`, or `(action item)` with none (ADR-032) |
 | quote | `> ` |
 | callout | GitHub alert: `> [!NOTE]` (info), `> [!TIP]` (success), `> [!IMPORTANT]` (note), `> [!WARNING]`, `> [!CAUTION]` (error), then each line as `> line` |
 | code | fenced block with language |
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
 | table | GitHub-style Markdown table, first row as the header; `\|` for a pipe and `<br>` for a line break in a cell |
-| page link (inline) | `[[Title]]`; pasted back, a link when exactly one page outside the trash has that title, else text (ADR 0071) |
+| page link (inline) | `[[Title]]`; pasted back, a link when exactly one page outside the trash has that title, else text (ADR-071) |
 
-Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR 0032); plain lines become paragraphs.
+Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR-032); plain lines become paragraphs.
 
 ## Testing requirements
 

@@ -1,4 +1,4 @@
-//! The code block's language label and picker (E07-S09, ADR 0054). The label shows at the top right
+//! The code block's language label and picker (E07-S09, ADR-054). The label shows at the top right
 //! of a code block while the pointer is over it; a click opens a list to filter by typing. Enter picks
 //! the best match, a click picks any, and Escape or a click elsewhere closes it. The list and the
 //! change are `leaf_editor::code_block`'s; this module draws and forwards.
