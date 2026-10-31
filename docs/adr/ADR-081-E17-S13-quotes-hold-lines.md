@@ -1,4 +1,4 @@
-# ADR-XXX. A quote holds lines like a callout, and Enter at a block's start leaves the block alone
+# ADR-081. A quote holds lines like a callout, and Enter at a block's start leaves the block alone
 
 - **Status:** Accepted
 - **Type:** Feature
