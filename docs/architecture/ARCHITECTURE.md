@@ -89,7 +89,8 @@ selection, filled in when the selection is already one link, with Open and Remov
 system may open. A **page link** (E10, ADR-071) is one character in the page but is drawn as the target's icon and
 title: `leaf_editor::LinkedText` builds the drawn runs from `WorkspaceEditor::link_target` (title, icon, live / in
 trash / deleted) and maps positions both ways, and the painted layout keeps that map so carets, selections and clicks
-stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. Typing `[[` opens the **page-link menu**
+stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page,
+and the pointer is a hand over page and web links (`PaintedLayout::over_link`, E10-S11). Typing `[[` opens the **page-link menu**
 (E10-S05, `shell/link_menu_popover.rs`): the page editor keeps where the `[[` is and the highlight (like the slash
 menu), and `WorkspaceEditor::link_menu` matches the query against the workspace's pages with the quick switcher's
 fuzzy matcher, adding "New page"; Enter or a click calls `link_menu_apply`, which links the page in one undo step. A **code block** shows its language at the top right on hover; a click opens a searchable list
