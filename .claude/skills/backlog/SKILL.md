@@ -34,7 +34,8 @@ Use `claude` as your name unless the owner gives you another one. Prefer these c
 4. **Finish.** When every box is ticked and `just check` passes: commit, open a PR titled `<id>: <title>` (use `gh pr create` if available), then `pr <id> <url>` and `move <id> review "PR opened"`. Every PR for a story gets linked this way, including follow-up fix PRs.
 5. **Merged.** When the owner says the PR is merged, or `gh pr view` shows it merged: `move <id> done "merged"`. Never mark `done` otherwise.
    If `main` now has a decision record named `docs/adr/ADR-XXX-…`, run `python3 scripts/adr_number.py` in the same
-   follow-up branch (made from the newest `main`) so it gets its number.
+   follow-up branch (made from the newest `main`) so it gets its number and its index row. A story branch never edits
+   the index in `docs/adr/README.md` (E00-S13).
 6. **Next.** Tell the owner in one or two lines what finished and what is next. Start the next story only if the owner asked you to keep going.
 
 ## Other situations

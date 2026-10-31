@@ -10,13 +10,13 @@ Records cover two kinds of decision:
 
 1. Copy [ADR-000-EXX-SYY-template.md](ADR-000-EXX-SYY-template.md) to `ADR-XXX-EXX-SYY-short-title.md`: `XXX` stays
    as it is, then the story the decision belongs to (its epic, e.g. `E11`, if it spans one), then a short title. Head
-   it `# ADR-XXX. Title`, add it to the index below as `[ADR-XXX](ADR-XXX-EXX-SYY-short-title.md)`, and mention it
-   elsewhere as `ADR-XXX-EXX-SYY` (one new record per story). After the PR merges, the follow-up PR that marks its
-   story done runs `python3 scripts/adr_number.py`, which gives it the next number (three digits, so the files list
-   in the order decisions were taken) and updates every mention to `ADR-NNN`
-   ([ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md)).
-2. Fill it in. Keep it to one screen.
-3. Add a row to the index below in the same PR as the change it describes.
+   it `# ADR-XXX. Title` and mention it elsewhere as `ADR-XXX-EXX-SYY` (one new record per story). After the PR
+   merges, the follow-up PR that marks its story done runs `python3 scripts/adr_number.py`, which gives it the next
+   number (three digits, so the files list in the order decisions were taken), updates every mention to `ADR-NNN`
+   ([ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md)) and adds its row to the index below.
+2. Fill it in. Keep it to one screen. Its heading, `Type` and `Status` lines become its index row.
+3. Leave the index alone on a story branch: rows are added only when records are numbered, so two open PRs never
+   clash on its last line (ADR-XXX-E00-S13).
 4. Never rewrite an accepted record. If a decision changes, write a new one and mark the old one `Superseded by ADR-NNN`.
 
 ## Index
@@ -106,4 +106,3 @@ Records cover two kinds of decision:
 | [ADR-081](ADR-081-E17-S13-quotes-hold-lines.md) | A quote holds lines like a callout, and Enter at a block's start leaves the block alone | Feature | Accepted |
 | [ADR-082](ADR-082-E08-S17-faster-tests-and-builds.md) | Faster tests and builds: test depth per OS, a split round trip, and slimmer debug info | Architecture | Accepted |
 | [ADR-XXX](ADR-XXX-E15-S02-web-bookmark-block.md) | The web bookmark block: an address, a preview off the undo history, and an empty text container | Architecture | Accepted |
-| [ADR-XXX](ADR-XXX-E09-S08-row-page-properties.md) | A database row opens as a page with its properties under the title | Feature | Accepted |

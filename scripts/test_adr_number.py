@@ -113,5 +113,47 @@ class AdrNumberTest(unittest.TestCase):
         self.assertTrue((self.adr / "ADR-XXX-E09-S05-tabs.md").exists(), "nothing is renamed")
 
 
+    def record(self, title: str, kind: str, status: str) -> str:
+        return (
+            f"# ADR-XXX. {title}\n\n- **Status:** {status}\n- **Type:** {kind}\n- **Date:** 2026-10-31\n"
+            "- **Story:** E09-S08\n\n## Context\n"
+        )
+
+    def test_numbering_adds_the_index_row_from_the_record_itself(self) -> None:
+        # Story branches leave the index alone (E00-S13): two branches each adding a row at its end always clashed.
+        self.write(
+            "docs/adr/README.md",
+            "# Decision records\n\n## Index\n\n| # | Title | Type | Status |\n|---|---|---|---|\n"
+            "| [ADR-074](ADR-074-E08-S13-old.md) | Old | Architecture | Accepted |\n"
+            "| [ADR-075](ADR-075-E22-S01-views.md) | Views | Architecture | Accepted |\n",
+        )
+        self.write("docs/adr/ADR-XXX-E09-S08-row-page.md", self.record("Rows open as pages", "Feature", "Accepted"))
+        self.write("docs/adr/ADR-XXX-E15-S02-bookmark.md", self.record("Web bookmarks", "Architecture", "Proposed"))
+        done = self.run_script()
+        self.assertEqual(done.returncode, 0, done.stderr)
+        index = self.read("docs/adr/README.md").splitlines()
+        self.assertEqual(
+            index[-2:],
+            [
+                "| [ADR-076](ADR-076-E09-S08-row-page.md) | Rows open as pages | Feature | Accepted |",
+                "| [ADR-077](ADR-077-E15-S02-bookmark.md) | Web bookmarks | Architecture | Proposed |",
+            ],
+        )
+        self.assertEqual(sum("ADR-076" in line for line in index), 1, "one row each")
+
+    def test_a_row_added_the_old_way_is_renamed_not_doubled(self) -> None:
+        self.write(
+            "docs/adr/README.md",
+            "## Index\n\n| # | Title | Type | Status |\n|---|---|---|---|\n"
+            "| [ADR-075](ADR-075-E22-S01-views.md) | Views | Architecture | Accepted |\n"
+            "| [ADR-XXX](ADR-XXX-E09-S08-row-page.md) | Rows open as pages | Feature | Accepted |\n",
+        )
+        self.write("docs/adr/ADR-XXX-E09-S08-row-page.md", self.record("Rows open as pages", "Feature", "Accepted"))
+        done = self.run_script()
+        self.assertEqual(done.returncode, 0, done.stderr)
+        index = self.read("docs/adr/README.md")
+        self.assertEqual(index.count("ADR-076-E09-S08-row-page.md"), 1)
+        self.assertNotIn("ADR-XXX", index)
+
 if __name__ == "__main__":
     unittest.main()
