@@ -155,7 +155,7 @@ fn deleting_the_slash_or_moving_away_closes_it() {
 #[test]
 fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
     let items = all_items();
-    assert_eq!(labels(&filter(&items, "")).len(), 13);
+    assert_eq!(labels(&filter(&items, "")).len(), 18);
     assert_eq!(
         labels(&filter(&items, "h")),
         vec![
@@ -193,8 +193,18 @@ fn the_filter_ranks_name_starts_then_word_starts_then_letters_in_order() {
     assert_eq!(&hd[..3], ["Heading 1", "Heading 2", "Heading 3"]);
     assert_eq!(
         labels(&filter(&items, "  co ")),
-        vec!["Code", "Action item", "To-do list", "Quote"],
-        "spaces around the query are ignored; \"checkbox\" and \"citation\" match loosely"
+        vec![
+            "Code",
+            "Action item",
+            "Callout",
+            "Callout: Success",
+            "Callout: Warning",
+            "Callout: Error",
+            "Callout: Note",
+            "To-do list",
+            "Quote"
+        ],
+        "spaces around the query are ignored; \"callout\", \"checkbox\" and \"citation\" match loosely"
     );
 }
 
@@ -385,4 +395,27 @@ fn the_mouse_highlights_an_entry_and_a_new_query_resets_it() {
     );
     type_keys(&mut editor, "h");
     assert_eq!(editor.slash_menu().unwrap().unwrap().selected, 0);
+}
+
+#[test]
+fn slash_callout_entries_make_a_callout_of_each_tone() {
+    use leaf_model::CalloutTone;
+    for (query, tone) in [
+        ("/callout", CalloutTone::Info),
+        ("/info", CalloutTone::Info),
+        ("/success", CalloutTone::Success),
+        ("/warning", CalloutTone::Warning),
+        ("/error", CalloutTone::Error),
+        ("/note", CalloutTone::Note),
+    ] {
+        let (mut editor, id) = empty();
+        type_keys(&mut editor, query);
+        editor.slash_apply(None).unwrap();
+        assert_eq!(
+            outline(&editor),
+            vec![(BlockKind::Callout { tone }, String::new())],
+            "{query}"
+        );
+        assert_eq!(editor.caret().unwrap(), Some(at(id, 0)), "{query}");
+    }
 }

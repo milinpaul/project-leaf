@@ -9,6 +9,7 @@
 //! plain text expects; a line indented under a list item or quote without a marker of its own
 //! continues it. Inline formatting is read by [`inline`].
 
+pub(crate) mod alert;
 pub(crate) mod inline;
 mod table;
 mod task;
@@ -66,6 +67,16 @@ fn indent(line: &str) -> usize {
         .sum()
 }
 
+/// A fenced code block that started at `indent` columns, with its lines.
+fn code_block(indent: usize, language: String, lines: &[String]) -> (usize, FragmentBlock) {
+    let block = FragmentBlock {
+        kind: BlockKind::Code { language },
+        text: plain(&lines.join("\n")),
+        children: Vec::new(),
+    };
+    (indent / 2, block)
+}
+
 /// Reads pasted text into blocks.
 pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
     let text = text.replace("\r\n", "\n").replace('\r', "\n");
@@ -74,6 +85,9 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
     let mut fence: Option<(String, usize, String, Vec<String>)> = None;
     // Whether the last block is a list item or quote, which indented lines without a marker continue.
     let mut open_item: Option<usize> = None;
+    // A callout opened by a `> [!NOTE]` line, at this indentation: the `>` lines after it are its
+    // lines (E21-S03).
+    let mut open_alert: Option<usize> = None;
     let lines: Vec<&str> = text.split('\n').collect();
     let mut next = 0;
     while let Some(&line) = lines.get(next) {
@@ -82,14 +96,7 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
             if line.trim_start().starts_with(marker.as_str())
                 && line.trim().chars().all(|c| c == '`' || c == '~')
             {
-                let block = FragmentBlock {
-                    kind: BlockKind::Code {
-                        language: std::mem::take(language),
-                    },
-                    text: plain(&lines.join("\n")),
-                    children: Vec::new(),
-                };
-                rows.push((*fence_indent / 2, block));
+                rows.push(code_block(*fence_indent, std::mem::take(language), lines));
                 fence = None;
             } else {
                 let cut = indent(line).min(*fence_indent);
@@ -99,6 +106,7 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
         }
         if line.trim().is_empty() {
             open_item = None;
+            open_alert = None;
             continue;
         }
         let columns = indent(line);
@@ -121,6 +129,13 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
             continue;
         }
         let start = block_start(content);
+        if let Some((BlockKind::Quote, text)) = start
+            && alert::take(&mut rows, &mut open_alert, columns, text)
+        {
+            open_item = None;
+            continue;
+        }
+        open_alert = None;
         if start.is_none()
             && open_item.is_some()
             && columns > 0
@@ -161,14 +176,7 @@ pub(crate) fn parse(text: &str) -> Vec<FragmentBlock> {
     }
     // A fence left open runs to the end of the text.
     if let Some((_, fence_indent, language, lines)) = fence {
-        rows.push((
-            fence_indent / 2,
-            FragmentBlock {
-                kind: BlockKind::Code { language },
-                text: plain(&lines.join("\n")),
-                children: Vec::new(),
-            },
-        ));
+        rows.push(code_block(fence_indent, language, &lines));
     }
     super::nest(rows)
 }
@@ -289,7 +297,7 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
             }
             // GitHub's alert syntax, so a callout reads as one there and in other Markdown apps.
             BlockKind::Callout { tone } => {
-                out.push(format!("{pad}> [!{}]", alert_name(tone)));
+                out.push(format!("{pad}> [!{}]", alert::name(tone)));
                 for line in text.split('\n') {
                     out.push(format!("{pad}> {line}"));
                 }
@@ -337,18 +345,6 @@ fn escape_start(text: &str) -> String {
         return format!("{}\\{}", &text[..digits], &text[digits..]);
     }
     format!("\\{text}")
-}
-
-/// The GitHub alert a callout's tone is written as. A tone from a newer version reads as a note.
-fn alert_name(tone: &leaf_model::CalloutTone) -> &'static str {
-    use leaf_model::CalloutTone;
-    match tone {
-        CalloutTone::Success => "TIP",
-        CalloutTone::Warning => "WARNING",
-        CalloutTone::Error => "CAUTION",
-        CalloutTone::Note => "IMPORTANT",
-        CalloutTone::Info | CalloutTone::Other(_) => "NOTE",
-    }
 }
 
 #[cfg(test)]

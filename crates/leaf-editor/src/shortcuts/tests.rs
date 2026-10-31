@@ -256,3 +256,5 @@ fn a_shortcut_typed_over_a_selection_or_committed_by_an_input_method() {
     editor.commit_preedit("- ").unwrap();
     assert_eq!(outline(&editor), vec![(BlockKind::BulletedList, String::new())]);
 }
+
+mod callouts;
