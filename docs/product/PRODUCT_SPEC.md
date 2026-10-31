@@ -67,7 +67,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ## Phase 1 — MVP (current)
 
-The current phase since 2026-10-31 (owner's decision, ADR-XXX-E00-S14). Phase 0's open hardening stories are
+The current phase since 2026-10-31 (owner's decision, ADR-085). Phase 0's open hardening stories are
 finished alongside.
 
 - **Database (table first, then board and saved views)**

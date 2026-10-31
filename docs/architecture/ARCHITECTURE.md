@@ -262,7 +262,7 @@ chip per sort and filter and opens their pop-ups. `leaf-editor` `database_view/q
 conditions and what each change writes. A filter's typed value is a draft the table shows at once and the database
 gets when the pop-up closes.
 
-A row opens as a page (E09-S08, ADR-XXX-E09-S08): the "Open" button on its title cell. Under the page's title,
+A row opens as a page (E09-S08, ADR-086): the "Open" button on its title cell. Under the page's title,
 `database_page/row_page.rs` lists the row's properties from `DatabaseEditor::row_properties` (every column, in order)
 and edits them with the table cell's rules, with the row's page as the row.
 

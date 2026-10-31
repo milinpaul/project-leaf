@@ -16,7 +16,7 @@ Records cover two kinds of decision:
    ([ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md)) and adds its row to the index below.
 2. Fill it in. Keep it to one screen. Its heading, `Type` and `Status` lines become its index row.
 3. Leave the index alone on a story branch: rows are added only when records are numbered, so two open PRs never
-   clash on its last line (ADR-XXX-E00-S13).
+   clash on its last line (ADR-084).
 4. Never rewrite an accepted record. If a decision changes, write a new one and mark the old one `Superseded by ADR-NNN`.
 
 ## Index
@@ -106,3 +106,6 @@ Records cover two kinds of decision:
 | [ADR-081](ADR-081-E17-S13-quotes-hold-lines.md) | A quote holds lines like a callout, and Enter at a block's start leaves the block alone | Feature | Accepted |
 | [ADR-082](ADR-082-E08-S17-faster-tests-and-builds.md) | Faster tests and builds: test depth per OS, a split round trip, and slimmer debug info | Architecture | Accepted |
 | [ADR-083](ADR-083-E15-S02-web-bookmark-block.md) | The web bookmark block: an address, a preview off the undo history, and an empty text container | Architecture | Accepted |
+| [ADR-084](ADR-084-E00-S13-index-rows-at-numbering.md) | Decision record index rows are added when records are numbered | Architecture | Accepted |
+| [ADR-085](ADR-085-E00-S14-phase-1-is-current.md) | Phase 1 is the current phase | Feature | Accepted |
+| [ADR-086](ADR-086-E09-S08-row-page-properties.md) | A database row opens as a page with its properties under the title | Feature | Accepted |

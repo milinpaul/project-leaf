@@ -38,7 +38,7 @@ PHASES = {
     2: "More views, sync and the web viewer",
     3: "Web editor",
 }
-# The phase being worked on, chosen by the owner (Phase 1 from 2026-10-31, ADR-XXX-E00-S14). An earlier phase may
+# The phase being worked on, chosen by the owner (Phase 1 from 2026-10-31, ADR-085). An earlier phase may
 # still have open stories: they are finished alongside, not first.
 CURRENT_PHASE = 1
 STATUSES = ["backlog", "todo", "planning", "in_progress", "review", "done", "blocked"]
