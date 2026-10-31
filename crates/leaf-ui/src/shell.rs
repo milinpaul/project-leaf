@@ -40,7 +40,9 @@ pub struct Shell {
     /// The cover picker while it is open, and the subscription to what is picked in it.
     cover_picker: Option<(Entity<crate::cover_picker::CoverPickerPanel>, Subscription)>,
     /// The open database page's table and editors (E09-S05), while a database page is open.
-    database: Option<database_page::DatabasePage>,
+    databases: Vec<database_page::DatabasePage>,
+    /// The database page whose view the table actions work on (E09-S09: a page can show several inline).
+    active_database: Option<leaf_core::PageId>,
     /// The open row page's property editing (E09-S08), while a database row is open as a page.
     row_page: Option<database_page::row_page::RowPage>,
     /// The workspace folder this window saves to; `None` for an in-memory workspace (tests).
@@ -104,7 +106,8 @@ impl Shell {
             tree: tree::TreeState::default(),
             icon_picker: None,
             cover_picker: None,
-            database: None,
+            databases: Vec::new(),
+            active_database: None,
             row_page: None,
             storage,
             focus,
@@ -166,6 +169,7 @@ impl Shell {
             input.focus(window, cx);
         });
         self.remember_open_page();
+        self.prune_database_views();
         cx.notify();
     }
 

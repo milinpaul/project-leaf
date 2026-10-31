@@ -29,6 +29,7 @@ mod format_bar;
 mod fuzzy;
 mod history;
 mod image;
+mod inline_database;
 mod input;
 mod keys;
 mod link;
@@ -70,6 +71,7 @@ pub use emoji_picker::{
 pub use format_bar::{FormatBar, KindChoice, MarkButton};
 pub use fuzzy::{FuzzyMatch, fuzzy_match};
 pub use image::{MIN_IMAGE_WIDTH, PasteKind, image_display_size, paste_kind, resized_image_width};
+pub use inline_database::InlineDatabaseChanges;
 pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use link::openable_url;

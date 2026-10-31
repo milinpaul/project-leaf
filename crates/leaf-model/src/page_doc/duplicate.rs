@@ -3,6 +3,9 @@
 //! The copy is made field by field from the stored data, not from what this version understands: every
 //! entry of a block's record is copied, including properties and formatting from newer versions, so
 //! duplicating never loses anything (architecture rule 5). Only the block IDs are new.
+//!
+//! The one exception is an inline database (E09-S09): a page shows a database in one place, so its copy is a
+//! paragraph holding a link to the same database, never a second table or a copy of the data.
 
 use leaf_core::BlockId;
 use loro::{Container, LoroList, LoroMap, LoroText, TreeID, ValueOrContainer};
@@ -10,7 +13,8 @@ use loro::{Container, LoroList, LoroMap, LoroText, TreeID, ValueOrContainer};
 use super::PageDoc;
 use super::split_merge::append_delta;
 use crate::block_kind::keys;
-use crate::{ModelError, PageOutcome};
+use crate::text::{PAGE_LINK, marks};
+use crate::{BlockKind, ModelError, PageOutcome};
 
 impl PageDoc {
     pub(super) fn duplicate_blocks(&mut self, ids: &[BlockId]) -> Result<PageOutcome, ModelError> {
@@ -51,6 +55,13 @@ impl PageDoc {
                 }
                 (key, value) => copy_into_map(&to, key, value)?,
             }
+        }
+        if let Ok(BlockKind::Database { page }) = BlockKind::read(&from) {
+            BlockKind::Paragraph.write(&to)?;
+            to.delete(keys::PAGE)?;
+            let text = to.ensure_mergeable_text(keys::TEXT)?;
+            text.insert(0, &PAGE_LINK.to_string())?;
+            text.mark(0..1, marks::PAGE, page.to_string())?;
         }
         to.insert(keys::ID, block.to_string())?;
         self.index.insert(block, node);

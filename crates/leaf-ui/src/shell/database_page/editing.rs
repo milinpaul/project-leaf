@@ -13,7 +13,7 @@ use super::{EditKind, Editing};
 
 impl Shell {
     pub(super) fn editing(&self) -> Option<Editing> {
-        self.database.as_ref().and_then(|d| d.editing)
+        self.database_view().and_then(|d| d.editing)
     }
 
     /// Enter on the selected cell.
@@ -76,7 +76,7 @@ impl Shell {
                     }),
                     cx,
                 );
-                if let Some(d) = &self.database {
+                if let Some(d) = self.database_view() {
                     let query = d.query.clone();
                     query.update(cx, |q, cx| {
                         q.set_value("", window, cx);
@@ -86,7 +86,7 @@ impl Shell {
                 self.refresh_option_picker(cx);
             }
             CellEditor::Date { initial } => {
-                if let Some(d) = &self.database {
+                if let Some(d) = self.database_view() {
                     let date = initial.and_then(|at| {
                         chrono::DateTime::from_timestamp_millis(at)
                             .map(|t| t.with_timezone(&chrono::Local).date_naive())
@@ -118,7 +118,7 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let Some(d) = &self.database {
+        if let Some(d) = self.database_view() {
             let text = d.text.clone();
             text.update(cx, |input, cx| {
                 input.set_value(initial, window, cx);
@@ -129,7 +129,7 @@ impl Shell {
     }
 
     pub(super) fn set_editing(&mut self, editing: Option<Editing>, cx: &mut Context<Self>) {
-        let Some(database) = &mut self.database else {
+        let Some(database) = self.database_view_mut() else {
             return;
         };
         database.editing = editing;
@@ -150,11 +150,7 @@ impl Shell {
             return;
         };
         if matches!(editing.kind, EditKind::Title | EditKind::Text) {
-            let Some(text) = self
-                .database
-                .as_ref()
-                .map(|d| d.text.read(cx).value().to_string())
-            else {
+            let Some(text) = self.database_view().map(|d| d.text.read(cx).value().to_string()) else {
                 return;
             };
             let Some((page, column)) = self.cell_at(editing.row, editing.col, cx) else {

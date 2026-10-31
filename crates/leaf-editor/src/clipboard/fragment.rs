@@ -36,6 +36,25 @@ pub struct FragmentBlock {
     pub children: Vec<FragmentBlock>,
 }
 
+impl FragmentBlock {
+    /// A paragraph holding one link to `page`: what an inline database is copied as (E09-S09). A page shows a
+    /// database in one place, so a copy links to it rather than making a second table or copying its data.
+    #[must_use]
+    pub fn link_to(page: PageId) -> Self {
+        Self {
+            kind: BlockKind::Paragraph,
+            text: vec![TextSpan {
+                text: leaf_model::PAGE_LINK.to_string(),
+                marks: Marks {
+                    page: Some(page),
+                    ..Marks::default()
+                },
+            }],
+            children: Vec::new(),
+        }
+    }
+}
+
 impl Fragment {
     /// The fragment as JSON, for the system clipboard.
     #[must_use]
@@ -261,6 +280,7 @@ impl WireBlock {
                 favicon: preview.favicon,
                 fetched_at: preview.fetched_at,
             },
+            BlockKind::Database { page } => return Self::from_block(&FragmentBlock::link_to(*page)),
             BlockKind::Unknown { .. } => return None,
         };
         Some(Self {

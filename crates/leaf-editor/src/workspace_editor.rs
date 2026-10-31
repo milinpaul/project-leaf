@@ -267,6 +267,7 @@ mod backlinks;
 mod breadcrumb;
 mod databases;
 mod favourites;
+mod inline_databases;
 mod last_page;
 mod link_menu;
 mod page_links;

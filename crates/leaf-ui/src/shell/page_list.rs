@@ -65,6 +65,16 @@ impl PageList {
         }
     }
 
+    /// Measures the block showing the database page `page` again, if the page has one: its table grew or shrank
+    /// (E09-S09).
+    pub(super) fn remeasure_database(&self, page: PageId) {
+        for (i, row) in self.rows.iter().enumerate() {
+            if row.style == (BlockStyle::Database { page }) {
+                self.state.remeasure_items(HEADER_ITEMS + i..HEADER_ITEMS + i + 1);
+            }
+        }
+    }
+
     /// Scrolls so block number `index` (reading order, from 0) is at the top, once the list is in
     /// step with the page.
     pub(super) fn scroll_to_block(&mut self, index: usize) {

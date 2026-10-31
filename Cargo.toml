@@ -80,7 +80,7 @@ todo = "warn"
 dbg_macro = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
-# Hidden panics and smells (E08-S15, ADR-XXX-E08-S15). Core crates also lint indexing and arithmetic, in their
+# Hidden panics and smells (E08-S15, ADR-090). Core crates also lint indexing and arithmetic, in their
 # `lib.rs`. Tests may panic, index and print (clippy.toml); examples and benches may print.
 allow_attributes_without_reason = "warn"
 panic = "warn"

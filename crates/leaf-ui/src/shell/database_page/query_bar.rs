@@ -366,7 +366,7 @@ impl Shell {
         else {
             return div().into_any_element();
         };
-        let Some(d) = &self.database else {
+        let Some(d) = self.database_view() else {
             return div().into_any_element();
         };
         let (text, calendar, menu) = (d.filter_text.clone(), d.filter_calendar.clone(), d.query_menu);

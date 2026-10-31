@@ -39,6 +39,9 @@ impl Shell {
         if let BlockStyle::WebBookmark { url, preview } = &row.style {
             return self.render_web_bookmark(row, url, preview, cx);
         }
+        if let BlockStyle::Database { page } = row.style {
+            return self.render_inline_database(row, page, window, cx);
+        }
         if let BlockStyle::Table {
             header_row,
             rows,

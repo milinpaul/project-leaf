@@ -4,7 +4,7 @@
 //! as a `type` string plus a `props` map in its meta, so a newer app can add kinds without
 //! breaking older ones: anything unrecognised reads as [`BlockKind::Unknown`] and is left untouched.
 
-use leaf_core::AssetId;
+use leaf_core::{AssetId, PageId};
 use loro::{LoroMap, LoroValue};
 
 use crate::page_meta::value;
@@ -62,7 +62,7 @@ impl BlockProp {
 }
 
 /// Every known prop key, for removing the ones a new kind no longer uses.
-pub(crate) const KNOWN_PROP_KEYS: [&str; 18] = [
+pub(crate) const KNOWN_PROP_KEYS: [&str; 19] = [
     keys::LEVEL,
     keys::CHECKED,
     keys::LANGUAGE,
@@ -81,6 +81,7 @@ pub(crate) const KNOWN_PROP_KEYS: [&str; 18] = [
     keys::IMAGE,
     keys::FAVICON,
     keys::FETCHED_AT,
+    keys::PAGE,
 ];
 
 /// Meta and props key names.
@@ -106,6 +107,7 @@ pub(crate) mod keys {
     pub const IMAGE: &str = "image";
     pub const FAVICON: &str = "favicon";
     pub const FETCHED_AT: &str = "fetched_at";
+    pub const PAGE: &str = "page";
 }
 
 /// What kind of block this is, with its type-specific properties.
@@ -183,6 +185,13 @@ pub enum BlockKind {
         /// What was fetched for it; empty until then.
         preview: WebPreview,
     },
+    /// A database shown inside the page as a table (E09-S09, ADR-066 answer 4). The database is its own page,
+    /// filed under this one; the block only says which. Has no text and nothing nested, and never turns into
+    /// another kind: deleting the block trashes the database, and undo brings both back.
+    Database {
+        /// The database's page.
+        page: PageId,
+    },
     /// A kind this version of Leaf does not know, probably from a newer version. It is shown as a
     /// read-only placeholder and its data is never rewritten, so nothing is lost.
     Unknown {
@@ -211,6 +220,7 @@ impl BlockKind {
             Self::Task { .. } => "task",
             Self::Callout { .. } => "callout",
             Self::WebBookmark { .. } => "web_bookmark",
+            Self::Database { .. } => "database",
             Self::Unknown { type_name } => type_name,
         }
     }
@@ -241,6 +251,7 @@ impl BlockKind {
                 | Self::Table { .. }
                 | Self::TableRow
                 | Self::WebBookmark { .. }
+                | Self::Database { .. }
         )
     }
 
@@ -323,6 +334,7 @@ impl BlockKind {
                 keys::FAVICON,
                 keys::FETCHED_AT,
             ],
+            Self::Database { .. } => &[keys::PAGE],
             _ => &[],
         }
     }
@@ -445,6 +457,15 @@ impl BlockKind {
                 let (url, preview) = web_bookmark::read(meta)?;
                 Self::WebBookmark { url, preview }
             }
+            "database" => match prop(keys::PAGE) {
+                Some(LoroValue::String(page)) => Self::Database {
+                    page: page
+                        .parse()
+                        .map_err(|e: leaf_core::CoreError| (keys::PAGE, e.to_string()))?,
+                },
+                Some(_) => return Err((keys::PAGE, "is not text".into())),
+                None => return Err((keys::PAGE, "is missing".into())),
+            },
             _ => Self::Unknown { type_name },
         })
     }
@@ -472,6 +493,7 @@ impl BlockKind {
             Self::Table { header_row } => meta.insert(keys::HEADER_ROW, *header_row)?,
             Self::Callout { tone } => meta.insert(keys::TONE, tone.as_str())?,
             Self::WebBookmark { url, preview } => web_bookmark::write(meta, url, preview)?,
+            Self::Database { page } => meta.insert(keys::PAGE, page.to_string())?,
             Self::Task {
                 done,
                 due,

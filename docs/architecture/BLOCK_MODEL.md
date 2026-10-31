@@ -108,6 +108,7 @@ and rebuilds that index after undo, redo and import.
 | `task` | `done`: bool, `due`: `YYYY-MM-DD`?, `due_time`: `HH:MM`? (only with `due`), `priority`: `high` \| `medium` \| `low`? | yes | yes |
 | `callout` | `tone`: `info` \| `success` \| `warning` \| `error` \| `note` (another name is kept; missing reads as `info`) | yes | no |
 | `web_bookmark` | `url`: http(s) String, then once fetched `title`?, `description`?, `image`: AssetId?, `favicon`: AssetId?, `fetched_at`: i64? (unix ms) | no (keeps an empty container) | no |
+| `database` | `page`: PageId (the database page it shows) | no | no |
 
 **Callouts (E21, ADR-070).** A `callout` is text with marks in a tinted box with an icon; its lines are separated by
 `\n` in its one text, like a code block, and nothing nests inside. The `tone` is stored by name; a tone from a newer
@@ -122,6 +123,12 @@ address changes nothing, so its fetched preview is never cleared by an undo step
 creation, so these conversions are plain text edits: a container made in a later step than its block loses its
 content when undo re-creates the block and redo replays the step (the Loro behaviour in ADR-007). `PageDoc::text`
 reads `None` for it.
+
+**Inline databases (E09-S09, ADR-066, ADR-091).** A `database` block shows a database inside the page; the
+database is its own page, filed under this one, and the block only names it. It is only ever inserted: no block turns
+into one and it turns into nothing else. Deleting it trashes the database (rows and all) and undo brings it back, kept
+in step by `WorkspaceEditor::sync_inline_databases`. Copying or duplicating it gives a paragraph holding a link to the
+same database. A block that lost its `page` in a merge is repaired to a paragraph.
 
 **Action items (E19, ADR-068).** A `task` is a to-do with a due date, an optional wall-clock time and a priority.
 Dates and times have no time zone: due Friday stays due Friday. An absent prop means "not set"; a time needs a date.

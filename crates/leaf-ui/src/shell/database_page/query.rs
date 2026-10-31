@@ -26,13 +26,13 @@ pub(super) enum QueryMenu {
 
 impl Shell {
     fn query_editor(&mut self) -> Option<&mut DatabaseEditor> {
-        let id = self.database.as_ref()?.id;
+        let id = self.database_view()?.id;
         self.editor.database_editor(id)
     }
 
     /// The bar's open pop-up, if any.
     pub(super) fn query_menu(&self) -> Option<QueryMenu> {
-        self.database.as_ref().and_then(|d| d.query_menu)
+        self.database_view().and_then(|d| d.query_menu)
     }
 
     /// Opens one of the bar's pop-ups, closing any other menu first. A filter's pop-up starts with its value.
@@ -44,7 +44,7 @@ impl Shell {
                 .query_editor()
                 .and_then(|e| e.query_bar(offset_minutes()).ok())
                 .and_then(|bar| bar.filters.get(index).map(|f| f.input.clone()));
-            let Some(d) = &self.database else {
+            let Some(d) = self.database_view() else {
                 return;
             };
             match input {
@@ -66,7 +66,7 @@ impl Shell {
                 _ => {}
             }
         }
-        if let Some(d) = &mut self.database {
+        if let Some(d) = self.database_view_mut() {
             d.query_menu = Some(menu);
         }
         cx.notify();
@@ -80,7 +80,7 @@ impl Shell {
         if let Some(Err(err)) = self.query_editor().map(DatabaseEditor::commit_filter_text) {
             report("could not save the filter", err);
         }
-        if let Some(d) = &mut self.database {
+        if let Some(d) = self.database_view_mut() {
             d.query_menu = None;
         }
         self.refresh_database_table(cx);
@@ -161,7 +161,7 @@ impl Shell {
             e.cancel_filter_text();
         }
         self.change_query("could not remove the filter", cx, |e| e.remove_filter(index));
-        if let Some(d) = &mut self.database {
+        if let Some(d) = self.database_view_mut() {
             d.query_menu = None;
         }
         cx.notify();

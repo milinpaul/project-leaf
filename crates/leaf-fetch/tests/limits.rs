@@ -2,7 +2,7 @@
 #![allow(
     clippy::unwrap_used,
     clippy::expect_used,
-    reason = "the test server's helpers panic on failure, as the tests do"
+    reason = "a test fails by panicking"
 )]
 
 use std::io::{BufRead as _, BufReader, Write as _};
