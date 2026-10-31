@@ -29,6 +29,7 @@ mod columns;
 mod editing;
 mod header;
 mod inline;
+mod option_menu;
 mod options;
 mod query;
 mod query_bar;
@@ -292,6 +293,9 @@ impl Shell {
 
     /// Escape: closes a column menu if one is open, otherwise drops the cell being edited.
     pub(super) fn stop_editing(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.close_option_menu(cells::PickerFor::Table, window, cx) {
+            return;
+        }
         if self.query_menu().is_some() {
             self.close_query_menu(cx);
         } else if self.column_menu_open(cx) {

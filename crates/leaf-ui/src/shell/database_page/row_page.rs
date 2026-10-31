@@ -32,13 +32,16 @@ const LINE_HEIGHT: f32 = 32.0;
 /// The open row page's property editing.
 pub(in crate::shell) struct RowPage {
     page: PageId,
-    id: DatabaseId,
+    pub(super) id: DatabaseId,
     /// The property being edited, and how.
     editing: Option<(ColumnId, EditKind)>,
     /// The option picker's contents while one is open.
     picker: Option<OptionPicker>,
+    /// The open option's menu inside the picker, and its name field (E09-S11).
+    pub(super) option_menu: Option<leaf_editor::OptionMenu>,
+    pub(super) option_name: Entity<InputState>,
     text: Entity<InputState>,
-    query: Entity<InputState>,
+    pub(super) query: Entity<InputState>,
     calendar: Entity<CalendarState>,
     _subscriptions: Vec<Subscription>,
 }
@@ -68,7 +71,11 @@ impl Shell {
         let text = cx.new(|cx| InputState::new(window, cx));
         let query = cx.new(|cx| InputState::new(window, cx).placeholder("Search or create an option"));
         let calendar = cx.new(|cx| CalendarState::new(window, cx));
+        let option_name = super::option_menu::name_input(window, cx);
         let subscriptions = vec![
+            cx.subscribe_in(&option_name, window, |shell, _, event, window, cx| {
+                shell.on_option_name_event(PickerFor::RowPage, event, window, cx);
+            }),
             cx.subscribe_in(&text, window, Self::on_row_text_event),
             cx.subscribe_in(&query, window, Self::on_row_query_event),
             cx.subscribe_in(&calendar, window, Self::on_row_calendar_event),
@@ -78,6 +85,8 @@ impl Shell {
             id,
             editing: None,
             picker: None,
+            option_menu: None,
+            option_name,
             text,
             query,
             calendar,
@@ -122,7 +131,11 @@ impl Shell {
             v_flex()
                 .debug_selector(|| "row-properties".into())
                 .key_context(ROW_CONTEXT)
-                .on_action(cx.listener(|shell, _: &StopEditing, _, cx| shell.cancel_row_edit(cx)))
+                .on_action(cx.listener(|shell, _: &StopEditing, window, cx| {
+                    if !shell.close_option_menu(PickerFor::RowPage, window, cx) {
+                        shell.cancel_row_edit(cx);
+                    }
+                }))
                 .pt_2()
                 .pb_3()
                 .mb_2()
@@ -164,7 +177,14 @@ impl Shell {
                                 shell.update(cx, |shell, cx| shell.close_row_edit(window, cx));
                             }
                         })
-                        .child(render_picker(picker, &row.query, shell, PickerFor::RowPage, cx))
+                        .child(render_picker(
+                            picker,
+                            &row.query,
+                            row.option_menu.as_ref().map(|menu| (menu, &row.option_name)),
+                            shell,
+                            PickerFor::RowPage,
+                            cx,
+                        ))
                         .into_any_element(),
                 )
             }),

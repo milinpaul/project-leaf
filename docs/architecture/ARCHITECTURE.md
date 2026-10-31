@@ -281,6 +281,11 @@ A row opens as a page (E09-S08, ADR-086): the "Open" button on its title cell. U
 `database_page/row_page.rs` lists the row's properties from `DatabaseEditor::row_properties` (every column, in order)
 and edits them with the table cell's rules, with the row's page as the row.
 
+A column's options are edited from the picker (E09-S11, ADR-XXX-E09-S11): a "⋯" on each option opens its menu in place
+of the list (`database_page/option_menu.rs`): name, the nine colours, Delete. Options drag to a new place while nothing
+is typed. `leaf-editor` `database_view/options.rs` decides what each writes; deleting an option clears it from every
+cell and the list as one undo step. The model's option commands, `MoveOption` among them, are in `database/options.rs`.
+
 A database can sit inside a page (E09-S09, ADR-091): a `database` block naming a database page filed under that
 page. `/database` asks for one; `WorkspaceEditor::make_requested_database` makes the page and `PageEditor::
 insert_inline_database` places the block. After each page change `WorkspaceEditor::sync_inline_databases` trashes the
