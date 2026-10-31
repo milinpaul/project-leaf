@@ -456,11 +456,11 @@ fn read_task(meta: &LoroMap) -> Result<BlockKind, (&'static str, String)> {
         Some(_) => return Err((keys::DONE, "is not true or false".into())),
     };
     let due: Option<DueDate> = text_prop(keys::DUE, prop(keys::DUE))?;
-    let time: Option<DueTime> = text_prop(keys::DUE_TIME, prop(keys::DUE_TIME))?;
+    // A time on no day means nothing. Edits never store one, but two devices can: one clears the date
+    // while the other sets the time (E17-S11). It reads as no time, so both agree; the stored value is
+    // kept until the next change to the item writes its props as they read.
+    let time: Option<DueTime> = text_prop(keys::DUE_TIME, prop(keys::DUE_TIME))?.filter(|_| due.is_some());
     let priority: Option<Priority> = text_prop(keys::PRIORITY, prop(keys::PRIORITY))?;
-    if due.is_none() && time.is_some() {
-        return Err((keys::DUE_TIME, "is set without a due date".into()));
-    }
     Ok(BlockKind::Task {
         done,
         due,

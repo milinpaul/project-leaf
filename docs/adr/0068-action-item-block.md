@@ -49,3 +49,10 @@ at once must converge without losing either change. The editor never reads the c
   menu each write one prop, so one undo step each; typing a time with no date also sets today.
 - Plain English: Leaf now has a place to store action items, each with a done tick, a due date, an optional time
   and a priority. They are drawn with a round check, a date chip and a priority flag, set from a date picker and a priority menu.
+
+## Update 2026-10-31 (E17-S11): a time with no date, after a merge
+
+Edits never store a time without a date, but two devices can: one clears the date (and so the time) while the other
+sets the time, and the merge keeps the other's time. Reading such an item treats the time as unset, so both devices
+show the same thing, and the stored value is kept (never drop data) until the next change to the item, which writes
+its props as they read. Found by the two-peer property test on CI; its case is saved in the test's regressions file.

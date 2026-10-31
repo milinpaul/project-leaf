@@ -255,7 +255,7 @@ type BadData = (&'static str, &'static str, Option<(&'static str, LoroValue)>);
 
 #[test]
 fn known_kinds_with_bad_data_are_errors_not_guesses() {
-    let cases: [BadData; 15] = [
+    let cases: [BadData; 14] = [
         ("type missing", "", None),
         ("heading", "level", Some(("level", LoroValue::I64(7)))),
         ("heading", "level", None),
@@ -284,11 +284,6 @@ fn known_kinds_with_bad_data_are_errors_not_guesses() {
             "task",
             "due_time",
             Some(("due_time", LoroValue::String("25:00".into()))),
-        ),
-        (
-            "task",
-            "due_time",
-            Some(("due_time", LoroValue::String("09:00".into()))),
         ),
         (
             "task",
