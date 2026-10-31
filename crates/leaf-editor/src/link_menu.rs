@@ -1,4 +1,4 @@
-//! The page-link menu's typing side (E10-S05, ADR 0071): typing `[[` opens it, and what follows is the
+//! The page-link menu's typing side (E10-S05, ADR-071): typing `[[` opens it, and what follows is the
 //! query. Like the slash menu, `[[` and the query are ordinary text in the page, so they stay if the menu
 //! closes without a choice; the editor only remembers where the `[[` is and which entry is highlighted.
 //! Which pages match is the workspace's business: see [`WorkspaceEditor::link_menu`](crate::WorkspaceEditor::link_menu).

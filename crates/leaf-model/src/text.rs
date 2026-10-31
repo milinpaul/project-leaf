@@ -18,7 +18,7 @@ pub(crate) mod marks {
 }
 
 /// The character a link to a page occupies in block text (U+FFFC, the object replacement character): one
-/// placeholder carrying a `page` mark whose value is the target's ID (ADR 0071). The title isn't stored, so
+/// placeholder carrying a `page` mark whose value is the target's ID (ADR-071). The title isn't stored, so
 /// renaming the page updates every link to it; and being one character, a link can't be half edited.
 pub const PAGE_LINK: char = '\u{FFFC}';
 

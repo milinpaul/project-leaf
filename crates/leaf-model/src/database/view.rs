@@ -1,4 +1,4 @@
-//! A database's table view settings: how rows are sorted and which are shown (ADR 0066, E09-S07 draws them).
+//! A database's table view settings: how rows are sorted and which are shown (ADR-066, E09-S07 draws them).
 //!
 //! The sort and the filters are each one plain value in the `"view"` map, so a change replaces the whole list
 //! and two devices changing them at once settle on one list rather than a mix. What a newer version of Leaf

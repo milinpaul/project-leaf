@@ -1,4 +1,4 @@
-//! Tests for `MarkEdited` and the `edited_at` field (ADR 0059): recording, the fallback for older
+//! Tests for `MarkEdited` and the `edited_at` field (ADR-059): recording, the fallback for older
 //! pages, undo skipping it, saving, and two peers agreeing on one time.
 
 use std::sync::atomic::Ordering;
@@ -183,7 +183,7 @@ fn a_stamp_made_after_seeing_the_other_wins() {
 
 proptest! {
     /// Whatever each peer stamps, after syncing both read the same time, and it is one that was
-    /// actually written (ADR 0059: Loro keeps one of two simultaneous stamps).
+    /// actually written (ADR-059: Loro keeps one of two simultaneous stamps).
     #[test]
     fn two_peers_agree_on_one_written_time(
         rounds in proptest::collection::vec(

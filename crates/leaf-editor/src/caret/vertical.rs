@@ -3,7 +3,7 @@
 //! Where a block's text wraps depends on fonts and window width, which only the UI knows. The UI
 //! describes its layout through [`LineLayout`]; the rules for where the caret goes stay here, plain
 //! and testable (tests use a fake monospace layout). The caret keeps a preferred x while Up and Down
-//! repeat, so passing a short line doesn't drag it to the left for good (ADR 0016).
+//! repeat, so passing a short line doesn't drag it to the left for good (ADR-016).
 
 use leaf_core::BlockId;
 use leaf_model::Caret;

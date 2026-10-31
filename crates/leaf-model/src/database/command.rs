@@ -25,7 +25,7 @@ pub enum DatabaseCommand {
         /// The new name.
         name: String,
     },
-    /// Changes a column's type. Stored cell values stay as they are (ADR 0066 answer 3); options stay too, so
+    /// Changes a column's type. Stored cell values stay as they are (ADR-066 answer 3); options stay too, so
     /// changing back to a select brings them back. A column of an unknown type can't be retyped.
     SetColumnType {
         /// The column.
@@ -54,7 +54,7 @@ pub enum DatabaseCommand {
         /// The width, in points; must be finite and positive.
         width: Option<f64>,
     },
-    /// Deletes a column. Its cells stay in the document, unread, so undo brings it back whole (ADR 0066).
+    /// Deletes a column. Its cells stay in the document, unread, so undo brings it back whole (ADR-066).
     DeleteColumn {
         /// The column.
         column: ColumnId,

@@ -72,7 +72,7 @@ pub enum PageCommand {
         text: String,
     },
     /// Inserts a link to `page` at `pos`: one [`PAGE_LINK`](crate::PAGE_LINK) placeholder carrying the
-    /// page's ID, written as one step (ADR 0071). Typing beside it never joins it. Code blocks take none.
+    /// page's ID, written as one step (ADR-071). Typing beside it never joins it. Code blocks take none.
     InsertPageLink {
         /// Block whose text gets the link; its kind must take marks.
         id: BlockId,

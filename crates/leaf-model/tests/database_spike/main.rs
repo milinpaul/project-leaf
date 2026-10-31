@@ -1,7 +1,7 @@
 //! E09-S01 spike: proves a data model for databases (Phase 1) on Loro before `leaf-model` wraps it.
 //!
 //! Throwaway quality on purpose, like `loro_spike.rs` for blocks: these tests drive Loro directly and pin down
-//! how a database document behaves. Findings and the proposed model are in ADR 0066.
+//! how a database document behaves. Findings and the proposed model are in ADR-066.
 //!
 //! The model under test, one Loro document per database:
 //!

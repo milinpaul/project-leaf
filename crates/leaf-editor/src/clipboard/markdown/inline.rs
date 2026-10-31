@@ -244,7 +244,7 @@ pub(crate) fn write(spans: &[TextSpan]) -> String {
         if let Some(href) = &marks.link {
             text = format!("[{text}]({href})");
         }
-        // A page link, named by `Fragment::with_link_names`: `[[Title]]` (ADR 0071).
+        // A page link, named by `Fragment::with_link_names`: `[[Title]]` (ADR-071).
         if marks.page.is_some() {
             text = format!("[[{}]]", span.text.replace("]]", "] ]"));
         }

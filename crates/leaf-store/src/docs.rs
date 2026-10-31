@@ -21,7 +21,7 @@ pub enum DocKey {
     Workspace,
     /// A page's blocks, stored under the page's ID.
     Page(PageId),
-    /// A database's columns, rows and cells (Phase 1, ADR 0066), stored as `database:<id>` so it can never be
+    /// A database's columns, rows and cells (Phase 1, ADR-066), stored as `database:<id>` so it can never be
     /// mistaken for a page.
     Database(DatabaseId),
 }

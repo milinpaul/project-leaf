@@ -45,7 +45,7 @@ impl PageDoc {
         for (key, value) in entries(&from) {
             match (key.as_str(), value) {
                 (keys::ID, _) => {}
-                // The block text keeps the container kind every block's text has (ADR 0001).
+                // The block text keeps the container kind every block's text has (ADR-001).
                 (keys::TEXT, ValueOrContainer::Container(Container::Text(text))) => {
                     append_delta(&to.ensure_mergeable_text(keys::TEXT)?, text.to_delta())?;
                 }

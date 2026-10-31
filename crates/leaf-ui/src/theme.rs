@@ -1,4 +1,4 @@
-//! Leaf's look in one place: colours, fonts, sizes and shapes for light and dark (ADR 0027).
+//! Leaf's look in one place: colours, fonts, sizes and shapes for light and dark (ADR-027).
 //!
 //! The direction came from the owner: warm and friendly, on warm "paper" neutrals, with the app icon's
 //! green used sparingly (selection, caret, links, focus, the main button) and a soft charcoal dark mode.

@@ -1,5 +1,5 @@
 //! Tests for workspace undo and redo. States are compared as outlines (every page, its parent and
-//! its metadata, trash included), never by Loro `TreeID`s, which undo is allowed to change (ADR 0006).
+//! its metadata, trash included), never by Loro `TreeID`s, which undo is allowed to change (ADR-006).
 
 use leaf_core::PageId;
 

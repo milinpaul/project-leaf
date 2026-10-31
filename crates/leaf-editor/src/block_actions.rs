@@ -3,7 +3,7 @@
 //! An action opened on a block that is part of the selection applies to the whole selection (every
 //! block a text selection touches, or the selected blocks); otherwise to that block alone, the way
 //! the ⋮⋮ handle works in other editors. Each action is one undo step, however many blocks it touches
-//! (ADR 0028).
+//! (ADR-028).
 
 use leaf_core::BlockId;
 use leaf_model::{BlockKind, Caret, PageCommand, PageOutcome};

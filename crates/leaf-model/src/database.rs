@@ -1,4 +1,4 @@
-//! A database's own document (Phase 1, ADR 0066): its columns, the order of its rows, every cell, and how the
+//! A database's own document (Phase 1, ADR-066): its columns, the order of its rows, every cell, and how the
 //! table view sorts and filters.
 //!
 //! One `Database` owns one Loro document:
@@ -23,7 +23,7 @@
 //! (E09-S03); this document only knows their IDs.
 //!
 //! Like pages, the model talks about columns and rows by permanent IDs and keeps Loro's `TreeID`s private,
-//! because undo can re-create nodes under new ones (ADR 0006).
+//! because undo can re-create nodes under new ones (ADR-006).
 
 mod apply;
 mod changes;

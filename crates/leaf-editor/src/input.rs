@@ -5,7 +5,7 @@
 //! *preedit* text: a draft, underlined, that changes with each key until the user commits it. The
 //! draft lives only here in the editor and is drawn over the document, never written to it, so a
 //! composition makes no undo steps, no saves and nothing for other devices until it is committed.
-//! An empty draft is the same as none: it never deletes the selection (ADR 0017).
+//! An empty draft is the same as none: it never deletes the selection (ADR-017).
 
 use leaf_model::{Caret, PageCommand};
 

@@ -1,4 +1,4 @@
-//! The slash menu's popover (E07-S06, ADR 0043): the list `PageEditor` keeps while a `/` query is
+//! The slash menu's popover (E07-S06, ADR-043): the list `PageEditor` keeps while a `/` query is
 //! open, drawn under the `/` (or above it when there is no room below). The page keeps the keyboard,
 //! so typing goes on filtering and the editor's keys (Up, Down, Enter, Escape) drive it; the mouse
 //! highlights and picks entries. Nothing here decides anything.
