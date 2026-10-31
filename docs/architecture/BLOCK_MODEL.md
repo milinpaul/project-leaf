@@ -124,7 +124,7 @@ creation, so these conversions are plain text edits: a container made in a later
 content when undo re-creates the block and redo replays the step (the Loro behaviour in ADR-007). `PageDoc::text`
 reads `None` for it.
 
-**Inline databases (E09-S09, ADR-066, ADR-XXX-E09-S09).** A `database` block shows a database inside the page; the
+**Inline databases (E09-S09, ADR-066, ADR-091).** A `database` block shows a database inside the page; the
 database is its own page, filed under this one, and the block only names it. It is only ever inserted: no block turns
 into one and it turns into nothing else. Deleting it trashes the database (rows and all) and undo brings it back, kept
 in step by `WorkspaceEditor::sync_inline_databases`. Copying or duplicating it gives a paragraph holding a link to the

@@ -41,7 +41,7 @@ just install    # macOS: build Leaf and put it in /Applications
 
 - Edition 2024, workspace lints on. No `unwrap()`/`expect()` outside tests; return errors with `thiserror` types.
 - No `unsafe`.
-- No hidden panics (E08-S15, ADR-XXX-E08-S15): no `panic!`/`unreachable!` outside tests; core crates also
+- No hidden panics (E08-S15, ADR-090): no `panic!`/`unreachable!` outside tests; core crates also
   lint slice indexing and integer arithmetic. Prefer `get`, iterators, `checked_*`/`saturating_*`; where it truly
   can't fail, `#[expect(lint, reason = "why it can't fail")]` on the smallest item.
 - Every `#[allow]`/`#[expect]` carries a `reason = "..."`. Print only through `leaf_ui::log::log` (examples, benches

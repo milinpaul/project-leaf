@@ -281,7 +281,7 @@ A row opens as a page (E09-S08, ADR-086): the "Open" button on its title cell. U
 `database_page/row_page.rs` lists the row's properties from `DatabaseEditor::row_properties` (every column, in order)
 and edits them with the table cell's rules, with the row's page as the row.
 
-A database can sit inside a page (E09-S09, ADR-XXX-E09-S09): a `database` block naming a database page filed under that
+A database can sit inside a page (E09-S09, ADR-091): a `database` block naming a database page filed under that
 page. `/database` asks for one; `WorkspaceEditor::make_requested_database` makes the page and `PageEditor::
 insert_inline_database` places the block. After each page change `WorkspaceEditor::sync_inline_databases` trashes the
 database whose block left the page and restores one whose block came back, outside the workspace's undo. In the UI

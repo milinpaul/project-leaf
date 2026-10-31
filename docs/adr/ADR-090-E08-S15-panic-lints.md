@@ -1,4 +1,4 @@
-# ADR-XXX. Lints against hidden panics: no panic macros, checked indexing and arithmetic in core crates
+# ADR-090. Lints against hidden panics: no panic macros, checked indexing and arithmetic in core crates
 
 - **Status:** Accepted
 - **Type:** Architecture
