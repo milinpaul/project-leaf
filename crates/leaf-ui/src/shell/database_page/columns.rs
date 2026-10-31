@@ -39,7 +39,7 @@ impl Shell {
             Some(Err(err)) => return report("could not open the column menu", err),
             None => return,
         };
-        let Some(d) = &self.database else {
+        let Some(d) = self.database_view() else {
             return;
         };
         let name = d.column_name.clone();
@@ -107,8 +107,7 @@ impl Shell {
             return;
         };
         let Some(name) = self
-            .database
-            .as_ref()
+            .database_view()
             .map(|d| d.column_name.read(cx).value().to_string())
         else {
             return;
@@ -277,7 +276,7 @@ impl Shell {
 
     /// Undo or redo on a database page: the database's own history.
     pub(super) fn database_history(&mut self, undo: bool, window: &mut Window, cx: &mut Context<Self>) {
-        let Some((page, _)) = self.open_database() else {
+        let Some(page) = self.database_view().map(|d| d.page) else {
             return;
         };
         self.close_menus(window, cx);

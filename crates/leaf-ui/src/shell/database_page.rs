@@ -153,8 +153,40 @@ impl Shell {
     /// Makes sure the open database page has its table, loading the database from disk the first time.
     fn ensure_database_page(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Option<DatabaseId> {
         let (page, id) = self.open_database()?;
-        if self.database.as_ref().is_some_and(|d| d.page == page) {
-            return Some(id);
+        self.ensure_database_view(page, id, window, cx);
+        self.activate_database(page);
+        Some(id)
+    }
+
+    /// The view of the active database: the one the person is working in, on its own page or inline (E09-S09).
+    pub(super) fn database_view(&self) -> Option<&DatabasePage> {
+        let page = self.active_database?;
+        self.databases.iter().find(|d| d.page == page)
+    }
+
+    pub(super) fn database_view_mut(&mut self) -> Option<&mut DatabasePage> {
+        let page = self.active_database?;
+        self.databases.iter_mut().find(|d| d.page == page)
+    }
+
+    /// Makes the database of `page` the one the table actions work on. Every press inside a database's view does
+    /// this first, so with several inline databases on a page each acts on its own.
+    pub(super) fn activate_database(&mut self, page: PageId) {
+        if self.active_database != Some(page) && self.databases.iter().any(|d| d.page == page) {
+            self.active_database = Some(page);
+        }
+    }
+
+    /// Makes sure the database page `page` (database `id`) has a view, loading the database the first time.
+    pub(super) fn ensure_database_view(
+        &mut self,
+        page: PageId,
+        id: DatabaseId,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.databases.iter().any(|d| d.page == page) {
+            return;
         }
         self.load_database(id);
         let shell = cx.entity().downgrade();
@@ -189,16 +221,25 @@ impl Shell {
                 .col_resizable(true)
                 .sortable(false)
         });
+        // Each event marks its own database active first, so the handler acts on the view it came from.
+        macro_rules! sub {
+            ($entity:expr, $handler:path) => {
+                cx.subscribe_in($entity, window, move |shell, e, event, window, cx| {
+                    shell.activate_database(page);
+                    $handler(shell, e, event, window, cx);
+                })
+            };
+        }
         let subscriptions = vec![
-            cx.subscribe_in(&table, window, Self::on_table_event),
-            cx.subscribe_in(&text, window, Self::on_cell_text_event),
-            cx.subscribe_in(&query, window, Self::on_option_query_event),
-            cx.subscribe_in(&calendar, window, Self::on_calendar_event),
-            cx.subscribe_in(&column_name, window, Self::on_column_name_event),
-            cx.subscribe_in(&filter_text, window, Self::on_filter_text_event),
-            cx.subscribe_in(&filter_calendar, window, Self::on_filter_calendar_event),
+            sub!(&table, Self::on_table_event),
+            sub!(&text, Self::on_cell_text_event),
+            sub!(&query, Self::on_option_query_event),
+            sub!(&calendar, Self::on_calendar_event),
+            sub!(&column_name, Self::on_column_name_event),
+            sub!(&filter_text, Self::on_filter_text_event),
+            sub!(&filter_calendar, Self::on_filter_calendar_event),
         ];
-        self.database = Some(DatabasePage {
+        self.databases.push(DatabasePage {
             page,
             id,
             table,
@@ -216,9 +257,10 @@ impl Shell {
         if let Err(err) = self.editor.read_database(id, FIRST_SCREEN_ROWS) {
             report("could not read the database", err);
         }
+        let active = self.active_database.replace(page);
         self.refresh_database_table(cx);
         self.read_rest_of_database(cx);
-        Some(id)
+        self.active_database = active.or(Some(page));
     }
 
     /// Hands the editor the database's saved document, if it has none in memory yet.
@@ -237,7 +279,7 @@ impl Shell {
 
     /// Reads the rest of the database a chunk at a time, redrawing as rows arrive.
     fn read_rest_of_database(&mut self, cx: &mut Context<Self>) {
-        let Some(database) = &mut self.database else {
+        let Some(database) = self.database_view_mut() else {
             return;
         };
         let id = database.id;
@@ -258,14 +300,14 @@ impl Shell {
 
     /// Hands the table the database as it is now.
     pub(super) fn refresh_database_table(&mut self, cx: &mut Context<Self>) {
-        let Some(database) = &self.database else {
+        let Some((id, table)) = self.database_parts() else {
             return;
         };
-        let view = match self.editor.database_view(database.id, offset_minutes()) {
+        let view = match self.editor.database_view(id, offset_minutes()) {
             Ok(view) => view,
             Err(err) => return report("could not read the database", err),
         };
-        database.table.update(cx, |table, cx| {
+        table.update(cx, |table, cx| {
             table.delegate_mut().view = view;
             table.refresh(cx);
         });
@@ -277,7 +319,7 @@ impl Shell {
         if self.ensure_database_page(window, cx).is_none() {
             return div().into_any_element();
         }
-        let Some(database) = &self.database else {
+        let Some(database) = self.database_view() else {
             return div().into_any_element();
         };
         let table = database.table.clone();
@@ -343,7 +385,7 @@ impl Shell {
     }
 
     fn database_parts(&self) -> Option<(DatabaseId, Entity<TableState<DatabaseTable>>)> {
-        self.database.as_ref().map(|d| (d.id, d.table.clone()))
+        self.database_view().map(|d| (d.id, d.table.clone()))
     }
 
     /// The row page and column of a table cell (`None` column for the title).
@@ -387,7 +429,7 @@ impl Shell {
 
     /// The "New" line: adds a row at the end and starts typing its title.
     fn add_database_row(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let Some((page, id)) = self.open_database() else {
+        let Some((page, id)) = self.database_view().map(|d| (d.page, d.id)) else {
             return;
         };
         let rows = self.editor.database(id).map_or(0, |db| db.rows().len());
