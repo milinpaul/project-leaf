@@ -2,7 +2,7 @@
 
 use leaf_model::{DueDate, DueTime};
 
-use super::{days, due_label, is_overdue, weekday};
+use super::{add_days, days, due_label, is_overdue, weekday};
 
 fn d(text: &str) -> DueDate {
     text.parse().unwrap()
@@ -68,4 +68,12 @@ fn overdue_means_not_done_and_past_due() {
     assert!(!overdue(false, Some("2026-10-31"), None), "tomorrow");
     assert!(!overdue(true, Some("2026-10-01"), None), "done");
     assert!(!overdue(false, None, None), "no date");
+}
+
+#[test]
+fn adding_days_crosses_months_and_years() {
+    assert_eq!(add_days(d("2026-10-30"), 7), Some(d("2026-11-06")));
+    assert_eq!(add_days(d("2026-12-31"), 1), Some(d("2027-01-01")));
+    assert_eq!(add_days(d("2028-03-01"), -1), Some(d("2028-02-29")));
+    assert_eq!(add_days(d("9999-12-31"), 1), None, "past the last year");
 }

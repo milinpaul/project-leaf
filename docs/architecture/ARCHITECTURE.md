@@ -75,6 +75,11 @@ state lives in `PageEditor` (`leaf-editor/src/block_menu.rs`) like the slash men
 it the keyboard while open, and `Cmd/Ctrl+/` opens it for the caret's block. Dragging the handle is worked out in
 `leaf-editor/src/drag.rs` (E05-S04, ADR 0049): the UI passes the rows it drew and the pointer, `PageEditor::drop_target`
 returns where the line goes (a gap between rows and a depth), and `drop_blocks` moves the blocks there as one undo step.
+An **action item** (E19, ADR 0068) is drawn by `shell/task_row.rs`: a round check, then a date chip (red when overdue)
+and a priority flag. Clicking a chip, or `Cmd/Ctrl+Shift+D` / `Cmd/Ctrl+Shift+P`, opens `shell/task_pickers.rs`: a
+month calendar with quick picks and a time field, or a priority menu. The calendar's weeks, the quick picks and the
+typed-time parser are plain functions in `leaf-editor/src/task_edit.rs` (`DatePicker`, `parse_time`); each choice is
+one `SetProp` command. The UI reads today and now from the local clock and passes them in.
 `shell/block_drag.rs` (E07-S05, ADR 0050) uses GPUI's drag: a click on the handle still opens the menu, pressing and
 moving starts a drag with a preview of the block's first line, each row records where it was drawn, the line is drawn at
 the answer's depth, the dragged rows fade, and holding near the page's top or bottom edge scrolls it. `Cmd/Ctrl+K` over

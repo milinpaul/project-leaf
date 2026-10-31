@@ -4,3 +4,7 @@
 .claude/settings.local.json
 .DS_Store
 __pycache__/
+
+# insta leftovers from failing runs (review with cargo insta, never commit)
+*.pending-snap
+*.snap.new

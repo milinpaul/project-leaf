@@ -191,6 +191,22 @@ fn mode_named(name: &str) -> Option<ThemeMode> {
     }
 }
 
+/// An action item's priority flag colour (E19-S03): calm, clearly different hues, readable on the
+/// page in both appearances. High is the danger red; Medium a warm amber; Low a quiet blue.
+#[must_use]
+pub fn priority_colour(priority: leaf_model::Priority, dark: bool) -> gpui::Hsla {
+    let hex = match (priority, dark) {
+        (leaf_model::Priority::High, false) => LIGHT.danger,
+        (leaf_model::Priority::High, true) => DARK.danger,
+        (leaf_model::Priority::Medium, false) => "#B26B00",
+        (leaf_model::Priority::Medium, true) => "#E3B341",
+        (leaf_model::Priority::Low, false) => "#3A6EA5",
+        (leaf_model::Priority::Low, true) => "#79B0E8",
+    };
+    let value = u32::from_str_radix(hex.trim_start_matches('#'), 16).unwrap_or(0);
+    gpui::rgb(value).into()
+}
+
 /// gpui-component's theme for one appearance, built from Leaf's tokens. Roles gpui-component has but
 /// Leaf doesn't use yet (charts, tables, tabs, ...) keep its defaults.
 fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {
