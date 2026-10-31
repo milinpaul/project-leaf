@@ -140,3 +140,16 @@ In order. E13 (the read-only viewer) shares S3–S5 and could reuse them.
 Start with **S02 and S03**: they are small, settle the protocol, and fix the two core gaps, which the desktop needs
 anyway for sync. Then decide between building the E13 viewer first (as planned) or going straight to S04–S06, since
 the spike shows the editor itself is not the hard part; the browser layer is.
+
+## Update 2026-10-31: the owner's choice
+
+After reading the findings, the owner chose to build an **independent web app first**: Next.js around the
+WebAssembly core, with pages stored in the browser, and accounts and sync later. It replaces "the E13 viewer first".
+The E14 epic notes record it, and the first stories are:
+- **E14-S02:** the decision record (Next.js, browser storage, where the code lives).
+- **E14-S03:** the `leaf-web` crate, which closes core gaps 1 and 2 above.
+- **E14-S04:** the Next.js app skeleton, one page typed and saved in the browser.
+
+The rest of the breakdown above still applies, with S09–S12 (server, accounts, assets, workspace sync) coming after
+the web app works on its own.
+
