@@ -126,6 +126,7 @@ impl Shell {
                             SlashAction::Block(kind) => kind_icon(kind),
                             SlashAction::Image => IconName::Image,
                             SlashAction::Table => IconName::Table,
+                            SlashAction::LinkToPage => IconName::Link,
                         })
                         .small()
                         .text_color(muted),

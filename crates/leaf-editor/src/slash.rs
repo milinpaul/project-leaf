@@ -151,6 +151,25 @@ impl PageEditor {
                 self.request_image(caret)?;
                 return Ok(Some(caret));
             }
+            SlashAction::LinkToPage => {
+                self.doc.as_separate_step(|doc| {
+                    doc.apply(PageCommand::ReplaceText {
+                        id: block,
+                        range: typed.clone(),
+                        text: "[[".into(),
+                    })
+                })?;
+                let caret = self.set_caret(Caret {
+                    block,
+                    at: typed.start + 2,
+                })?;
+                self.finish()?;
+                self.open_link_menu(Caret {
+                    block,
+                    at: typed.start,
+                })?;
+                return Ok(Some(caret));
+            }
             SlashAction::Table => {
                 let caret = self
                     .doc
