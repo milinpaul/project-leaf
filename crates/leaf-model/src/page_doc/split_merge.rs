@@ -8,7 +8,8 @@ use loro::cursor::PosType;
 use loro::{LoroText, TextDelta, TreeID};
 
 use super::PageDoc;
-use crate::{BlockKind, ModelError, PageOutcome};
+use super::page_links::mark_run;
+use crate::{BlockKind, ModelError, PAGE_LINK, PageOutcome};
 
 impl PageDoc {
     pub(super) fn split_block(&mut self, id: BlockId, pos: usize) -> Result<PageOutcome, ModelError> {
@@ -87,7 +88,9 @@ impl PageDoc {
         if into_kind.allows_marks() {
             append_delta(&target, source.to_delta())?;
         } else {
-            target.insert(at, &source.to_string())?; // code keeps no marks
+            // Code keeps no marks, so no page links either (ADR 0071).
+            let words: String = source.to_string().chars().filter(|&c| c != PAGE_LINK).collect();
+            target.insert(at, &words)?;
         }
         let into_is_parent = self.parent_node(node) == Some(previous_node);
         for child in self.tree.children(node).unwrap_or_default() {
@@ -143,7 +146,7 @@ pub(super) fn append_delta(text: &LoroText, delta: Vec<TextDelta>) -> Result<(),
             text.unmark(start..end, &key)?;
         }
         for (key, value) in attributes.into_iter().flatten() {
-            text.mark(start..end, &key, value)?;
+            mark_run(text, start..end, &key, value)?;
         }
     }
     Ok(())

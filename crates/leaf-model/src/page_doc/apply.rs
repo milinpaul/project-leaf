@@ -30,6 +30,7 @@ impl PageDoc {
             PageCommand::InsertText { id, pos, text } => self.insert_text(id, pos, &text)?,
             PageCommand::DeleteText { id, range } => self.delete_text(id, range)?,
             PageCommand::ReplaceText { id, range, text } => self.replace_text(id, range, &text)?,
+            PageCommand::InsertPageLink { id, pos, page } => self.insert_page_link(id, pos, page)?,
             PageCommand::SetMark { id, range, mark } => self.set_mark(id, range, &mark)?,
             PageCommand::RemoveMark { id, range, kind } => self.remove_mark(id, range, kind)?,
             PageCommand::SetBlockKind { id, kind } => self.set_kind(id, &kind)?,
@@ -74,6 +75,7 @@ impl PageDoc {
         text: &str,
     ) -> Result<PageOutcome, ModelError> {
         kind.check_creatable()?;
+        super::page_links::check_plain(text)?;
         if !text.is_empty() && !kind.has_text() {
             return Err(ModelError::TextNotAllowed {
                 kind: kind.type_name().to_owned(),

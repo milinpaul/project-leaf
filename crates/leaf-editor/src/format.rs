@@ -165,6 +165,7 @@ impl PageEditor {
                         strike: s.strike && marks.strike,
                         code: s.code && marks.code,
                         link: s.link.filter(|l| marks.link.as_ref() == Some(l)),
+                        page: s.page.filter(|p| marks.page.as_ref() == Some(p)),
                     },
                 });
             }
@@ -192,6 +193,8 @@ impl PageEditor {
             strike: before.strike,
             code: before.code && after.code,
             link: before.link.filter(|l| after.link.as_ref() == Some(l)),
+            // Typed text never becomes a page link (ADR 0071).
+            page: None,
         };
         for (kind, on) in self.pending_at(caret).unwrap_or_default() {
             match kind {
@@ -199,7 +202,7 @@ impl PageEditor {
                 MarkKind::Italic => typed.italic = on,
                 MarkKind::Strike => typed.strike = on,
                 MarkKind::Code => typed.code = on,
-                MarkKind::Link => {}
+                MarkKind::Link | MarkKind::PageLink => {}
             }
         }
         Ok(typed)
@@ -301,13 +304,14 @@ pub(crate) fn apply_pending(
     Ok(())
 }
 
-/// The mark for a toggle. Links are never toggled on (they need an address), so `Link` never gets here.
+/// The mark for a toggle. Links are never toggled on (they need an address or a page), so `Link` and
+/// `PageLink` never get here.
 fn mark_of(kind: MarkKind) -> Mark {
     match kind {
         MarkKind::Bold => Mark::Bold,
         MarkKind::Italic => Mark::Italic,
         MarkKind::Strike => Mark::Strike,
-        MarkKind::Code | MarkKind::Link => Mark::Code,
+        MarkKind::Code | MarkKind::Link | MarkKind::PageLink => Mark::Code,
     }
 }
 
@@ -318,6 +322,7 @@ fn has(marks: &Marks, kind: MarkKind) -> bool {
         MarkKind::Strike => marks.strike,
         MarkKind::Code => marks.code,
         MarkKind::Link => marks.link.is_some(),
+        MarkKind::PageLink => marks.page.is_some(),
     }
 }
 

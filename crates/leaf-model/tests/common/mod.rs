@@ -3,7 +3,7 @@
 
 #![allow(dead_code)] // each test file uses part of this
 
-use leaf_core::{AssetId, BlockId};
+use leaf_core::{AssetId, BlockId, PageId};
 use leaf_model::{
     BlockKind, BlockProp, CalloutTone, DueDate, DueTime, Mark, MarkKind, PageCommand, PageDoc, Priority,
     TextSpan,
@@ -51,23 +51,36 @@ pub(crate) fn kinds() -> [BlockKind; 16] {
     ]
 }
 
-pub(crate) fn marks() -> [Mark; 5] {
+/// Pages that links point at: fixed, so a shrunk failing case reads the same every time.
+pub(crate) fn link_targets() -> [PageId; 2] {
+    [
+        "01a18f8c-179f-7705-9e09-69f9f450c2f2",
+        "01a18f8c-179f-7705-9e09-69f9f450c2f3",
+    ]
+    // Both parse; the fallback only keeps clippy's no-`expect` rule.
+    .map(|id| id.parse().unwrap_or_else(|_| PageId::new()))
+}
+
+pub(crate) fn marks() -> [Mark; 6] {
     [
         Mark::Bold,
         Mark::Italic,
         Mark::Strike,
         Mark::Code,
         Mark::Link("https://leaf.app".into()),
+        // Mostly refused (only links take it); on a link it re-points it.
+        Mark::PageLink(link_targets()[1]),
     ]
 }
 
-pub(crate) fn mark_kinds() -> [MarkKind; 5] {
+pub(crate) fn mark_kinds() -> [MarkKind; 6] {
     [
         MarkKind::Bold,
         MarkKind::Italic,
         MarkKind::Strike,
         MarkKind::Code,
         MarkKind::Link,
+        MarkKind::PageLink,
     ]
 }
 
@@ -130,6 +143,12 @@ pub(crate) enum Step {
         start: usize,
         len: usize,
         text: String,
+    },
+    /// A link to one of [`link_targets`].
+    Link {
+        block: usize,
+        pos: usize,
+        page: usize,
     },
     SetMark {
         block: usize,
@@ -198,6 +217,7 @@ pub(crate) fn step() -> impl Strategy<Value = Step> {
         3 => (n(), n(), text()).prop_map(|(block, pos, text)| Step::Type { block, pos, text }),
         1 => (n(), n(), 0..4_usize).prop_map(|(block, start, len)| Step::Erase { block, start, len }),
         1 => (n(), n(), 0..4_usize, text()).prop_map(|(block, start, len, text)| Step::Replace { block, start, len, text }),
+        2 => (n(), n(), n()).prop_map(|(block, pos, page)| Step::Link { block, pos, page }),
         2 => (n(), n(), 0..5_usize, n()).prop_map(|(block, start, len, mark)| Step::SetMark { block, start, len, mark }),
         1 => (n(), n(), 0..5_usize, n()).prop_map(|(block, start, len, kind)| Step::RemoveMark { block, start, len, kind }),
         2 => (n(), n()).prop_map(|(block, kind)| Step::SetKind { block, kind }),
@@ -442,6 +462,14 @@ pub(crate) fn text_command(step: Step, p: &Picker<'_>) -> Option<PageCommand> {
                 text,
             }
         }
+        Step::Link { block, pos, page } => {
+            let id = p.block(block)?;
+            PageCommand::InsertPageLink {
+                id,
+                pos: p.pos(id, pos),
+                page: link_targets()[page % 2],
+            }
+        }
         Step::SetMark {
             block,
             start,
@@ -452,7 +480,7 @@ pub(crate) fn text_command(step: Step, p: &Picker<'_>) -> Option<PageCommand> {
             PageCommand::SetMark {
                 id,
                 range: p.range(id, start, len),
-                mark: marks()[mark % 5].clone(),
+                mark: marks()[mark % 6].clone(),
             }
         }
         Step::RemoveMark {
@@ -465,7 +493,7 @@ pub(crate) fn text_command(step: Step, p: &Picker<'_>) -> Option<PageCommand> {
             PageCommand::RemoveMark {
                 id,
                 range: p.range(id, start, len),
-                kind: mark_kinds()[kind % 5],
+                kind: mark_kinds()[kind % 6],
             }
         }
         Step::Split { block, pos } => {

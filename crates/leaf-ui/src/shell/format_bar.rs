@@ -201,7 +201,8 @@ impl Shell {
             MarkKind::Italic => IconName::Italic,
             MarkKind::Strike => IconName::Strikethrough,
             MarkKind::Code => IconName::Code,
-            MarkKind::Link => IconName::Link,
+            // The bar has no page-link button; the arm only keeps the match whole.
+            MarkKind::Link | MarkKind::PageLink => IconName::Link,
         };
         // The same keys `page_keys` binds.
         let keys = match mark.kind {
@@ -209,7 +210,7 @@ impl Shell {
             MarkKind::Italic => "secondary-i",
             MarkKind::Strike => "secondary-shift-s",
             MarkKind::Code => "secondary-e",
-            MarkKind::Link => "secondary-k",
+            MarkKind::Link | MarkKind::PageLink => "secondary-k",
         };
         let tooltip = Keystroke::parse(keys).ok().map_or_else(
             || mark.label.to_owned(),
