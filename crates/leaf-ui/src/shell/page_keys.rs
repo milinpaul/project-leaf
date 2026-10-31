@@ -157,6 +157,7 @@ pub(crate) fn bind(cx: &mut App) {
     cx.bind_keys(bindings);
     super::block_menu::bind(cx, CONTEXT, secondary!("/"));
     super::link_popover::bind(cx);
+    super::web_bookmark::bind(cx);
     super::language_picker::bind(cx);
     super::task_pickers::bind(cx, CONTEXT, secondary!("shift-d"), secondary!("shift-p"));
 }
@@ -203,6 +204,7 @@ impl Shell {
     /// After any page action: the caret is shown solid, kept in view, and the page redrawn.
     pub(super) fn changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.pick_image_if_asked(window, cx);
+        self.ask_web_address_if_asked(window, cx);
         self.restart_blink();
         self.reveal_caret();
         window.invalidate_character_coordinates();
@@ -253,6 +255,11 @@ impl Shell {
             return self.changed(window, cx);
         }
         let Some(page) = self.page() else { return };
+        // Up and Down move the web bookmark offer's highlight while it stands (E15-S03).
+        if !extend && page.bookmark_offer().ok().flatten().is_some() {
+            page.bookmark_offer_move(direction);
+            return self.changed(window, cx);
+        }
         if !extend && page.slash_menu().ok().flatten().is_some() {
             let _ = page.slash_move(direction);
             return self.changed(window, cx);
@@ -288,6 +295,8 @@ impl Shell {
         if let Some(page) = self.page() {
             if page.link_menu_escape().unwrap_or(false) {
                 // Closed; a menu opened from selected words gave them back.
+            } else if page.bookmark_offer().ok().flatten().is_some() {
+                page.dismiss_bookmark_offer();
             } else if page.slash_menu().ok().flatten().is_some() {
                 page.slash_close();
             } else if let Some(caret) = page.caret().ok().flatten() {

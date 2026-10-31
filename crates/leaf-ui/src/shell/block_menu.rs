@@ -96,6 +96,8 @@ pub(super) fn icon_of(entry: &MenuEntry) -> IconName {
         MenuEntry::MoveDown => IconName::ArrowDown,
         MenuEntry::Delete => IconName::Trash,
         MenuEntry::Kind(kind) => kind_icon(kind),
+        MenuEntry::ToLink => IconName::Link,
+        MenuEntry::ToWebBookmark(_) => IconName::Bookmark,
     }
 }
 
@@ -113,6 +115,7 @@ pub(super) fn kind_icon(kind: &BlockKind) -> IconName {
         BlockKind::Callout { tone } => super::callout::icon_of(tone),
         BlockKind::Code { .. } => IconName::SquareCode,
         BlockKind::Divider => IconName::Minus,
+        BlockKind::WebBookmark { .. } => IconName::Bookmark,
         _ => IconName::Type,
     }
 }

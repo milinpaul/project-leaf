@@ -127,6 +127,7 @@ impl Shell {
                             SlashAction::Image => IconName::Image,
                             SlashAction::Table => IconName::Table,
                             SlashAction::LinkToPage => IconName::Link,
+                            SlashAction::WebBookmark => IconName::Bookmark,
                         })
                         .small()
                         .text_color(muted),

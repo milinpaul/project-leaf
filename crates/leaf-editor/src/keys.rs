@@ -49,6 +49,15 @@ impl PageEditor {
     /// Delete remove them, Tab and Shift+Tab nest them, and other keys do nothing.
     /// With the slash menu open and something matching, Enter applies the highlighted entry instead.
     pub fn press(&mut self, key: Key) -> Result<KeyOutcome, EditorError> {
+        // With the web bookmark offer standing, Enter takes its highlighted entry; any other key closes
+        // it and does what it always does.
+        if key == Key::Enter
+            && self.bookmark_offer()?.is_some()
+            && let Some(caret) = self.bookmark_offer_apply(None)?
+        {
+            return Ok(KeyOutcome::Caret(caret));
+        }
+        self.dismiss_bookmark_offer();
         if key == Key::Enter
             && self.slash_menu()?.is_some_and(|menu| !menu.items.is_empty())
             && let Some(caret) = self.slash_apply(None)?

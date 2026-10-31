@@ -51,6 +51,7 @@ gpui_kit_assets::icon_assets!(
         Calendar,
         ArrowUp,
         Bold,
+        Bookmark,
         Check,
         ChevronRight,
         Code,

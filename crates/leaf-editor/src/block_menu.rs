@@ -57,6 +57,10 @@ pub enum MenuEntry {
     Delete,
     /// From the "Turn into" list: change the blocks to this kind.
     Kind(BlockKind),
+    /// On a web bookmark: turn it into its address as a link (E15-S03).
+    ToLink,
+    /// On a block that is only a link to a web address: turn it into a web bookmark for it.
+    ToWebBookmark(String),
 }
 
 impl MenuEntry {
@@ -70,6 +74,8 @@ impl MenuEntry {
             Self::MoveDown => "Move down",
             Self::Delete => "Delete",
             Self::Kind(kind) => kind_label(kind),
+            Self::ToLink => "Turn into link",
+            Self::ToWebBookmark(_) => "Turn into web bookmark",
         }
     }
 }
@@ -215,13 +221,17 @@ impl PageEditor {
             enabled,
             current: false,
         };
-        let items = vec![
-            item(MenuEntry::TurnInto, !matches!(kind, BlockKind::Unknown { .. })),
+        let mut items = vec![item(
+            MenuEntry::TurnInto,
+            !matches!(kind, BlockKind::Unknown { .. }),
+        )];
+        items.extend(self.link_swap(open.block, &kind)?.map(|entry| item(entry, true)));
+        items.extend([
             item(MenuEntry::Duplicate, true),
             item(MenuEntry::MoveUp, self.can_move(open.block, true)?),
             item(MenuEntry::MoveDown, self.can_move(open.block, false)?),
             item(MenuEntry::Delete, true),
-        ];
+        ]);
         let kinds = open.kind.map(|selected| {
             let list = turn_into_kinds()
                 .into_iter()
@@ -382,6 +392,11 @@ impl PageEditor {
             MenuEntry::MoveDown => BlockAction::MoveDown,
             MenuEntry::Delete => BlockAction::Delete,
             MenuEntry::Kind(kind) => BlockAction::TurnInto(kind),
+            MenuEntry::ToLink => BlockAction::TurnInto(BlockKind::Paragraph),
+            MenuEntry::ToWebBookmark(url) => BlockAction::TurnInto(BlockKind::WebBookmark {
+                url,
+                preview: leaf_model::WebPreview::default(),
+            }),
         };
         self.menu = None;
         self.block_action(menu.block, action)?;

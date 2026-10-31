@@ -183,7 +183,8 @@ impl PageEditor {
     }
 
     /// A lone web address pasted (E17-S10): over selected text it links that text; anywhere else it
-    /// goes in as a link whose text is the address. One undo step either way.
+    /// goes in as a link whose text is the address, and a web address is offered as a web bookmark
+    /// (E15-S03). One undo step either way.
     fn paste_link(&mut self, text: &str, href: &str) -> Result<Option<Caret>, EditorError> {
         if let Some(Selection::Text { start, end }) = self.selection()?
             && start != end
@@ -191,13 +192,25 @@ impl PageEditor {
             self.set_link(href)?;
             return self.caret();
         }
-        self.paste(&Fragment::Text(vec![TextSpan {
+        let caret = self.paste(&Fragment::Text(vec![TextSpan {
             text: text.to_owned(),
             marks: leaf_model::Marks {
                 link: Some(href.to_owned()),
                 ..leaf_model::Marks::default()
             },
-        }]))
+        }]))?;
+        let len = text.chars().count();
+        if let Some(end) = caret.filter(|end| end.at >= len) {
+            self.offer_bookmark(
+                Caret {
+                    at: end.at - len,
+                    ..end
+                },
+                len,
+                href,
+            )?;
+        }
+        Ok(caret)
     }
 
     /// `block` alone as a fragment: one block with its kind and formatted text, without what is
@@ -262,7 +275,11 @@ fn paste_blocks(doc: &mut PageDoc, at: Caret, blocks: &[FragmentBlock]) -> Resul
     let Some((first, rest)) = blocks.split_first() else {
         return Ok(at);
     };
-    if matches!(first.kind, BlockKind::Table { .. }) {
+    // A table, or a block that is whole without text (a divider, an image, a web bookmark), can't join
+    // the line: it goes below it, or in place of an empty one.
+    let whole =
+        matches!(first.kind, BlockKind::Table { .. } | BlockKind::Image { .. }) || !first.kind.has_text();
+    if whole {
         return paste_below_line(doc, at, blocks, &tail, len == 0 && kind == BlockKind::Paragraph);
     }
     // Only a line that is really empty takes the first block's kind: at the start of a line that has

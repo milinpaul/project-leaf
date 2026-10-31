@@ -40,6 +40,7 @@ mod table_edit;
 mod task_due;
 mod task_edit;
 mod view;
+mod web_bookmark;
 mod workspace_editor;
 
 pub use block_actions::BlockAction;
@@ -78,6 +79,7 @@ pub use table_edit::TableEdit;
 pub use task_due::{add_days, due_label, is_overdue};
 pub use task_edit::{DatePicker, parse_time, priority_choices};
 pub use view::{BlockRow, BlockStyle, PageView};
+pub use web_bookmark::{BOOKMARK_OFFER_CHOICES, BookmarkOffer};
 pub use workspace_editor::{
     BacklinkRow, BacklinkSource, Crumb, DropPlace, EditorError, LinkChoice, LinkMenu, MAX_CRUMBS,
     MAX_LINK_CHOICES, MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon, RECENT_LIMIT,
