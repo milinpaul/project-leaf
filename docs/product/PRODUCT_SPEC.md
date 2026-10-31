@@ -78,8 +78,9 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
     order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR-075).
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
-- **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
-  Fetching previews is Leaf's first network access and is opt-in, off by default (E15).
+- **Web bookmarks** (after the table view): paste a web address as a preview card (title, description, icon,
+  image). Fetching previews is Leaf's first network access: opt-in, off by default, asked once, public internet
+  only, and only the page's preview is read (E15, ADR-080).
 - Trash: restore and permanent delete.
 - **Page top bar** (E18): the page's place (breadcrumb), when it was last edited, a Favourites star and a `⋯` menu.
   The edited time counts changes to the blocks (undo and redo included), title, icon and cover, not opening,
@@ -147,7 +148,8 @@ Numbered list numbers are computed when rendering, never stored.
   - Open a 5,000-block page: < 100 ms.
   - Cold start to editable: < 500 ms.
 - **Reliability:** every edit is durable within 1 s; crash recovery loses nothing older than that.
-- **Privacy:** no telemetry without explicit opt-in. No network calls in Phase 0.
+- **Privacy:** no telemetry without explicit opt-in. No network calls in Phase 0. From Phase 1 the only network
+  access is fetching web bookmark previews, and only after the owner allows it (ADR-080).
 - **Accessibility:** full keyboard navigation, respects system font scaling and light/dark mode.
 
 ## Non-goals (for now)
@@ -155,7 +157,7 @@ Numbered list numbers are computed when rendering, never stored.
 - Pixel-copying Notion's UI.
 - Markdown as the storage format (it is import/export only).
 - Plugins.
-- Live web embeds (show link preview cards instead).
+- Live web embeds (show web bookmarks, preview cards, instead).
 
 ## Phase 0 acceptance checklist
 
