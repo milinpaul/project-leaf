@@ -63,7 +63,8 @@ LoroDoc (database, keyed by DatabaseId)
 ├── "rows":    LoroTree (flat)  row order; node meta "id" = the row's PageId, "deleted": true once deleted
 ├── "cells":   LoroMap          PageId -> mergeable LoroMap: ColumnId -> value
 │     text, url: String · number: f64 · date: i64 (unix ms) · checkbox: bool · select: OptionId as String
-│     multi_select: mergeable LoroMap OptionId -> true
+│     multi_select: mergeable LoroMap OptionId -> true; a cell that has had this map keeps it: retyped and
+│       given a plain value, the value sits inside under "=" (E09-S12)
 └── "view":    LoroMap          "sort": [{column, descending}], "filters": [{column, op, value}] (plain values)
 ```
 

@@ -45,6 +45,11 @@ LoroDoc (database)
   - date: i64 unix ms;
   - select: option ID.
 - **Multi-select** is a mergeable map of option ID to `true`, so tags two people add are all kept.
+  - *Amended by E09-S12 (2026-10-31):* once a cell has its map, the map is never taken out of the row. A mergeable
+    map put back after being taken out is the same container, holding whatever it held then, and undo and redo
+    don't follow edits made while it was out; so a cell retyped, cleared and made a multi-select again lost its
+    options on undo. Now a plain value set after a retype is kept inside the map under the key `=`, and clearing
+    the cell empties the map. An emptied map reads as no value, except in a multi-select, where it reads as no tags.
 - **Select options** live in the column's schema (`options`: ordered list of `{id, name, color}`); cells hold option IDs,
   so renaming an option is one edit.
 - **Rows are pages.**

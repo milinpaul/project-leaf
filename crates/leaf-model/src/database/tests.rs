@@ -2,6 +2,7 @@
 
 mod cells;
 mod merges;
+mod retype_history;
 
 use leaf_core::{ColumnId, PageId};
 
