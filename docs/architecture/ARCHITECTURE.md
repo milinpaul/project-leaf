@@ -317,7 +317,7 @@ bytes, and records its type (read from its first bytes, not its name) and size i
 written atomically before its row, and the same picture is stored once (ADR-047). Image blocks refer to it by
 that hash (`AssetId`). Before a picture is drawn, `Workspace::drawable_asset` clears it: raster files pass, and
 anything GPUI would read as an SVG is checked by `leaf_store::check_svg`, which refuses links to files or web
-addresses and pictures too big or too complex to draw. A refused SVG shows a frame saying why (ADR-XXX-E08-S12).
+addresses and pictures too big or too complex to draw. A refused SVG shows a frame saying why (ADR-078).
 
 **Staying inside the workspace folder (E08-S13).** Every file Leaf writes in a workspace has a fixed name
 (`workspace.sqlite`, `leaf.lock`, `view.json`, `search/index.sqlite`) or is named by an `AssetId`, a typed hash

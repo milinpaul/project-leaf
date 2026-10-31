@@ -1,4 +1,4 @@
-# ADR-XXX. SVG images are checked before GPUI draws them
+# ADR-078. SVG images are checked before GPUI draws them
 
 - **Status:** Accepted
 - **Type:** Architecture

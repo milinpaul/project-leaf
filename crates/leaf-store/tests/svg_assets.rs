@@ -1,4 +1,4 @@
-//! A stored SVG is drawn only when it names nothing outside itself (ADR-XXX-E08-S12).
+//! A stored SVG is drawn only when it names nothing outside itself (ADR-078).
 
 mod common;
 

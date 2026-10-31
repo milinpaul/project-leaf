@@ -97,7 +97,7 @@ impl Storage {
         self.folder.import_asset(bytes, now_ms()).map(|asset| asset.id)
     }
 
-    /// Where the picture `id` is kept, if it is safe to draw (an SVG is checked first, ADR-XXX-E08-S12).
+    /// Where the picture `id` is kept, if it is safe to draw (an SVG is checked first, ADR-078).
     pub(super) fn drawable_asset(&self, id: AssetId) -> Result<std::path::PathBuf, leaf_store::SvgProblem> {
         self.folder.drawable_asset(id)
     }
