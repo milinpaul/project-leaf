@@ -7,7 +7,7 @@
 
 /// Version of the layout below. Bump it on any change: an index with another version is deleted
 /// and rebuilt, which is always safe because it holds nothing that isn't in the documents.
-pub const INDEX_VERSION: u32 = 4;
+pub const INDEX_VERSION: u32 = 5;
 
 /// `meta` key holding [`INDEX_VERSION`].
 pub(crate) const VERSION_KEY: &str = "index_version";
@@ -38,7 +38,8 @@ CREATE TABLE blocks (
 );
 CREATE INDEX blocks_by_page ON blocks(page_id);
 
--- Version 4 (E10-S06): each page's links to other pages, for backlinks. `position` is the link's
+-- Version 4 (E10-S06): each page's links to other pages, for backlinks; version 5 (E10-S07): other links in
+-- the words around a link read as their titles. `position` is the link's
 -- place in its page's reading order.
 CREATE TABLE links (
   id        INTEGER PRIMARY KEY,

@@ -263,6 +263,7 @@ impl WorkspaceEditor {
     }
 }
 
+mod backlinks;
 mod breadcrumb;
 mod databases;
 mod favourites;
@@ -274,6 +275,7 @@ mod page_width;
 mod trash;
 mod tree;
 
+pub use backlinks::{BacklinkRow, BacklinkSource, backlinks_label};
 pub use breadcrumb::{Crumb, MAX_CRUMBS};
 pub use link_menu::{LinkChoice, LinkMenu, MAX_LINK_CHOICES};
 pub use page_menu::{MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon};
