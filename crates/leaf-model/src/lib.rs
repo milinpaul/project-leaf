@@ -13,6 +13,7 @@ mod callout;
 mod command;
 mod database;
 mod error;
+mod loro_import;
 mod page_command;
 mod page_doc;
 mod page_meta;

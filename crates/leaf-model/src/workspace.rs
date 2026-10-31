@@ -118,7 +118,7 @@ impl Workspace {
     /// [`Workspace::unsaved_changes`] or [`Workspace::to_bytes`]). The changes are not undoable here.
     /// Phase 0 has no sync; tests use this to check that two copies converge.
     pub fn import_changes(&mut self, bytes: &[u8]) -> Result<(), ModelError> {
-        self.doc.import(bytes)?;
+        crate::loro_import::import(&self.doc, bytes)?;
         self.index = PageIndex::build(&self.tree)?;
         Ok(())
     }

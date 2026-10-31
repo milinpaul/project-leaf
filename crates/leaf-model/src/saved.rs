@@ -9,7 +9,7 @@ use std::sync::Mutex;
 
 use loro::{ExportMode, LoroDoc, VersionVector};
 
-use crate::ModelError;
+use crate::{ModelError, loro_import};
 
 /// The version of a document that is safely saved.
 ///
@@ -50,9 +50,9 @@ impl SavedVersion {
 
 /// Fills an empty `doc` from a saved snapshot and the updates saved after it.
 pub(crate) fn import(doc: &LoroDoc, snapshot: &[u8], updates: &[Vec<u8>]) -> Result<(), ModelError> {
-    doc.import(snapshot)?;
+    loro_import::import(doc, snapshot)?;
     if !updates.is_empty() {
-        doc.import_batch(updates)?;
+        loro_import::import_batch(doc, updates)?;
     }
     Ok(())
 }
@@ -64,11 +64,11 @@ pub(crate) fn import_each(
     snapshot: &[u8],
     updates: &[Vec<u8>],
 ) -> Result<Vec<usize>, ModelError> {
-    doc.import(snapshot)?;
+    loro_import::import(doc, snapshot)?;
     Ok(updates
         .iter()
         .enumerate()
-        .filter(|(_, update)| doc.import(update).is_err())
+        .filter(|(_, update)| loro_import::import(doc, update).is_err())
         .map(|(i, _)| i)
         .collect())
 }
@@ -82,10 +82,10 @@ pub(crate) fn import_each(
 /// damaged update is an error, for the same reason.
 pub fn fold_saved(snapshot: &[u8], updates: &[Vec<u8>]) -> Result<Option<Vec<u8>>, ModelError> {
     let doc = LoroDoc::new();
-    if doc.import(snapshot)?.pending.is_some() {
+    if loro_import::import(&doc, snapshot)?.pending.is_some() {
         return Ok(None);
     }
-    if !updates.is_empty() && doc.import_batch(updates)?.pending.is_some() {
+    if !updates.is_empty() && loro_import::import_batch(&doc, updates)?.pending.is_some() {
         return Ok(None);
     }
     Ok(Some(doc.export(ExportMode::Snapshot)?))

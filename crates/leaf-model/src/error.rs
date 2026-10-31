@@ -282,6 +282,11 @@ pub enum ModelError {
     #[error(transparent)]
     Loro(#[from] loro::LoroError),
 
+    /// Loro failed while reading saved or merged bytes, in a way it doesn't report as an error (a panic
+    /// inside the library, caught in `loro_import`). The bytes are damaged; the message is Loro's.
+    #[error("damaged document bytes: {0}")]
+    Damaged(String),
+
     /// Loro could not export the document.
     #[error(transparent)]
     Export(#[from] loro::LoroEncodeError),
