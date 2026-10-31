@@ -1,0 +1,10 @@
+---
+source: crates/leaf-editor/src/bookmark_card/tests.rs
+expression: "picture(&WebBookmarkCard::new(LEAF, &full(), false))"
+---
+title:       Local-first, at last
+description: Why Leaf keeps your pages on your own computer, and how sync will work later.
+footer:      [icon df6bf077] leaf.app
+picture:     1f6ae92f
+opens:       https://www.leaf.app/blog/local-first?ref=home
+fetched: true, fetching: false
