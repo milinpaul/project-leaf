@@ -363,3 +363,43 @@ fn a_broken_database_is_reported_by_the_invariant_check_and_unreadable_ids_refus
         ));
     }
 }
+
+#[test]
+fn a_group_undoes_and_redoes_as_one_step_even_when_a_command_fails() {
+    let mut db = database();
+    let a = add_column(&mut db, "A", PropertyType::Text);
+    let grouped = db.group(|db| {
+        db.apply(DatabaseCommand::RenameColumn {
+            column: a,
+            name: "Aa".into(),
+        })?;
+        db.apply(DatabaseCommand::SetColumnHidden {
+            column: a,
+            hidden: true,
+        })
+    });
+    assert!(grouped.is_ok());
+    assert!(db.undo().unwrap());
+    let column = db.column(a).unwrap();
+    assert_eq!(
+        (column.name.as_str(), column.hidden),
+        ("A", false),
+        "both undone together"
+    );
+    assert!(db.redo().unwrap());
+    assert_eq!(db.column(a).unwrap().name, "Aa");
+
+    // A failing group still ends, so the next command is a step of its own.
+    let missing = ColumnId::new();
+    assert!(
+        db.group(|db| db.apply(DatabaseCommand::DeleteColumn { column: missing }))
+            .is_err()
+    );
+    db.apply(DatabaseCommand::RenameColumn {
+        column: a,
+        name: "Ab".into(),
+    })
+    .unwrap();
+    assert!(db.undo().unwrap());
+    assert_eq!(db.column(a).unwrap().name, "Aa");
+}

@@ -280,3 +280,5 @@ fn a_date_cell_opens_a_calendar(cx: &mut TestAppContext) {
     draw(cx);
     assert_eq!(editing(&shell, cx), None);
 }
+
+mod columns;

@@ -10,7 +10,7 @@
 //! - Columns of a type from a newer version are read-only.
 
 use leaf_core::{ColumnId, OptionId, PageId};
-use leaf_model::{CellValue, Column, DatabaseCommand, DatabaseOutcome, ModelError, PropertyType};
+use leaf_model::{CellValue, Column, Database, DatabaseCommand, DatabaseOutcome, ModelError, PropertyType};
 
 use super::DatabaseEditor;
 use super::display::{as_number, as_text};
@@ -197,8 +197,13 @@ impl DatabaseEditor {
         column: ColumnId,
         option: OptionId,
     ) -> Result<(), ModelError> {
-        let kind = self.column_of(column)?.kind;
-        let current = self.db.cell(row, column)?;
+        Self::pick(&mut self.db, row, column, option)
+    }
+
+    /// `toggle_option` on `db` directly, so it can run inside a `Database::group`.
+    fn pick(db: &mut Database, row: PageId, column: ColumnId, option: OptionId) -> Result<(), ModelError> {
+        let kind = db.column(column)?.kind;
+        let current = db.cell(row, column)?;
         let value = match kind {
             PropertyType::Select => match current {
                 Some(CellValue::Option(id)) if id == option => None,
@@ -216,7 +221,7 @@ impl DatabaseEditor {
             }
             _ => return Err(ModelError::NotASelectColumn(column)),
         };
-        self.db.apply(DatabaseCommand::SetCell { row, column, value })?;
+        db.apply(DatabaseCommand::SetCell { row, column, value })?;
         Ok(())
     }
 
@@ -230,16 +235,19 @@ impl DatabaseEditor {
     ) -> Result<OptionId, ModelError> {
         let count = self.column_of(column)?.options.len();
         let color = OPTION_COLORS[count % OPTION_COLORS.len()].to_owned();
-        let DatabaseOutcome::OptionCreated(option) = self.db.apply(DatabaseCommand::AddOption {
-            column,
-            name: name.trim().to_owned(),
-            color,
-        })?
-        else {
-            unreachable!("AddOption always reports the option it created");
-        };
-        self.toggle_option(row, column, option)?;
-        Ok(option)
+        // One undo step: undo takes the option away along with its pick.
+        self.db.group(|db| {
+            let DatabaseOutcome::OptionCreated(option) = db.apply(DatabaseCommand::AddOption {
+                column,
+                name: name.trim().to_owned(),
+                color,
+            })?
+            else {
+                unreachable!("AddOption always reports the option it created");
+            };
+            Self::pick(db, row, column, option)?;
+            Ok(option)
+        })
     }
 
     /// Sets or clears a date cell.
