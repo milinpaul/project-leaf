@@ -50,6 +50,10 @@ pub struct PageEditor {
     pub(crate) menu: Option<OpenMenu>,
     /// A picture asked for from the slash menu, until it arrives or the picker is cancelled.
     pub(crate) image: Option<ImageRequest>,
+    /// The offer to make a pasted web address a web bookmark, while it stands (E15-S03).
+    pub(crate) offer: Option<crate::web_bookmark::OfferState>,
+    /// A web bookmark's address asked for from the slash menu, until it is given or cancelled.
+    pub(crate) address: Option<crate::web_bookmark::AddressRequest>,
 }
 
 impl PageEditor {
@@ -67,6 +71,8 @@ impl PageEditor {
             link_menu: None,
             menu: None,
             image: None,
+            offer: None,
+            address: None,
         }
     }
 

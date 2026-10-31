@@ -117,6 +117,21 @@ impl PageEditor {
         self.slash = None;
     }
 
+    /// Removes the typed `/` and query as a step of its own, leaving the caret where the `/` was: for the
+    /// entries that ask for something first (a file, an address).
+    fn clear_query(&mut self, block: BlockId, typed: std::ops::Range<usize>) -> Result<Caret, EditorError> {
+        let at = typed.start;
+        self.doc.as_separate_step(|doc| {
+            doc.apply(PageCommand::DeleteText {
+                id: block,
+                range: typed,
+            })
+        })?;
+        let caret = self.set_caret(Caret { block, at })?;
+        self.finish()?;
+        Ok(caret)
+    }
+
     /// Enter, or a click on entry `index` (`None` for the highlighted one): removes the `/` and query
     /// and applies the entry. An empty block is converted; otherwise the new block goes below it and
     /// the caret into it. A divider never takes the caret: it stays above, or goes to a new paragraph
@@ -137,18 +152,14 @@ impl PageEditor {
             SlashAction::Block(kind) => kind,
             SlashAction::Image => {
                 // The `/image` goes now; the picture arrives once the owner has picked a file.
-                self.doc.as_separate_step(|doc| {
-                    doc.apply(PageCommand::DeleteText {
-                        id: block,
-                        range: typed.clone(),
-                    })
-                })?;
-                let caret = self.set_caret(Caret {
-                    block,
-                    at: typed.start,
-                })?;
-                self.finish()?;
+                let caret = self.clear_query(block, typed)?;
                 self.request_image(caret)?;
+                return Ok(Some(caret));
+            }
+            SlashAction::WebBookmark => {
+                // The `/web bookmark` goes now; the bookmark comes once the owner has typed an address.
+                let caret = self.clear_query(block, typed)?;
+                self.request_web_address(caret)?;
                 return Ok(Some(caret));
             }
             SlashAction::LinkToPage => {

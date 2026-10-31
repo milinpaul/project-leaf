@@ -78,7 +78,15 @@ impl PageEditor {
                         self.doc.kind(target)?,
                         BlockKind::Unknown { .. } | BlockKind::Table { .. }
                     );
-                    let loses_text = kind == BlockKind::Divider && !text.is_empty();
+                    let loses_text = match &kind {
+                        BlockKind::Divider => !text.is_empty(),
+                        // A web bookmark takes only an empty block or one that is just its link.
+                        BlockKind::WebBookmark { url, .. } => {
+                            !text.is_empty()
+                                && crate::web_bookmark::only_link(&self.doc, target)?.as_deref() != Some(url)
+                        }
+                        _ => false,
+                    };
                     if !unknown && !loses_text {
                         convertible.push(target);
                     }

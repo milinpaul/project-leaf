@@ -36,6 +36,9 @@ pub enum SlashAction {
     Table,
     /// Types `[[` in place of the `/` and query and opens the page-link menu there (E10-S05).
     LinkToPage,
+    /// Asks for a web address: the UI shows a prompt and gives what was typed to
+    /// [`PageEditor::insert_web_bookmark`](crate::PageEditor::insert_web_bookmark) (E15-S03).
+    WebBookmark,
 }
 
 /// A callout block of `tone`.
@@ -127,6 +130,11 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             label: "Table",
             keywords: &["grid", "rows", "|"],
             action: SlashAction::Table,
+        },
+        SlashItem {
+            label: "Web bookmark",
+            keywords: &["bookmark", "url", "website", "preview", "web link"],
+            action: SlashAction::WebBookmark,
         },
         SlashItem {
             label: "Link to page",

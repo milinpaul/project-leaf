@@ -91,6 +91,8 @@ pub(super) struct PageState {
     pub(super) language: Option<super::language_picker::OpenLanguage>,
     /// An action item's date picker or priority menu, while open (E19-S03).
     pub(super) task_picker: Option<super::task_pickers::OpenTaskPicker>,
+    /// The address box the slash menu's "Web bookmark" opened, while it is open (E15-S03).
+    pub(super) address: Option<super::web_bookmark::OpenAddress>,
 }
 
 impl Shell {
@@ -219,6 +221,7 @@ impl Shell {
         let slash = self.render_slash_popover(window, cx);
         let link_menu = self.render_link_menu_popover(window, cx);
         let format_bar = self.render_format_bar(window, cx);
+        let offer = self.render_bookmark_offer(window, cx);
         self.blocks.painted.clear();
         self.blocks.drawn.clear();
         self.end_stale_drag(cx);
@@ -247,6 +250,7 @@ impl Shell {
         let language = self.render_language_picker(cx);
         let tones = self.render_tone_picker(cx);
         let task_picker = self.render_task_picker(cx);
+        let address = self.render_address_prompt(cx);
         let page = v_flex()
             .size_full()
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
@@ -284,7 +288,9 @@ impl Shell {
             .children(task_picker)
             .children(slash)
             .children(link_menu)
-            .children(format_bar);
+            .children(format_bar)
+            .children(offer)
+            .children(address);
         let page = Self::with_block_menu_action(page, cx);
         let page = Self::with_task_picker_actions(page, cx);
         Self::with_page_actions(page, cx).into_any_element()

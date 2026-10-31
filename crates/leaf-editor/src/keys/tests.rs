@@ -538,3 +538,4 @@ fn enter_on_a_divider_adds_a_paragraph_below() {
 mod block_start_and_quotes;
 mod callouts;
 mod tasks;
+mod web_bookmarks;

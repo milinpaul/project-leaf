@@ -304,6 +304,7 @@ mod task_row;
 mod top_bar;
 mod trash;
 mod tree;
+mod web_bookmark;
 mod window;
 
 pub(crate) use database_page::bind as bind_database_keys;

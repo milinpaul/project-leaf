@@ -477,3 +477,35 @@ fn a_web_bookmark_copies_with_its_preview_and_a_bad_address_is_not_read() {
     let bad = r#"{"leaf_fragment": 1, "blocks": [{"type": "web_bookmark", "url": "javascript:alert(1)"}]}"#;
     assert_eq!(Fragment::from_json(bad), None);
 }
+
+/// E15-S03: a copied divider, image or web bookmark pasted into a line with text used to vanish, its
+/// empty text joining the line. It goes below the line now, like a pasted table.
+#[test]
+fn a_whole_block_pasted_into_a_line_with_text_goes_below_it() {
+    let bookmark = BlockKind::WebBookmark {
+        url: "https://leaf.app".into(),
+        preview: leaf_model::WebPreview::default(),
+    };
+    let image = BlockKind::Image {
+        asset: AssetId::of(b"photo"),
+        width: None,
+        alt: String::new(),
+    };
+    for kind in [BlockKind::Divider, image, bookmark] {
+        let (mut editor, ids) = page(&[(0, BlockKind::Paragraph, "before after")]);
+        editor.set_caret(Caret { block: ids[0], at: 6 }).unwrap();
+        let fragment = Fragment::Blocks(vec![FragmentBlock {
+            kind: kind.clone(),
+            text: Vec::new(),
+            children: Vec::new(),
+        }]);
+        editor.paste(&fragment).unwrap();
+        let kinds: Vec<BlockKind> = editor
+            .rows()
+            .unwrap()
+            .iter()
+            .map(|r| editor.doc().kind(r.id).unwrap())
+            .collect();
+        assert!(kinds.contains(&kind), "{kind:?} kept: {kinds:?}");
+    }
+}
