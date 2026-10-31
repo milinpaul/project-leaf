@@ -85,7 +85,7 @@ impl WorkspaceEditor {
         Ok(items)
     }
 
-    /// `pages` without database rows, which the sidebar leaves out (ADR 0066 answer 1): the table lists them.
+    /// `pages` without database rows, which the sidebar leaves out (ADR-066 answer 1): the table lists them.
     fn sidebar_pages(&self, pages: Vec<PageId>) -> Result<Vec<PageId>, EditorError> {
         let mut shown = Vec::with_capacity(pages.len());
         for page in pages {

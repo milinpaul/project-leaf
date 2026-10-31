@@ -4,7 +4,7 @@
 //! The `/` and the query are ordinary typed text in the page, so they show while the menu is open and
 //! stay if the menu closes without applying. The editor only remembers where the `/` is (an anchor,
 //! so edits elsewhere don't lose it) and which entry is highlighted. Everything else is read from the
-//! text each time, so the menu can never disagree with what is on the page (ADR 0026).
+//! text each time, so the menu can never disagree with what is on the page (ADR-026).
 
 mod items;
 

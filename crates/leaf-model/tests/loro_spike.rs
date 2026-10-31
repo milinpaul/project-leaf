@@ -1,7 +1,7 @@
 //! E00-S05 spike: proves the Loro features `docs/architecture/BLOCK_MODEL.md` relies on.
 //!
 //! Throwaway quality on purpose: these tests pin down Loro's behaviour before `leaf-model` wraps it.
-//! Delete or fold them into real model tests once E02 covers the same ground. Findings are in ADR 0001.
+//! Delete or fold them into real model tests once E02 covers the same ground. Findings are in ADR-001.
 
 use loro::{
     Container, ExpandType, ExportMode, LoroDoc, LoroError, LoroResult, LoroText, LoroTree, LoroValue,

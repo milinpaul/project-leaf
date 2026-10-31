@@ -75,7 +75,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
   - **Saved views** (E22, after the table): tabs above a database, each a table or a board with its own layout,
     sort, filters, hidden properties, widths and grouping. Add, rename, duplicate, reorder and delete views.
   - **Board view** (E22): cards in columns, one per option of a select property (plus "No value"), in the option
-    order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR 0075).
+    order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR-075).
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
 - **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).

@@ -1,4 +1,4 @@
-//! The ⋮⋮ handle beside each block and the menu it opens (E07-S04, ADR 0041). The menu's state and
+//! The ⋮⋮ handle beside each block and the menu it opens (E07-S04, ADR-041). The menu's state and
 //! every decision live in `leaf_editor::block_menu`; this module draws it, gives it the keyboard while
 //! it is open, and forwards keys, hovers and clicks.
 

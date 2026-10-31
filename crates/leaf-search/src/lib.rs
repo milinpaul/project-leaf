@@ -1,4 +1,4 @@
-//! Full-text search across a Leaf workspace, using SQLite's built-in FTS5 (ADR 0019).
+//! Full-text search across a Leaf workspace, using SQLite's built-in FTS5 (ADR-019).
 //!
 //! The search index is disposable: it can always be rebuilt from the documents, so it never
 //! holds data that exists nowhere else. It lives in its own file, `search/index.sqlite`, never in
@@ -10,7 +10,7 @@
 //! page, read-only, so indexing can never change or lose anything in a document.
 //!
 //! - [`SearchWorker`] keeps the index current on its own thread: after each save it compares what is
-//!   saved with what it indexed ([`Syncer`], ADR 0024) and re-reads only what changed, through a
+//!   saved with what it indexed ([`Syncer`], ADR-024) and re-reads only what changed, through a
 //!   [`PageSource`] the app supplies.
 //! - [`Searcher`] searches it, on a separate read-only connection: every typed word as a prefix,
 //!   ignoring case and accents, title matches first, with highlighted excerpts ([`PageHit`]).

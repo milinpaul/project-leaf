@@ -2,7 +2,7 @@
 //!
 //! Both are UUID v7: globally unique, so they survive copy and paste between pages and later sync
 //! between devices, and time-ordered, so sorting by ID roughly sorts by creation time. Blocks keep
-//! theirs in their own meta rather than using Loro's `TreeID`, which changes on undo (ADR 0006).
+//! theirs in their own meta rather than using Loro's `TreeID`, which changes on undo (ADR-006).
 
 use std::fmt;
 use std::str::FromStr;
@@ -81,7 +81,7 @@ uuid_id!(
 );
 
 uuid_id!(
-    /// Identifies a database across the whole workspace, forever: the key of its own document (ADR 0066).
+    /// Identifies a database across the whole workspace, forever: the key of its own document (ADR-066).
     /// A database's rows are pages, so they use [`PageId`].
     DatabaseId,
     "database"

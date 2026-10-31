@@ -98,7 +98,7 @@ fn time<T>(label: &str, out: &mut Vec<(String, Duration)>, f: impl FnOnce() -> T
 }
 
 #[test]
-#[ignore = "a measurement for ADR 0066; run with --release --ignored --nocapture"]
+#[ignore = "a measurement for ADR-066; run with --release --ignored --nocapture"]
 fn a_ten_thousand_row_database_loads_sorts_and_filters_quickly() -> LoroResult<()> {
     let mut times = Vec::new();
     let db = time("build (one commit)", &mut times, build)?;

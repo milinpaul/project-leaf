@@ -130,7 +130,7 @@ impl Workspace {
 
     /// Where image `id`'s file is, if it may be handed to the UI to draw. A raster picture always may.
     /// An SVG (or anything GPUI would try to read as one) is checked first ([`crate::check_svg`],
-    /// ADR 0076), since GPUI's SVG drawing would load files the SVG names and draw it at any size. A
+    /// ADR-XXX-E08-S12), since GPUI's SVG drawing would load files the SVG names and draw it at any size. A
     /// file that can't be read is returned as is: GPUI fails to draw it and says so, as before.
     pub fn drawable_asset(&self, id: AssetId) -> Result<PathBuf, SvgProblem> {
         let path = self.asset_path(id);

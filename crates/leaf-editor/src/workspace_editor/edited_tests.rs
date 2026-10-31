@@ -1,4 +1,4 @@
-//! Tests for recording when pages were edited (E18-S01, ADR 0059): what counts as an edit, and that
+//! Tests for recording when pages were edited (E18-S01, ADR-059): what counts as an edit, and that
 //! undo is one.
 
 use leaf_core::PageId;

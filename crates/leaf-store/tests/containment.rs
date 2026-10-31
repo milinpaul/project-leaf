@@ -1,5 +1,5 @@
 //! Nothing stored in, or typed for, a workspace can make Leaf touch a path outside the workspace
-//! folder (E08-S13, ADR 0074).
+//! folder (E08-S13, ADR-074).
 
 mod common;
 

@@ -1,4 +1,4 @@
-//! Favourite pages: the pages starred in the top bar, listed at the top of the sidebar (ADR 0060).
+//! Favourite pages: the pages starred in the top bar, listed at the top of the sidebar (ADR-060).
 //!
 //! Kept in the workspace doc as a map from page ID to position, not as a list. Two devices starring
 //! the same page write the same key, so it is listed once; a list would hold it twice. A new

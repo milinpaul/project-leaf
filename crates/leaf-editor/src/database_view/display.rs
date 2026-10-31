@@ -1,4 +1,4 @@
-//! What a cell shows, converted for its column's current type (ADR 0066 answer 3).
+//! What a cell shows, converted for its column's current type (ADR-066 answer 3).
 //!
 //! The model keeps each value as it was stored, so after a column's type changes a cell may hold a value of the
 //! old type. Here it is converted where it can be ("12" shows as the number 12 in a number column, 12 as "12" in a

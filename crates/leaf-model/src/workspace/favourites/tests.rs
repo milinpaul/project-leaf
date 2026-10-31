@@ -1,4 +1,4 @@
-//! Tests for favourites (E18-S02, ADR 0060): order, repeats, the trash, deleting, unknown entries
+//! Tests for favourites (E18-S02, ADR-060): order, repeats, the trash, deleting, unknown entries
 //! and saving.
 
 use leaf_core::PageId;

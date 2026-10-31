@@ -22,4 +22,4 @@ that lets Leaf read or write outside the workspace folder you chose.
 
 CI only has read access to the repository, and every GitHub Action it uses is pinned to an exact commit.
 `cargo deny` checks every dependency for known vulnerabilities, licences, its source (crates.io only) and duplicate
-versions, and Dependabot proposes updates weekly. See ADR 0073.
+versions, and Dependabot proposes updates weekly. See ADR-073.

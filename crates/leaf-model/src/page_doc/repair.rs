@@ -1,4 +1,4 @@
-//! Putting the page's rules back after merging another copy's changes (E02-S09, ADR 0044).
+//! Putting the page's rules back after merging another copy's changes (E02-S09, ADR-044).
 //!
 //! Each copy only ever applies commands that keep the invariants, but two copies changing the same
 //! block at once can merge into a page that breaks them: one turns a block into code while the other

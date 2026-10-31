@@ -1,4 +1,4 @@
-//! Checking an SVG before it is drawn (E08-S12, ADR 0076).
+//! Checking an SVG before it is drawn (ADR-XXX-E08-S12).
 //!
 //! GPUI draws SVGs with `usvg` on its default settings, which load any image an SVG names by path
 //! (`<image href="/Users/me/photo.jpg">`), including other SVGs, and draw the picture at whatever size

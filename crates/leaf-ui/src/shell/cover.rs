@@ -1,6 +1,6 @@
 //! The open page's cover: a full-width band above the page header, with Change cover and Remove on
 //! hover, and the cover picker in a popover. Built-in covers are SVG files drawn with `img()`; a cover
-//! this version doesn't know shows as a plain band, so it can still be seen and removed (ADR 0045).
+//! this version doesn't know shows as a plain band, so it can still be seen and removed (ADR-045).
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{

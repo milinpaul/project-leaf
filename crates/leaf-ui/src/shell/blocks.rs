@@ -1,6 +1,6 @@
 //! The open page: the header (icon, cover, title), then the blocks, as a virtual list drawn by the
 //! rich text view. A block's type is changed with the slash menu, the block handle's "Turn into" or
-//! Markdown shortcuts (there is no toolbar, ADR 0057). The page takes the keyboard itself (E07-S03): keys become editor actions
+//! Markdown shortcuts (there is no toolbar, ADR-057). The page takes the keyboard itself (E07-S03): keys become editor actions
 //! (`page_keys`), typed text and input-method drafts arrive through the platform's text input
 //! (`ime`), and the mouse places the caret and selects (`rich_text`). Every decision is
 //! `PageEditor`'s; this module only forwards and draws.
@@ -67,7 +67,7 @@ pub(super) struct PageState {
     pub(super) dragging: Option<BlockDrag>,
     /// How much room each image row had in the last frame.
     pub(super) image_room: ImageRoom,
-    /// Each picture drawn so far, checked once (ADR 0076): its file, or why it isn't drawn. A stored
+    /// Each picture drawn so far, checked once (ADR-XXX-E08-S12): its file, or why it isn't drawn. A stored
     /// picture never changes, since it is named by the hash of its bytes.
     pub(super) drawable: HashMap<leaf_core::AssetId, Result<std::path::PathBuf, leaf_store::SvgProblem>>,
     /// A resize of an image by its handle, while it lasts.

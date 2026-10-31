@@ -91,13 +91,13 @@ impl Storage {
         self.view.save(&self.folder.view_state_path())
     }
 
-    /// Stores the picture `bytes` in the workspace's `assets/` folder (ADR 0047) and returns its id.
+    /// Stores the picture `bytes` in the workspace's `assets/` folder (ADR-047) and returns its id.
     /// Refused unless the bytes are an image.
     pub(super) fn import_image(&mut self, bytes: &[u8]) -> Result<AssetId, StoreError> {
         self.folder.import_asset(bytes, now_ms()).map(|asset| asset.id)
     }
 
-    /// Where the picture `id` is kept, if it is safe to draw (an SVG is checked first, ADR 0076).
+    /// Where the picture `id` is kept, if it is safe to draw (an SVG is checked first, ADR-XXX-E08-S12).
     pub(super) fn drawable_asset(&self, id: AssetId) -> Result<std::path::PathBuf, leaf_store::SvgProblem> {
         self.folder.drawable_asset(id)
     }

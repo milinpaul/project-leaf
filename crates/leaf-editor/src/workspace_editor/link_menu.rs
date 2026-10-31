@@ -1,4 +1,4 @@
-//! The page-link menu as drawn (E10-S05, ADR 0071): the open page's `[[` query matched against the
+//! The page-link menu as drawn (E10-S05, ADR-071): the open page's `[[` query matched against the
 //! workspace's pages with the quick switcher's fuzzy matcher, plus "New page" when no title is exactly
 //! the query. Choosing an entry links it, creating the page first for "New page".
 

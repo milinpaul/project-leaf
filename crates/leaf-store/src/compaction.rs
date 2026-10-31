@@ -1,4 +1,4 @@
-//! Compaction (E03-S05, ADR 0048): folding a document's saved updates back into its snapshot.
+//! Compaction (E03-S05, ADR-048): folding a document's saved updates back into its snapshot.
 //!
 //! Every save appends one small update, so a page edited for months would collect thousands of
 //! them, and each load would replay them all. Once a document has more than [`COMPACT_AFTER`], the
@@ -21,7 +21,7 @@ impl Store {
     /// Returns whether it did. [`Store::save`] calls this after each update it appends.
     ///
     /// When an update can't be read, nothing is folded: the snapshot would lose it, and Leaf never
-    /// deletes data it can't read (ADR 0012). The document's "last saved" time stays the time of its
+    /// deletes data it can't read (ADR-012). The document's "last saved" time stays the time of its
     /// last edit, because compaction changes nothing in it.
     pub fn compact(&mut self, key: DocKey) -> Result<bool, StoreError> {
         let id = key.to_string();

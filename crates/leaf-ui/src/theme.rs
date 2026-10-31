@@ -1,4 +1,4 @@
-//! Leaf's look in one place: colours, fonts, sizes and shapes for light and dark (ADR 0027).
+//! Leaf's look in one place: colours, fonts, sizes and shapes for light and dark (ADR-027).
 //!
 //! The direction came from the owner: warm and friendly, on warm "paper" neutrals, with the app icon's
 //! green used sparingly (selection, caret, links, focus, the main button) and a soft charcoal dark mode.
@@ -21,6 +21,12 @@ use crate::settings;
 /// The one typeface for everything (interface, text, titles and headings), bundled so Leaf looks the
 /// same on every OS. One family keeps the page calm; hierarchy comes from size and weight.
 pub const UI_FONT: &str = "Inter";
+
+/// The monospace face for code blocks and inline code, bundled too (E08-S08, ADR-XXX-E08-S08). Naming a
+/// bundled face also keeps gpui-component from listing every installed font at startup to check the
+/// platform's default, which cost about 220 ms of a 500 ms cold-start budget. The "NL" cut has no
+/// ligatures, so `->` stays two characters to move the caret through.
+pub const CODE_FONT: &str = "JetBrains Mono NL";
 
 /// Body text size in pixels. Comfortable for long writing, Phase 0's goal.
 pub const BODY_SIZE: f32 = 16.0;
@@ -119,14 +125,16 @@ pub const DARK: Palette = Palette {
     danger: "#FF7B72",
 };
 
-/// The bundled font files, embedded so Leaf needs nothing installed. Inter is under the SIL Open Font
-/// License; the licence sits next to the files.
-const FONTS: [&[u8]; 5] = [
+/// The bundled font files, embedded so Leaf needs nothing installed: Inter and the code face. Both
+/// are under the SIL Open Font License; the licences sit next to the files.
+const FONTS: [&[u8]; 7] = [
     include_bytes!("../assets/fonts/Inter-Regular.ttf"),
     include_bytes!("../assets/fonts/Inter-Italic.ttf"),
     include_bytes!("../assets/fonts/Inter-SemiBold.ttf"),
     include_bytes!("../assets/fonts/Inter-Bold.ttf"),
     include_bytes!("../assets/fonts/Inter-BoldItalic.ttf"),
+    include_bytes!("../assets/fonts/JetBrainsMonoNL-Regular.ttf"),
+    include_bytes!("../assets/fonts/JetBrainsMonoNL-Bold.ttf"),
 ];
 
 /// A button with Leaf's pointer: the hand. gpui-component's buttons show the arrow, as desktop apps
@@ -136,18 +144,29 @@ pub fn button(id: impl Into<ElementId>) -> Button {
     Button::new(id).cursor_pointer()
 }
 
-/// Loads the fonts and installs Leaf's light and dark themes, in the appearance the owner chose in
-/// Settings (following the system by default; `LEAF_APPEARANCE=light|dark` overrides both, for
-/// screenshots). Call once at startup, after gpui-component and the settings are set up.
-pub fn init(cx: &mut App) {
+/// Loads the fonts and puts Leaf's light and dark themes in place before gpui-component sets itself
+/// up. Its setup applies the theme it finds, and only probes the installed fonts (a slow listing)
+/// when the theme still names the library's default faces; with Leaf's own named here first, it
+/// never does (E08-S08). Call once at startup, before `gpui_component::init`.
+pub fn install(cx: &mut App) {
     let fonts = FONTS.iter().map(|bytes| Cow::Borrowed(*bytes)).collect();
     if let Err(err) = cx.text_system().add_fonts(fonts) {
         // The system font stands in; the app still works, only the look is off.
         eprintln!("leaf: could not load the bundled fonts: {err:#}");
     }
-    let theme = Theme::global_mut(cx);
-    theme.light_theme = Rc::new(config(ThemeMode::Light, &LIGHT));
-    theme.dark_theme = Rc::new(config(ThemeMode::Dark, &DARK));
+    cx.set_global(Theme {
+        light_theme: Rc::new(config(ThemeMode::Light, &LIGHT)),
+        dark_theme: Rc::new(config(ThemeMode::Dark, &DARK)),
+        font_family: UI_FONT.into(),
+        mono_font_family: CODE_FONT.into(),
+        ..Theme::default()
+    });
+}
+
+/// Switches to the appearance the owner chose in Settings (following the system by default;
+/// `LEAF_APPEARANCE=light|dark` overrides both, for screenshots). Call once at startup, after
+/// gpui-component and the settings are set up.
+pub fn init(cx: &mut App) {
     apply(None, cx);
 }
 
@@ -291,6 +310,7 @@ fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {
         mode,
         font_size: Some(BODY_SIZE),
         font_family: Some(UI_FONT.into()),
+        mono_font_family: Some(CODE_FONT.into()),
         radius: Some(RADIUS),
         radius_lg: Some(RADIUS_LG),
         shadow: Some(false),

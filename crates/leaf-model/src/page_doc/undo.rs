@@ -3,7 +3,7 @@
 //! Each page command is one Loro commit, and Loro's `UndoManager` turns commits into undo steps
 //! (commits closer together than the merge interval share one, so typing undoes as a burst). Each
 //! step also remembers the editor's selection twice: as it was *before* the change, which undo puts
-//! back, and as it was right *after*, which redo puts back (ADR 0023).
+//! back, and as it was right *after*, which redo puts back (ADR-023).
 //!
 //! Loro carries one value per step and hands it to `on_pop`/`on_push`. We store a step number there
 //! and keep the two selections in a table here: a step's number survives undo and redo (the pop of
@@ -21,7 +21,7 @@ use crate::{DEFAULT_UNDO_MERGE_MS, ModelError};
 /// Where the text cursor is: a block and a Unicode scalar position in its text.
 ///
 /// Stored with each undo step by `BlockId`, not Loro's cursors, because undo can re-create a block
-/// under a new `TreeID` (ADR 0006) while its `BlockId` never changes.
+/// under a new `TreeID` (ADR-006) while its `BlockId` never changes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Caret {
     /// The block.
