@@ -67,11 +67,15 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ## Phase 1 — MVP
 
-- **Database (single view type: Table)**
+- **Database (table first, then board and saved views)**
   - Property types: text, number, select, multi-select, date, checkbox, URL.
   - Add, rename, reorder, hide columns. Sort and filter. Inline cell editing.
   - Each row is a page (open it to write content).
   - Database as a full page and inline inside a page.
+  - **Saved views** (E22, after the table): tabs above a database, each a table or a board with its own layout,
+    sort, filters, hidden properties, widths and grouping. Add, rename, duplicate, reorder and delete views.
+  - **Board view** (E22): cards in columns, one per option of a select property (plus "No value"), in the option
+    order; drag a card to change its value or its place. Moved from Phase 2 by the owner (2026-10-31, ADR 0075).
 - `[[page links]]` with autocomplete; backlinks panel.
 - Markdown export (page and workspace) and import.
 - **Bookmarks** (after the table view): paste a link as a preview card (title, description, icon, image).
@@ -84,7 +88,7 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ## Phase 2
 
-Board, calendar and gallery views; relations and rollups; toggles, columns; templates; graph view;
+Calendar and gallery views; boards grouped by other property types; relations and rollups; toggles, columns; templates; graph view;
 cloud sync and team workspaces; read-only web viewer (E13); MCP server.
 
 ## Phase 3
@@ -121,6 +125,7 @@ Mobile; P2P collaboration (maybe).
 | Copy or paste an action item as Markdown | Written as `- [ ] Send invoice (due 2026-10-31 14:00, high)` (`(action item)` when it has no date or priority); pasting such a line makes an action item. Other brackets stay text, and plain `- [ ]` lines stay to-dos. |
 | Copy a table, or selected cells | Other apps get a Markdown table (plain text: tab-separated rows); pasted back into Leaf it is a table again. |
 | Paste a lone web address (`https://…`, `www.…`) | It goes in as a link whose text is the address; over selected text, that text becomes a link to it. Into a code block it stays plain text. |
+| `[[` typed in text (not code) | Opens a list of pages under it, filtered as you type (fuzzy, by title, with each page's icon and where it lives); pages in the trash and the open page aren't offered. Up/Down choose, `Enter` or a click links the page in place of the `[[` and what was typed (one undo step), `Escape` closes it and leaves the text. When no title is exactly what was typed, the last entry is "New page", which makes that page inside the open one and links it. The slash menu's "Link to page" opens the same list. |
 | A link to a page in the text (E10) | Shown as the page's icon and current title, underlined in the link colour; a page in the trash shows greyed as "Title (in trash)", a deleted one as "Deleted page". A plain click opens the page (not for a deleted one). The caret steps over it in one press, `Backspace`/`Delete` remove it whole, and typing beside it never joins it. Copied out as `[[Title]]` (Markdown) or the title (plain text); pasting `[[Title]]` links it when exactly one page outside the trash has that title. Search leaves links out. |
 | Copy with all of one block's text selected, or with only the caret in a block | Copies the whole block with its type and formatting. Pasted on an empty line it comes back as the same block; pasted into text, just its text goes in. `Cut` with only the caret does nothing. |
 | Deleting a block with children | Children are deleted too (one undo step restores all). |

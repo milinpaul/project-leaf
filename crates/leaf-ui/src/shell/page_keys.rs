@@ -210,6 +210,17 @@ impl Shell {
     }
 
     fn key(&mut self, key: Key, window: &mut Window, cx: &mut Context<Self>) {
+        // Enter with the page-link menu open links the highlighted page (E10-S05).
+        if key == Key::Enter
+            && self
+                .editor
+                .link_menu()
+                .ok()
+                .flatten()
+                .is_some_and(|menu| !menu.choices.is_empty())
+        {
+            return self.apply_link_menu(None, window, cx);
+        }
         match self.page().map(|page| page.press(key)) {
             Some(Ok(KeyOutcome::SelectBlock(block))) => self.blocks.list.reveal(block),
             Some(Err(err)) => report("could not apply the key", err),
@@ -237,6 +248,10 @@ impl Shell {
     fn vertical(&mut self, direction: Vertical, extend: bool, window: &mut Window, cx: &mut Context<Self>) {
         let painted = self.blocks.painted.clone();
         let first_row = self.blocks.list.rows.first().map(|row| row.id);
+        if !extend && self.editor.link_menu().ok().flatten().is_some() {
+            let _ = self.editor.link_menu_move(direction);
+            return self.changed(window, cx);
+        }
         let Some(page) = self.page() else { return };
         if !extend && page.slash_menu().ok().flatten().is_some() {
             let _ = page.slash_move(direction);
@@ -271,7 +286,9 @@ impl Shell {
 
     fn on_escape(&mut self, _: &Escape, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(page) = self.page() {
-            if page.slash_menu().ok().flatten().is_some() {
+            if page.link_query().ok().flatten().is_some() {
+                page.link_menu_close();
+            } else if page.slash_menu().ok().flatten().is_some() {
                 page.slash_close();
             } else if let Some(caret) = page.caret().ok().flatten() {
                 // Collapse the selection to the caret.

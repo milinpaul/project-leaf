@@ -103,6 +103,14 @@ Measured with 5,000 pages × 20 blocks and 25,000 links, release build, Apple M1
   text the title. Pasted `[[Title]]` becomes a link when exactly one page outside the trash has that title.
 - **Search** drops the placeholder from indexed text; pages are found by their own titles.
 
+## Notes from building it (E10-S05)
+
+- **The `[[` menu works like the slash menu:** `[[` and the query stay ordinary text until a page is chosen, so
+  Escape leaves them, and undo right after choosing gives them back. The page editor keeps only where the `[[` is
+  and the highlight; the workspace editor lists the pages (the quick switcher's fuzzy matcher, at most 8, not the open
+  page, not the trash) and adds "New page" when no title is exactly the query.
+- **"New page"** makes the page inside the open page, titled with the query, and stays on the open page.
+
 ## Alternatives considered
 
 - **Today's `link` mark over the title's words, with a `leaf://page/…` address:**

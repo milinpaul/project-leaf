@@ -89,7 +89,10 @@ selection, filled in when the selection is already one link, with Open and Remov
 system may open. A **page link** (E10, ADR 0071) is one character in the page but is drawn as the target's icon and
 title: `leaf_editor::LinkedText` builds the drawn runs from `WorkspaceEditor::link_target` (title, icon, live / in
 trash / deleted) and maps positions both ways, and the painted layout keeps that map so carets, selections and clicks
-stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. A **code block** shows its language at the top right on hover; a click opens a searchable list
+stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. Typing `[[` opens the **page-link menu**
+(E10-S05, `shell/link_menu_popover.rs`): the page editor keeps where the `[[` is and the highlight (like the slash
+menu), and `WorkspaceEditor::link_menu` matches the query against the workspace's pages with the quick switcher's
+fuzzy matcher, adding "New page"; Enter or a click calls `link_menu_apply`, which links the page in one undo step. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR 0054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
 and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR 0043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
