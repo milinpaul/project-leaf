@@ -10,6 +10,7 @@
 | Persistence | SQLite via `rusqlite` (`bundled`) | Stores Loro snapshots + incremental updates, plus index tables. |
 | Search | SQLite FTS5 (in the bundled SQLite, via `rusqlite`) | Full-text index in its own disposable file, rebuilt from documents if lost ([ADR-019](../adr/ADR-019-E11-S01-sqlite-fts5-search.md)). |
 | Markdown (Phase 1) | `comrak` | Import/export only. |
+| Web bookmark previews (Phase 1) | `ureq` (rustls, `webpki-roots`), `html5ever` tokenizer | Opt-in fetch of a page's title, description and images, in `leaf-fetch` only; limits and choices in [ADR-XXX-E15-S01](../adr/ADR-XXX-E15-S01-web-bookmark-previews.md). |
 | IDs | `uuid` v7 for pages and blocks (`PageId`, `BlockId`); BLAKE3 hash for assets (`AssetId`) | In `leaf-core`; see [BLOCK_MODEL.md](BLOCK_MODEL.md) and [ADR-006](../adr/ADR-006-E02-S10-stable-block-ids.md). On `wasm32-unknown-unknown`, `uuid`'s `js` feature supplies the clock and randomness. |
 | Hashing | `blake3` | Content-addressed image assets. |
 | Text segmentation | `unicode-segmentation` | Grapheme and word boundaries (UAX #29) for caret movement in `leaf-editor`; see [ADR-015](../adr/ADR-015-E04-S02-caret-anchors-and-grapheme-motion.md). |
@@ -30,6 +31,8 @@ crates/
   leaf-store    SQLite persistence, autosave, crash recovery        [core, native]
   leaf-export   markdown import/export (Phase 1)                    [core, wasm-ok]
   leaf-search   full-text index (SQLite FTS5)                       [core, native]
+  leaf-fetch    web bookmark previews: the only crate that goes
+                online, opt-in (Phase 1, E15-S05)                   [native, network]
   leaf-fixtures big seeded test documents for tests and benchmarks  [test support, native]
   leaf-bench    performance budget benchmarks (divan; search)       [test support, native]
   leaf-ui       GPUI components, theme, rendering of view models    [ui]
