@@ -1,4 +1,4 @@
-//! Making web bookmarks (E15-S03, ADR-XXX-E15-S03): the small menu under a pasted web address
+//! Making web bookmarks (E15-S03, ADR-087): the small menu under a pasted web address
 //! ("Dismiss", "Create web bookmark") and the address box the slash menu's "Web bookmark" opens. What is
 //! offered, where a bookmark goes and which addresses it takes are `leaf_editor`'s; this module draws
 //! the two and forwards. The page keeps the keyboard while the menu shows, so Up, Down, Enter and Escape

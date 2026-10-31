@@ -95,7 +95,7 @@ and the pointer is a hand over page and web links (`PaintedLayout::over_link`, E
 (E10-S05, `shell/link_menu_popover.rs`): the page editor keeps where the `[[` is and the highlight (like the slash
 menu), and `WorkspaceEditor::link_menu` matches the query against the workspace's pages with the quick switcher's
 fuzzy matcher, adding "New page"; Enter or a click calls `link_menu_apply`, which links the page in one undo step. **Web bookmarks** are made in `leaf-editor/src/web_bookmark.rs` (E15-S03,
-ADR-XXX-E15-S03): a pasted web address remembers an offer while the caret sits right after the untouched link, and
+ADR-087): a pasted web address remembers an offer while the caret sits right after the untouched link, and
 the slash menu's "Web bookmark" asks for an address like "Image" asks for a file; `shell/web_bookmark.rs` draws the
 offer menu and the address box and forwards. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR-054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
