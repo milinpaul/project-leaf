@@ -1,4 +1,4 @@
-# ADR-XXX. The inline database block follows its database
+# ADR-091. The inline database block follows its database
 
 - **Status:** Accepted
 - **Type:** Feature

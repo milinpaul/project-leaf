@@ -112,3 +112,5 @@ Records cover two kinds of decision:
 | [ADR-087](ADR-087-E15-S03-making-web-bookmarks.md) | Making web bookmarks: an offer after a paste, and an address box from the slash menu | Feature | Accepted |
 | [ADR-088](ADR-088-E08-S11-fuzzing.md) | Fuzzing the code that reads outside input, with cargo-fuzz in its own crate | Architecture | Accepted |
 | [ADR-089](ADR-089-E15-S05-preview-fetcher.md) | The web bookmark preview fetcher, and fetching only once the owner says yes | Architecture | Accepted |
+| [ADR-090](ADR-090-E08-S15-panic-lints.md) | Lints against hidden panics: no panic macros, checked indexing and arithmetic in core crates | Architecture | Accepted |
+| [ADR-091](ADR-091-E09-S09-inline-database-block.md) | The inline database block follows its database | Feature | Accepted |
