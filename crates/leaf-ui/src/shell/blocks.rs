@@ -98,6 +98,8 @@ pub(super) struct PageState {
     /// The fetcher for web bookmark previews, made on first use (E15-S05). Tests put one in that may
     /// reach their local server.
     pub(super) fetcher: Option<std::sync::Arc<leaf_fetch::Fetcher>>,
+    /// Whether the one-time question about fetching previews is showing (E15-S06).
+    pub(super) asking_previews: bool,
 }
 
 impl Shell {
@@ -256,6 +258,7 @@ impl Shell {
         let tones = self.render_tone_picker(cx);
         let task_picker = self.render_task_picker(cx);
         let address = self.render_address_prompt(cx);
+        let previews_question = self.render_previews_question(cx);
         let page = v_flex()
             .size_full()
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
@@ -283,7 +286,9 @@ impl Shell {
                     .child(Self::select_scroll_layer(cx))
                     .child(rows)
                     // Where you are in the page, at its right edge (E07-S14).
-                    .child(crate::scrollbar::slim(&self.blocks.list.state, cx).id("page-scrollbar")),
+                    .child(crate::scrollbar::slim(&self.blocks.list.state, cx).id("page-scrollbar"))
+                    // The one-time question about web bookmark previews, at the bottom of the page.
+                    .children(previews_question),
             )
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
             .child(menu)

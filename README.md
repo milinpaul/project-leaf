@@ -23,7 +23,7 @@ Notion's flexibility, Obsidian's speed and ownership, no browser in the way.
 - **Native speed.** Written in Rust and drawn on the GPU with [GPUI](https://www.gpui.rs/). No webview, no
   Electron. A keystroke on a 10,000-block page takes under 16 ms.
 - **Local-first.** Leaf works fully offline. Your workspace is a folder on your computer, not a row in someone
-  else's database. Leaf makes no network requests; web bookmark previews, when they come, ask first.
+  else's database. Leaf makes no network requests unless you allow web bookmark previews, which it asks about once.
 - **Nothing lost.** Every change is saved as you type. A crash or a force-quit loses nothing.
 - **Pages all the way down.** There are no folders: any page can hold pages.
 - **Collaboration-ready.** Documents are [Loro](https://loro.dev/) CRDTs from day one, so sync can come later

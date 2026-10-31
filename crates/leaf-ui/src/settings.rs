@@ -53,6 +53,17 @@ pub fn update(cx: &mut App, change: impl FnOnce(&mut AppSettings)) {
     loaded.dirty |= loaded.settings != before;
 }
 
+/// Calls `changed` on `entity` whenever the settings change (E15-S06: previews turned on or off).
+pub fn observe<T: 'static>(
+    cx: &mut gpui::Context<T>,
+    changed: impl Fn(&mut T, &mut gpui::Context<T>) + 'static,
+) -> gpui::Subscription {
+    if !cx.has_global::<Loaded>() {
+        cx.set_global(Loaded::default());
+    }
+    cx.observe_global::<Loaded>(changed)
+}
+
 /// Writes the settings if they changed. A failure is logged: losing a window size is not worth
 /// interrupting the owner for, and the next save tries again.
 pub fn save(cx: &mut App) {

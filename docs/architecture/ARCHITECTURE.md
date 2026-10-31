@@ -109,7 +109,10 @@ the blocks whose preview is being fetched (`PageState::fetching`) show a loading
 ADR-089): the page editor notes a request when a bookmark is made on this device or "Refresh preview" is
 chosen; after each page action `shell/preview_fetch.rs` takes them, but only if the app setting allows previews (off
 until the owner says yes), runs `leaf_fetch::Fetcher` on a background thread, stores the pictures in the asset store and
-saves the preview with `SetWebBookmarkPreview`, which is never an undo step. A failed fetch changes nothing. A **code block** shows its language at the top right on hover; a click opens a searchable list
+saves the preview with `SetWebBookmarkPreview`, which is never an undo step. A failed fetch changes nothing. Before the
+owner has answered, the requests wait and `shell/previews_question.rs` asks once at the bottom of the page (E15-S06);
+Settings › Privacy (`settings_dialog/privacy.rs`) changes the answer, and the shell observes the settings, so turning
+previews on (or opening a page) fetches the open page's bookmarks that never had a preview. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR-054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
 and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR-043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.

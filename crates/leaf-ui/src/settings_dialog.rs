@@ -17,6 +17,8 @@ use gpui_kit_assets::IconName;
 use leaf_store::Appearance;
 
 use crate::settings;
+
+mod privacy;
 use crate::theme::{self, DARK, LIGHT, Palette};
 
 /// Leaf's app icon, shown in About and on the welcome screen.
@@ -32,6 +34,8 @@ pub enum Section {
     Appearance,
     /// The open workspace: name and folder.
     Workspace,
+    /// Whether Leaf may go online for web bookmark previews (E15-S06).
+    Privacy,
     /// Version and licences.
     About,
 }
@@ -41,6 +45,7 @@ impl Section {
         match self {
             Self::Appearance => "Appearance",
             Self::Workspace => "Workspace",
+            Self::Privacy => "Privacy",
             Self::About => "About Leaf",
         }
     }
@@ -49,6 +54,7 @@ impl Section {
         match self {
             Self::Appearance => IconName::Palette,
             Self::Workspace => IconName::FolderOpen,
+            Self::Privacy => IconName::ShieldCheck,
             Self::About => IconName::Info,
         }
     }
@@ -57,6 +63,7 @@ impl Section {
         match self {
             Self::Appearance => "Choose how Leaf looks. System follows your computer and switches with it.",
             Self::Workspace => "Where this workspace keeps your pages.",
+            Self::Privacy => "What Leaf may do online. Your pages always stay on this computer.",
             Self::About => "A calm, local-first notebook.",
         }
     }
@@ -136,6 +143,7 @@ impl SettingsPanel {
             .child(group("General"))
             .child(self.row(Section::Appearance, cx))
             .child(self.row(Section::Workspace, cx))
+            .child(self.row(Section::Privacy, cx))
             .child(divider())
             .child(group("Leaf"))
             .child(self.row(Section::About, cx))
@@ -406,6 +414,7 @@ impl Render for SettingsPanel {
         let body = match section {
             Section::Appearance => Self::appearance(cx),
             Section::Workspace => self.workspace(cx),
+            Section::Privacy => Self::privacy(cx),
             Section::About => Self::about(cx),
         };
         h_flex()
