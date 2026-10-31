@@ -106,7 +106,7 @@ the slash menu's "Web bookmark" asks for an address like "Image" asks for a file
 offer menu and the address box and forwards. A bookmark is drawn as a card (E15-S04, `shell/bookmark_card.rs`) from
 `leaf_editor::WebBookmarkCard`, which decides what shows; its pictures come from the asset store like an image's, and
 the blocks whose preview is being fetched (`PageState::fetching`) show a loading line. **Previews** (E15-S05,
-ADR-XXX-E15-S05): the page editor notes a request when a bookmark is made on this device or "Refresh preview" is
+ADR-089): the page editor notes a request when a bookmark is made on this device or "Refresh preview" is
 chosen; after each page action `shell/preview_fetch.rs` takes them, but only if the app setting allows previews (off
 until the owner says yes), runs `leaf_fetch::Fetcher` on a background thread, stores the pictures in the asset store and
 saves the preview with `SetWebBookmarkPreview`, which is never an undo step. A failed fetch changes nothing. A **code block** shows its language at the top right on hover; a click opens a searchable list

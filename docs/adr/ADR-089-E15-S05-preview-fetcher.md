@@ -1,4 +1,4 @@
-# ADR-XXX. The web bookmark preview fetcher, and fetching only once the owner says yes
+# ADR-089. The web bookmark preview fetcher, and fetching only once the owner says yes
 
 - **Status:** Accepted
 - **Type:** Architecture
