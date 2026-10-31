@@ -4,7 +4,10 @@
 On a branch a new record is `docs/adr/ADR-XXX-<story>-<title>.md`, mentioned elsewhere as `ADR-XXX-<story>`, so
 branches never pick the same number. After a merge, the follow-up PR that marks the story done runs this on the newest
 `main`: each `ADR-XXX` file gets the next number after the highest one, in name order, and every link and mention in
-the repository's tracked text files follows. Nothing to do is not an error. Standard library only, like `backlog.py`.
+the repository's tracked text files follows. Its row in the index (`docs/adr/README.md`) is added here too, from the
+record's own heading, Type and Status, so story branches never edit the index and never clash there (E00-S13). A row a
+branch did add the old way is renamed instead. Nothing to do is not an error. Standard library only, like
+`backlog.py`.
 
 Usage: python3 scripts/adr_number.py   (from anywhere in the repository; prints what it renamed)
 """
@@ -77,7 +80,42 @@ def apply(root: Path) -> list[tuple[str, str]]:
                 updated = re.sub(rf"\bADR-XXX-{story}(?![\w-])", number, updated)
         if updated != text:
             path.write_text(updated, encoding="utf-8")
+    add_index_rows(adr, [new for _, new, _ in renames])
     return [(old, new) for old, new, _ in renames]
+
+
+def field(record: str, name: str) -> str:
+    """The value of a record's `- **<name>:** value` line, or "?" when it has none."""
+    match = re.search(rf"^- \*\*{name}:\*\* *(.+?) *$", record, flags=re.M)
+    return match.group(1) if match else "?"
+
+
+def index_row(adr: Path, name: str) -> str:
+    """The index row of numbered record `name`, from its heading, Type and Status."""
+    record = (adr / name).read_text(encoding="utf-8")
+    number = name[: len("ADR-000")]
+    heading = re.search(r"^# ADR-\d{3}\. *(.+?) *$", record, flags=re.M)
+    title = heading.group(1) if heading else name
+    return f"| [{number}]({name}) | {title} | {field(record, 'Type')} | {field(record, 'Status')} |"
+
+
+def add_index_rows(adr: Path, names: list[str]) -> None:
+    """Adds a row for each of `names` the index doesn't list yet, and keeps the rows in number order."""
+    index = adr / "README.md"
+    if not index.is_file():
+        return
+    lines = index.read_text(encoding="utf-8").splitlines()
+    rows = [i for i, line in enumerate(lines) if line.startswith("| [ADR-")]
+    if not rows:
+        return
+    missing = [index_row(adr, name) for name in names if not any(f"]({name})" in line for line in lines)]
+    at = rows[-1] + 1
+    lines[at:at] = missing
+    # Rows stay in number order, wherever a row added the old way was renamed.
+    rows = [i for i, line in enumerate(lines) if line.startswith("| [ADR-")]
+    for i, line in zip(rows, sorted((lines[i] for i in rows), key=lambda line: line[len("| [ADR-") :])):
+        lines[i] = line
+    index.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> int:

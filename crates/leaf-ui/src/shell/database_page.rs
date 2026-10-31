@@ -16,6 +16,9 @@
 //! Sorting and filtering (E09-S07): a bar above the table shows a chip for each sort and filter, with "Sort" and
 //! "Filter" buttons; each opens a pop-up (`query_bar.rs`). A filter's typed value shows in the table at once and is
 //! saved when the pop-up closes.
+//!
+//! A row opens as a page (E09-S08): the "Open" button on its title cell, and its properties under the page's title
+//! (`row_page.rs`).
 
 mod cells;
 mod column_menu;
@@ -25,6 +28,7 @@ mod header;
 mod options;
 mod query;
 mod query_bar;
+pub(super) mod row_page;
 mod table;
 
 use std::time::Duration;
@@ -57,6 +61,8 @@ const CONTEXT: &str = "DatabasePage";
 /// Key context around a cell's open editor. It sits inside the table, which takes Escape for itself while a cell
 /// is selected, so the editor binds Escape here, closer in.
 const CELL_CONTEXT: &str = "DatabaseCell";
+/// Key context around a row page's properties (E09-S08), for Escape.
+const ROW_CONTEXT: &str = "DatabaseRowPage";
 
 actions!(database_page, [EditCell, StopEditing, UndoDatabase, RedoDatabase]);
 
@@ -72,6 +78,7 @@ pub(crate) fn bind(cx: &mut gpui::App) {
         KeyBinding::new("enter", EditCell, Some(CONTEXT)),
         KeyBinding::new("escape", StopEditing, Some(CONTEXT)),
         KeyBinding::new("escape", StopEditing, Some(CELL_CONTEXT)),
+        KeyBinding::new("escape", StopEditing, Some(ROW_CONTEXT)),
         KeyBinding::new(undo, UndoDatabase, Some(CONTEXT)),
         KeyBinding::new(redo, RedoDatabase, Some(CONTEXT)),
     ]);

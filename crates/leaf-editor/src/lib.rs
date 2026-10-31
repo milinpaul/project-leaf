@@ -51,8 +51,8 @@ pub use cover::{BuiltinCover, CoverSection, PageCover};
 pub use database_view::{
     COLUMN_TYPES, CellDisplay, CellEditor, Chip, ColumnMenu, DEFAULT_COLUMN_WIDTH, DatabaseEditor,
     FIRST_SCREEN_ROWS, FilterChip, FilterInput, HiddenColumn, OPTION_COLORS, OptionChoice, OptionPicker,
-    QueryBar, SortChip, TableView, TextCommit, ViewColumn, ViewRow, date_label, direction_label, filter_ops,
-    op_label, type_label,
+    QueryBar, RowProperty, SortChip, TableView, TextCommit, ViewColumn, ViewRow, date_label, direction_label,
+    filter_ops, op_label, type_label,
 };
 pub use drag::{BlockDrop, RowBox};
 pub use edited::{edited_ago, edited_on};

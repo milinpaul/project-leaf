@@ -330,11 +330,16 @@ impl Shell {
             let cover = self.page_cover();
             let band = cover.as_ref().map(|cover| self.render_cover(cover, cx));
             let header = self.render_page_header(band.is_some(), cx);
+            // A database row's properties sit under its title (E09-S08).
+            let properties = self.render_row_properties(window, cx);
             let top = if band.is_some() { px(0.0) } else { px(64.0) };
             return v_flex()
                 .w_full()
                 .children(band)
-                .child(column(div().pt(top).pb_3().child(header), self.full_width()))
+                .child(column(
+                    div().pt(top).pb_3().child(header).children(properties),
+                    self.full_width(),
+                ))
                 .into_any_element();
         }
         // A table's cells are drawn in its grid, by the table's row (E16-S03): their own rows are empty.

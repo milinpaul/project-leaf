@@ -56,9 +56,9 @@ The owner does not write Rust and relies on these docs to understand the system.
 - `docs/architecture/ARCHITECTURE.md`: crates, data flow, how a keystroke becomes a saved change. Update when structure changes.
 - `docs/adr/ADR-NNN-EXX-SYY-title.md`: one short decision record per significant architecture or feature decision,
   numbered in the order taken, with the story it belongs to. On a branch, copy `docs/adr/ADR-000-EXX-SYY-template.md`
-  to `ADR-XXX-EXX-SYY-title.md`, mention it as `ADR-XXX-EXX-SYY`, and add it to the index in `docs/adr/README.md`;
-  never pick a number yourself. After merge, the PR that marks the story done runs `python3 scripts/adr_number.py`,
-  which numbers it and updates the mentions.
+  to `ADR-XXX-EXX-SYY-title.md` and mention it as `ADR-XXX-EXX-SYY`; leave the index in `docs/adr/README.md` alone
+  and never pick a number yourself. After merge, the PR that marks the story done runs `python3 scripts/adr_number.py`,
+  which numbers it, updates the mentions and adds its index row (E00-S13).
 - Each crate has a top-level `//!` doc explaining its role and boundaries.
 
 ## Definition of done

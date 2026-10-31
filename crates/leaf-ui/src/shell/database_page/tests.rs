@@ -284,3 +284,5 @@ fn a_date_cell_opens_a_calendar(cx: &mut TestAppContext) {
 mod columns;
 
 mod query;
+
+mod row_page;

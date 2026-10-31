@@ -16,11 +16,13 @@ mod display;
 mod edit;
 mod order;
 mod query;
+mod row;
 
 pub use columns::{COLUMN_TYPES, ColumnMenu, HiddenColumn, type_label};
 pub use display::{CellDisplay, Chip, date_label, display};
 pub use edit::{CellEditor, OPTION_COLORS, OptionChoice, OptionPicker, TextCommit};
 pub use query::{FilterChip, FilterInput, QueryBar, SortChip, direction_label, filter_ops, op_label};
+pub use row::RowProperty;
 
 use std::collections::{HashMap, HashSet};
 
