@@ -41,7 +41,7 @@ impl WorkspaceEditor {
             unreachable!("CreateDatabasePage always reports the page it created");
         };
         self.databases
-            .insert(database, DatabaseEditor::new(Database::new()));
+            .insert(database, DatabaseEditor::new(starter_database()?));
         Ok((page, database))
     }
 
@@ -182,6 +182,18 @@ impl WorkspaceEditor {
         }
         Ok(())
     }
+}
+
+/// What a new database starts with: a multi-select "Tags" column beside the title, as Notion's do, so there is
+/// something to fill in. Loaded back from its bytes so making it isn't an undo step.
+fn starter_database() -> Result<Database, ModelError> {
+    let mut db = Database::new();
+    db.apply(DatabaseCommand::AddColumn {
+        index: 0,
+        name: "Tags".into(),
+        kind: leaf_model::PropertyType::MultiSelect,
+    })?;
+    Database::from_bytes(&db.to_bytes()?)
 }
 
 #[cfg(test)]
