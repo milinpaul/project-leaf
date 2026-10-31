@@ -48,6 +48,7 @@ tests on push.
 | `just check` | Everything CI runs: format, clippy, tests, coverage, licences, WebAssembly. Run it before opening a PR |
 | `just fmt` | Format the code |
 | `just cov-html` | Open a coverage report in the browser |
+| `just demo <folder>` | Make the demo workspace shown in the README |
 | `just fixture <folder>` | Make a large test workspace (5,000 pages) to try performance |
 | `just screenshot <workspace> <out.png>` | Draw a workspace to an image without opening a window (macOS) |
 
