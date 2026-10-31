@@ -71,7 +71,11 @@ fn turn_into_opens_a_list_of_kinds_with_the_current_one_marked() {
     let menu = editor.block_menu_key(MenuKey::Right).unwrap().unwrap();
     let (kinds, selected) = menu.kinds.unwrap();
     assert_eq!(selected, 0);
-    assert_eq!(kinds.len(), 10, "the text kinds, action items included (E19-S02)");
+    assert_eq!(
+        kinds.len(),
+        11,
+        "the text kinds, action items (E19-S02) and callouts (E21-S01) included"
+    );
     let current: Vec<&str> = kinds
         .iter()
         .filter(|k| k.current)
@@ -84,14 +88,24 @@ fn turn_into_opens_a_list_of_kinds_with_the_current_one_marked() {
     editor.block_menu_key(MenuKey::Enter).unwrap();
     editor.block_menu_key(MenuKey::Up).unwrap();
     let menu = editor.block_menu_key(MenuKey::Up).unwrap().unwrap();
-    assert_eq!(menu.kinds.unwrap().1, 8, "Up wraps to Quote");
+    assert_eq!(menu.kinds.unwrap().1, 9, "Up wraps to Callout");
     let menu = editor.block_menu_key(MenuKey::Escape).unwrap().unwrap();
     assert_eq!(menu.kinds, None, "Escape leaves the list first");
     editor.block_menu_key(MenuKey::Right).unwrap();
     editor.block_menu_key(MenuKey::Up).unwrap();
     editor.block_menu_key(MenuKey::Up).unwrap();
     assert_eq!(editor.block_menu_key(MenuKey::Enter).unwrap(), None);
-    assert_eq!(outline(&editor), vec![row(0, BlockKind::Quote, "title")]);
+    assert_eq!(
+        outline(&editor),
+        vec![row(
+            0,
+            BlockKind::Callout {
+                tone: leaf_model::CalloutTone::Info
+            },
+            "title"
+        )],
+        "a new callout starts as Info"
+    );
 }
 
 #[test]

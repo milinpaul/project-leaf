@@ -5,11 +5,12 @@
 
 use leaf_core::{AssetId, BlockId};
 use leaf_model::{
-    BlockKind, BlockProp, DueDate, DueTime, Mark, MarkKind, PageCommand, PageDoc, Priority, TextSpan,
+    BlockKind, BlockProp, CalloutTone, DueDate, DueTime, Mark, MarkKind, PageCommand, PageDoc, Priority,
+    TextSpan,
 };
 use proptest::prelude::*;
 
-pub(crate) fn kinds() -> [BlockKind; 14] {
+pub(crate) fn kinds() -> [BlockKind; 16] {
     [
         BlockKind::Paragraph,
         BlockKind::Heading { level: 1 },
@@ -41,6 +42,12 @@ pub(crate) fn kinds() -> [BlockKind; 14] {
             time: DueTime::new(14, 30).ok(),
             priority: Some(Priority::High),
         },
+        BlockKind::Callout {
+            tone: CalloutTone::Info,
+        },
+        BlockKind::Callout {
+            tone: CalloutTone::Warning,
+        },
     ]
 }
 
@@ -64,7 +71,7 @@ pub(crate) fn mark_kinds() -> [MarkKind; 5] {
     ]
 }
 
-pub(crate) fn props() -> [BlockProp; 14] {
+pub(crate) fn props() -> [BlockProp; 16] {
     [
         BlockProp::TableHeaderRow(true),
         BlockProp::TableHeaderRow(false),
@@ -80,6 +87,8 @@ pub(crate) fn props() -> [BlockProp; 14] {
         BlockProp::TaskTime(DueTime::new(9, 0).ok()),
         BlockProp::TaskPriority(Some(Priority::Low)),
         BlockProp::TaskPriority(None),
+        BlockProp::CalloutTone(CalloutTone::Error),
+        BlockProp::CalloutTone(CalloutTone::Note),
     ]
 }
 

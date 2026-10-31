@@ -268,6 +268,13 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                     out.push(format!("{pad}> {line}"));
                 }
             }
+            // GitHub's alert syntax, so a callout reads as one there and in other Markdown apps.
+            BlockKind::Callout { tone } => {
+                out.push(format!("{pad}> [!{}]", alert_name(tone)));
+                for line in text.split('\n') {
+                    out.push(format!("{pad}> {line}"));
+                }
+            }
             BlockKind::Code { language } => {
                 let body: String = block.text.iter().map(|s| s.text.as_str()).collect();
                 let longest = body
@@ -311,6 +318,18 @@ fn escape_start(text: &str) -> String {
         return format!("{}\\{}", &text[..digits], &text[digits..]);
     }
     format!("\\{text}")
+}
+
+/// The GitHub alert a callout's tone is written as. A tone from a newer version reads as a note.
+fn alert_name(tone: &leaf_model::CalloutTone) -> &'static str {
+    use leaf_model::CalloutTone;
+    match tone {
+        CalloutTone::Success => "TIP",
+        CalloutTone::Warning => "WARNING",
+        CalloutTone::Error => "CAUTION",
+        CalloutTone::Note => "IMPORTANT",
+        CalloutTone::Info | CalloutTone::Other(_) => "NOTE",
+    }
 }
 
 #[cfg(test)]

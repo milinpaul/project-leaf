@@ -8,7 +8,7 @@ use leaf_core::AssetId;
 use loro::{LoroMap, LoroValue};
 
 use crate::page_meta::value;
-use crate::{DueDate, DueTime, ModelError, Priority};
+use crate::{CalloutTone, DueDate, DueTime, ModelError, Priority};
 
 /// One property of a block, for [`PageCommand::SetProp`](crate::PageCommand::SetProp). Each belongs to
 /// one kind: setting it on another kind is an error rather than a silent no-op.
@@ -34,6 +34,8 @@ pub enum BlockProp {
     TaskTime(Option<DueTime>),
     /// An action item's priority, or `None` for none.
     TaskPriority(Option<Priority>),
+    /// A callout's tone.
+    CalloutTone(CalloutTone),
 }
 
 impl BlockProp {
@@ -51,12 +53,13 @@ impl BlockProp {
             Self::TaskDue(_) => "due date",
             Self::TaskTime(_) => "due time",
             Self::TaskPriority(_) => "priority",
+            Self::CalloutTone(_) => "tone",
         }
     }
 }
 
 /// Every known prop key, for removing the ones a new kind no longer uses.
-pub(crate) const KNOWN_PROP_KEYS: [&str; 11] = [
+pub(crate) const KNOWN_PROP_KEYS: [&str; 12] = [
     keys::LEVEL,
     keys::CHECKED,
     keys::LANGUAGE,
@@ -68,6 +71,7 @@ pub(crate) const KNOWN_PROP_KEYS: [&str; 11] = [
     keys::DUE,
     keys::DUE_TIME,
     keys::PRIORITY,
+    keys::TONE,
 ];
 
 /// Meta and props key names.
@@ -86,6 +90,7 @@ pub(crate) mod keys {
     pub const DUE: &str = "due";
     pub const DUE_TIME: &str = "due_time";
     pub const PRIORITY: &str = "priority";
+    pub const TONE: &str = "tone";
 }
 
 /// What kind of block this is, with its type-specific properties.
@@ -149,6 +154,12 @@ pub enum BlockKind {
         /// How important it is.
         priority: Option<Priority>,
     },
+    /// A box with an icon that makes its text stand out (E21, ADR 0069): rich text, nothing nested,
+    /// drawn in its tone's colours.
+    Callout {
+        /// Its colour scheme and icon.
+        tone: CalloutTone,
+    },
     /// A kind this version of Leaf does not know, probably from a newer version. It is shown as a
     /// read-only placeholder and its data is never rewritten, so nothing is lost.
     Unknown {
@@ -175,6 +186,7 @@ impl BlockKind {
             Self::TableRow => "table_row",
             Self::TableCell => "table_cell",
             Self::Task { .. } => "task",
+            Self::Callout { .. } => "callout",
             Self::Unknown { type_name } => type_name,
         }
     }
@@ -248,6 +260,9 @@ impl BlockKind {
                 time: Some(_),
                 ..
             } => Err(ModelError::TimeWithoutDate),
+            Self::Callout {
+                tone: CalloutTone::Other(name),
+            } if name.is_empty() => Err(ModelError::InvalidKind("a callout's tone can't be empty".into())),
             _ => Ok(()),
         }
     }
@@ -261,6 +276,7 @@ impl BlockKind {
             Self::Image { .. } => &[keys::ASSET, keys::WIDTH, keys::ALT],
             Self::Table { .. } => &[keys::HEADER_ROW],
             Self::Task { .. } => &[keys::DONE, keys::DUE, keys::DUE_TIME, keys::PRIORITY],
+            Self::Callout { .. } => &[keys::TONE],
             _ => &[],
         }
     }
@@ -280,6 +296,7 @@ impl BlockKind {
             }
             (Self::Image { asset, width, .. }, BlockProp::ImageAlt(alt)) => Self::Image { asset, width, alt },
             (Self::Table { .. }, BlockProp::TableHeaderRow(header_row)) => Self::Table { header_row },
+            (Self::Callout { .. }, BlockProp::CalloutTone(tone)) => Self::Callout { tone },
             (
                 Self::Task {
                     done,
@@ -360,6 +377,15 @@ impl BlockKind {
             "table_row" => Self::TableRow,
             "table_cell" => Self::TableCell,
             "task" => read_task(meta)?,
+            "callout" => match prop(keys::TONE) {
+                Some(LoroValue::String(tone)) => Self::Callout {
+                    tone: CalloutTone::parse(&tone),
+                },
+                None => Self::Callout {
+                    tone: CalloutTone::Info,
+                },
+                Some(_) => return Err((keys::TONE, "is not text".into())),
+            },
             _ => Self::Unknown { type_name },
         })
     }
@@ -385,6 +411,7 @@ impl BlockKind {
                 meta.insert(keys::ALT, alt.as_str())?;
             }
             Self::Table { header_row } => meta.insert(keys::HEADER_ROW, *header_row)?,
+            Self::Callout { tone } => meta.insert(keys::TONE, tone.as_str())?,
             Self::Task {
                 done,
                 due,

@@ -85,3 +85,4 @@ Records cover two kinds of decision:
 | [0066](0066-database-data-model.md) | Databases: one Loro document per database, rows as pages | Architecture | Accepted |
 | [0067](0067-formatting-bar.md) | Formatting bar: a floating bar over selected text, drawn in the page's own overlay | Feature | Accepted |
 | [0068](0068-action-item-block.md) | Action items: a `task` block kind with its fields as props | Feature | Accepted |
+| [0069](0069-callout-block.md) | Callout block: one text with lines, and a tone stored by name | Feature | Accepted |
