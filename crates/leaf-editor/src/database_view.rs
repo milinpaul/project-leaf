@@ -1,7 +1,7 @@
 //! A database as a table (E09-S04): the columns to show, the rows in order, and what each cell shows.
 //!
 //! [`DatabaseEditor`] owns a [`Database`] and keeps the cells it has read, by row. Reading every cell of a big
-//! database takes longer than opening a page may (ADR 0066 measured about 190 ms for 10,000 rows), so the cells are
+//! database takes longer than opening a page may (ADR-066 measured about 190 ms for 10,000 rows), so the cells are
 //! read a chunk of rows at a time, in the database's own order: [`DatabaseEditor::read_more`] reads the next chunk,
 //! and the UI calls it on idle ticks until [`DatabaseEditor::is_complete`]. Nothing here uses threads, so the crate
 //! stays wasm-ok. The first screen is ready after one chunk; with a sort or filter on, the view says it is not

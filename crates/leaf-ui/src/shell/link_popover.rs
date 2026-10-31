@@ -1,4 +1,4 @@
-//! The link popover (E07-S07, ADR 0052): Cmd/Ctrl+K over selected text opens a box under the selection
+//! The link popover (E07-S07, ADR-052): Cmd/Ctrl+K over selected text opens a box under the selection
 //! to type or paste an address. Enter saves it, Escape or a click elsewhere cancels, and Remove takes
 //! the link off. Cmd/Ctrl+click on a link opens it in the browser (`rich_text`). Linking and the
 //! addresses Leaf will open are `leaf_editor`'s; this module only draws the box and forwards.

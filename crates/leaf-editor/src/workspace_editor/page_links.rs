@@ -1,4 +1,4 @@
-//! What the workspace tells page links (E10-S03, ADR 0071): what a link to a page shows, and which page a
+//! What the workspace tells page links (E10-S03, ADR-071): what a link to a page shows, and which page a
 //! pasted `[[Title]]` means.
 
 use std::collections::HashMap;

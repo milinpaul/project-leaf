@@ -111,7 +111,7 @@ fn the_caption_is_editable_text() {
     editor.insert_image(picture()).unwrap();
     type_keys(&mut editor, "Sunset");
     assert_eq!(outline(&editor), vec![(image(), "Sunset".into())]);
-    // Enter in a caption adds a paragraph below instead of splitting it (ADR 0020).
+    // Enter in a caption adds a paragraph below instead of splitting it (ADR-020).
     let outcome = editor.press(Key::Enter).unwrap();
     assert!(matches!(outcome, KeyOutcome::Caret(_)));
     assert_eq!(outline(&editor)[1], (BlockKind::Paragraph, String::new()));

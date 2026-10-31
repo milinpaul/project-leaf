@@ -1,5 +1,5 @@
 //! Markdown and plain text on the clipboard: pasting text from other apps, and writing what Leaf
-//! copies as Markdown and plain text for them (ADR 0032).
+//! copies as Markdown and plain text for them (ADR-032).
 //!
 //! Reading is line by line, following `BLOCK_MODEL.md` "Markdown mapping": `#`–`###` headings
 //! (deeper ones become heading 3), `-`/`*`/`+` bullets, `1.` numbers, `- [ ]`/`- [x]` to-dos, `>`

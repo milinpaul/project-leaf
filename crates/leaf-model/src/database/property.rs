@@ -1,9 +1,9 @@
-//! What a database column is and what its cells hold (ADR 0066).
+//! What a database column is and what its cells hold (ADR-066).
 //!
 //! A column's type decides which values its cells take. Cells are stored as plain Loro values (last writer wins
 //! per cell), except multi-select, which is a mergeable map of option ID to `true` so tags added on two devices
 //! are all kept. Reading goes by what is stored, so a value written under an earlier type (before a retype, or
-//! by another device at the same time) still reads back as itself: the editor converts it for display (ADR 0066
+//! by another device at the same time) still reads back as itself: the editor converts it for display (ADR-066
 //! answer 3), and the stored value stays until the cell is edited.
 
 use std::collections::BTreeSet;
@@ -31,7 +31,7 @@ pub(crate) mod keys {
 /// such columns are read-only here, so nothing that newer version stored is lost.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PropertyType {
-    /// Plain text (ADR 0066 answer 2: no formatting).
+    /// Plain text (ADR-066 answer 2: no formatting).
     Text,
     /// A number.
     Number,

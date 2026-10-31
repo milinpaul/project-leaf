@@ -75,7 +75,7 @@ pub enum WorkspaceCommand {
         /// When it was trashed, in Unix milliseconds, supplied by the caller.
         at: i64,
     },
-    /// Records that a page's blocks, title, icon or cover just changed (ADR 0059). The editor applies
+    /// Records that a page's blocks, title, icon or cover just changed (ADR-059). The editor applies
     /// it after the change itself, as a separate commit that undo skips: undoing an edit is an edit
     /// too, so it must never bring back an older time.
     MarkEdited {
@@ -90,7 +90,7 @@ pub enum WorkspaceCommand {
         /// A page that was trashed on its own (listed by `Workspace::trash`).
         page: PageId,
     },
-    /// Adds a page that is a database (Phase 1, ADR 0066), like [`WorkspaceCommand::CreatePage`]. The model
+    /// Adds a page that is a database (Phase 1, ADR-066), like [`WorkspaceCommand::CreatePage`]. The model
     /// mints the page's and the database's IDs and returns both in [`Outcome::DatabasePageCreated`]; the
     /// database's own document is the caller's to create.
     CreateDatabasePage {
@@ -112,7 +112,7 @@ pub enum WorkspaceCommand {
         /// Creation time, Unix milliseconds.
         created_at: i64,
     },
-    /// Stars a page: adds it to the end of the favourites (ADR 0060). Already a favourite: nothing
+    /// Stars a page: adds it to the end of the favourites (ADR-060). Already a favourite: nothing
     /// changes. A page in the trash can't be starred.
     AddFavourite {
         /// Page to star.

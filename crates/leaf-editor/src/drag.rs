@@ -1,5 +1,5 @@
 //! Dragging blocks by their ⋮⋮ handle: where a drop lands for a pointer position, and the move
-//! itself (E05-S04, ADR 0049).
+//! itself (E05-S04, ADR-049).
 //!
 //! The UI reports where it drew the rows ([`RowBox`]) and where the pointer is; everything else is
 //! worked out here from the page, so it is tested without a window. A drop always lands in a gap

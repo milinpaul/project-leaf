@@ -50,7 +50,7 @@ enum Step {
         page: usize,
         on: bool,
     },
-    /// The editor stamping a page's edited time, which undo skips (ADR 0059).
+    /// The editor stamping a page's edited time, which undo skips (ADR-059).
     Stamp {
         page: usize,
         at: u8,

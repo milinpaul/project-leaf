@@ -1,4 +1,4 @@
-//! A callout's tone (E21, ADR 0070): which of the five colour schemes it is drawn in.
+//! A callout's tone (E21, ADR-070): which of the five colour schemes it is drawn in.
 //!
 //! The tone is stored by name (`info`, `success`, `warning`, `error`, `note`). A name this version
 //! doesn't know, from a newer version, is kept as it was and reads as [`CalloutTone::Other`], so saving

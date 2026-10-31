@@ -14,7 +14,7 @@ use leaf_ui::menus::{self, Quit};
 
 /// Leaf's identity for the operating system: the macOS bundle identifier, the Windows taskbar group and
 /// the Linux `app_id`, which must match the `.desktop` file name. Reverse-DNS under the owner's GitHub,
-/// which no one else can claim (ADR 0018).
+/// which no one else can claim (ADR-018).
 const APP_ID: &str = "io.github.milinpaul.Leaf";
 
 /// The window icon for X11, which reads it from the window. Wayland, macOS and Windows take the icon from

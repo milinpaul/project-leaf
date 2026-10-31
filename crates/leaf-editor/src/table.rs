@@ -1,7 +1,7 @@
 //! Editing inside tables (E16-S02): moving between cells, the keys that act differently in a cell,
 //! and selections that cover whole cells.
 //!
-//! A cell is a text block (ADR 0061), so typing, marks, Left and Right, undo and the caret already
+//! A cell is a text block (ADR-061), so typing, marks, Left and Right, undo and the caret already
 //! work in it. What differs: Tab moves between cells instead of nesting (in the last cell it adds a
 //! row), Enter types a line break, Backspace and Delete never merge a cell into its neighbour, Up and
 //! Down keep to the column, and a selection from one cell into another covers the rectangle of cells

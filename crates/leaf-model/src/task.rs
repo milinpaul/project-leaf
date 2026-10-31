@@ -1,4 +1,4 @@
-//! The values an action item carries (E19, ADR 0068): its due date, an optional time of day and a
+//! The values an action item carries (E19, ADR-068): its due date, an optional time of day and a
 //! priority.
 //!
 //! A due date is a calendar date in the owner's own sense of "Friday", stored as `YYYY-MM-DD`, and the

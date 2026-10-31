@@ -135,7 +135,7 @@ fn in_a_tree_a_delete_against_a_concurrent_move_is_settled_by_loros_order_of_the
     // Rows as nodes of a flat Loro tree (fractional index order), as pages and blocks already are. E09-S02
     // corrected this spike: it first tried one case only and concluded "delete wins". Loro orders the two concurrent
     // edits by device ID, so here peer 2's edit wins either way, and the tree alone can't record that a row was
-    // deleted (ADR 0066, "Correction").
+    // deleted (ADR-066, "Correction").
     let names = |doc: &LoroDoc| -> Vec<String> {
         let tree = doc.get_tree("rows");
         tree.children(TreeParentId::Root)

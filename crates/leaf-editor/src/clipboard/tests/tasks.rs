@@ -36,7 +36,7 @@ fn an_action_item_round_trips_through_the_clipboard() {
 
 #[test]
 fn an_unreadable_task_field_makes_the_copy_unreadable() {
-    // As for a kind Leaf doesn't know (ADR 0030): the paste falls back to the copy's plain text.
+    // As for a kind Leaf doesn't know (ADR-030): the paste falls back to the copy's plain text.
     let json = r#"{"leaf_fragment":1,"blocks":[{"type":"task","due":"2026-02-30","text":[{"insert":"x"}]}]}"#;
     assert_eq!(Fragment::from_json(json), None);
     let good = r#"{"leaf_fragment":1,"blocks":[{"type":"task","priority":"low","text":[{"insert":"x"}]}]}"#;

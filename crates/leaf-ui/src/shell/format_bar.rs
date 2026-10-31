@@ -1,4 +1,4 @@
-//! The floating formatting bar over selected text (E07-S13, ADR 0067): "Turn into", then Bold, Italic,
+//! The floating formatting bar over selected text (E07-S13, ADR-067): "Turn into", then Bold, Italic,
 //! Strikethrough, Code, Link and Link to page. What it offers, and which marks are on, is `PageEditor::format_bar`;
 //! this module places and draws it and runs a click the way the keyboard would (`toggle_mark`, the link
 //! popover, `BlockAction::TurnInto`), then gives the page the keyboard back with the selection kept.

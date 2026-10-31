@@ -30,7 +30,7 @@ pub fn page_text(
     // Depth-first, children before later siblings: a stack holding siblings in reverse.
     let mut stack: Vec<_> = doc.root_blocks().into_iter().rev().collect();
     while let Some(block) = stack.pop() {
-        // Page links are left out (ADR 0071): their placeholder isn't a word, and pages are found by
+        // Page links are left out (ADR-071): their placeholder isn't a word, and pages are found by
         // their own titles.
         if let Some(text) = doc.plain_text(block)?.map(|text| text.replace(PAGE_LINK, ""))
             && !text.trim().is_empty()

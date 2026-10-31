@@ -2,7 +2,7 @@
 //!
 //! One `Workspace` owns one Loro document holding the `"pages"` tree. Everything outside this module
 //! talks about pages by `PageId`; Loro's `TreeID`s stay private because undo and redo can re-create
-//! nodes under new ones (ADR 0006).
+//! nodes under new ones (ADR-006).
 
 use std::collections::HashMap;
 
@@ -231,7 +231,7 @@ fn pages_tree(doc: &LoroDoc) -> LoroTree {
 
 impl PageIndex {
     /// Reads every live page node's `id`. Called on load, and after undo and redo, which can
-    /// re-create nodes under new `TreeID`s (ADR 0006).
+    /// re-create nodes under new `TreeID`s (ADR-006).
     fn build(tree: &LoroTree) -> Result<Self, ModelError> {
         let mut index = Self::default();
         for node in tree.get_nodes(false) {

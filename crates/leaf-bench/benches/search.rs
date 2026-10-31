@@ -4,7 +4,7 @@
 //! connection (p95 must stay under 50 ms) and re-indexing one edited page the way the background
 //! worker does after a save (p95 under 20 ms). Prints the numbers and fails when a budget is missed,
 //! unless `LEAF_BENCH_RECORD_ONLY` is set: CI only records them, since shared runners are too noisy
-//! to judge a budget by (ADR 0056). Run with `just bench` or `just bench-search`; timings only mean
+//! to judge a budget by (ADR-056). Run with `just bench` or `just bench-search`; timings only mean
 //! something in the optimised build `cargo bench` uses.
 
 use std::collections::HashMap;

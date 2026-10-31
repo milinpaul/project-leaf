@@ -2,7 +2,7 @@
 //!
 //! Every editing action records the selection twice: just before it changes the page (so undo can
 //! put back exactly what was selected, including text across blocks or whole selected blocks) and
-//! right after (so redo puts back what the edit left, wherever the caret has gone since) (ADR 0023).
+//! right after (so redo puts back what the edit left, wherever the caret has gone since) (ADR-023).
 
 use leaf_model::{History, SavedSelection};
 

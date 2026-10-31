@@ -1,8 +1,8 @@
 //! E22-S01 spike: proves a data model for saved database views and a board layout on Loro, before `leaf-model`
 //! grows them. Throwaway quality on purpose, like `database_spike`: these tests drive Loro directly. Findings and the
-//! proposed model are in ADR 0075.
+//! proposed model are in ADR-075.
 //!
-//! The database document as it is today (ADR 0066), plus two new containers:
+//! The database document as it is today (ADR-066), plus two new containers:
 //!
 //! ```text
 //! LoroDoc (database)
@@ -286,7 +286,7 @@ impl Db {
 
     /// Deletes a view: its settings go, its node stays (a move on another device can't bring it back).
     pub(crate) fn delete_view(&self, id: &str) -> LoroResult<()> {
-        assert_ne!(id, DEFAULT, "the first view stays (see ADR 0075 for why)");
+        assert_ne!(id, DEFAULT, "the first view stays (see ADR-075 for why)");
         self.settings().delete(id)?;
         self.doc.commit();
         Ok(())

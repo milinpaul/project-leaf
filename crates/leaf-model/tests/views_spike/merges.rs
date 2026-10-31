@@ -171,7 +171,7 @@ fn the_first_views_tab_made_on_two_devices_reads_once_whichever_device_sorts_fir
         sync(&a, &b)?;
         same(&a, &b);
         // Every tab once, the same on both devices. In both peer orders A's move held, but which copy of the first
-        // view's node is read depends on how the two sort; a lost tab move is the worst case (ADR 0075).
+        // view's node is read depends on how the two sort; a lost tab move is the worst case (ADR-075).
         assert_eq!(a.view_ids(), ["v-a", DEFAULT, "v-b"], "peers {pa}, {pb}");
     }
     Ok(())

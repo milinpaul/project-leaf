@@ -1,6 +1,6 @@
 //! Which version of each document is on disk, without loading any of them.
 //!
-//! Search keeps its own copy of every page's text (ADR 0024). It decides what to re-read by
+//! Search keeps its own copy of every page's text (ADR-024). It decides what to re-read by
 //! comparing these versions with the ones it indexed, so nothing in the editor has to report what
 //! changed, and edits saved just before a crash are still picked up on the next start.
 

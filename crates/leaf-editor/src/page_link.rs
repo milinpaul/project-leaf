@@ -1,4 +1,4 @@
-//! Page links as they are drawn (E10-S03, ADR 0071). In the page a link is one placeholder character; on
+//! Page links as they are drawn (E10-S03, ADR-071). In the page a link is one placeholder character; on
 //! screen it is the target's icon and current title, or a note that the page is in the trash or gone.
 //!
 //! [`LinkedText`] turns a row's runs into the runs to draw and keeps the two sets of positions apart: the
