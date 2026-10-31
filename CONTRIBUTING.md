@@ -74,7 +74,8 @@ These are checked in review and will block a PR:
    events, nothing more.
 4. `leaf-core`, `leaf-model`, `leaf-editor` and `leaf-export` must compile for `wasm32-unknown-unknown`.
 5. Never drop unknown data from a document; preserve it.
-6. No network access in Phase 0.
+6. No network access except `leaf-fetch`, and only once the owner allows web bookmark previews (ADR-080).
+   Core crates never go online.
 
 ### Code conventions
 

@@ -6,7 +6,9 @@ Read these before any work: `docs/product/PRODUCT_SPEC.md` (what and why), `docs
 
 ## Current phase
 
-**Phase 0: page editor.** Do not build databases, links, sync or export unless the task says so.
+**Phase 1: MVP** (owner's decision, 2026-10-31, ADR-XXX-E00-S14): databases, page links, Markdown import and export,
+web bookmarks, the page top bar. Phase 0 (the page editor) is done apart from its open hardening stories, which are
+finished alongside. Do not build Phase 2 work (sync, other database views, the web viewer) unless the task says so.
 
 ## Backlog (always on)
 
@@ -32,7 +34,8 @@ just install    # macOS: build Leaf and put it in /Applications
 3. All editing logic lives in `leaf-editor` as plain, testable Rust. `leaf-ui` renders view models and forwards events, nothing more.
 4. Wasm-ok crates (`leaf-core`, `leaf-model`, `leaf-editor`, `leaf-export`) must compile for `wasm32-unknown-unknown`.
 5. Never drop unknown data from a document; preserve it.
-6. No network access anywhere in Phase 0.
+6. No network access except `leaf-fetch`, and only once the owner allows web bookmark previews (ADR-080). Core
+   crates never go online.
 
 ## Code conventions
 

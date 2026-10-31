@@ -23,7 +23,7 @@ Notion's flexibility, Obsidian's speed and ownership, no browser in the way.
 - **Native speed.** Written in Rust and drawn on the GPU with [GPUI](https://www.gpui.rs/). No webview, no
   Electron. A keystroke on a 10,000-block page takes under 16 ms.
 - **Local-first.** Leaf works fully offline. Your workspace is a folder on your computer, not a row in someone
-  else's database. Phase 0 makes no network requests at all.
+  else's database. Leaf makes no network requests; web bookmark previews, when they come, ask first.
 - **Nothing lost.** Every change is saved as you type. A crash or a force-quit loses nothing.
 - **Pages all the way down.** There are no folders: any page can hold pages.
 - **Collaboration-ready.** Documents are [Loro](https://loro.dev/) CRDTs from day one, so sync can come later
@@ -42,7 +42,7 @@ above is the demo workspace: build it yourself with `just demo <folder>` and ope
 
 ## Status
 
-Leaf is **pre-alpha**. Phase 0 is the page editor, and it is close to done. It is good enough to write in daily,
+Leaf is **pre-alpha**. Phase 0, the page editor, is done, and Phase 1 (the MVP) is under way. It is good enough to write in daily,
 but the file format may still change, so keep backups of anything you care about.
 
 There are no prebuilt downloads yet; you build Leaf from source (see [Install](#install)).
@@ -57,14 +57,13 @@ There are no prebuilt downloads yet; you build Leaf from source (see [Install](#
 | **Search** | `Cmd/Ctrl+K` finds pages by title and by the text inside them, ignoring case and accents |
 | **Look and feel** | Light and dark themes, a resizable sidebar, a top bar with breadcrumbs and "Edited 3 minutes ago" |
 
-Still to come in Phase 0: action items (tasks with due dates and priorities) and callouts.
 
 ### Roadmap
 
 | Phase | What it brings |
 |---|---|
-| **0: Page editor** (now) | Write a long document with zero friction and zero lost text |
-| **1: MVP** | Databases (table view), `[[page links]]` and backlinks, markdown import and export, bookmarks |
+| **0: Page editor** (done) | Write a long document with zero friction and zero lost text |
+| **1: MVP** (now) | Databases (table and board views), `[[page links]]` and backlinks, markdown import and export, web bookmarks |
 | **2** | Board, calendar and gallery views, templates, cloud sync and team workspaces, a read-only web viewer |
 | **3** | A full web editor kept in sync with the desktop app |
 

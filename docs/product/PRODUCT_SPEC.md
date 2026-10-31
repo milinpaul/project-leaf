@@ -28,7 +28,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 
 ---
 
-## Phase 0 — Pre-MVP: the page editor (current)
+## Phase 0 — Pre-MVP: the page editor (done)
 
 **Goal:** write a long, real document (a blog post) with zero friction and zero lost text.
 
@@ -65,7 +65,10 @@ Databases, page links/backlinks, sync, export, templates, comments, mobile.
 
 ---
 
-## Phase 1 — MVP
+## Phase 1 — MVP (current)
+
+The current phase since 2026-10-31 (owner's decision, ADR-XXX-E00-S14). Phase 0's open hardening stories are
+finished alongside.
 
 - **Database (table first, then board and saved views)**
   - Property types: text, number, select, multi-select, date, checkbox, URL.
@@ -170,5 +173,5 @@ Evidence for each item: [PHASE0_ACCEPTANCE.md](PHASE0_ACCEPTANCE.md).
 - [ ] Kill the process mid-typing; reopening shows all text older than 1 s.
 - [x] Page tree with 500 pages, 6 levels deep, stays smooth.
 - [x] `Cmd/Ctrl+K` finds a word inside any page of a 5,000-page workspace and jumps to it; results appear in < 50 ms.
-- [ ] Performance budgets met on a mid-range laptop.
+- [x] Performance budgets met on a mid-range laptop.
 - [x] CI green on macOS, Windows, Linux with ≥ 90% coverage on core crates.
