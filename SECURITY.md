@@ -17,3 +17,9 @@ within a week. Once a fix is merged, we'll credit you in the advisory unless you
 Leaf is a local, offline app: in Phase 0 it makes no network requests. The most relevant problems are files
 that crash Leaf or make it lose data when opened (a crafted workspace, image or pasted content), and anything
 that lets Leaf read or write outside the workspace folder you chose.
+
+## How we protect the code
+
+CI only has read access to the repository, and every GitHub Action it uses is pinned to an exact commit.
+`cargo deny` checks every dependency for known vulnerabilities, licences, its source (crates.io only) and duplicate
+versions, and Dependabot proposes updates weekly. See ADR 0073.
