@@ -236,7 +236,8 @@ fn callout_text_and_icons_stay_readable_in_every_tone() {
 
 /// E08-S08: gpui-component's setup lists every installed font (about 220 ms on a Mac) only to replace
 /// its own default faces. Installed first, Leaf's faces are what its setup finds and keeps, so the
-/// listing never runs; the bundled faces are loaded by then.
+/// listing never runs. (The test platform's text system lists no fonts, so that the bundled files hold
+/// these faces is checked from the files themselves, above.)
 #[gpui::test]
 fn the_library_setup_finds_leafs_fonts_already_in_place(cx: &mut TestAppContext) {
     cx.update(|cx| {
@@ -246,9 +247,5 @@ fn the_library_setup_finds_leafs_fonts_already_in_place(cx: &mut TestAppContext)
         assert_eq!(theme.font_family.as_ref(), UI_FONT);
         assert_eq!(theme.mono_font_family.as_ref(), CODE_FONT);
         assert_eq!(theme.radius, gpui::px(6.0), "Leaf's config, not the library's");
-        let installed = cx.text_system().all_font_names();
-        for family in [UI_FONT, CODE_FONT] {
-            assert!(installed.iter().any(|f| f == family), "{family} is loaded");
-        }
     });
 }
