@@ -38,6 +38,7 @@ fn page(title: &str, texts: &[&str]) -> PageText {
                 text: (*text).to_owned(),
             })
             .collect(),
+        links: Vec::new(),
     }
 }
 

@@ -97,6 +97,7 @@ fn index_with(name: &str, pages: &[Indexed<'_>]) -> PathBuf {
                     text: (*text).to_owned(),
                 })
                 .collect(),
+            links: Vec::new(),
         };
         index.index_page(&text, PageVersion::default()).unwrap();
     }

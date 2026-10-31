@@ -86,6 +86,7 @@ impl<S: PageSource> Syncer<S> {
                     page,
                     title: wanted_title.clone(),
                     blocks: Vec::new(),
+                    links: Vec::new(),
                 }),
             };
             if let Some(text) = text {

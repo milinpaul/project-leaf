@@ -313,7 +313,8 @@ itself (ADR-018).
    in `leaf-search`), which runs on its own thread so typing never waits for it. It asks the store which
    version of each document is saved (`Store::saved_versions`), compares that and the page titles and trash with
    what it indexed, and re-reads only the pages that changed into `search/index.sqlite`. An edit is searchable
-   well within a second (ADR-024).
+   well within a second (ADR-024). The same pass records each page's links to other pages in the index's `links`
+   table, which `Searcher::backlinks` reads to list the blocks linking to a page (E10-S06, ADR-071).
 
 Undo runs the same path backwards: the model reverses the last step and the editor redraws.
 

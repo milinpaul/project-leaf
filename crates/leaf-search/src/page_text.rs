@@ -14,6 +14,9 @@ pub struct PageText {
     pub title: String,
     /// One entry per block that has text, in document order.
     pub blocks: Vec<BlockText>,
+    /// The page's links to other pages, at most one per block and target, in document order: what the
+    /// backlinks of each target list (E10-S06, ADR-071).
+    pub links: Vec<LinkText>,
 }
 
 /// Which save of a page the indexed rows came from, as `leaf_store::SavedVersion` reports it.
@@ -38,4 +41,18 @@ pub struct BlockText {
     pub kind: String,
     /// The block's text without marks.
     pub text: String,
+}
+
+/// One link from a block to another page, with the words around it for the backlinks list.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LinkText {
+    /// The block holding the link, so a backlink can open the page scrolled to it.
+    pub block: BlockId,
+    /// The page linked to.
+    pub target: PageId,
+    /// Up to [`crate::LINK_CONTEXT`] characters of the block's text just before the link ("…" first
+    /// where it was cut). Other links in it are left out.
+    pub before: String,
+    /// The same just after the link ("…" last where it was cut).
+    pub after: String,
 }
