@@ -19,6 +19,7 @@ mod window_tests;
 pub(super) use painted_layout::PaintedLayout;
 pub(super) use pieces::{Highlight, highlights, with_draft};
 
+use gpui::prelude::FluentBuilder as _;
 use gpui::{
     AnyElement, Context, FontStyle, FontWeight, Hsla, InteractiveElement as _, IntoElement, MouseButton,
     MouseDownEvent, MouseMoveEvent, ParentElement, Pixels, SharedString, StrikethroughStyle, Styled,
@@ -83,7 +84,8 @@ impl Shell {
         // Page links draw as their target's icon and title (E10-S04); everything below speaks in drawn
         // positions, and the painted layout maps clicks and carets back.
         let linked = LinkedText::new(&spans, |page| self.editor().link_target(page));
-        let links = linked.has_links().then(|| Rc::new(linked.clone()));
+        // Kept for rows with links: page links map positions, and either kind turns the cursor to a hand.
+        let links = (linked.has_links() || linked.has_web_links()).then(|| Rc::new(linked.clone()));
         let text = linked.text();
         let len = text.chars().count();
         let caret = caret.map(|at| linked.to_drawn(at));
@@ -134,6 +136,7 @@ impl Shell {
         .left_0()
         .size_full();
 
+        let over_link = self.blocks.link_hover == Some(id);
         let block = div()
             .relative()
             .flex_1()
@@ -141,8 +144,10 @@ impl Shell {
             .py(look.pad)
             .line_height(look.line_height)
             .min_h(look.line_height + look.pad * 2.0)
-            // The text cursor (I-beam) over text, so the page reads as somewhere to type (E07-S12).
-            .cursor_text()
+            // The text cursor (I-beam) over text, so the page reads as somewhere to type (E07-S12); a
+            // pointing hand over a link, which a click follows (E10-S11).
+            .when(over_link, Styled::cursor_pointer)
+            .when(!over_link, Styled::cursor_text)
             .child(styled)
             .child(overlay)
             .on_mouse_down(
@@ -233,6 +238,13 @@ impl Shell {
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        // Which row's link the pointer is over, for the pointing-hand cursor (E10-S11).
+        let hover = (event.pressed_button.is_none() && self.blocks.painted.over_link(block, event.position))
+            .then_some(block);
+        if self.blocks.link_hover != hover {
+            self.blocks.link_hover = hover;
+            cx.notify();
+        }
         if event.pressed_button != Some(MouseButton::Left) {
             return;
         }

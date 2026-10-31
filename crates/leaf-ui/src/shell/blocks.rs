@@ -43,6 +43,8 @@ pub(super) struct PageState {
     blink: Option<Task<()>>,
     /// Where a mouse drag started, while the button is down.
     pub(super) drag: Option<Caret>,
+    /// The row whose link the pointer is over, drawn with a pointing-hand cursor (E10-S11).
+    pub(super) link_hover: Option<BlockId>,
     /// What the block menu hangs from, set when it opens: the left edge and the top and bottom of the
     /// handle (or of the line, from the keyboard). The menu goes below it, or above when there's no room.
     pub(super) menu_at: Point<Pixels>,

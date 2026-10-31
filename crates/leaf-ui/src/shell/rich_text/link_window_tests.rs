@@ -154,3 +154,72 @@ fn a_link_to_a_deleted_page_says_so_and_a_click_places_the_caret(cx: &mut TestAp
         "nothing to open"
     );
 }
+
+fn hover(cx: &mut VisualTestContext, at: gpui::Point<gpui::Pixels>) {
+    cx.simulate_event(gpui::MouseMoveEvent {
+        position: at,
+        pressed_button: None,
+        modifiers: Modifiers::none(),
+    });
+}
+
+/// Where the caret at `at` in `block` is drawn, nudged right and to mid-line: over the character after it.
+fn over_char(
+    shell: &gpui::Entity<Shell>,
+    cx: &mut VisualTestContext,
+    block: BlockId,
+    at: usize,
+) -> gpui::Point<gpui::Pixels> {
+    shell.read_with(cx, |shell, _| {
+        let (top, height) = shell.blocks.painted.caret_bounds(block, at).unwrap();
+        gpui::point(top.x + gpui::px(2.0), top.y + height / 2.0)
+    })
+}
+
+#[gpui::test]
+fn the_pointer_is_a_hand_over_a_link_and_an_i_beam_elsewhere(cx: &mut TestAppContext) {
+    let (shell, cx, block, target) = open(cx);
+    let hovered = |shell: &gpui::Entity<Shell>, cx: &mut VisualTestContext| {
+        shell.read_with(cx, |shell, _| shell.blocks.link_hover)
+    };
+    let at = middle_of_link(&shell, cx, block);
+    hover(cx, at);
+    assert_eq!(hovered(&shell, cx), Some(block));
+    let beside = over_char(&shell, cx, block, 1);
+    hover(cx, beside);
+    assert_eq!(hovered(&shell, cx), None, "back to the I-beam beside it");
+
+    // A link to a deleted page has nothing to open.
+    shell.update(cx, |shell, _| {
+        shell.editor.trash(target, NOW).unwrap();
+        shell.editor.empty_trash().unwrap();
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    let at = middle_of_link(&shell, cx, block);
+    hover(cx, at);
+    assert_eq!(hovered(&shell, cx), None);
+}
+
+#[gpui::test]
+fn the_pointer_is_a_hand_over_a_web_link(cx: &mut TestAppContext) {
+    let (shell, cx, block, _) = open(cx);
+    shell.update(cx, |shell, _| {
+        let page = shell.editor.open_page().unwrap().unwrap();
+        page.set_caret(Caret { block, at: 0 }).unwrap();
+        let web = TextSpan {
+            text: "site".into(),
+            marks: Marks {
+                link: Some("https://example.com".into()),
+                ..Marks::default()
+            },
+        };
+        page.paste(&Fragment::Text(vec![web])).unwrap();
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    let at = over_char(&shell, cx, block, 1);
+    hover(cx, at);
+    assert_eq!(
+        shell.read_with(cx, |shell, _| shell.blocks.link_hover),
+        Some(block)
+    );
+}

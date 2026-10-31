@@ -96,6 +96,8 @@ pub struct LinkedText {
     starts: Vec<usize>,
     /// Every link, in order.
     links: Vec<DrawnLink>,
+    /// Where web links are drawn, in characters of the drawn text.
+    web: Vec<Range<usize>>,
 }
 
 impl LinkedText {
@@ -104,12 +106,17 @@ impl LinkedText {
         let mut out = Vec::new();
         let mut starts = vec![0];
         let mut links = Vec::new();
+        let mut web = Vec::new();
         let mut drawn = 0;
         for span in spans {
             let Some(page) = span.marks.page else {
+                let start = drawn;
                 for _ in span.text.chars() {
                     drawn += 1;
                     starts.push(drawn);
+                }
+                if span.marks.link.is_some() && drawn > start {
+                    web.push(start..drawn);
                 }
                 out.push(span.clone());
                 continue;
@@ -142,6 +149,7 @@ impl LinkedText {
             spans: out,
             starts,
             links,
+            web,
         }
     }
 
@@ -190,6 +198,21 @@ impl LinkedText {
     #[must_use]
     pub fn links(&self) -> &[DrawnLink] {
         &self.links
+    }
+
+    /// Whether any web link is drawn.
+    #[must_use]
+    pub fn has_web_links(&self) -> bool {
+        !self.web.is_empty()
+    }
+
+    /// Whether the character drawn at `drawn` can be clicked through (E10-S11): a page link to a page that
+    /// is still there (live or in the trash), or a web link.
+    #[must_use]
+    pub fn clickable_at(&self, drawn: usize) -> bool {
+        self.link_at(drawn)
+            .is_some_and(|link| link.state != LinkState::Missing)
+            || self.web.iter().any(|range| range.contains(&drawn))
     }
 }
 

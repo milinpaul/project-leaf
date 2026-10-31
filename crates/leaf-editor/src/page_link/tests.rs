@@ -105,3 +105,25 @@ fn neighbouring_links_and_marks_keep_their_own_runs() {
         vec![0..1, 1..2]
     );
 }
+
+#[test]
+fn page_links_still_there_and_web_links_can_be_clicked() {
+    let (live, gone) = (PageId::new(), PageId::new());
+    let mut web = plain("site");
+    web.marks.link = Some("https://example.com".into());
+    let drawn = LinkedText::new(&[link(live), plain(" "), web, plain(" "), link(gone)], |page| {
+        if page == live {
+            japan(page)
+        } else {
+            LinkTarget::missing()
+        }
+    });
+    // "🗾 Japan site Deleted page": the label 0..7, a space, "site" 8..12, a space, the gone page 13..
+    assert!(drawn.has_web_links());
+    assert!(drawn.clickable_at(0) && drawn.clickable_at(6));
+    assert!(!drawn.clickable_at(7), "the space");
+    assert!(drawn.clickable_at(8) && drawn.clickable_at(11));
+    assert!(!drawn.clickable_at(12));
+    assert!(!drawn.clickable_at(14), "a deleted page has nothing to open");
+    assert!(!LinkedText::new(&[plain("words")], japan).has_web_links());
+}
