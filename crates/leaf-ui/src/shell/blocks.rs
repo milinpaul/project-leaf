@@ -67,6 +67,9 @@ pub(super) struct PageState {
     pub(super) dragging: Option<BlockDrag>,
     /// How much room each image row had in the last frame.
     pub(super) image_room: ImageRoom,
+    /// Each picture drawn so far, checked once (ADR-XXX-E08-S12): its file, or why it isn't drawn. A stored
+    /// picture never changes, since it is named by the hash of its bytes.
+    pub(super) drawable: HashMap<leaf_core::AssetId, Result<std::path::PathBuf, leaf_store::SvgProblem>>,
     /// A resize of an image by its handle, while it lasts.
     pub(super) resizing: Option<ImageResize>,
     /// Where an image's resize handle was last pressed, for the resize it may start.
