@@ -390,6 +390,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
 | table | GitHub-style Markdown table, first row as the header; `\|` for a pipe and `<br>` for a line break in a cell |
+| page link (inline) | `[[Title]]`; pasted back, a link when exactly one page outside the trash has that title, else text (ADR 0071) |
 
 Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR 0032); plain lines become paragraphs.
 

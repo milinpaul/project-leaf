@@ -302,13 +302,13 @@ impl Shell {
     /// paste inside Leaf keeps everything (ADR 0030, ADR 0032).
     fn on_copy(&mut self, _: &Copy, _: &mut Window, cx: &mut Context<Self>) {
         if let Some(Ok(Some(fragment))) = self.page().map(leaf_editor::PageEditor::copy) {
-            cx.write_to_clipboard(clipboard_item(&fragment));
+            cx.write_to_clipboard(self.clipboard_item(&fragment));
         }
     }
 
     fn on_cut(&mut self, _: &Cut, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(Ok(Some(fragment))) = self.page().map(leaf_editor::PageEditor::cut) {
-            cx.write_to_clipboard(clipboard_item(&fragment));
+            cx.write_to_clipboard(self.clipboard_item(&fragment));
         }
         self.changed(window, cx);
     }
@@ -323,7 +323,13 @@ impl Shell {
             PasteKind::Fragment => {
                 fragment.and_then(|fragment| self.page().map(|page| page.paste(&fragment)))
             }
-            PasteKind::Text => self.page().map(|page| page.paste_text(&contents.text)),
+            PasteKind::Text => {
+                // `[[Title]]` pastes as a link when exactly one page has the title (E10-S03).
+                let titles = self.editor().titles_for_links().unwrap_or_default();
+                let find = |title: &str| titles.get(title).copied();
+                self.page()
+                    .map(|page| page.paste_text_linking(&contents.text, &find))
+            }
             PasteKind::Image => {
                 let inserted = match (&contents.image, &contents.file) {
                     (Some(bytes), _) => self.insert_image(&ImageSource::Bytes(bytes), window, cx),
@@ -348,9 +354,13 @@ impl Shell {
     }
 }
 
-/// What copying `fragment` puts on the clipboard: Markdown as text, the fragment as metadata.
-fn clipboard_item(fragment: &Fragment) -> ClipboardItem {
-    ClipboardItem::new_string_with_metadata(fragment.to_markdown(), fragment.to_json())
+impl Shell {
+    /// What copying `fragment` puts on the clipboard: Markdown as text (page links named `[[Title]]`), the
+    /// fragment itself as metadata.
+    fn clipboard_item(&self, fragment: &Fragment) -> ClipboardItem {
+        let named = fragment.with_link_names(|page| self.editor().link_target(page).name());
+        ClipboardItem::new_string_with_metadata(named.to_markdown(), fragment.to_json())
+    }
 }
 
 /// What a clipboard item holds, by kind: text, a picture, a copied file.
