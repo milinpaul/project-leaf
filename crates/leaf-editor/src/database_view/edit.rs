@@ -234,9 +234,17 @@ impl DatabaseEditor {
         name: &str,
     ) -> Result<OptionId, ModelError> {
         let count = self.column_of(column)?.options.len();
-        let color = OPTION_COLORS[count % OPTION_COLORS.len()].to_owned();
+        let color = OPTION_COLORS
+            .get(count.checked_rem(OPTION_COLORS.len()).unwrap_or(0))
+            .copied()
+            .unwrap_or_default()
+            .to_owned();
         // One undo step: undo takes the option away along with its pick.
         self.db.group(|db| {
+            #[expect(
+                clippy::unreachable,
+                reason = "the model's AddOption always answers OptionCreated"
+            )]
             let DatabaseOutcome::OptionCreated(option) = db.apply(DatabaseCommand::AddOption {
                 column,
                 name: name.trim().to_owned(),

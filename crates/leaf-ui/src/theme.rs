@@ -152,7 +152,7 @@ pub fn install(cx: &mut App) {
     let fonts = FONTS.iter().map(|bytes| Cow::Borrowed(*bytes)).collect();
     if let Err(err) = cx.text_system().add_fonts(fonts) {
         // The system font stands in; the app still works, only the look is off.
-        eprintln!("leaf: could not load the bundled fonts: {err:#}");
+        crate::log::log(format_args!("could not load the bundled fonts: {err:#}"));
     }
     cx.set_global(Theme {
         light_theme: Rc::new(config(ThemeMode::Light, &LIGHT)),

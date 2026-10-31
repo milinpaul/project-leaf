@@ -158,7 +158,7 @@ impl WorkspaceEditor {
         if was_open.is_none() || self.selected.is_some() {
             return Ok(None);
         }
-        let after = at.and_then(|at| siblings.get(at + 1).copied());
+        let after = at.and_then(|at| siblings.get(at.checked_add(1)?).copied());
         let before = at
             .and_then(|at| at.checked_sub(1))
             .and_then(|at| siblings.get(at).copied());

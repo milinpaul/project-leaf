@@ -44,13 +44,12 @@ impl PageEditor {
             .unwrap_or_default()
             .chars()
             .collect();
-        let start = at.at + OPEN.len();
+        let start = at.at.saturating_add(OPEN.len());
         let opened = text.get(at.at..start).is_some_and(|two| two == ['[', '[']);
         let inside = caret.block == at.block && caret.at >= start && caret.at <= text.len();
-        let query: String = if opened && inside {
-            text[start..caret.at].iter().collect()
-        } else {
-            String::new()
+        let query: String = match text.get(start..caret.at) {
+            Some(typed) if opened && inside => typed.iter().collect(),
+            _ => String::new(),
         };
         if !opened || !inside || query.contains([']', '\n']) || self.selection()?.is_some() {
             self.link_menu = None;
@@ -102,7 +101,7 @@ impl PageEditor {
             .unwrap_or_default()
             .chars()
             .skip(from)
-            .take(to - from)
+            .take(to.saturating_sub(from))
             .collect();
         self.begin()?;
         let query = format!("{OPEN}{words}");
@@ -115,12 +114,12 @@ impl PageEditor {
         })?;
         let caret = self.set_caret(Caret {
             block,
-            at: from + query.chars().count(),
+            at: from.saturating_add(query.chars().count()),
         })?;
         self.finish()?;
         self.open_link_menu(Caret { block, at: from })?;
         if let Some(menu) = &mut self.link_menu {
-            menu.from_selection = Some(to - from);
+            menu.from_selection = Some(to.saturating_sub(from));
         }
         Ok(Some(caret))
     }
@@ -138,7 +137,7 @@ impl PageEditor {
             .unwrap_or_default()
             .chars()
             .skip(from)
-            .take(to - from)
+            .take(to.saturating_sub(from))
             .collect();
         Ok(!words.trim().is_empty() && !words.contains([']', '\n', leaf_model::PAGE_LINK]))
     }
@@ -155,9 +154,14 @@ impl PageEditor {
             // Back to the selected words first, so the link replaces them in one step.
             Some(words) => {
                 self.undo()?;
-                at.at..at.at + words
+                at.at..at.at.saturating_add(words)
             }
-            None => at.at..at.at + OPEN.len() + query.chars().count(),
+            None => {
+                at.at
+                    ..at.at
+                        .saturating_add(OPEN.len())
+                        .saturating_add(query.chars().count())
+            }
         };
         self.begin()?;
         self.doc.as_separate_step(|doc| -> Result<(), EditorError> {
@@ -174,7 +178,7 @@ impl PageEditor {
         })?;
         let caret = self.set_caret(Caret {
             block: at.block,
-            at: at.at + 1,
+            at: at.at.saturating_add(1),
         })?;
         self.finish()?;
         Ok(Some(caret))

@@ -6,6 +6,7 @@
 //! variants are left out to keep the grid calm.
 
 use emojis::{Emoji, Group, UnicodeVersion};
+use std::num::NonZeroUsize;
 
 /// The newest Unicode version whose emoji the picker offers (2020): drawn by Windows 10, macOS 11 and
 /// the Noto Color Emoji in current Linux distributions.
@@ -150,28 +151,38 @@ impl EmojiPicker {
         let Some((section, at)) = self.highlighted else {
             return;
         };
-        let columns = columns.max(1);
+        let width = NonZeroUsize::new(columns).unwrap_or(NonZeroUsize::MIN);
+        let columns = width.get();
         let len = |s: usize| self.sections.get(s).map_or(0, |section| section.emojis.len());
-        let last_row_start = |s: usize| len(s).saturating_sub(1) / columns * columns;
+        // The guards below keep every step inside the grid, so saturating never actually clamps.
+        let last_row_start = |s: usize| (len(s).saturating_sub(1) / width).saturating_mul(columns);
         let target = match step {
-            GridMove::Left if at > 0 => Some((section, at - 1)),
-            GridMove::Left if section > 0 => Some((section - 1, len(section - 1).saturating_sub(1))),
-            GridMove::Right if at + 1 < len(section) => Some((section, at + 1)),
-            GridMove::Right if section + 1 < self.sections.len() => Some((section + 1, 0)),
-            GridMove::Up if at >= columns => Some((section, at - columns)),
+            GridMove::Left if at > 0 => Some((section, at.saturating_sub(1))),
+            GridMove::Left if section > 0 => {
+                let above = section.saturating_sub(1);
+                Some((above, len(above).saturating_sub(1)))
+            }
+            GridMove::Right if at.saturating_add(1) < len(section) => Some((section, at.saturating_add(1))),
+            GridMove::Right if section.saturating_add(1) < self.sections.len() => {
+                Some((section.saturating_add(1), 0))
+            }
+            GridMove::Up if at >= columns => Some((section, at.saturating_sub(columns))),
             GridMove::Up if section > 0 => {
-                let above = section - 1;
+                let above = section.saturating_sub(1);
                 Some((
                     above,
-                    (last_row_start(above) + at % columns).min(len(above).saturating_sub(1)),
+                    last_row_start(above)
+                        .saturating_add(at % width)
+                        .min(len(above).saturating_sub(1)),
                 ))
             }
-            GridMove::Down if at / columns < last_row_start(section) / columns => {
-                Some((section, (at + columns).min(len(section) - 1)))
-            }
-            GridMove::Down if section + 1 < self.sections.len() => {
-                let below = section + 1;
-                Some((below, (at % columns).min(len(below).saturating_sub(1))))
+            GridMove::Down if at / width < last_row_start(section) / width => Some((
+                section,
+                at.saturating_add(columns).min(len(section).saturating_sub(1)),
+            )),
+            GridMove::Down if section.saturating_add(1) < self.sections.len() => {
+                let below = section.saturating_add(1);
+                Some((below, (at % width).min(len(below).saturating_sub(1))))
             }
             _ => None,
         };
@@ -198,7 +209,11 @@ impl EmojiPicker {
                 )
             })
             .collect();
-        let index = usize::try_from(seed % u64::try_from(pool.len()).unwrap_or(1)).unwrap_or(0);
+        let index = u64::try_from(pool.len())
+            .ok()
+            .and_then(|len| seed.checked_rem(len))
+            .and_then(|i| usize::try_from(i).ok())
+            .unwrap_or(0);
         pool.get(index).copied().map_or(
             EmojiChoice {
                 emoji: "📄",

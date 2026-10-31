@@ -246,7 +246,7 @@ impl DatabaseEditor {
         let value = (kind == PropertyType::Checkbox).then_some(CellValue::Checkbox(true));
         let mut filters = self.current_filters();
         filters.push(Filter::new(column, op, value));
-        let index = filters.len() - 1;
+        let index = filters.len().saturating_sub(1);
         self.write_filters(filters)?;
         Ok(index)
     }

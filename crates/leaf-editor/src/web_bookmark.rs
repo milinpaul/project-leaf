@@ -75,12 +75,12 @@ impl PageEditor {
             (offer.start.clone(), offer.len, offer.url.clone(), offer.selected);
         let start = self.doc.resolve(&anchor)?;
         let at = start.map(|start| Caret {
-            at: start.at + len,
+            at: start.at.saturating_add(len),
             ..start
         });
         let standing = match (at, self.caret()?, self.selection()?) {
             (Some(at), Some(caret), None) if caret == at => char_marks(&self.doc, at.block)?
-                .get(at.at - len..at.at)
+                .get(at.at.saturating_sub(len)..at.at)
                 .is_some_and(|marks| marks.iter().all(|m| m.link.as_deref() == Some(url.as_str()))),
             _ => false,
         };
@@ -101,8 +101,11 @@ impl PageEditor {
         if let Some(offer) = &mut self.offer {
             let n = BOOKMARK_OFFER_CHOICES.len();
             offer.selected = match direction {
-                Vertical::Down => (offer.selected + 1) % n,
-                Vertical::Up => (offer.selected + n - 1) % n,
+                Vertical::Down => offer.selected.saturating_add(1).checked_rem(n).unwrap_or(0),
+                Vertical::Up => offer
+                    .selected
+                    .checked_sub(1)
+                    .map_or(n.saturating_sub(1), |prev| prev.min(n.saturating_sub(1))),
             };
         }
     }
@@ -136,7 +139,7 @@ impl PageEditor {
         }
         let len = offer.len;
         let start = Caret {
-            at: offer.at.at - len,
+            at: offer.at.at.saturating_sub(len),
             ..offer.at
         };
         self.begin()?;
@@ -281,7 +284,7 @@ fn place_bookmark(
     if len > 0 {
         doc.apply(PageCommand::DeleteText {
             id: block,
-            range: start.at..start.at + len,
+            range: start.at..start.at.saturating_add(len),
         })?;
     }
     let below: BlockId = crate::table::table_of(doc, block)?.unwrap_or(block);

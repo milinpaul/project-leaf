@@ -325,7 +325,7 @@ impl PageEditor {
         };
         let moved = open.hovered != Some(Hovered::Main(at));
         open.hovered = Some(Hovered::Main(at));
-        let enabled = menu.items[at].enabled;
+        let enabled = menu.items.get(at).is_some_and(|i| i.enabled);
         let change = match (menu.kinds.is_some(), *entry == MenuEntry::TurnInto) {
             (false, turn_into) => {
                 if enabled {
@@ -408,14 +408,15 @@ impl PageEditor {
 fn step(items: &[MenuItem], from: usize, up: bool) -> usize {
     let count = items.len();
     (1..=count)
-        .map(|n| {
-            if up {
-                (from + count * 2 - n) % count
+        .filter_map(|n| {
+            let ahead = if up {
+                from.checked_add(count.checked_mul(2)?)?.checked_sub(n)?
             } else {
-                (from + n) % count
-            }
+                from.checked_add(n)?
+            };
+            ahead.checked_rem(count)
         })
-        .find(|&i| items[i].enabled)
+        .find(|&i| items.get(i).is_some_and(|item| item.enabled))
         .unwrap_or(from)
 }
 

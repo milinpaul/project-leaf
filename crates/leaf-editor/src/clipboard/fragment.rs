@@ -85,8 +85,10 @@ struct Wire {
     blocks: Option<Vec<WireBlock>>,
 }
 
-// Each mark is a separate optional flag on the wire, written only when set.
-#[allow(clippy::struct_excessive_bools)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "each mark is a separate optional flag on the wire, written only when set"
+)]
 #[derive(Serialize, Deserialize)]
 struct WireSpan {
     insert: String,
@@ -105,7 +107,10 @@ struct WireSpan {
     page: Option<PageId>,
 }
 
-#[allow(clippy::trivially_copy_pass_by_ref)] // serde's `skip_serializing_if` passes a reference
+#[expect(
+    clippy::trivially_copy_pass_by_ref,
+    reason = "serde's `skip_serializing_if` passes a reference"
+)]
 fn is_false(value: &bool) -> bool {
     !value
 }

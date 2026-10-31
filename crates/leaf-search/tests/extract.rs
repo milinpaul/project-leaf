@@ -1,4 +1,5 @@
 //! Turning pages into index rows (E11-S02).
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 use leaf_core::{AssetId, BlockId, PageId};
 use leaf_model::{BlockKind, Outcome, PageCommand, PageDoc, PageOutcome, Workspace, WorkspaceCommand};

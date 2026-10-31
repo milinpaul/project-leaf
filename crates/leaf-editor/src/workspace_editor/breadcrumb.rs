@@ -42,9 +42,10 @@ impl WorkspaceEditor {
             }
         }
         path.reverse();
-        let shown: Vec<Option<PageId>> = if path.len() > MAX_CRUMBS {
-            let tail = &path[path.len() - 2..];
-            [Some(path[0]), None]
+        let shown: Vec<Option<PageId>> = if path.len() > MAX_CRUMBS
+            && let (Some(&first), Some(tail)) = (path.first(), path.get(path.len().saturating_sub(2)..))
+        {
+            [Some(first), None]
                 .into_iter()
                 .chain(tail.iter().copied().map(Some))
                 .collect()

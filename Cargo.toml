@@ -71,6 +71,15 @@ todo = "warn"
 dbg_macro = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
+# Hidden panics and smells (E08-S15, ADR-XXX-E08-S15). Core crates also lint indexing and arithmetic, in their
+# `lib.rs`. Tests may panic, index and print (clippy.toml); examples and benches may print.
+allow_attributes_without_reason = "warn"
+panic = "warn"
+unreachable = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"
 
 # Development and test builds keep only line tables (file and line in panics and backtraces), not full debug info:
 # linking is faster and `target/` far smaller (E08-S17). For a debugger session, build with

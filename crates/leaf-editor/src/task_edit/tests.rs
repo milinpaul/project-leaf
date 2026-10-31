@@ -61,7 +61,10 @@ fn typed_times_read_in_common_forms() {
     ] {
         assert_eq!(t(typed).as_deref(), Some(read), "{typed:?}");
     }
-    for bad in ["", "25", "9:5", "13pm", "0am", "noon", "9:60", "-1", "12345"] {
+    // "é1": cutting the last two bytes off used to split the "é" and crash (E08-S15).
+    for bad in [
+        "", "25", "9:5", "13pm", "0am", "noon", "9:60", "-1", "12345", "é1", "1é5",
+    ] {
         assert_eq!(t(bad), None, "{bad:?}");
     }
 }

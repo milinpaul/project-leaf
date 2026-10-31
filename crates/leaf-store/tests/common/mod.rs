@@ -1,4 +1,5 @@
 //! Helpers shared by the integration tests.
+#![allow(clippy::panic, reason = "test helpers fail a test by panicking")]
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};

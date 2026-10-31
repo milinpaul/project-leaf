@@ -58,15 +58,15 @@ impl PageEditor {
             .and_then(|tracked| tracked.goal_x)
             .unwrap_or_else(|| layout.offset_to_x(block, caret.at));
         let line = layout.line_of(block, caret.at);
-        let last_line = layout.line_count(block).max(1) - 1;
+        let last_line = layout.line_count(block).saturating_sub(1);
         let target = match direction {
             Vertical::Up if line > 0 => Caret {
                 block,
-                at: layout.x_to_offset(block, line - 1, x),
+                at: layout.x_to_offset(block, line.saturating_sub(1), x),
             },
             Vertical::Down if line < last_line => Caret {
                 block,
-                at: layout.x_to_offset(block, line + 1, x),
+                at: layout.x_to_offset(block, line.saturating_add(1), x),
             },
             Vertical::Up | Vertical::Down => self.across_lines(caret, direction, x, layout)?,
         };
@@ -93,10 +93,10 @@ impl PageEditor {
                 let row = if back {
                     place.row.checked_sub(1)
                 } else {
-                    Some(place.row + 1).filter(|&r| r < place.grid.len())
+                    place.row.checked_add(1).filter(|&r| r < place.grid.len())
                 };
                 let same_column = row.and_then(|r| {
-                    let cells = &place.grid[r];
+                    let cells = place.grid.get(r)?;
                     cells
                         .get(place.column.min(cells.len().saturating_sub(1)))
                         .copied()
@@ -122,7 +122,7 @@ impl PageEditor {
         };
         let next = self.column_under(next, block, x, layout)?;
         let line = if back {
-            layout.line_count(next).max(1) - 1
+            layout.line_count(next).saturating_sub(1)
         } else {
             0
         };
@@ -147,7 +147,9 @@ impl PageEditor {
         if cell_place(&self.doc, from)?.is_some_and(|here| here.table == place.table) {
             return Ok(target);
         }
-        let row = &place.grid[place.row];
+        let Some(row) = place.grid.get(place.row) else {
+            return Ok(target);
+        };
         Ok(row
             .iter()
             .copied()

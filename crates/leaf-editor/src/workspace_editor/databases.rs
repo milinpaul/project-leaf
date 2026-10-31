@@ -30,6 +30,10 @@ impl WorkspaceEditor {
             Some(parent) => self.workspace.children(parent)?.len(),
             None => self.workspace.root_pages()?.len(),
         };
+        #[expect(
+            clippy::unreachable,
+            reason = "the workspace's CreateDatabasePage always answers DatabasePageCreated"
+        )]
         let Outcome::DatabasePageCreated { page, database } =
             self.workspace.apply(WorkspaceCommand::CreateDatabasePage {
                 parent,
@@ -113,6 +117,10 @@ impl WorkspaceEditor {
         if index > rows {
             return Err(ModelError::IndexOutOfRange { index, len: rows }.into());
         }
+        #[expect(
+            clippy::unreachable,
+            reason = "the workspace's CreateRowPage always answers PageCreated"
+        )]
         let Outcome::PageCreated(row) = self.workspace.apply_unrecorded(WorkspaceCommand::CreateRowPage {
             database_page,
             created_at: now_ms,

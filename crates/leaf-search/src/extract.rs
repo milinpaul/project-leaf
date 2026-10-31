@@ -87,8 +87,8 @@ fn links_in(workspace: &Workspace, doc: &PageDoc, block: BlockId) -> Result<Vec<
         links.push(LinkText {
             block,
             target,
-            before: tail(&words(&chars[..at])),
-            after: head(&words(&chars[at + 1..])),
+            before: tail(&words(chars.get(..at).unwrap_or_default())),
+            after: head(&words(chars.get(at.saturating_add(1)..).unwrap_or_default())),
         });
     }
     Ok(links)
@@ -109,7 +109,7 @@ fn tail(text: &str) -> String {
     if count <= LINK_CONTEXT {
         return text.to_owned();
     }
-    let kept: String = text.chars().skip(count - LINK_CONTEXT).collect();
+    let kept: String = text.chars().skip(count.saturating_sub(LINK_CONTEXT)).collect();
     format!("…{}", kept.trim_start())
 }
 

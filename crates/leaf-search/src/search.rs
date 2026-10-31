@@ -272,14 +272,14 @@ fn plain(text: String) -> Highlighted {
 fn highlighted(marked: &str) -> Highlighted {
     let mut text = String::with_capacity(marked.len());
     let mut ranges = Vec::new();
-    let (mut chars, mut start) = (0, None);
+    let (mut chars, mut start) = (0_usize, None);
     for c in marked.chars() {
         match c {
             OPEN => start = Some(chars),
             CLOSE => ranges.extend(start.take().map(|start| start..chars)),
             _ => {
                 text.push(c);
-                chars += 1;
+                chars = chars.saturating_add(1);
             }
         }
     }

@@ -18,6 +18,10 @@
 //! **Boundaries:** core crate, native only. No GPUI and no `leaf-ui`. Depends only on
 //! `leaf-core` and `leaf-model`; the store is reached through [`PageSource`].
 
+// Core crates must not panic on bad input, so indexing and arithmetic are checked here (E08-S15).
+// Unit tests are exempt, like the workspace exempts them from unwrap/expect.
+#![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
+
 mod backlinks;
 mod error;
 mod extract;

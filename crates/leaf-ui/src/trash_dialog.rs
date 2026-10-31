@@ -40,7 +40,7 @@ pub struct TrashPanel {
 /// Opens the Trash dialog over `editor`'s trash; actions go to `shell`.
 pub fn open(shell: WeakEntity<Shell>, editor: &WorkspaceEditor, window: &mut Window, cx: &mut gpui::App) {
     let items = editor.trash_items().unwrap_or_else(|err| {
-        eprintln!("leaf: could not list the trash: {err}");
+        crate::log::log(format_args!("could not list the trash: {err}"));
         Vec::new()
     });
     let panel = cx.new(|cx| TrashPanel::new(items, shell, window, cx));

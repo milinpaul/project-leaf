@@ -174,7 +174,7 @@ fn score(item: &SlashItem, query: &str) -> Option<u32> {
         .chain(item.keywords.iter().copied())
         .filter_map(|target| in_order(target, query))
         .max()
-        .map(|closeness| 1000 + closeness)
+        .map(|closeness| closeness.saturating_add(1000))
 }
 
 /// Whether the query's letters appear in order in `target`; if so, a closeness score that is higher
@@ -187,11 +187,11 @@ fn in_order(target: &str, query: &str) -> Option<u32> {
         loop {
             match rest.next() {
                 Some(c) if c == wanted => break,
-                Some(_) => skipped += 1,
+                Some(_) => skipped = skipped.saturating_add(1),
                 None => return None,
             }
         }
-        gaps += skipped;
+        gaps = gaps.saturating_add(skipped);
     }
     Some(999u32.saturating_sub(gaps))
 }

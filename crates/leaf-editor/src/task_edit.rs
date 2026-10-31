@@ -76,7 +76,11 @@ impl DatePicker {
     /// The heading, such as "October 2026".
     #[must_use]
     pub fn title(&self) -> String {
-        format!("{} {}", MONTH_NAMES[usize::from(self.month - 1)], self.year)
+        let name = MONTH_NAMES
+            .get(usize::from(self.month.saturating_sub(1)))
+            .copied()
+            .unwrap_or_default();
+        format!("{name} {}", self.year)
     }
 
     /// The month's days as week rows, Monday first; days outside the month are `None`.
@@ -91,8 +95,10 @@ impl DatePicker {
         let mut column = lead;
         let mut day = Some(first);
         while let Some(date) = day.filter(|d| d.month() == self.month) {
-            week[column] = Some(date);
-            column += 1;
+            if let Some(slot) = week.get_mut(column) {
+                *slot = Some(date);
+            }
+            column = column.saturating_add(1);
             if column == 7 {
                 weeks.push(week);
                 week = [None; 7];
@@ -110,10 +116,10 @@ impl DatePicker {
     pub fn previous_month(&mut self) {
         if self.month == 1 {
             if self.year > 1 {
-                (self.year, self.month) = (self.year - 1, 12);
+                (self.year, self.month) = (self.year.saturating_sub(1), 12);
             }
         } else {
-            self.month -= 1;
+            self.month = self.month.saturating_sub(1);
         }
     }
 
@@ -121,10 +127,10 @@ impl DatePicker {
     pub fn next_month(&mut self) {
         if self.month == 12 {
             if self.year < 9999 {
-                (self.year, self.month) = (self.year + 1, 1);
+                (self.year, self.month) = (self.year.saturating_add(1), 1);
             }
         } else {
-            self.month += 1;
+            self.month = self.month.saturating_add(1);
         }
     }
 
@@ -153,7 +159,7 @@ pub fn parse_time(text: &str) -> Option<DueTime> {
     let (hour, minute) = match clock.split_once([':', '.']) {
         Some((h, m)) if m.len() == 2 => (h, m),
         Some(_) => return None,
-        None if clock.len() > 2 => clock.split_at(clock.len() - 2),
+        None if clock.len() > 2 => clock.split_at_checked(clock.len().saturating_sub(2))?,
         None => (clock, "00"),
     };
     if hour.is_empty() || !hour.bytes().chain(minute.bytes()).all(|b| b.is_ascii_digit()) {
@@ -168,7 +174,7 @@ pub fn parse_time(text: &str) -> Option<DueTime> {
         hour = match (hour, pm) {
             (12, false) => 0,
             (12, true) => 12,
-            (h, true) => h + 12,
+            (h, true) => h.checked_add(12)?,
             (h, false) => h,
         };
     }

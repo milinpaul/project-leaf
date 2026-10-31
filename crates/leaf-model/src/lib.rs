@@ -8,6 +8,10 @@
 //! **Boundaries:** core crate, wasm-ok. No GPUI, no `leaf-ui`, no file system, threads or SQLite.
 //! Depends only on `leaf-core`. Unknown data from newer app versions is preserved, never dropped.
 
+// Core crates must not panic on bad input, so indexing and arithmetic are checked here (E08-S15).
+// Unit tests are exempt, like the workspace exempts them from unwrap/expect.
+#![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
+
 mod block_kind;
 mod callout;
 mod command;

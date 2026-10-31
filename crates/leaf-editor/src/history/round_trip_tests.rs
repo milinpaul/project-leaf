@@ -207,7 +207,7 @@ fn run(editor: &mut PageEditor, step: Step) {
             let caret = at.caret(editor);
             let _ = editor.set_caret(caret).and_then(|_| editor.paste_text(&text));
         }
-        Step::CutAndPaste(..) => unreachable!("run step by step by the test"),
+        Step::CutAndPaste(..) => panic!("run step by step by the test"),
         Step::Bold(a, b) => {
             let (a, b) = (a.caret(editor), b.caret(editor));
             let _ = editor

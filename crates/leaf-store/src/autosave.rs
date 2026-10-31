@@ -52,7 +52,10 @@ impl Autosave {
     /// When the next document falls due, or `None` when everything is saved: when to fire the timer.
     #[must_use]
     pub fn next_deadline(&self) -> Option<i64> {
-        self.dirty.values().min().map(|first| first + self.delay)
+        self.dirty
+            .values()
+            .min()
+            .map(|first| first.saturating_add(self.delay))
     }
 
     /// The documents whose changes have waited long enough to be saved at `now`.
@@ -60,7 +63,7 @@ impl Autosave {
     pub fn due(&self, now: i64) -> Vec<DocKey> {
         self.dirty
             .iter()
-            .filter(|&(_, &first)| now - first >= self.delay)
+            .filter(|&(_, &first)| now.saturating_sub(first) >= self.delay)
             .map(|(&key, _)| key)
             .collect()
     }
@@ -128,10 +131,12 @@ impl Autosave {
         keys: &[DocKey],
         now: i64,
     ) -> Result<usize, StoreError> {
-        let mut wrote = 0;
+        let mut wrote = 0_usize;
         for key in keys {
             match docs.iter().find(|(k, _)| k == key) {
-                Some((_, doc)) => wrote += usize::from(self.save(store, *key, *doc, now)?),
+                Some((_, doc)) => {
+                    wrote = wrote.saturating_add(usize::from(self.save(store, *key, *doc, now)?));
+                }
                 None => self.forget(*key),
             }
         }

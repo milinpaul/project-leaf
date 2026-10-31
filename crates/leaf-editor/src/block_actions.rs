@@ -174,8 +174,9 @@ impl PageEditor {
         // `MoveBlocks` counts the destination index without the moved blocks themselves.
         Ok(if up {
             top.checked_sub(1).map(|index| (parent, index))
-        } else if bottom + 1 < siblings.len() {
-            Some((parent, bottom + 2 - positions.len()))
+        } else if bottom.saturating_add(1) < siblings.len() {
+            // `positions` holds distinct indices up to `bottom`, so its length is at most `bottom + 1`.
+            Some((parent, bottom.saturating_add(2).saturating_sub(positions.len())))
         } else {
             None
         })

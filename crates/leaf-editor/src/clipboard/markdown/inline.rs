@@ -19,7 +19,7 @@ pub(crate) fn parse(line: &str) -> Vec<TextSpan> {
 fn read(s: &[char], marks: &Marks, out: &mut Vec<TextSpan>) {
     let mut plain = String::new();
     let mut i = 0;
-    while i < s.len() {
+    while let Some(rest) = s.get(i..).filter(|r| !r.is_empty()) {
         if let Some((inner, inner_marks, next)) = token(s, i, marks) {
             flush(&mut plain, marks, out);
             match inner {
@@ -27,25 +27,30 @@ fn read(s: &[char], marks: &Marks, out: &mut Vec<TextSpan>) {
                     text,
                     marks: inner_marks,
                 }),
-                Inner::Parse(range) => read(&s[range], &inner_marks, out),
+                Inner::Parse(range) => read(s.get(range).unwrap_or_default(), &inner_marks, out),
             }
             i = next;
             continue;
         }
-        if s[i] == '`' {
+        let used = match rest {
             // A backtick run with no matching run after it is text, all of it.
-            let run = s[i..].iter().take_while(|&&c| c == '`').count();
-            plain.extend(&s[i..i + run]);
-            i += run;
-            continue;
-        }
-        if s[i] == '\\' && s.get(i + 1).is_some_and(char::is_ascii_punctuation) {
-            plain.push(s[i + 1]);
-            i += 2;
-            continue;
-        }
-        plain.push(s[i]);
-        i += 1;
+            ['`', ..] => {
+                let run = backtick_run(rest);
+                plain.extend(std::iter::repeat_n('`', run));
+                run
+            }
+            ['\\', p, ..] if p.is_ascii_punctuation() => {
+                plain.push(*p);
+                2
+            }
+            [c, ..] => {
+                plain.push(*c);
+                1
+            }
+            [] => break,
+        };
+        // `used` is at most `rest.len()`, so this stays within `s.len()`.
+        i = i.saturating_add(used);
     }
     flush(&mut plain, marks, out);
 }
@@ -57,52 +62,62 @@ enum Inner {
     Parse(std::ops::Range<usize>),
 }
 
+/// Inline code starting at the backticks at `i`: its text, marked as code, and where reading continues.
+fn code_token(s: &[char], i: usize, marks: &Marks) -> Option<(Inner, Marks, usize)> {
+    let run = backtick_run(s.get(i..)?);
+    let start = i.checked_add(run)?;
+    let end = find_backtick_run(s, start, run)?;
+    let mut text: String = s.get(start..end)?.iter().collect();
+    // One space just inside each end is padding, so `` ` `` can hold a backtick.
+    if text.len() > 2
+        && let Some(inner) = text.strip_prefix(' ').and_then(|t| t.strip_suffix(' '))
+    {
+        text = inner.to_string();
+    }
+    Some((
+        Inner::Literal(text),
+        Marks {
+            code: true,
+            ..marks.clone()
+        },
+        end.checked_add(run)?,
+    ))
+}
+
 /// A formatting token starting at `i`: what it contains, its marks, and where reading continues.
 fn token(s: &[char], i: usize, marks: &Marks) -> Option<(Inner, Marks, usize)> {
-    let at = |k: usize| s.get(k).copied();
-    match s[i] {
-        '`' => {
-            let run = s[i..].iter().take_while(|&&c| c == '`').count();
-            let start = i + run;
-            let end = find_backtick_run(s, start, run)?;
-            let mut text: String = s[start..end].iter().collect();
-            // One space just inside each end is padding, so `` ` `` can hold a backtick.
-            if text.len() > 2 && text.starts_with(' ') && text.ends_with(' ') {
-                text = text[1..text.len() - 1].to_string();
-            }
-            Some((
-                Inner::Literal(text),
-                Marks {
-                    code: true,
-                    ..marks.clone()
-                },
-                end + run,
-            ))
-        }
+    let following = s.get(i.checked_add(1)?).copied();
+    match *s.get(i)? {
+        '`' => code_token(s, i, marks),
         '[' => {
             // The link text ends at the first `]`, which must be followed by `(`.
-            let close = s[i + 1..].iter().position(|&c| c == ']')? + i + 1;
-            if s.get(close + 1) != Some(&'(') {
+            let text_start = i.checked_add(1)?;
+            let close = find(s, text_start, ']')?;
+            let open = close.checked_add(1)?;
+            if s.get(open) != Some(&'(') {
                 return None;
             }
-            let url_end = s[close + 2..].iter().position(|&c| c == ')')? + close + 2;
-            let url: String = s[close + 2..url_end].iter().collect();
+            let url_start = open.checked_add(1)?;
+            let url_end = find(s, url_start, ')')?;
+            let url: String = s.get(url_start..url_end)?.iter().collect();
             let url = url.trim().to_owned();
             if url.is_empty() || url.contains(' ') {
                 return None;
             }
             Some((
-                Inner::Parse(i + 1..close),
+                Inner::Parse(text_start..close),
                 Marks {
                     link: Some(url),
                     ..marks.clone()
                 },
-                url_end + 1,
+                url_end.checked_add(1)?,
             ))
         }
         '<' => {
-            let close = s[i + 1..].iter().position(|&c| c == '>')? + i + 1;
-            let url: String = s[i + 1..close].iter().collect();
+            let start = i.checked_add(1)?;
+            let close = find(s, start, '>')?;
+            let next = close.checked_add(1)?;
+            let url: String = s.get(start..close)?.iter().collect();
             let is_url =
                 (url.starts_with("http://") || url.starts_with("https://") || url.starts_with("mailto:"))
                     && !url.contains(char::is_whitespace);
@@ -113,11 +128,11 @@ fn token(s: &[char], i: usize, marks: &Marks) -> Option<(Inner, Marks, usize)> {
                         link: Some(url),
                         ..marks.clone()
                     },
-                    close + 1,
+                    next,
                 )
             })
         }
-        '~' if at(i + 1) == Some('~') => delimited(
+        '~' if following == Some('~') => delimited(
             s,
             i,
             &['~', '~'],
@@ -126,7 +141,7 @@ fn token(s: &[char], i: usize, marks: &Marks) -> Option<(Inner, Marks, usize)> {
                 ..marks.clone()
             },
         ),
-        c @ ('*' | '_') if at(i + 1) == Some(c) => {
+        c @ ('*' | '_') if following == Some(c) => {
             if c == '_' && !word_edge_before(s, i) {
                 return None;
             }
@@ -160,41 +175,54 @@ fn token(s: &[char], i: usize, marks: &Marks) -> Option<(Inner, Marks, usize)> {
 
 /// Text between `delim` at `i` and the next matching `delim`; it must not start or end with a space.
 fn delimited(s: &[char], i: usize, delim: &[char], marks: Marks) -> Option<(Inner, Marks, usize)> {
-    let start = i + delim.len();
+    let first = *delim.first()?;
+    let start = i.checked_add(delim.len())?;
     if s.get(start).is_none_or(|c| c.is_whitespace()) {
         return None;
     }
-    let mut k = start + 1;
-    while k + delim.len() <= s.len() {
-        let closes = s[k..k + delim.len()] == *delim
-            && !s[k - 1].is_whitespace()
+    for k in start.checked_add(1)?..=s.len().checked_sub(delim.len())? {
+        let end = k.checked_add(delim.len())?;
+        let closes = s.get(k..end) == Some(delim)
+            && k.checked_sub(1).and_then(|p| s.get(p)).is_some_and(|c| !c.is_whitespace())
             // `*italic*` must not close on half of a `**`.
-            && (delim.len() > 1 || s.get(k + 1) != Some(&delim[0]))
-            && (delim[0] != '_' || s.get(k + delim.len()).is_none_or(|c| !c.is_alphanumeric()));
+            && (delim.len() > 1 || k.checked_add(1).and_then(|n| s.get(n)) != Some(&first))
+            && (first != '_' || s.get(end).is_none_or(|c| !c.is_alphanumeric()));
         if closes {
-            return Some((Inner::Parse(start..k), marks, k + delim.len()));
+            return Some((Inner::Parse(start..k), marks, end));
         }
-        k += 1;
     }
     None
 }
 
 fn word_edge_before(s: &[char], i: usize) -> bool {
-    i == 0 || !s[i - 1].is_alphanumeric()
+    i.checked_sub(1)
+        .and_then(|p| s.get(p))
+        .is_none_or(|c| !c.is_alphanumeric())
+}
+
+/// The index of the first `c` at or after `from`.
+fn find(s: &[char], from: usize, c: char) -> Option<usize> {
+    s.get(from..)?.iter().position(|&x| x == c)?.checked_add(from)
+}
+
+/// How many backticks `s` starts with.
+fn backtick_run(s: &[char]) -> usize {
+    s.iter().take_while(|&&c| c == '`').count()
 }
 
 fn find_backtick_run(s: &[char], from: usize, run: usize) -> Option<usize> {
     let mut k = from;
-    while k < s.len() {
-        if s[k] == '`' {
-            let len = s[k..].iter().take_while(|&&c| c == '`').count();
+    while let Some(rest) = s.get(k..).filter(|r| !r.is_empty()) {
+        let step = if rest.first() == Some(&'`') {
+            let len = backtick_run(rest);
             if len == run {
                 return Some(k);
             }
-            k += len;
+            len
         } else {
-            k += 1;
-        }
+            1
+        };
+        k = k.checked_add(step)?;
     }
     None
 }
@@ -259,14 +287,21 @@ pub(crate) fn write(spans: &[TextSpan]) -> String {
 fn escape(text: &str) -> String {
     let chars: Vec<char> = text.chars().collect();
     let mut out = String::with_capacity(text.len());
-    for (i, &c) in chars.iter().enumerate() {
-        let alnum = |k: Option<usize>| k.and_then(|k| chars.get(k)).is_some_and(|c| c.is_alphanumeric());
-        let rest: String = chars[i + 1..].iter().collect();
+    let mut prev: Option<char> = None;
+    let mut remaining = chars.as_slice();
+    while let Some((&c, tail)) = remaining.split_first() {
+        remaining = tail;
+        let rest: String = tail.iter().collect();
         let needs = match c {
             '\\' | '`' | '*' | '~' => true,
-            '_' => !(alnum(i.checked_sub(1)) && alnum(Some(i + 1))),
+            '_' => {
+                !(prev.is_some_and(char::is_alphanumeric)
+                    && tail.first().is_some_and(|c| c.is_alphanumeric()))
+            }
             // Only when its own closing `]` is followed by `(`, making a link.
-            '[' => rest.find(']').is_some_and(|k| rest[k + 1..].starts_with('(')),
+            '[' => rest
+                .split_once(']')
+                .is_some_and(|(_, after)| after.starts_with('(')),
             '<' => ["http://", "https://", "mailto:"]
                 .iter()
                 .any(|p| rest.starts_with(p)),
@@ -276,6 +311,7 @@ fn escape(text: &str) -> String {
             out.push('\\');
         }
         out.push(c);
+        prev = Some(c);
     }
     out
 }
@@ -283,7 +319,7 @@ fn escape(text: &str) -> String {
 /// A code span long enough to hold any backticks in `text`.
 fn code_span(text: &str) -> String {
     let longest = text.split(|c| c != '`').map(str::len).max().unwrap_or(0);
-    let fence = "`".repeat(longest + 1);
+    let fence = "`".repeat(longest.saturating_add(1));
     let pad = if text.starts_with('`') || text.ends_with('`') {
         " "
     } else {

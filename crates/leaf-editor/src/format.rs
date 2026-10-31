@@ -132,12 +132,16 @@ impl PageEditor {
         let Some((i, href)) = touching else {
             return Ok(None);
         };
-        let same = |j: usize| marks[j].link.as_deref() == Some(href.as_str());
+        let same = |j: usize| {
+            marks
+                .get(j)
+                .is_some_and(|m| m.link.as_deref() == Some(href.as_str()))
+        };
         let start = (0..=i).rev().take_while(|&j| same(j)).last().unwrap_or(i);
         let end = (i..marks.len())
             .take_while(|&j| same(j))
             .last()
-            .map_or(i, |j| j + 1);
+            .map_or(i, |j| j.saturating_add(1));
         Ok(Some((
             TextRange {
                 block: caret.block,
@@ -156,7 +160,8 @@ impl PageEditor {
         }
         let mut shared: Option<Marks> = None;
         for TextRange { block, range } in ranges {
-            for marks in &char_marks(&self.doc, block)?[range] {
+            let block_marks = char_marks(&self.doc, block)?;
+            for marks in block_marks.get(range).unwrap_or_default() {
                 shared = Some(match shared {
                     None => marks.clone(),
                     Some(s) => Marks {
@@ -328,9 +333,9 @@ fn has(marks: &Marks, kind: MarkKind) -> bool {
 
 /// Whether every character in `range` has the mark.
 fn covered(doc: &PageDoc, range: &TextRange, kind: MarkKind) -> Result<bool, EditorError> {
-    Ok(char_marks(doc, range.block)?[range.range.clone()]
-        .iter()
-        .all(|m| has(m, kind)))
+    Ok(char_marks(doc, range.block)?
+        .get(range.range.clone())
+        .is_some_and(|marks| marks.iter().all(|m| has(m, kind))))
 }
 
 /// The marks of each character of the block's text, by Unicode scalar position.
