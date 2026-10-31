@@ -100,7 +100,7 @@ def index_row(adr: Path, name: str) -> str:
 
 
 def add_index_rows(adr: Path, names: list[str]) -> None:
-    """Adds a row for each of `names` the index doesn't list yet, after its last row, in the order given."""
+    """Adds a row for each of `names` the index doesn't list yet, and keeps the rows in number order."""
     index = adr / "README.md"
     if not index.is_file():
         return
@@ -109,10 +109,12 @@ def add_index_rows(adr: Path, names: list[str]) -> None:
     if not rows:
         return
     missing = [index_row(adr, name) for name in names if not any(f"]({name})" in line for line in lines)]
-    if not missing:
-        return
     at = rows[-1] + 1
     lines[at:at] = missing
+    # Rows stay in number order, wherever a row added the old way was renamed.
+    rows = [i for i, line in enumerate(lines) if line.startswith("| [ADR-")]
+    for i, line in zip(rows, sorted((lines[i] for i in rows), key=lambda line: line[len("| [ADR-") :])):
+        lines[i] = line
     index.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

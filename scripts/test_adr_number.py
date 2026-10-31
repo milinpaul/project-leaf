@@ -149,11 +149,15 @@ class AdrNumberTest(unittest.TestCase):
             "| [ADR-XXX](ADR-XXX-E09-S08-row-page.md) | Rows open as pages | Feature | Accepted |\n",
         )
         self.write("docs/adr/ADR-XXX-E09-S08-row-page.md", self.record("Rows open as pages", "Feature", "Accepted"))
+        # A record added the new way, numbered alongside: its row joins, and the rows stay in number order.
+        self.write("docs/adr/ADR-XXX-E00-S13-index.md", self.record("Index rows", "Architecture", "Accepted"))
         done = self.run_script()
         self.assertEqual(done.returncode, 0, done.stderr)
         index = self.read("docs/adr/README.md")
-        self.assertEqual(index.count("ADR-076-E09-S08-row-page.md"), 1)
+        self.assertEqual(index.count("ADR-077-E09-S08-row-page.md"), 1)
         self.assertNotIn("ADR-XXX", index)
+        numbers = [line[3:10] for line in index.splitlines() if line.startswith("| [ADR-")]
+        self.assertEqual(numbers, ["ADR-075", "ADR-076", "ADR-077"])
 
 if __name__ == "__main__":
     unittest.main()
