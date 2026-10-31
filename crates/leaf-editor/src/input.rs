@@ -80,6 +80,7 @@ impl PageEditor {
             return Ok(Some(converted));
         }
         self.maybe_open_slash(text, after)?;
+        self.maybe_open_link_menu(text, after)?;
         Ok(Some(after))
     }
 

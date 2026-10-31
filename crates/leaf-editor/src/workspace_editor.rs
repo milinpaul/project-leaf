@@ -267,6 +267,7 @@ mod breadcrumb;
 mod databases;
 mod favourites;
 mod last_page;
+mod link_menu;
 mod page_links;
 mod page_menu;
 mod page_width;
@@ -274,6 +275,7 @@ mod trash;
 mod tree;
 
 pub use breadcrumb::{Crumb, MAX_CRUMBS};
+pub use link_menu::{LinkChoice, LinkMenu, MAX_LINK_CHOICES};
 pub use page_menu::{MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon};
 pub use trash::{TrashItem, TrashList, trashed_ago};
 pub use tree::DropPlace;
