@@ -42,6 +42,17 @@ fn shortcut(typed: &str, rest_empty: bool) -> Option<BlockKind> {
     })
 }
 
+/// GitHub's alert syntax, `> [!WARNING] `, typed at the start of a block makes a callout (E21-S03).
+/// Typing `> ` already made the block a quote, so in a quote `[!WARNING] ` alone does it too.
+fn alert(typed: &str, kind: &BlockKind) -> Option<BlockKind> {
+    let rest = typed
+        .strip_prefix("> ")
+        .or_else(|| (*kind == BlockKind::Quote).then_some(typed))?;
+    let name = rest.strip_prefix("[!")?.strip_suffix("] ")?;
+    let tone = crate::clipboard::markdown::alert::tone(name)?;
+    Some(BlockKind::Callout { tone })
+}
+
 impl PageEditor {
     /// After typing that left the caret at `caret`: if everything before it is a Markdown shortcut,
     /// converts the block and returns where the caret goes. Code blocks and image captions are left
@@ -59,7 +70,7 @@ impl PageEditor {
         };
         let typed: String = text.chars().take(caret.at).collect();
         let rest_empty = text.chars().count() == caret.at;
-        let Some(target) = shortcut(&typed, rest_empty) else {
+        let Some(target) = alert(&typed, &kind).or_else(|| shortcut(&typed, rest_empty)) else {
             return Ok(None);
         };
         let same = match (&kind, &target) {

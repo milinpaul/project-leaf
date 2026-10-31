@@ -35,7 +35,7 @@ pub(super) struct OpenTones {
 }
 
 /// A tone's icon. A tone from a newer version shows the note's bulb.
-fn icon_of(tone: &CalloutTone) -> IconName {
+pub(super) fn icon_of(tone: &CalloutTone) -> IconName {
     match tone {
         CalloutTone::Info => IconName::Info,
         CalloutTone::Success => IconName::CircleCheck,

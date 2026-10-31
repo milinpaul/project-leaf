@@ -51,7 +51,7 @@ macOS, Windows, Linux (desktop). A read-only web viewer comes in Phase 2 and the
 - **Block types:** paragraph, heading 1–3, bulleted list, numbered list, to-do, quote, code (language label; syntax highlighting optional), divider, image (local file), simple table (a grid of text cells, not a database; E16), action item (a task with a due date, optional time, priority and a round check; overdue dates in red; E19), callout (text in a tinted box with an icon, in five tones: info, success, warning, error, note; E21).
 - **Inline marks:** bold, italic, strikethrough, inline code, link.
 - **Slash menu** (`/`): insert or convert blocks, fuzzy filtered.
-- **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`.
+- **Markdown shortcuts** at the start of a block: `# `, `## `, `### `, `- `, `* `, `1. `, `[] `, `> `, ```` ``` ````, `---`; GitHub alerts `> [!NOTE] `, `> [!TIP] `, `> [!IMPORTANT] `, `> [!WARNING] `, `> [!CAUTION] ` make an info, success, note, warning or error callout (in a quote, `[!WARNING] ` alone does it). The slash menu offers `Callout` (info) and `Callout: Success`, `Warning`, `Error`, `Note` (also found as `/success`, `/warning`, `/error`, `/note`).
 - **Inline shortcuts:** `Cmd/Ctrl+B/I/E`, `Cmd/Ctrl+Shift+S` (strike), `Cmd/Ctrl+K` with text selected (link; without a selection it opens search). `Cmd/Ctrl+click` on a link opens it in the browser.
 - **Block handle** (⋮⋮) on hover: drag to reorder or nest; menu with Turn into (its list opens on hover), Duplicate, Move up, Move down, Delete (each with an icon); `Cmd/Ctrl+/` opens the menu from the keyboard.
 - **Nesting:** `Tab` / `Shift+Tab` indent and outdent.

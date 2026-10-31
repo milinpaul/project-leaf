@@ -370,6 +370,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | todo | `- [ ] ` / `- [x] ` |
 | task | `- [ ] ` / `- [x] ` then its fields in a final group: `(due 2026-10-31 14:00, high)`, or `(action item)` with none (ADR 0032) |
 | quote | `> ` |
+| callout | GitHub alert: `> [!NOTE]` (info), `> [!TIP]` (success), `> [!IMPORTANT]` (note), `> [!WARNING]`, `> [!CAUTION]` (error), then each line as `> line` |
 | code | fenced block with language |
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |

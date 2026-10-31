@@ -11,7 +11,7 @@
 //!
 //! Ties keep the menu's own order, so the list never jumps around for no reason.
 
-use leaf_model::BlockKind;
+use leaf_model::{BlockKind, CalloutTone};
 
 /// One entry in the slash menu.
 #[derive(Debug, Clone, PartialEq)]
@@ -34,6 +34,11 @@ pub enum SlashAction {
     Image,
     /// Adds a 3 × 3 table with a header row, in place of an empty line or below the block (E16-S04).
     Table,
+}
+
+/// A callout block of `tone`.
+fn callout(tone: CalloutTone) -> BlockKind {
+    BlockKind::Callout { tone }
 }
 
 /// Every entry, in the order the menu shows them with no query.
@@ -78,6 +83,31 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             },
         ),
         item("Quote", &["blockquote", "citation", ">"], BlockKind::Quote),
+        item(
+            "Callout",
+            &["info", "box", "alert", "[!note]"],
+            callout(CalloutTone::Info),
+        ),
+        item(
+            "Callout: Success",
+            &["success", "done", "tip", "[!tip]"],
+            callout(CalloutTone::Success),
+        ),
+        item(
+            "Callout: Warning",
+            &["warning", "careful", "[!warning]"],
+            callout(CalloutTone::Warning),
+        ),
+        item(
+            "Callout: Error",
+            &["error", "danger", "problem", "[!caution]"],
+            callout(CalloutTone::Error),
+        ),
+        item(
+            "Callout: Note",
+            &["note", "aside", "tip", "[!important]"],
+            callout(CalloutTone::Note),
+        ),
         item(
             "Code",
             &["snippet", "pre", "```"],

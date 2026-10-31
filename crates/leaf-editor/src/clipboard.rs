@@ -17,7 +17,7 @@
 //!   new line below it. Into a cell, a table's cells go in as lines of text.
 
 mod fragment;
-mod markdown;
+pub(crate) mod markdown;
 
 pub use fragment::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 

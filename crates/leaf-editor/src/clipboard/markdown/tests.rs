@@ -486,3 +486,38 @@ fn a_backlog_story_survives_copy_as_markdown_and_paste_again() {
     let again = parse(&Fragment::Blocks(blocks.clone()).to_markdown());
     assert_eq!(picture(&again), picture(&blocks));
 }
+
+// ---- Callouts (E21-S03) ----
+
+#[test]
+fn github_alerts_paste_as_callouts_with_their_lines() {
+    let text = "> [!WARNING]\n> Pack **light**.\n> One bag only.\n\n> [!tip] Booked\n> a plain quote line?\n\n> just a quote";
+    assert_eq!(
+        picture(&parse(text)),
+        "callout: Pack «light»[bold].⏎One bag only.\ncallout: Booked⏎a plain quote line?\nquote: just a quote\n"
+    );
+    let tones: Vec<BlockKind> = parse(text).into_iter().map(|b| b.kind).collect();
+    assert_eq!(
+        tones[..2],
+        [
+            BlockKind::Callout {
+                tone: leaf_model::CalloutTone::Warning
+            },
+            BlockKind::Callout {
+                tone: leaf_model::CalloutTone::Success
+            },
+        ]
+    );
+}
+
+#[test]
+fn callouts_survive_copy_as_markdown_and_paste_again() {
+    use leaf_model::CalloutTone;
+    let blocks: Vec<FragmentBlock> = CalloutTone::ALL
+        .into_iter()
+        .map(|tone| block(BlockKind::Callout { tone }, "first line\nsecond line"))
+        .collect();
+    let markdown = Fragment::Blocks(blocks.clone()).to_markdown();
+    assert!(markdown.contains("> [!CAUTION]"), "{markdown}");
+    assert_eq!(parse(&markdown), blocks, "every tone and both lines come back");
+}
