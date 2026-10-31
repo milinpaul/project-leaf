@@ -164,7 +164,22 @@ impl PaintedLayout {
         block: BlockId,
         position: gpui::Point<Pixels>,
     ) -> Option<DrawnLink> {
-        let links = self.links(block)?;
+        let drawn = self.drawn_char_at(block, position)?;
+        self.links(block)?.link_at(drawn).cloned()
+    }
+
+    /// Whether `position` (window coordinates) is over a link in `block` that can be clicked through: a
+    /// page link to a page still there, or a web link (E10-S11, for the pointing-hand cursor).
+    pub(in crate::shell) fn over_link(&self, block: BlockId, position: gpui::Point<Pixels>) -> bool {
+        let (Some(links), Some(drawn)) = (self.links(block), self.drawn_char_at(block, position)) else {
+            return false;
+        };
+        links.clickable_at(drawn)
+    }
+
+    /// The drawn character under `position` in a row with links, if the pointer is over one.
+    fn drawn_char_at(&self, block: BlockId, position: gpui::Point<Pixels>) -> Option<usize> {
+        self.links(block)?;
         let bounds = self.boundaries(block)?;
         let line = bounds.tops.iter().rposition(|top| *top <= position.y)?;
         let top = bounds.tops[line];
@@ -178,7 +193,7 @@ impl PaintedLayout {
         // drawn to its right (past a line's end there is nothing to click).
         let start = on_line.iter().rposition(|(_, x)| *x <= position.x)?;
         on_line.get(start + 1)?;
-        links.link_at(on_line[start].0).cloned()
+        Some(on_line[start].0)
     }
 
     /// The row's page links, if it has any.

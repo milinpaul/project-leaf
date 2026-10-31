@@ -89,6 +89,20 @@ impl SearchIndex {
             for block in &text.blocks {
                 insert.execute(params![page_id, block.block.to_string(), block.kind, block.text])?;
             }
+            let mut link = tx.prepare_cached(
+                "INSERT INTO links (page_id, block_id, target_id, before, after, position)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            )?;
+            for (position, row) in (0_i64..).zip(&text.links) {
+                link.execute(params![
+                    page_id,
+                    row.block.to_string(),
+                    row.target.to_string(),
+                    row.before,
+                    row.after,
+                    position
+                ])?;
+            }
         }
         tx.commit()?;
         Ok(())
@@ -106,6 +120,7 @@ impl SearchIndex {
     pub fn clear(&mut self) -> Result<(), SearchError> {
         let tx = self.conn.transaction()?;
         tx.execute("DELETE FROM blocks", [])?;
+        tx.execute("DELETE FROM links", [])?;
         tx.execute("DELETE FROM pages", [])?;
         set_meta(&tx, COMPLETE_KEY, "0")?;
         tx.commit()?;
@@ -153,6 +168,11 @@ impl SearchIndex {
     /// separate read-only connection that can search while this one writes.
     pub fn search(&self, query: &str) -> Result<Vec<PageHit>, SearchError> {
         search(&self.conn, query)
+    }
+
+    /// The blocks that link to `page`, on this connection. See [`crate::Searcher::backlinks`].
+    pub fn backlinks(&self, page: PageId) -> Result<Vec<crate::Backlink>, SearchError> {
+        crate::backlinks::backlinks(&self.conn, page)
     }
 
     /// Starts again empty after an error, since anything in the index can be rebuilt. Afterwards
@@ -259,6 +279,7 @@ fn remove_index_files(path: &Path) -> Result<(), SearchError> {
 
 fn delete_page(tx: &Transaction<'_>, page_id: &str) -> Result<(), SearchError> {
     tx.execute("DELETE FROM blocks WHERE page_id = ?1", [page_id])?;
+    tx.execute("DELETE FROM links WHERE page_id = ?1", [page_id])?;
     tx.execute("DELETE FROM pages WHERE page_id = ?1", [page_id])?;
     Ok(())
 }

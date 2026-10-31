@@ -26,6 +26,7 @@ fn text(title: &str, blocks: &[&str]) -> PageText {
                 text: (*b).to_owned(),
             })
             .collect(),
+        links: Vec::new(),
     }
 }
 

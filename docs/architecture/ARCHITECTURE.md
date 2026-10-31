@@ -89,7 +89,8 @@ selection, filled in when the selection is already one link, with Open and Remov
 system may open. A **page link** (E10, ADR-071) is one character in the page but is drawn as the target's icon and
 title: `leaf_editor::LinkedText` builds the drawn runs from `WorkspaceEditor::link_target` (title, icon, live / in
 trash / deleted) and maps positions both ways, and the painted layout keeps that map so carets, selections and clicks
-stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. Typing `[[` opens the **page-link menu**
+stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page,
+and the pointer is a hand over page and web links (`PaintedLayout::over_link`, E10-S11). Typing `[[` opens the **page-link menu**
 (E10-S05, `shell/link_menu_popover.rs`): the page editor keeps where the `[[` is and the highlight (like the slash
 menu), and `WorkspaceEditor::link_menu` matches the query against the workspace's pages with the quick switcher's
 fuzzy matcher, adding "New page"; Enter or a click calls `link_menu_apply`, which links the page in one undo step. A **code block** shows its language at the top right on hover; a click opens a searchable list
@@ -255,7 +256,7 @@ hidden one (`database_page/header.rs`, `column_menu.rs`, `columns.rs`). What eac
 `leaf-editor` `database_view/columns.rs`. Each database command is its own undo step; `Database::group` makes an action
 of several commands one step. Cmd/Ctrl+Z on a database page undoes the database.
 
-Sorting and filtering (E09-S07, ADR-XXX-E09-S07): a bar above the table (`database_page/query_bar.rs`, `query.rs`) shows a
+Sorting and filtering (E09-S07, ADR-079): a bar above the table (`database_page/query_bar.rs`, `query.rs`) shows a
 chip per sort and filter and opens their pop-ups. `leaf-editor` `database_view/query.rs` decides each type's
 conditions and what each change writes. A filter's typed value is a draft the table shows at once and the database
 gets when the pop-up closes.
@@ -316,7 +317,8 @@ itself (ADR-018).
    in `leaf-search`), which runs on its own thread so typing never waits for it. It asks the store which
    version of each document is saved (`Store::saved_versions`), compares that and the page titles and trash with
    what it indexed, and re-reads only the pages that changed into `search/index.sqlite`. An edit is searchable
-   well within a second (ADR-024).
+   well within a second (ADR-024). The same pass records each page's links to other pages in the index's `links`
+   table, which `Searcher::backlinks` reads to list the blocks linking to a page (E10-S06, ADR-071).
 
 Undo runs the same path backwards: the model reverses the last step and the editor redraws.
 
