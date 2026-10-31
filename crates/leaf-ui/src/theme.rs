@@ -191,6 +191,22 @@ fn mode_named(name: &str) -> Option<ThemeMode> {
     }
 }
 
+/// An action item's priority flag colour (E19-S03): calm, clearly different hues, readable on the
+/// page in both appearances. High is the danger red; Medium a warm amber; Low a quiet blue.
+#[must_use]
+pub fn priority_colour(priority: leaf_model::Priority, dark: bool) -> gpui::Hsla {
+    let hex = match (priority, dark) {
+        (leaf_model::Priority::High, false) => LIGHT.danger,
+        (leaf_model::Priority::High, true) => DARK.danger,
+        (leaf_model::Priority::Medium, false) => "#B26B00",
+        (leaf_model::Priority::Medium, true) => "#E3B341",
+        (leaf_model::Priority::Low, false) => "#3A6EA5",
+        (leaf_model::Priority::Low, true) => "#79B0E8",
+    };
+    let value = u32::from_str_radix(hex.trim_start_matches('#'), 16).unwrap_or(0);
+    gpui::rgb(value).into()
+}
+
 /// gpui-component's theme for one appearance, built from Leaf's tokens. Roles gpui-component has but
 /// Leaf doesn't use yet (charts, tables, tabs, ...) keep its defaults.
 fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {
@@ -256,3 +272,28 @@ fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {
 
 #[cfg(test)]
 mod tests;
+
+/// Background and text colours of a select option's chip, by colour name (`leaf_editor::OPTION_COLORS`), soft in
+/// both modes. Names this version doesn't know (from a newer Leaf) draw as gray.
+#[expect(clippy::unreadable_literal, reason = "colours read best as plain 0xRRGGBB")]
+pub fn option_colors(name: &str, cx: &gpui::App) -> (gpui::Hsla, gpui::Hsla) {
+    use gpui_component::ActiveTheme as _;
+    // (light background, light text, dark background, dark text) as 0xRRGGBB.
+    let (lb, lf, db, df) = match name {
+        "brown" => (0xF1E6DD, 0x6B4A32, 0x4A3A2E, 0xE8D3C2),
+        "orange" => (0xFBE6D3, 0x8A4B12, 0x55391F, 0xF4C9A0),
+        "yellow" => (0xF7EDC8, 0x77600D, 0x4F4620, 0xEEDB98),
+        "green" => (0xDCEFE2, 0x235E3B, 0x24452F, 0xB7E1C3),
+        "blue" => (0xDDE9F6, 0x24507E, 0x233A52, 0xBBD3EE),
+        "purple" => (0xE9E1F4, 0x553482, 0x3A2F4F, 0xD6C6EE),
+        "pink" => (0xF6E0EA, 0x84305A, 0x4E2C3C, 0xF0C2D7),
+        "red" => (0xF8DEDC, 0x8E2B25, 0x55302D, 0xF2BFBA),
+        _ => (0xECEAE6, 0x4D4A45, 0x3A3835, 0xDAD6CF),
+    };
+    let (background, text) = if cx.theme().mode.is_dark() {
+        (db, df)
+    } else {
+        (lb, lf)
+    };
+    (gpui::rgb(background).into(), gpui::rgb(text).into())
+}

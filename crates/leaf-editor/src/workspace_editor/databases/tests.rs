@@ -40,6 +40,14 @@ fn a_database_page_has_its_database_ready_and_rows_are_pages_under_it() {
         assert_eq!(editor.workspace().parent(row).unwrap(), Some(tasks));
     }
     assert_eq!(editor.loaded_databases().count(), 1);
+    // A new database starts with a Tags column, and nothing to undo.
+    let id = editor.database_of(tasks).unwrap();
+    let columns = editor.database(id).unwrap().columns().unwrap();
+    assert_eq!(columns.len(), 1);
+    assert_eq!(
+        (columns[0].name.as_str(), &columns[0].kind),
+        ("Tags", &leaf_model::PropertyType::MultiSelect)
+    );
     // Not a database page: no rows.
     let notes = editor.workspace().root_pages().unwrap()[0];
     assert!(matches!(

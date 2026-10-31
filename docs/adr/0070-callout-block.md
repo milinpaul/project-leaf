@@ -1,4 +1,4 @@
-# 0069. Callout block: one text with lines, and a tone stored by name
+# 0070. Callout block: one text with lines, and a tone stored by name
 
 - **Status:** Accepted
 - **Type:** Feature

@@ -82,6 +82,10 @@ run *args:
 fixture folder seed="2026":
     cargo run --release -p leaf-fixtures --example make_workspace -- {{folder}} {{seed}}
 
+# The demo workspace from the README's screenshots (a trip to Japan) in a new folder
+demo folder:
+    cargo run -q -p leaf-fixtures --example demo_workspace -- {{folder}}
+
 # just screenshot <workspace folder> <out.png> [first block] [dark] [bench]
 screenshot *args:
     cargo run -q -p leaf-ui --example screenshot -- {{args}}

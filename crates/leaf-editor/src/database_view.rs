@@ -12,9 +12,11 @@
 //! read at once. Columns and the view are read fresh each time, since they are small.
 
 mod display;
+mod edit;
 mod order;
 
 pub use display::{CellDisplay, Chip, date_label, display};
+pub use edit::{CellEditor, OPTION_COLORS, OptionChoice, OptionPicker, TextCommit};
 
 use std::collections::{HashMap, HashSet};
 

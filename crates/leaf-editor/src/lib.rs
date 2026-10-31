@@ -36,6 +36,7 @@ mod switcher;
 mod table;
 mod table_edit;
 mod task_due;
+mod task_edit;
 mod view;
 mod workspace_editor;
 
@@ -46,8 +47,8 @@ pub use clipboard::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 pub use code_block::{CODE_INDENT, CODE_LANGUAGES, CodeLanguage, find_languages, language_label};
 pub use cover::{BuiltinCover, CoverSection, PageCover};
 pub use database_view::{
-    CellDisplay, Chip, DEFAULT_COLUMN_WIDTH, DatabaseEditor, FIRST_SCREEN_ROWS, TableView, ViewColumn,
-    ViewRow, date_label,
+    CellDisplay, CellEditor, Chip, DEFAULT_COLUMN_WIDTH, DatabaseEditor, FIRST_SCREEN_ROWS, OPTION_COLORS,
+    OptionChoice, OptionPicker, TableView, TextCommit, ViewColumn, ViewRow, date_label,
 };
 pub use drag::{BlockDrop, RowBox};
 pub use edited::{edited_ago, edited_on};
@@ -69,7 +70,8 @@ pub use selection::{Selection, TextRange};
 pub use slash::{SlashAction, SlashItem, SlashMenu};
 pub use switcher::{MAX_SWITCHER_RESULTS, QuickSwitcher, SwitcherResult};
 pub use table_edit::TableEdit;
-pub use task_due::{due_label, is_overdue};
+pub use task_due::{add_days, due_label, is_overdue};
+pub use task_edit::{DatePicker, parse_time, priority_choices};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
     Crumb, DropPlace, EditorError, MAX_CRUMBS, MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon,

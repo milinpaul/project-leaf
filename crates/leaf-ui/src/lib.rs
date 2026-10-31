@@ -36,6 +36,12 @@ gpui_kit_assets::icon_assets!(
     LeafIcons,
     [
         ArrowDown,
+        X,
+        TextAlignStart,
+        Hash,
+        CircleQuestionMark,
+        CircleChevronDown,
+        Calendar,
         ArrowUp,
         Bold,
         Check,
@@ -46,6 +52,7 @@ gpui_kit_assets::icon_assets!(
         ExternalLink,
         FaceSlightlySmilingPlus,
         FileText,
+        Flag,
         GripVertical,
         Heading1,
         Heading2,
@@ -116,6 +123,7 @@ pub fn init(settings_path: Option<std::path::PathBuf>, cx: &mut App) {
     settings::init(settings_path, cx);
     theme::init(cx);
     shell::bind_page_keys(cx);
+    shell::bind_database_keys(cx);
 }
 
 /// Builds the root view of a Leaf window: the shell wrapped in gpui-component's `Root`, which

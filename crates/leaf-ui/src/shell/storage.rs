@@ -115,7 +115,7 @@ impl Storage {
     }
 
     /// The saved database `id`, or `None` for one never saved.
-    fn load_database(&self, id: DatabaseId) -> Result<Option<Database>, StoreError> {
+    pub(super) fn load_database(&self, id: DatabaseId) -> Result<Option<Database>, StoreError> {
         self.folder.store().load(DocKey::Database(id))
     }
 }

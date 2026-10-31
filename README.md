@@ -11,8 +11,8 @@ Notion's flexibility, Obsidian's speed and ownership, no browser in the way.
 ![Platforms: macOS, Linux, Windows](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)
 ![Status: pre-alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg)
 
-<img src="docs/screenshots/E18-S06-full-width-off.png" alt="Leaf in light mode: the sidebar page tree on the left, a formatted page in the middle and the page menu open" width="49%">
-<img src="docs/screenshots/E18-S06-full-width-dark.png" alt="Leaf in dark mode with a full-width page" width="49%">
+<img src="docs/screenshots/E00-S11-demo-light.png" alt="Leaf in light mode: a Trip to Japan page with an illustrated travel cover and a map icon, page icons in the sidebar, and a to-do list and route below the title" width="49%">
+<img src="docs/screenshots/E00-S11-demo-dark.png" alt="The same Trip to Japan page in dark mode" width="49%">
 
 </div>
 
@@ -30,6 +30,16 @@ Notion's flexibility, Obsidian's speed and ownership, no browser in the way.
   without rewriting the data model.
 - **Keyboard-first.** Everything is reachable without a mouse.
 
+### A closer look
+
+Pages nest, carry an emoji icon and a cover, and hold headings, lists, to-dos, quotes, tables and more. The page
+above is the demo workspace: build it yourself with `just demo <folder>` and open it in Leaf.
+
+<p align="center">
+<img src="docs/screenshots/E00-S11-demo-table-light.png" alt="Further down the trip page: the route as a numbered list, a quote, a budget table in yen and a packing checklist" width="49%">
+<img src="docs/screenshots/E00-S11-demo-table-dark.png" alt="The route, budget table and packing checklist in dark mode" width="49%">
+</p>
+
 ## Status
 
 Leaf is **pre-alpha**. Phase 0 is the page editor, and it is close to done. It is good enough to write in daily,
@@ -42,10 +52,12 @@ There are no prebuilt downloads yet; you build Leaf from source (see [Install](#
 | Area | Features |
 |---|---|
 | **Workspaces and pages** | Workspaces stored as local folders, a sidebar page tree (nest, drag, reorder), page icons and covers, favourites, trash and restore, full-width pages |
-| **Blocks** | Paragraphs, headings 1–3, bulleted, numbered and to-do lists, quotes, code (with a language label), dividers, images, simple tables and action items |
+| **Blocks** | Paragraphs, headings 1–3, bulleted, numbered and to-do lists, quotes, code (with a language label), dividers, images and simple tables |
 | **Editing** | Slash menu (`/`), markdown shortcuts (`# `, `- `, `[] `, ```` ``` ````…), bold, italic, strike, inline code and links, drag handles, `Tab` to nest, undo and redo for every edit |
 | **Search** | `Cmd/Ctrl+K` finds pages by title and by the text inside them, ignoring case and accents |
 | **Look and feel** | Light and dark themes, a resizable sidebar, a top bar with breadcrumbs and "Edited 3 minutes ago" |
+
+Still to come in Phase 0: action items (tasks with due dates and priorities) and callouts.
 
 ### Roadmap
 

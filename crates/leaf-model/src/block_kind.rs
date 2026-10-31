@@ -154,7 +154,7 @@ pub enum BlockKind {
         /// How important it is.
         priority: Option<Priority>,
     },
-    /// A box with an icon that makes its text stand out (E21, ADR 0069): rich text, nothing nested,
+    /// A box with an icon that makes its text stand out (E21, ADR 0070): rich text, nothing nested,
     /// drawn in its tone's colours.
     Callout {
         /// Its colour scheme and icon.

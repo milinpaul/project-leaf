@@ -107,7 +107,7 @@ and rebuilds that index after undo, redo and import.
 | `task` | `done`: bool, `due`: `YYYY-MM-DD`?, `due_time`: `HH:MM`? (only with `due`), `priority`: `high` \| `medium` \| `low`? | yes | yes |
 | `callout` | `tone`: `info` \| `success` \| `warning` \| `error` \| `note` (another name is kept; missing reads as `info`) | yes | no |
 
-**Callouts (E21, ADR 0069).** A `callout` is text with marks in a tinted box with an icon; its lines are separated by
+**Callouts (E21, ADR 0070).** A `callout` is text with marks in a tinted box with an icon; its lines are separated by
 `\n` in its one text, like a code block, and nothing nests inside. The `tone` is stored by name; a tone from a newer
 version reads as `CalloutTone::Other` and is written back unchanged.
 

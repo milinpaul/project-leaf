@@ -77,6 +77,8 @@ pub(super) struct PageState {
     pub(super) format_bar: super::format_bar::FormatBarState,
     /// A code block's language picker, while it is open.
     pub(super) language: Option<super::language_picker::OpenLanguage>,
+    /// An action item's date picker or priority menu, while open (E19-S03).
+    pub(super) task_picker: Option<super::task_pickers::OpenTaskPicker>,
 }
 
 impl Shell {
@@ -213,6 +215,7 @@ impl Shell {
         let menu = self.render_block_menu(window, cx);
         let link = self.render_link_popover(cx);
         let language = self.render_language_picker(cx);
+        let task_picker = self.render_task_picker(cx);
         let page = v_flex()
             .size_full()
             // A page opened from the Trash says so above everything, and stays in view while scrolling.
@@ -244,9 +247,11 @@ impl Shell {
             .child(menu)
             .children(link)
             .children(language)
+            .children(task_picker)
             .children(slash)
             .children(format_bar);
         let page = Self::with_block_menu_action(page, cx);
+        let page = Self::with_task_picker_actions(page, cx);
         Self::with_page_actions(page, cx).into_any_element()
     }
 

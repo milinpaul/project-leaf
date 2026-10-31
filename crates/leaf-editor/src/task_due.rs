@@ -56,7 +56,7 @@ pub fn is_overdue(
 
 /// Days from 1 January 1970 to `date`: Howard Hinnant's `days_from_civil`, the inverse of the one in
 /// `edited`.
-fn days(date: DueDate) -> i64 {
+pub(crate) fn days(date: DueDate) -> i64 {
     let (month, day) = (i64::from(date.month()), i64::from(date.day()));
     let year = i64::from(date.year()) - i64::from(month <= 2);
     let era = year.div_euclid(400);
@@ -66,8 +66,20 @@ fn days(date: DueDate) -> i64 {
     era * 146_097 + doe - 719_468
 }
 
+/// `date` moved by `n` days (back for negative `n`), or `None` past the years a due date can have.
+#[must_use]
+pub fn add_days(date: DueDate, n: i64) -> Option<DueDate> {
+    let (year, month, day) = crate::edited::civil_from_days(days(date) + n);
+    DueDate::new(
+        u16::try_from(year).ok()?,
+        u8::try_from(month).ok()?,
+        u8::try_from(day).ok()?,
+    )
+    .ok()
+}
+
 /// The day of the week, 0 for Monday to 6 for Sunday. 1 January 1970 was a Thursday.
-fn weekday(date: DueDate) -> i64 {
+pub(crate) fn weekday(date: DueDate) -> i64 {
     (days(date) + 3).rem_euclid(7)
 }
 
