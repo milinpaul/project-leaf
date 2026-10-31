@@ -332,6 +332,11 @@ fn write_blocks(blocks: &[FragmentBlock], depth: usize, out: &mut Vec<String>) {
                 };
                 out.push(format!("{pad}{}", escape_start(&inline::write(&[link]))));
             }
+            // Copies already hold a link instead (`FragmentBlock::link_to`); one built by hand is written the same way.
+            BlockKind::Database { page } => {
+                let link = FragmentBlock::link_to(*page).text;
+                out.push(format!("{pad}{}", escape_start(&inline::write(&link))));
+            }
             BlockKind::Table { .. } => {
                 table::write(block, &pad, out);
                 continue;

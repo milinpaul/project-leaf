@@ -10,7 +10,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
-use leaf_core::{AssetId, BlockId};
+use leaf_core::{AssetId, BlockId, PageId};
 use leaf_model::{BlockKind, ModelError, PageDoc, TextSpan};
 
 /// How to draw a block. Mirrors `BlockKind`, but with what the screen needs: list numbers are worked
@@ -92,6 +92,11 @@ pub enum BlockStyle {
         /// What was fetched for it; empty until then.
         preview: leaf_model::WebPreview,
     },
+    /// A database shown inside the page (E09-S09). The row holds no text; the UI draws the database's table.
+    Database {
+        /// The database's page.
+        page: PageId,
+    },
     /// A kind from a newer version, drawn read-only.
     Unknown {
         /// The stored type name.
@@ -125,6 +130,7 @@ impl BlockStyle {
             BlockKind::Divider => Self::Divider,
             BlockKind::Image { asset, width, alt } => Self::Image { asset, width, alt },
             BlockKind::WebBookmark { url, preview } => Self::WebBookmark { url, preview },
+            BlockKind::Database { page } => Self::Database { page },
             BlockKind::Unknown { type_name } => Self::Unknown { type_name },
             // Placed by the walk, which knows the grid; these are only what a table part reads as alone.
             BlockKind::Table { header_row } => Self::Table {

@@ -54,6 +54,10 @@ pub struct PageEditor {
     pub(crate) offer: Option<crate::web_bookmark::OfferState>,
     /// A web bookmark's address asked for from the slash menu, until it is given or cancelled.
     pub(crate) address: Option<crate::web_bookmark::AddressRequest>,
+    /// Where a database was asked for from the slash menu, until the workspace makes it (E09-S09).
+    pub(crate) database_request: Option<leaf_model::Anchor>,
+    /// The inline databases on the page when last looked at; `None` until first looked at (E09-S09).
+    pub(crate) inline_seen: Option<std::collections::HashSet<leaf_core::PageId>>,
 }
 
 impl PageEditor {
@@ -73,6 +77,8 @@ impl PageEditor {
             image: None,
             offer: None,
             address: None,
+            database_request: None,
+            inline_seen: None,
         }
     }
 

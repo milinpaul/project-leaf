@@ -39,6 +39,9 @@ pub enum SlashAction {
     /// Asks for a web address: the UI shows a prompt and gives what was typed to
     /// [`PageEditor::insert_web_bookmark`](crate::PageEditor::insert_web_bookmark) (E15-S03).
     WebBookmark,
+    /// Adds a database shown as a table, made under this page by the workspace, which then gives it to
+    /// [`PageEditor::insert_inline_database`](crate::PageEditor::insert_inline_database) (E09-S09).
+    Database,
 }
 
 /// A callout block of `tone`.
@@ -130,6 +133,11 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             label: "Table",
             keywords: &["grid", "rows", "|"],
             action: SlashAction::Table,
+        },
+        SlashItem {
+            label: "Database",
+            keywords: &["db", "properties", "tracker"],
+            action: SlashAction::Database,
         },
         SlashItem {
             label: "Web bookmark",

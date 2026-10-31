@@ -577,6 +577,9 @@ fn spans_in(doc: &PageDoc, block: BlockId, range: Range<usize>) -> Result<Vec<Te
 
 /// `block` with all its text and everything nested in it.
 fn subtree(doc: &PageDoc, block: BlockId) -> Result<FragmentBlock, EditorError> {
+    if let BlockKind::Database { page } = doc.kind(block)? {
+        return Ok(FragmentBlock::link_to(page));
+    }
     Ok(FragmentBlock {
         kind: doc.kind(block)?,
         text: doc.text(block)?.unwrap_or_default(),

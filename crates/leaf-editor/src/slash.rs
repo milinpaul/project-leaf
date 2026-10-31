@@ -162,6 +162,12 @@ impl PageEditor {
                 self.request_web_address(caret)?;
                 return Ok(Some(caret));
             }
+            SlashAction::Database => {
+                // The `/database` goes now; the block comes once the workspace has made the database.
+                let caret = self.clear_query(block, typed)?;
+                self.request_database(caret)?;
+                return Ok(Some(caret));
+            }
             SlashAction::LinkToPage => {
                 self.doc.as_separate_step(|doc| {
                     doc.apply(PageCommand::ReplaceText {
