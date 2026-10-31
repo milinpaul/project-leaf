@@ -60,3 +60,7 @@ Before, light and dark:
 - The interim block editor (E07-S10) and the formatting toolbar will be restyled when their real versions land.
 - Plain English: Leaf now has its own look, like a calm notebook on warm paper with a touch of its leaf-green,
   one clean modern typeface throughout, and a soft dark mode that follows your computer's setting.
+
+## Update 2026-10-31 (E08-S08)
+
+Code blocks and inline code use a bundled monospace face, JetBrains Mono NL, instead of the system's (ADR 0074).

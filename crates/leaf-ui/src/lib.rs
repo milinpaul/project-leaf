@@ -117,9 +117,11 @@ impl gpui::AssetSource for Assets {
     }
 }
 
-/// Sets up widgets, loads the app settings from `settings_path` (defaults if `None`), then Leaf's fonts
-/// and its light and dark themes. Call once at startup, before opening any window.
+/// Loads Leaf's fonts and themes, sets up widgets, loads the app settings from `settings_path` (defaults if
+/// `None`), then switches to the chosen appearance. Call once at startup, before opening any window.
 pub fn init(settings_path: Option<std::path::PathBuf>, cx: &mut App) {
+    // Leaf's fonts and themes first, so gpui-component's setup finds them (E08-S08).
+    theme::install(cx);
     gpui_component::init(cx);
     settings::init(settings_path, cx);
     theme::init(cx);

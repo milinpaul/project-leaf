@@ -1,7 +1,7 @@
 use gpui::TestAppContext;
 use gpui_component::theme::{Theme, ThemeMode};
 
-use super::{DARK, FONTS, LIGHT, Palette, UI_FONT, config, mode_named};
+use super::{CODE_FONT, DARK, FONTS, LIGHT, Palette, UI_FONT, config, mode_named};
 
 /// Reads `#RRGGBB` as 0-1 channels.
 fn rgb(hex: &str) -> [f64; 3] {
@@ -123,6 +123,7 @@ fn configs_carry_the_tokens() {
     assert_eq!(light.colors.selection.as_deref(), Some(LIGHT.selection));
     assert_eq!(dark.colors.danger.as_deref(), Some(DARK.danger));
     assert_eq!(light.font_family.as_deref(), Some(UI_FONT));
+    assert_eq!(dark.mono_font_family.as_deref(), Some(CODE_FONT));
 }
 
 /// A font file's family names, from its `name` table: the legacy family (ID 1) and the typographic
@@ -161,16 +162,19 @@ fn bundled_fonts_provide_the_families_the_theme_names() {
             .count()
     };
     assert_eq!(has(UI_FONT), 5, "regular, italic, semibold, bold and bold italic");
+    assert_eq!(has(CODE_FONT), 2, "regular and bold");
 }
 
 #[gpui::test]
 fn the_theme_follows_the_mode(cx: &mut TestAppContext) {
     cx.update(|cx| {
+        super::install(cx);
         gpui_component::init(cx);
         super::init(cx);
         Theme::change(ThemeMode::Dark, None, cx);
         assert!(Theme::global(cx).is_dark());
         assert_eq!(Theme::global(cx).font_family.as_ref(), UI_FONT);
+        assert_eq!(Theme::global(cx).mono_font_family.as_ref(), CODE_FONT);
         let dark_bg = Theme::global(cx).background;
         Theme::change(ThemeMode::Light, None, cx);
         assert!(!Theme::global(cx).is_dark());
@@ -228,4 +232,23 @@ fn callout_text_and_icons_stay_readable_in_every_tone() {
             );
         }
     }
+}
+
+/// E08-S08: gpui-component's setup lists every installed font (about 220 ms on a Mac) only to replace
+/// its own default faces. Installed first, Leaf's faces are what its setup finds and keeps, so the
+/// listing never runs; the bundled faces are loaded by then.
+#[gpui::test]
+fn the_library_setup_finds_leafs_fonts_already_in_place(cx: &mut TestAppContext) {
+    cx.update(|cx| {
+        super::install(cx);
+        gpui_component::init(cx);
+        let theme = Theme::global(cx);
+        assert_eq!(theme.font_family.as_ref(), UI_FONT);
+        assert_eq!(theme.mono_font_family.as_ref(), CODE_FONT);
+        assert_eq!(theme.radius, gpui::px(6.0), "Leaf's config, not the library's");
+        let installed = cx.text_system().all_font_names();
+        for family in [UI_FONT, CODE_FONT] {
+            assert!(installed.iter().any(|f| f == family), "{family} is loaded");
+        }
+    });
 }
