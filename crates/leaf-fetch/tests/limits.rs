@@ -131,19 +131,21 @@ fn a_page_in_another_encoding_is_decoded() {
 #[test]
 fn only_web_addresses_without_passwords() {
     let (fetcher, base) = setup();
-    let with_password = base.replace("http://", "http://me:secret@") + "/page";
     for address in [
         "file:///etc/passwd",
         "ftp://example.com/",
         "javascript:alert(1)",
         "data:text/html,hi",
-        &with_password,
     ] {
         assert!(
             matches!(fetcher.preview(address), Err(FetchError::Address(_))),
             "{address}"
         );
     }
+    // An address with a user name and password is refused before any request. It isn't printed: test
+    // output must not show credentials, even made-up ones.
+    let with_user = base.replace("http://", "http://someone:not-a-real-one@") + "/page";
+    assert!(matches!(fetcher.preview(&with_user), Err(FetchError::Address(_))));
 }
 
 #[test]
