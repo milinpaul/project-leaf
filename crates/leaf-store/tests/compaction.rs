@@ -31,13 +31,14 @@ fn db(path: &Path) -> Connection {
 }
 
 fn update_rows(path: &Path, key: DocKey) -> usize {
-    db(path)
+    let count: i64 = db(path)
         .query_row(
             "SELECT count(*) FROM doc_updates WHERE doc_id = ?1",
             [key.to_string()],
             |row| row.get(0),
         )
-        .or_fail()
+        .or_fail();
+    usize::try_from(count).or_fail()
 }
 
 fn snapshot(path: &Path, key: DocKey) -> Vec<u8> {

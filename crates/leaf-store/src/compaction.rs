@@ -28,12 +28,13 @@ impl Store {
         let tx = self
             .conn
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let count: usize = tx.query_row(
+        // SQLite counts in i64; rusqlite reads no `usize` (0.41). A count never goes negative.
+        let count: i64 = tx.query_row(
             "SELECT count(*) FROM doc_updates WHERE doc_id = ?1",
             [&id],
             |row| row.get(0),
         )?;
-        if count <= COMPACT_AFTER {
+        if usize::try_from(count).map_or(true, |count| count <= COMPACT_AFTER) {
             return Ok(false);
         }
         let Some(saved) = read(&tx, &id)? else {
