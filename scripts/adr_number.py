@@ -81,6 +81,10 @@ def apply(root: Path) -> list[tuple[str, str]]:
 
 
 def main() -> int:
+    # It takes no options: anything on the command line (`--help`, a typo) prints this help and changes nothing.
+    if len(sys.argv) > 1:
+        print(__doc__)
+        return 0
     try:
         done = apply(ROOT)
     except AdrError as exc:

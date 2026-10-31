@@ -99,7 +99,11 @@ fn backlinks_list_each_linking_block_with_the_words_around_it() {
         summary(&links),
         vec![
             ("Budget".into(), "Flights for ".into(), " are booked".into()),
-            ("Budget".into(), String::new(), " again and  and ".into()),
+            (
+                "Budget".into(),
+                String::new(),
+                " again and Trip to Japan and Journal".into()
+            ),
             ("notes".into(), String::new(), String::new()),
         ],
         "pages by title (case ignored), blocks in reading order"
@@ -113,7 +117,11 @@ fn backlinks_list_each_linking_block_with_the_words_around_it() {
     assert_eq!(ok(searcher.backlinks(japan)), links);
     assert_eq!(
         summary(&ok(searcher.backlinks(journal))),
-        vec![("Budget".into(), " again and  and ".into(), String::new())]
+        vec![(
+            "Budget".into(),
+            "Trip to Japan again and Trip to Japan and ".into(),
+            String::new()
+        )]
     );
     assert_eq!(ok(searcher.backlinks(PageId::new())), Vec::new());
     let _ = std::fs::remove_dir_all(root);

@@ -13,6 +13,7 @@
 //! - `deep`: open the deepest page under the first one (its first child, and so on), for a breadcrumb.
 //!   `star`: add the open page to Favourites. `cover=NAME`: give it the built-in cover NAME (`sage`,
 //!   `lagoon`, …). `wide`: make it full width. `pagemenu`: then open the top bar's `⋯` page menu.
+//!   `backlinks`: then open the backlinks list under the title.
 //! - `caret=B:C`: the caret at character C of block B; `select=B:C-B:C`: select from one to the
 //!   other. Either gives the page the keyboard.
 //! - `language=B`: open code block B's language picker.
@@ -74,6 +75,7 @@ mod mac {
         wide: bool,
         cover: Option<String>,
         pagemenu: bool,
+        backlinks: bool,
         bench: bool,
         caret: Option<String>,
         select: Option<String>,
@@ -86,7 +88,7 @@ mod mac {
     }
 
     fn options() -> Result<Options, Error> {
-        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [wide] [cover=NAME] [pagemenu] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
+        let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [wide] [cover=NAME] [pagemenu] [backlinks] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
                      [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
@@ -107,6 +109,7 @@ mod mac {
             wide: rest.iter().any(|a| a == "wide"),
             cover: value("cover="),
             pagemenu: rest.iter().any(|a| a == "pagemenu"),
+            backlinks: rest.iter().any(|a| a == "backlinks"),
             bench: rest.iter().any(|a| a == "bench"),
             link: rest.iter().any(|a| a == "link"),
             language: value("language="),
@@ -283,6 +286,11 @@ mod mac {
         }
         if options.pagemenu {
             click(cx, window, point(px(WIDTH - PAGE_MENU_FROM_RIGHT), px(22.0)))?;
+        }
+        if options.backlinks {
+            cx.update_window(window, |_, _, cx| {
+                shell.update(cx, Shell::show_backlinks);
+            })?;
         }
         Ok(())
     }

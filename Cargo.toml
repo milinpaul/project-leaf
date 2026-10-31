@@ -70,8 +70,16 @@ dbg_macro = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 
+# Development and test builds keep only line tables (file and line in panics and backtraces), not full debug info:
+# linking is faster and `target/` far smaller (E08-S17). For a debugger session, build with
+# `CARGO_PROFILE_DEV_DEBUG=full`.
+[profile.dev]
+debug = "line-tables-only"
+
 [profile.dev.package."*"]
 opt-level = 2
+# Dependencies are optimised and need no debug info at all.
+debug = false
 
 [profile.release]
 lto = "thin"

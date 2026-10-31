@@ -258,6 +258,7 @@ impl Render for Shell {
     }
 }
 
+mod backlinks;
 mod block_drag;
 mod block_menu;
 mod block_row;

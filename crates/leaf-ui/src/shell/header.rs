@@ -24,6 +24,7 @@ impl Shell {
     /// The icon, the "Add icon" and "Add cover" buttons, and the title of the open page. `on_cover` is
     /// whether a cover is drawn above, which the icon then overlaps.
     pub(super) fn render_page_header(&mut self, on_cover: bool, cx: &mut Context<Self>) -> AnyElement {
+        let backlinks = self.render_backlinks(cx);
         let icon = self.editor.selected_icon().unwrap_or_else(|err| {
             report("could not read the page icon", err);
             None
@@ -127,6 +128,8 @@ impl Shell {
                     // The text cursor over the title, as over the blocks (E07-S12).
                     .cursor_text(),
             )
+            // Which pages link here, under the title (E10-S07).
+            .children(backlinks)
             .into_any_element()
     }
 
