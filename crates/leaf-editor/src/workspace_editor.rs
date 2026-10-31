@@ -267,6 +267,7 @@ mod breadcrumb;
 mod databases;
 mod favourites;
 mod last_page;
+mod page_links;
 mod page_menu;
 mod page_width;
 mod trash;

@@ -92,6 +92,17 @@ Measured with 5,000 pages × 20 blocks and 25,000 links, release build, Apple M1
 - **Invariant 10** (`BLOCK_MODEL.md`): a placeholder always carries its page, and the page mark sits on nothing else.
   Commands can't break it; the merge repair restores it after an older version's edits.
 
+## Notes from building it (E10-S03, E10-S04)
+
+- **Drawn and page positions.** A link is one character in the page but many on screen. `LinkedText` (leaf-editor)
+  builds the drawn runs and maps positions both ways; the painted layout keeps the map, so the caret, selection,
+  Up/Down and clicks all stay in page positions. A point inside a label snaps to the link's nearer end.
+- **The label:** icon and title for a live page; "Title (in trash)" greyed; "Deleted page" greyed. A plain click opens
+  a live or trashed page; a deleted one has nothing to open, so the caret goes there.
+- **The clipboard.** Leaf's own fragment carries the link; the Markdown other apps get names it `[[Title]]`, plain
+  text the title. Pasted `[[Title]]` becomes a link when exactly one page outside the trash has that title.
+- **Search** drops the placeholder from indexed text; pages are found by their own titles.
+
 ## Alternatives considered
 
 - **Today's `link` mark over the title's words, with a `leaf://page/…` address:**
