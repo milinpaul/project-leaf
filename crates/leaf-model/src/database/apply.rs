@@ -317,6 +317,13 @@ impl Database {
         // Mergeable, so two devices filling in a row for the first time at once share one map (E09-S01).
         let cells = self.cells().ensure_mergeable_map(&row.to_string())?;
         let key = column.to_string();
+        // A multi-select's map is mergeable: attached again after being taken out, it would be the same container
+        // with whatever it held then, which undo and redo don't follow. So once a cell has a map it keeps it: a
+        // plain value goes inside it (`keys::PLAIN`) and clearing empties it (E09-S12).
+        let stored_map = match cells.get(&key) {
+            Some(ValueOrContainer::Container(Container::Map(map))) => Some(map),
+            _ => None,
+        };
         match new {
             Some(CellValue::Options(options)) => write_options(&cells.ensure_mergeable_map(&key)?, options)?,
             // A multi-select is emptied option by option, so one added elsewhere at the same time is kept.
@@ -328,10 +335,19 @@ impl Database {
             }
             Some(value) => {
                 if let Some(plain) = value.to_loro() {
-                    cells.insert(&key, plain)?;
+                    match &stored_map {
+                        Some(map) => {
+                            write_options(map, &std::collections::BTreeSet::new())?;
+                            map.insert(keys::PLAIN, plain)?;
+                        }
+                        None => cells.insert(&key, plain)?,
+                    }
                 }
             }
-            None => cells.delete(&key)?,
+            None => match &stored_map {
+                Some(map) => write_options(map, &std::collections::BTreeSet::new())?,
+                None => cells.delete(&key)?,
+            },
         }
         Ok(DatabaseOutcome::Done)
     }

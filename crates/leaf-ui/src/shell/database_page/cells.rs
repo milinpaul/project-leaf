@@ -17,7 +17,7 @@ use super::super::Shell;
 /// Width of the pop-up editors.
 const PANEL_WIDTH: f32 = 260.0;
 
-fn panel(cx: &App) -> gpui::Div {
+pub(super) fn panel(cx: &App) -> gpui::Div {
     let theme = cx.theme();
     v_flex()
         .w(px(PANEL_WIDTH))

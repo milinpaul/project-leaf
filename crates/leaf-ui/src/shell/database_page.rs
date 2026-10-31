@@ -8,9 +8,17 @@
 //! the title) edit in place, committed with Enter or by clicking away and dropped with Escape. A checkbox
 //! toggles on click or Enter. Select and multi-select cells open an option picker, date cells a calendar. What
 //! each input writes is `DatabaseEditor`'s (`leaf_editor::CellEditor`); this module only draws and forwards.
+//!
+//! Columns (E09-S06): a header opens its column's menu (name, type, move, hide, delete); the "+" at the end adds a
+//! column or shows a hidden one. Headers drag to reorder and their edges drag to resize. Cmd/Ctrl+Z undoes the
+//! database's last step.
 
 mod cells;
+mod column_menu;
+mod columns;
 mod editing;
+mod header;
+mod options;
 mod table;
 
 use std::time::Duration;
@@ -44,15 +52,26 @@ const CONTEXT: &str = "DatabasePage";
 /// is selected, so the editor binds Escape here, closer in.
 const CELL_CONTEXT: &str = "DatabaseCell";
 
-actions!(database_page, [EditCell, StopEditing]);
+actions!(database_page, [EditCell, StopEditing, UndoDatabase, RedoDatabase]);
 
-/// Enter edits the selected cell; Escape stops editing.
+/// Enter edits the selected cell; Escape stops editing or closes a menu; Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z undo and
+/// redo the database (Ctrl+Y too, off macOS).
 pub(crate) fn bind(cx: &mut gpui::App) {
+    let (undo, redo) = if cfg!(target_os = "macos") {
+        ("cmd-z", "cmd-shift-z")
+    } else {
+        ("ctrl-z", "ctrl-shift-z")
+    };
     cx.bind_keys([
         KeyBinding::new("enter", EditCell, Some(CONTEXT)),
         KeyBinding::new("escape", StopEditing, Some(CONTEXT)),
         KeyBinding::new("escape", StopEditing, Some(CELL_CONTEXT)),
+        KeyBinding::new(undo, UndoDatabase, Some(CONTEXT)),
+        KeyBinding::new(redo, RedoDatabase, Some(CONTEXT)),
     ]);
+    if !cfg!(target_os = "macos") {
+        cx.bind_keys([KeyBinding::new("ctrl-y", RedoDatabase, Some(CONTEXT))]);
+    }
 }
 
 /// A cell being edited: its view row and table column (0 is the title).
@@ -80,6 +99,8 @@ pub(super) struct DatabasePage {
     text: Entity<InputState>,
     query: Entity<InputState>,
     calendar: Entity<CalendarState>,
+    /// The column menu's name field.
+    column_name: Entity<InputState>,
     editing: Option<Editing>,
     reading: Option<Task<()>>,
     _subscriptions: Vec<Subscription>,
@@ -122,6 +143,7 @@ impl Shell {
         let text = cx.new(|cx| InputState::new(window, cx));
         let query = cx.new(|cx| InputState::new(window, cx).placeholder("Search or create an option"));
         let calendar = cx.new(|cx| CalendarState::new(window, cx));
+        let column_name = cx.new(|cx| InputState::new(window, cx).placeholder("Column name"));
         let delegate = DatabaseTable {
             view: leaf_editor::TableView {
                 columns: Vec::new(),
@@ -134,6 +156,9 @@ impl Shell {
             text: text.clone(),
             query: query.clone(),
             calendar: calendar.clone(),
+            column_menu: None,
+            add_menu: None,
+            column_name: column_name.clone(),
             shell,
         };
         let table = cx.new(|cx| {
@@ -141,8 +166,8 @@ impl Shell {
                 .cell_selectable(true)
                 .row_selectable(false)
                 .row_header(false)
-                .col_movable(false)
-                .col_resizable(false)
+                .col_movable(true)
+                .col_resizable(true)
                 .sortable(false)
         });
         let subscriptions = vec![
@@ -150,6 +175,7 @@ impl Shell {
             cx.subscribe_in(&text, window, Self::on_cell_text_event),
             cx.subscribe_in(&query, window, Self::on_option_query_event),
             cx.subscribe_in(&calendar, window, Self::on_calendar_event),
+            cx.subscribe_in(&column_name, window, Self::on_column_name_event),
         ];
         self.database = Some(DatabasePage {
             page,
@@ -158,6 +184,7 @@ impl Shell {
             text,
             query,
             calendar,
+            column_name,
             editing: None,
             reading: None,
             _subscriptions: subscriptions,
@@ -263,8 +290,14 @@ impl Shell {
                         cx.listener(|shell, _: &EditCell, window, cx| shell.edit_selected_cell(window, cx)),
                     )
                     .on_action(
-                        cx.listener(|shell, _: &StopEditing, window, cx| shell.cancel_cell_edit(window, cx)),
+                        cx.listener(|shell, _: &StopEditing, window, cx| shell.stop_editing(window, cx)),
                     )
+                    .on_action(cx.listener(|shell, _: &UndoDatabase, window, cx| {
+                        shell.database_history(true, window, cx);
+                    }))
+                    .on_action(cx.listener(|shell, _: &RedoDatabase, window, cx| {
+                        shell.database_history(false, window, cx);
+                    }))
                     .child(
                         div()
                             .h(px(height))
@@ -309,7 +342,18 @@ impl Shell {
         match event {
             TableEvent::DoubleClickedCell(row, col) => self.begin_cell_edit(*row, *col, window, cx),
             TableEvent::SelectCell(..) if self.editing().is_some() => self.commit_cell_edit(window, cx),
+            TableEvent::MoveColumn(from, to) => self.move_dragged_column(*from, *to, cx),
+            TableEvent::ColumnWidthsChanged(widths) => self.resize_columns(widths, cx),
             _ => {}
+        }
+    }
+
+    /// Escape: closes a column menu if one is open, otherwise drops the cell being edited.
+    pub(super) fn stop_editing(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.column_menu_open(cx) {
+            self.close_column_menus(window, cx);
+        } else {
+            self.cancel_cell_edit(window, cx);
         }
     }
 

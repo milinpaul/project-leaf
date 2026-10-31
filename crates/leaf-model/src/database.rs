@@ -177,6 +177,15 @@ impl Database {
         Ok(changed)
     }
 
+    /// Runs `f` as one undo step: every command it applies undoes and redoes together. For an action made of
+    /// several commands, such as creating an option and picking it in a cell.
+    pub fn group<T>(&mut self, f: impl FnOnce(&mut Self) -> Result<T, ModelError>) -> Result<T, ModelError> {
+        self.undo.group_start()?;
+        let result = f(self);
+        self.undo.group_end();
+        result
+    }
+
     /// How close together, in milliseconds, commands must be to undo as one step. `0` makes every command its
     /// own step, which tests use.
     pub fn set_undo_merge_interval(&mut self, ms: i64) {

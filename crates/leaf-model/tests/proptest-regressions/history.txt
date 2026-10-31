@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 978211e2c33a4e5db919557d766933946dfd05e10a79bf822b1512e662f47d18 # shrinks to steps = [AddColumn(0, 170), AddOption(0, 0)]
+cc 04a45ecda60c16c5ba28441c6c33d3ed1c122112f4b3c9e90de87e6d86e3d9ad # shrinks to steps = [AddColumn(0, 164), AddRow(0), AddOption(0, 0), SetCell(0, 0, 1), SetColumnType(0, 191), ClearCell(0, 0), DeleteOption(0, 0), SetColumnType(0, 255), SetCell(0, 0, 0)]

@@ -10,10 +10,10 @@ use gpui_component::input::{Input, InputState};
 use gpui_component::table::{Column, TableDelegate, TableState};
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex};
 use gpui_kit_assets::IconName;
-use leaf_editor::{CellDisplay, Chip, OptionPicker, TableView};
-use leaf_model::PropertyType;
+use leaf_editor::{CellDisplay, Chip, ColumnMenu, HiddenColumn, OptionPicker, TableView};
 
 use super::super::Shell;
+use super::header::{self, Slot};
 use super::{EditKind, Editing};
 
 /// Width of the title column, which every database has first.
@@ -21,20 +21,7 @@ pub(super) const TITLE_WIDTH: f32 = 260.0;
 
 /// Space either side of a cell's content. The columns have no padding of their own, so each cell reaches its
 /// column's edges and can draw the divider there.
-const CELL_PADDING: gpui::Pixels = px(8.0);
-
-/// A header cell's box, `width` wide: padded, with a subtle divider on its right, like the rows'. The table keeps
-/// room for a sort icon on the right of a header (sorting is off here); a fixed width reaches over it, so the
-/// divider sits on the column's edge, in line with the rows'.
-fn divided(width: f32, cx: &App) -> gpui::Div {
-    h_flex()
-        .h_full()
-        .w(px(width))
-        .flex_shrink_0()
-        .px(CELL_PADDING)
-        .border_r_1()
-        .border_color(cx.theme().table_row_border)
-}
+pub(super) const CELL_PADDING: gpui::Pixels = px(8.0);
 
 /// The table's data and what is being edited, for drawing.
 pub(in crate::shell) struct DatabaseTable {
@@ -45,26 +32,19 @@ pub(in crate::shell) struct DatabaseTable {
     pub(super) text: Entity<InputState>,
     pub(super) query: Entity<InputState>,
     pub(super) calendar: Entity<gpui_component::calendar::CalendarState>,
+    /// The open column menu: its table column and contents (E09-S06).
+    pub(super) column_menu: Option<(usize, ColumnMenu)>,
+    /// The hidden columns, while the "+" menu is open.
+    pub(super) add_menu: Option<Vec<HiddenColumn>>,
+    /// The column menu's name field.
+    pub(super) column_name: Entity<InputState>,
     pub(super) shell: WeakEntity<Shell>,
-}
-
-/// The icon for a column type, shown before its name.
-fn type_icon(kind: &PropertyType) -> IconName {
-    match kind {
-        PropertyType::Text => IconName::TextAlignStart,
-        PropertyType::Number => IconName::Hash,
-        PropertyType::Select => IconName::CircleChevronDown,
-        PropertyType::MultiSelect => IconName::List,
-        PropertyType::Date => IconName::Calendar,
-        PropertyType::Checkbox => IconName::SquareCheck,
-        PropertyType::Url => IconName::Link,
-        PropertyType::Unknown(_) => IconName::CircleQuestionMark,
-    }
 }
 
 impl TableDelegate for DatabaseTable {
     fn columns_count(&self, _: &App) -> usize {
-        self.view.columns.len() + 1
+        // The title, the shown columns, then the "+" column.
+        self.view.columns.len() + 2
     }
 
     fn rows_count(&self, _: &App) -> usize {
@@ -73,36 +53,33 @@ impl TableDelegate for DatabaseTable {
 
     #[expect(clippy::cast_possible_truncation, reason = "column widths are small")]
     fn column(&self, col_ix: usize, _: &App) -> Column {
-        match col_ix.checked_sub(1).and_then(|i| self.view.columns.get(i)) {
-            None => Column::new("title", "Name")
+        // Only the database's own columns move (by dragging the header) and resize (by dragging its edge).
+        match header::slot(&self.view, col_ix) {
+            Slot::Title => Column::new("title", "Name")
                 .width(px(TITLE_WIDTH))
                 .resizable(false)
-                .p_0(),
-            Some(column) => Column::new(SharedString::from(column.id.to_string()), column.name.clone())
-                .width(px(column.width as f32))
+                .movable(false),
+            Slot::Column(column) => {
+                Column::new(SharedString::from(column.id.to_string()), column.name.clone())
+                    .width(px(column.width as f32))
+                    .min_width(px(header::MIN_WIDTH))
+            }
+            Slot::Add => Column::new("add", "")
+                .width(px(header::ADD_WIDTH))
                 .resizable(false)
-                .p_0(),
+                .movable(false),
         }
+        .selectable(false)
+        .p_0()
     }
 
-    #[expect(clippy::cast_possible_truncation, reason = "column widths are small")]
     fn render_th(
         &mut self,
         col_ix: usize,
-        _: &mut Window,
+        window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) -> impl IntoElement {
-        let (name, icon, width) = match col_ix.checked_sub(1).and_then(|i| self.view.columns.get(i)) {
-            None => ("Name".to_owned(), IconName::TextAlignStart, TITLE_WIDTH),
-            Some(column) => (column.name.clone(), type_icon(&column.kind), column.width as f32),
-        };
-        divided(width, cx)
-            .gap_1p5()
-            .items_center()
-            .text_color(cx.theme().muted_foreground)
-            .debug_selector(move || format!("database-head-{col_ix}"))
-            .child(Icon::new(icon).xsmall())
-            .child(name)
+        header::render(self, col_ix, window, cx)
     }
 
     fn render_td(
@@ -127,13 +104,17 @@ impl TableDelegate for DatabaseTable {
             .border_color(cx.theme().table_row_border)
             .relative()
             .overflow_hidden();
+        if matches!(header::slot(&self.view, col_ix), Slot::Add) {
+            // Under the "+" header: empty, and no divider, which the header has none of either.
+            return cell.border_r_0().into_any_element();
+        }
         let cell = match editing {
             Some(_) => {
                 let shell = self.shell.clone();
                 cell.key_context(super::CELL_CONTEXT)
                     .on_action(move |_: &super::StopEditing, window, cx| {
                         if let Some(shell) = shell.upgrade() {
-                            shell.update(cx, |shell, cx| shell.cancel_cell_edit(window, cx));
+                            shell.update(cx, |shell, cx| shell.stop_editing(window, cx));
                         }
                     })
             }
