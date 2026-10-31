@@ -1,0 +1,18 @@
+[package]
+name = "web-bookmark-spike"
+description = "E15-S01 trial: fetch a web page's preview safely (throwaway, never merged)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# HTTP: blocking, rustls with bundled Mozilla roots, gzip through flate2 (already in the tree).
+ureq = { version = "=3.5.0", default-features = false, features = ["rustls", "gzip"] }
+# HTML: the tokenizer only, the same version gpui-component already brings.
+html5ever = "=0.27.0"
+url = "2.5"
+thiserror.workspace = true
+
+[lints]
+workspace = true
