@@ -1,0 +1,49 @@
+# Fuzz targets for the code that reads outside input (E08-S11, ADR-088). Not part of the main workspace:
+# it needs nightly Rust and cargo-fuzz, so `just check` and normal builds never compile it. Run with `just fuzz`.
+[package]
+name = "leaf-fuzz"
+version = "0.0.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+leaf-core = { path = "../crates/leaf-core" }
+leaf-editor = { path = "../crates/leaf-editor" }
+leaf-model = { path = "../crates/leaf-model" }
+leaf-store = { path = "../crates/leaf-store" }
+
+# Its own workspace, so the main one never builds it.
+[workspace]
+
+[[bin]]
+name = "doc_bytes"
+path = "fuzz_targets/doc_bytes.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "workspace_db"
+path = "fuzz_targets/workspace_db.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "asset_kind"
+path = "fuzz_targets/asset_kind.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "paste"
+path = "fuzz_targets/paste.rs"
+test = false
+doc = false
+bench = false
