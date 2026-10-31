@@ -335,6 +335,8 @@ mod undo;
 #[cfg(test)]
 mod callout_tests;
 #[cfg(test)]
+mod database_block_tests;
+#[cfg(test)]
 mod task_tests;
 #[cfg(test)]
 mod tests;

@@ -281,6 +281,14 @@ A row opens as a page (E09-S08, ADR-086): the "Open" button on its title cell. U
 `database_page/row_page.rs` lists the row's properties from `DatabaseEditor::row_properties` (every column, in order)
 and edits them with the table cell's rules, with the row's page as the row.
 
+A database can sit inside a page (E09-S09, ADR-XXX-E09-S09): a `database` block naming a database page filed under that
+page. `/database` asks for one; `WorkspaceEditor::make_requested_database` makes the page and `PageEditor::
+insert_inline_database` places the block. After each page change `WorkspaceEditor::sync_inline_databases` trashes the
+database whose block left the page and restores one whose block came back, outside the workspace's undo. In the UI
+(`database_page/inline.rs`) the block draws the title, the sort and filter bar, a table about ten rows tall and "New";
+the shell keeps one view per database shown and the table actions work on the active one, which a press inside makes
+it. The table's wrapper binds the page's keys to nothing, so they stay out of the page.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.

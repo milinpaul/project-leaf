@@ -54,6 +54,10 @@ pub struct PageEditor {
     pub(crate) offer: Option<crate::web_bookmark::OfferState>,
     /// A web bookmark's address asked for from the slash menu, until it is given or cancelled.
     pub(crate) address: Option<crate::web_bookmark::AddressRequest>,
+    /// Where a database was asked for from the slash menu, until the workspace makes it (E09-S09).
+    pub(crate) database_request: Option<leaf_model::Anchor>,
+    /// The inline databases on the page when last looked at; `None` until first looked at (E09-S09).
+    pub(crate) inline_seen: Option<std::collections::HashSet<leaf_core::PageId>>,
     /// Web bookmarks waiting for their preview to be fetched, and whether fetching is allowed (E15-S05).
     pub(crate) previews: crate::preview_requests::PreviewRequests,
 }
@@ -75,6 +79,8 @@ impl PageEditor {
             image: None,
             offer: None,
             address: None,
+            database_request: None,
+            inline_seen: None,
             previews: crate::preview_requests::PreviewRequests::default(),
         }
     }
@@ -83,6 +89,12 @@ impl PageEditor {
     #[must_use]
     pub fn doc(&self) -> &PageDoc {
         &self.doc
+    }
+
+    /// How close together, in milliseconds, edits must be to undo as one step (`0`: each its own). Window tests turn
+    /// merging off so a quick sequence of actions undoes one at a time.
+    pub fn set_undo_merge_interval(&mut self, ms: i64) {
+        self.doc.set_undo_merge_interval(ms);
     }
 
     /// Every block in reading order, with its depth and style, built from scratch. For drawing use
@@ -95,6 +107,10 @@ impl PageEditor {
     /// the last call.
     pub fn view(&mut self) -> Result<&[BlockRow], EditorError> {
         self.view.refresh(&self.doc)?;
+        if self.inline_seen.is_none() {
+            // The first drawing comes before any edit: the inline databases there are the ones the page opened with.
+            self.inline_seen = Some(crate::inline_database::databases_in(self.view.rows()).collect());
+        }
         Ok(self.view.rows())
     }
 

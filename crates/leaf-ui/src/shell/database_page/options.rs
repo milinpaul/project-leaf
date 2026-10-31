@@ -12,11 +12,7 @@ impl Shell {
         let Some((id, page, column)) = self.editing_cell(cx) else {
             return;
         };
-        let Some(query) = self
-            .database
-            .as_ref()
-            .map(|d| d.query.read(cx).value().to_string())
-        else {
+        let Some(query) = self.database_view().map(|d| d.query.read(cx).value().to_string()) else {
             return;
         };
         let picker = match self
@@ -122,7 +118,7 @@ impl Shell {
         {
             return report("could not add the option", err);
         }
-        if let Some(d) = &self.database {
+        if let Some(d) = self.database_view() {
             let query = d.query.clone();
             query.update(cx, |q, cx| q.set_value("", window, cx));
         }

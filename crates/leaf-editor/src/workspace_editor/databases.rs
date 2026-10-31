@@ -26,22 +26,37 @@ impl WorkspaceEditor {
         parent: Option<PageId>,
         now_ms: i64,
     ) -> Result<(PageId, DatabaseId), EditorError> {
+        self.create_database_page(parent, now_ms, true)
+    }
+
+    /// [`WorkspaceEditor::new_database_page`], in the workspace's undo history when `recorded`. An inline
+    /// database's page isn't: its block is the undo step, on the page (E09-S09).
+    pub(super) fn create_database_page(
+        &mut self,
+        parent: Option<PageId>,
+        now_ms: i64,
+        recorded: bool,
+    ) -> Result<(PageId, DatabaseId), EditorError> {
         let index = match parent {
             Some(parent) => self.workspace.children(parent)?.len(),
             None => self.workspace.root_pages()?.len(),
+        };
+        let command = WorkspaceCommand::CreateDatabasePage {
+            parent,
+            index,
+            title: String::new(),
+            created_at: now_ms,
+        };
+        let outcome = if recorded {
+            self.workspace.apply(command)?
+        } else {
+            self.workspace.apply_unrecorded(command)?
         };
         #[expect(
             clippy::unreachable,
             reason = "the workspace's CreateDatabasePage always answers DatabasePageCreated"
         )]
-        let Outcome::DatabasePageCreated { page, database } =
-            self.workspace.apply(WorkspaceCommand::CreateDatabasePage {
-                parent,
-                index,
-                title: String::new(),
-                created_at: now_ms,
-            })?
-        else {
+        let Outcome::DatabasePageCreated { page, database } = outcome else {
             unreachable!("CreateDatabasePage always reports the page it created");
         };
         self.databases

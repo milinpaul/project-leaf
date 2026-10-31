@@ -205,6 +205,7 @@ impl Shell {
     pub(super) fn changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.pick_image_if_asked(window, cx);
         self.ask_web_address_if_asked(window, cx);
+        self.follow_inline_databases();
         self.fetch_previews_if_asked(window, cx);
         self.restart_blink();
         self.reveal_caret();

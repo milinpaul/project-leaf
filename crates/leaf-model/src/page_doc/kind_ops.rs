@@ -35,8 +35,19 @@ impl PageDoc {
                     "a table can't be turned into another kind of block".into(),
                 ));
             }
+            // Its database lives and dies with the block (E09-S09): turned into text, it would be lost silently.
+            BlockKind::Database { .. } => {
+                return Err(ModelError::InvalidKind(
+                    "an inline database can't be turned into another kind of block".into(),
+                ));
+            }
             part if part.is_table_part() => return Err(ModelError::TablePart { block: id }),
             _ => {}
+        }
+        if matches!(kind, BlockKind::Database { .. }) {
+            return Err(ModelError::InvalidKind(
+                "an inline database is inserted as a new block, not made from another".into(),
+            ));
         }
         if old == *kind {
             return Ok(PageOutcome::Changed); // nothing to write; apply reports Unchanged
