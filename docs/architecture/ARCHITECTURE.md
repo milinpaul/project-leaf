@@ -86,7 +86,10 @@ the answer's depth, the dragged rows fade, and holding near the page's top or bo
 selected text opens the **link popover** (E07-S07, ADR 0052, `shell/link_popover.rs`): an address field under the
 selection, filled in when the selection is already one link, with Open and Remove; Enter saves through
 `PageEditor::set_link`. `Cmd/Ctrl+click` on a link opens it; `leaf_editor::openable_url` decides which addresses the
-system may open. A **code block** shows its language at the top right on hover; a click opens a searchable list
+system may open. A **page link** (E10, ADR 0071) is one character in the page but is drawn as the target's icon and
+title: `leaf_editor::LinkedText` builds the drawn runs from `WorkspaceEditor::link_target` (title, icon, live / in
+trash / deleted) and maps positions both ways, and the painted layout keeps that map so carets, selections and clicks
+stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR 0054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
 and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR 0043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
@@ -239,6 +242,11 @@ from that `TableView` through a delegate, with a "New" line under the last row. 
 the page opens and the rest on a timer. Editing a cell asks `DatabaseEditor` (`database_view/edit.rs`) which editor the
 cell opens (a text line, a checkbox, the option picker or a calendar), and hands what was typed, ticked, picked or
 chosen back to it as `DatabaseCommand`s. The sidebar's table button beside "+" adds a database page.
+
+Columns (E09-S06, ADR 0072): a header opens its column's menu and a "+" column at the end adds a column or shows a
+hidden one (`database_page/header.rs`, `column_menu.rs`, `columns.rs`). What each choice writes is decided in
+`leaf-editor` `database_view/columns.rs`. Each database command is its own undo step; `Database::group` makes an action
+of several commands one step. Cmd/Ctrl+Z on a database page undoes the database.
 
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;

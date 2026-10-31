@@ -36,6 +36,10 @@ gpui_kit_assets::icon_assets!(
     LeafIcons,
     [
         ArrowDown,
+        ArrowLeft,
+        ArrowRight,
+        Eye,
+        EyeOff,
         X,
         TextAlignStart,
         Hash,

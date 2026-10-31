@@ -63,7 +63,8 @@ LoroDoc (database, keyed by DatabaseId)
 ├── "rows":    LoroTree (flat)  row order; node meta "id" = the row's PageId, "deleted": true once deleted
 ├── "cells":   LoroMap          PageId -> mergeable LoroMap: ColumnId -> value
 │     text, url: String · number: f64 · date: i64 (unix ms) · checkbox: bool · select: OptionId as String
-│     multi_select: mergeable LoroMap OptionId -> true
+│     multi_select: mergeable LoroMap OptionId -> true; a cell that has had this map keeps it: retyped and
+│       given a plain value, the value sits inside under "=" (E09-S12)
 └── "view":    LoroMap          "sort": [{column, descending}], "filters": [{column, op, value}] (plain values)
 ```
 
@@ -153,6 +154,12 @@ Unknown `type` values (from a newer app version) are preserved and rendered as a
 | `strike` | `true` | after |
 | `code` | `true` | none |
 | `link` | `href: String` | none |
+| `page` | the target's `PageId` as text | none |
+
+**Page links (E10, ADR 0071).** A link to a page is one `U+FFFC` placeholder character (`PAGE_LINK`) carrying a
+`page` mark, made with `InsertPageLink`. The title isn't stored: it is looked up when drawing, so renaming a page updates
+every link to it. Each placeholder gets its own mark op, because Loro gives text typed *inside* a mark's span that mark
+whatever its expand rule, and two neighbouring links marked at once would take in text typed between them.
 
 Configure once per doc with `config_text_style` before any edit (on create and on every load). Marks this version
 doesn't know (from a newer version) get a default style that doesn't expand, so their text stays editable.
@@ -211,8 +218,13 @@ validate, write, commit once; `Unchanged` when nothing would change)
   text length; blocks without text (dividers, unknown kinds) are refused
 - `ReplaceText { id, range, text }`: one commit replacing `range` (typing over a selection, committing an input-method
   composition); the new text takes the marks of the first replaced character; an empty range is `InsertText` (ADR 0017)
+- `InsertPageLink { id, pos, page }`: one placeholder with its `page` mark, as one step; refused where marks are
+  (code). Plain text holding `U+FFFC` is refused by `InsertText`, `ReplaceText` and `InsertBlock`, and `ReplaceText`
+  never carries `page` onto its new text. `SetMark(PageLink)` only re-points ranges made entirely of placeholders, and
+  `RemoveMark(PageLink)` is refused: a link goes by deleting it. Turning a block into code, or merging it into code,
+  drops its links (undo brings them back). `PageDoc::page_links()` lists every (block, target) in reading order.
 - `SetMark { id, range, mark: Mark }`, `RemoveMark { id, range, kind: MarkKind }`: `Mark` is bold, italic, strike,
-  code or `Link(href)` (href must not be empty); code blocks take no marks; expand behaviour follows the table above;
+  code, `Link(href)` (href must not be empty) or `PageLink(page)` (above); code blocks take no marks; expand behaviour follows the table above;
   setting a mark the whole range already has, or removing one it doesn't have, is `Unchanged` and writes nothing
 - `SplitBlock { id, pos }` (Enter mid-text): the text after `pos` moves, with its marks, into a new block right after
   (or as its first child if it has children); lists and to-dos continue, anything else becomes a paragraph
@@ -268,7 +280,7 @@ history (ADR 0044).
 
 ## Invariants (checked in tests after every command)
 
-`PageDoc::check_invariants()` checks 1–6, 8 and 9 on the raw Loro tree (unknown kinds are exempt from 2 and 3); the
+`PageDoc::check_invariants()` checks 1–6 and 8–10 on the raw Loro tree (unknown kinds are exempt from 2 and 3); the
 property test `crates/leaf-model/tests/page_invariants.rs` runs random sequences of every page command and calls it
 after each step (256 cases locally and on PRs, 10,000 in CI on `main`). Invariant 7 is checked by the page undo
 property test (E02-S08). Two copies editing at once and swapping changes must end identical with every invariant
@@ -285,6 +297,9 @@ holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that br
 8. Every block has an `id` in its meta, and no two blocks in a page share one.
 9. A `table_row` sits in a `table` and a `table_cell` in a `table_row`. (Commands also keep every table a full grid;
    the page property test checks that, but merges may leave rows uneven, so it is not a state invariant.)
+10. Every `U+FFFC` in block text carries a `page` mark, and a `page` mark sits only on `U+FFFC` (so `code` text holds
+    none). Only a merge with an older version, which doesn't know the mark, can break it; the merge repair takes the
+    mark off other text and drops placeholders left without one.
 
 Database documents have their own, checked by `Database::check_invariants()` after every command in
 `crates/leaf-model/tests/database/` (random commands, two-peer convergence, undo and redo round-trips):
@@ -375,6 +390,7 @@ CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL); -- schema_version
 | divider | `---` |
 | image | `![alt](assets/<hash>.<ext>)` + caption as italic line |
 | table | GitHub-style Markdown table, first row as the header; `\|` for a pipe and `<br>` for a line break in a cell |
+| page link (inline) | `[[Title]]`; pasted back, a link when exactly one page outside the trash has that title, else text (ADR 0071) |
 
 Pasting reads the same table back (`leaf-editor/src/clipboard/markdown.rs`, ADR 0032); plain lines become paragraphs.
 

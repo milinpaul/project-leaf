@@ -34,5 +34,5 @@ pub use page_doc::{Anchor, Caret, Changes, History, InvariantViolation, PageDoc,
 pub use page_meta::PageMeta;
 pub use saved::fold_saved;
 pub use task::{DueDate, DueTime, Priority};
-pub use text::{Mark, MarkKind, Marks, TextSpan};
+pub use text::{Mark, MarkKind, Marks, PAGE_LINK, TextSpan};
 pub use workspace::{DEFAULT_UNDO_MERGE_MS, Workspace};

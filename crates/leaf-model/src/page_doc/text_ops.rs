@@ -11,6 +11,8 @@ use leaf_core::BlockId;
 use loro::{LoroText, LoroValue, TextDelta, cursor::PosType};
 
 use super::PageDoc;
+use super::page_links::{all_placeholders, check_plain, mark_run};
+use crate::text::marks;
 use crate::{Mark, MarkKind, ModelError, PageOutcome};
 
 impl PageDoc {
@@ -22,6 +24,7 @@ impl PageDoc {
     ) -> Result<PageOutcome, ModelError> {
         let container = self.editable_text(id)?;
         check_range(&container, pos..pos)?;
+        check_plain(text)?;
         if !text.is_empty() {
             container.insert(pos, text)?;
         }
@@ -49,10 +52,13 @@ impl PageDoc {
     ) -> Result<PageOutcome, ModelError> {
         let container = self.editable_text(id)?;
         check_range(&container, range.clone())?;
+        check_plain(text)?;
         if range.is_empty() {
             return self.insert_text(id, range.start, text);
         }
-        let wanted = attributes_at(&container, range.start)?;
+        let mut wanted = attributes_at(&container, range.start)?;
+        // Replacing a link with words: the words aren't a link (invariant 10).
+        wanted.remove(marks::PAGE);
         container.delete(range.start, range.len())?;
         if text.is_empty() {
             return Ok(PageOutcome::Changed);
@@ -90,6 +96,9 @@ impl PageDoc {
             return Err(ModelError::EmptyLink);
         }
         check_range(&container, range.clone())?;
+        if matches!(mark, Mark::PageLink(_)) && !all_placeholders(&container, range.clone()) {
+            return Err(ModelError::PageLinkOnText);
+        }
         let value = mark.value();
         let key = mark.kind().key();
         if range.is_empty()
@@ -99,7 +108,7 @@ impl PageDoc {
         {
             return Ok(PageOutcome::Unchanged);
         }
-        container.mark(range, key, value)?;
+        mark_run(&container, range, key, value)?;
         Ok(PageOutcome::Changed)
     }
 
@@ -117,6 +126,9 @@ impl PageDoc {
                 .all(Option::is_none)
         {
             return Ok(PageOutcome::Unchanged);
+        }
+        if kind == MarkKind::PageLink {
+            return Err(ModelError::PageLinkNotRemovable);
         }
         container.unmark(range, kind.key())?;
         Ok(PageOutcome::Changed)
@@ -174,7 +186,7 @@ fn attributes_at(text: &LoroText, pos: usize) -> Result<HashMap<String, LoroValu
 }
 
 /// Fails unless `range` is well-formed and within the text.
-fn check_range(text: &LoroText, range: Range<usize>) -> Result<(), ModelError> {
+pub(super) fn check_range(text: &LoroText, range: Range<usize>) -> Result<(), ModelError> {
     let len = text.len_unicode();
     if range.start > range.end || range.end > len {
         return Err(ModelError::TextOutOfRange {

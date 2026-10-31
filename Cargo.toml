@@ -28,7 +28,7 @@ gpui-component = "=0.8.1"
 gpui-kit-assets = "=0.8.1"
 gpui-platform = { package = "gpui-pre-platform", version = "=0.3.10", features = ["runtime_shaders", "font-kit", "x11", "wayland"] }
 loro = "1"
-rusqlite = { version = "0.37", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 uuid = { version = "1", features = ["v7", "serde"] }
 blake3 = "1"
 serde = { version = "1", features = ["derive"] }

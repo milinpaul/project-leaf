@@ -88,4 +88,6 @@ Records cover two kinds of decision:
 | [0069](0069-database-page-table.md) | Database page: gpui-component's data table, editing rules in leaf-editor | Feature | Accepted |
 | [0070](0070-callout-block.md) | Callout block: one text with lines, and a tone stored by name | Feature | Accepted |
 | [0071](0071-page-links-and-backlinks.md) | Page links: one placeholder character with a `page` mark; backlinks in the search index | Architecture | Accepted |
+| [0072](0072-database-column-menu.md) | Database columns: header menus, and each database command its own undo step | Feature | Accepted |
+| [0073](0073-ci-and-supply-chain-policy.md) | CI and supply chain: read-only CI, pinned actions, deny on new duplicates and git sources | Architecture | Accepted |
 | [0074](0074-bundled-code-font.md) | A bundled code font (JetBrains Mono NL), set before the UI library starts, for a fast cold start | Architecture | Accepted |

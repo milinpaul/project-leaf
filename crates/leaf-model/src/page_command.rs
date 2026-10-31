@@ -3,7 +3,7 @@
 
 use std::ops::Range;
 
-use leaf_core::BlockId;
+use leaf_core::{BlockId, PageId};
 
 use crate::{BlockKind, BlockProp, Mark, MarkKind};
 
@@ -70,6 +70,17 @@ pub enum PageCommand {
         range: Range<usize>,
         /// The replacement; empty just deletes.
         text: String,
+    },
+    /// Inserts a link to `page` at `pos`: one [`PAGE_LINK`](crate::PAGE_LINK) placeholder carrying the
+    /// page's ID, written as one step (ADR 0071). Typing beside it never joins it. Code blocks take none.
+    InsertPageLink {
+        /// Block whose text gets the link; its kind must take marks.
+        id: BlockId,
+        /// Position in Unicode scalar values, at most the text length.
+        pos: usize,
+        /// The page linked to. Any ID is accepted: a link to a page that doesn't exist (yet, or any more)
+        /// is shown as such, never removed.
+        page: PageId,
     },
     /// Applies a mark to the characters in `range`. Code blocks take no marks.
     SetMark {

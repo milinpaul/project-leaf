@@ -81,6 +81,28 @@ Measured with 5,000 pages × 20 blocks and 25,000 links, release build, Apple M1
 | Find the links in one page after an edit | 0.12 ms |
 | Look up one page's backlinks (in memory) | under 1 µs; a SQLite index lookup is well under a millisecond |
 
+## Notes from building it (E10-S02)
+
+- **Each placeholder is marked on its own.** Loro gives text typed *inside* a mark's span that mark, whatever its expand
+  rule; "never expands" only covers the span's ends. A copy or re-point that marked two neighbouring links in one op
+  made text typed between them part of the link (the page property test found it). Copies, duplicates, splits, merges
+  and re-pointing now mark placeholder by placeholder.
+- **Code drops links.** Turning a block into code, or merging a block into code, leaves its links out (code takes no
+  marks), and undo brings them back. The editor (E10-S03) can swap a link for its title first.
+- **Invariant 10** (`BLOCK_MODEL.md`): a placeholder always carries its page, and the page mark sits on nothing else.
+  Commands can't break it; the merge repair restores it after an older version's edits.
+
+## Notes from building it (E10-S03, E10-S04)
+
+- **Drawn and page positions.** A link is one character in the page but many on screen. `LinkedText` (leaf-editor)
+  builds the drawn runs and maps positions both ways; the painted layout keeps the map, so the caret, selection,
+  Up/Down and clicks all stay in page positions. A point inside a label snaps to the link's nearer end.
+- **The label:** icon and title for a live page; "Title (in trash)" greyed; "Deleted page" greyed. A plain click opens
+  a live or trashed page; a deleted one has nothing to open, so the caret goes there.
+- **The clipboard.** Leaf's own fragment carries the link; the Markdown other apps get names it `[[Title]]`, plain
+  text the title. Pasted `[[Title]]` becomes a link when exactly one page outside the trash has that title.
+- **Search** drops the placeholder from indexed text; pages are found by their own titles.
+
 ## Alternatives considered
 
 - **Today's `link` mark over the title's words, with a `leaf://page/…` address:**

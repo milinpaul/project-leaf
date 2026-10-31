@@ -4,6 +4,7 @@
 //! behaviour configured on every document before any edit, on creation and again after loading,
 //! because the setting is not stored in the document.
 
+use leaf_core::PageId;
 use loro::{ExpandType, LoroDoc, LoroText, LoroValue, StyleConfig, StyleConfigMap, TextDelta};
 
 /// Mark names as stored in Loro.
@@ -13,7 +14,13 @@ pub(crate) mod marks {
     pub const STRIKE: &str = "strike";
     pub const CODE: &str = "code";
     pub const LINK: &str = "link";
+    pub const PAGE: &str = "page";
 }
+
+/// The character a link to a page occupies in block text (U+FFFC, the object replacement character): one
+/// placeholder carrying a `page` mark whose value is the target's ID (ADR 0071). The title isn't stored, so
+/// renaming the page updates every link to it; and being one character, a link can't be half edited.
+pub const PAGE_LINK: char = '\u{FFFC}';
 
 /// Applies the mark table: formatting grows when typing right after it; inline code, links and marks this
 /// version doesn't know don't.
@@ -25,6 +32,7 @@ pub(crate) fn configure_marks(doc: &LoroDoc) {
         (marks::STRIKE, ExpandType::After),
         (marks::CODE, ExpandType::None),
         (marks::LINK, ExpandType::None),
+        (marks::PAGE, ExpandType::None),
     ] {
         styles.insert(key.into(), StyleConfig { expand });
     }
@@ -51,6 +59,8 @@ pub struct Marks {
     pub code: bool,
     /// The link target, if the text is a link.
     pub link: Option<String>,
+    /// The page a page link points at; only ever on a [`PAGE_LINK`] placeholder.
+    pub page: Option<PageId>,
 }
 
 /// A run of text whose characters all share the same marks.
@@ -81,6 +91,12 @@ pub(crate) fn spans(text: &LoroText) -> Vec<TextSpan> {
                                 marks.link = Some(href.to_string());
                             }
                         }
+                        // An unreadable ID is kept in the document but not shown as a link.
+                        marks::PAGE => {
+                            if let LoroValue::String(page) = value {
+                                marks.page = page.parse().ok();
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -104,6 +120,9 @@ pub enum Mark {
     Code,
     /// A link to this address; must not be empty.
     Link(String),
+    /// Points page links at this page. Only placeholders take it: links are made with
+    /// [`PageCommand::InsertPageLink`](crate::PageCommand::InsertPageLink), and this re-points them.
+    PageLink(PageId),
 }
 
 /// Which mark to remove, regardless of its value (removing a link does not need its address).
@@ -119,6 +138,8 @@ pub enum MarkKind {
     Code,
     /// Link.
     Link,
+    /// Page link. Never removed on its own: a link goes by deleting its placeholder.
+    PageLink,
 }
 
 impl Mark {
@@ -131,6 +152,7 @@ impl Mark {
             Self::Strike => MarkKind::Strike,
             Self::Code => MarkKind::Code,
             Self::Link(_) => MarkKind::Link,
+            Self::PageLink(_) => MarkKind::PageLink,
         }
     }
 
@@ -138,6 +160,7 @@ impl Mark {
     pub(crate) fn value(&self) -> LoroValue {
         match self {
             Self::Link(href) => LoroValue::String(href.as_str().into()),
+            Self::PageLink(page) => LoroValue::String(page.to_string().into()),
             Self::Bold | Self::Italic | Self::Strike | Self::Code => LoroValue::Bool(true),
         }
     }
@@ -152,6 +175,7 @@ impl MarkKind {
             Self::Strike => marks::STRIKE,
             Self::Code => marks::CODE,
             Self::Link => marks::LINK,
+            Self::PageLink => marks::PAGE,
         }
     }
 }

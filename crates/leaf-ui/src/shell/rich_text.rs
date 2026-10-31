@@ -9,6 +9,8 @@
 //! The mouse places the caret (shift extends the selection), drags select, a double click selects a
 //! word and a triple click the block's text. An input method's draft is drawn underlined in place.
 
+#[cfg(test)]
+mod link_window_tests;
 mod painted_layout;
 mod pieces;
 #[cfg(test)]
@@ -23,7 +25,9 @@ use gpui::{
     StyledText, TextRun, UnderlineStyle, Window, canvas, div, fill, px, size,
 };
 use gpui_component::ActiveTheme as _;
-use leaf_editor::BlockRow;
+use std::rc::Rc;
+
+use leaf_editor::{BlockRow, LinkState, LinkedText};
 use leaf_model::{Caret, Marks, TextSpan};
 
 use super::Shell;
@@ -75,16 +79,29 @@ impl Shell {
             }
             None => (real_spans, None, caret, highlight),
         };
-        let text: String = spans.iter().map(|s| s.text.as_str()).collect();
+        let page_len: usize = spans.iter().map(|s| s.text.chars().count()).sum();
+        // Page links draw as their target's icon and title (E10-S04); everything below speaks in drawn
+        // positions, and the painted layout maps clicks and carets back.
+        let linked = LinkedText::new(&spans, |page| self.editor().link_target(page));
+        let links = linked.has_links().then(|| Rc::new(linked.clone()));
+        let text = linked.text();
         let len = text.chars().count();
+        let caret = caret.map(|at| linked.to_drawn(at));
+        let draft_range = draft_range.map(|range| linked.range_to_drawn(&range));
         let selected = match highlight {
-            Some(Highlight::Text(range)) => Some(range.clone()),
+            Some(Highlight::Text(range)) => Some(linked.range_to_drawn(range)),
             Some(Highlight::Whole) => Some(0..len),
             None => None,
         };
-        let runs: Vec<TextRun> = pieces(&spans, selected.as_ref(), draft_range.as_ref())
+        let runs: Vec<TextRun> = pieces(&linked.spans, selected.as_ref(), draft_range.as_ref())
             .iter()
-            .map(|piece| Self::run(piece, look, window, cx))
+            .map(|piece| {
+                let state = links.as_ref().and_then(|links| {
+                    let at = text[..piece.bytes.start].chars().count();
+                    links.link_at(at).map(|link| link.state)
+                });
+                Self::run(piece, state, look, window, cx)
+            })
             .collect();
         let styled = StyledText::new(SharedString::from(text.clone())).with_runs(runs);
         let layout = styled.layout().clone();
@@ -100,7 +117,7 @@ impl Shell {
                 let layout = layout.clone();
                 move |_, _, _| {
                     // The text was measured and placed just before this: record it for Up/Down.
-                    painted.record(id, &recorded_text, layout.clone());
+                    painted.record(id, &recorded_text, layout.clone(), links.clone());
                     caret_byte
                         .and_then(|byte| layout.position_for_index(byte))
                         .map(|at| (at, layout.line_height()))
@@ -131,7 +148,7 @@ impl Shell {
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(move |shell, event: &MouseDownEvent, window, cx| {
-                    shell.on_text_mouse_down(id, len, event, window, cx);
+                    shell.on_text_mouse_down(id, page_len, event, window, cx);
                 }),
             )
             .on_mouse_move(cx.listener(move |shell, event: &MouseMoveEvent, window, cx| {
@@ -160,6 +177,18 @@ impl Shell {
             .offset_at(block, event.position)
             .unwrap_or(len);
         let here = Caret { block, at };
+        // A plain click on a page link opens the page (E10-S04): it never leaves Leaf, so unlike a web
+        // link it needs no Cmd/Ctrl. A link to a deleted page has nothing to open; the caret goes there.
+        if event.click_count == 1
+            && !event.modifiers.shift
+            && !event.modifiers.secondary(cx)
+            && let Some(link) = self.blocks.painted.link_at(block, event.position)
+            && link.state != LinkState::Missing
+        {
+            self.blocks.drag = None;
+            self.open(link.page, window, cx);
+            return;
+        }
         let Some(page) = self.page() else { return };
         // Cmd/Ctrl+click on a link opens it (in the browser or mail app) and leaves the caret alone.
         if event.modifiers.secondary(cx)
@@ -218,7 +247,13 @@ impl Shell {
     }
 
     /// The text run for one piece: the block's look, then the piece's own formatting.
-    fn run(piece: &Piece, look: &Look, window: &Window, cx: &Context<Self>) -> TextRun {
+    fn run(
+        piece: &Piece,
+        link: Option<LinkState>,
+        look: &Look,
+        window: &Window,
+        cx: &Context<Self>,
+    ) -> TextRun {
         let theme = cx.theme();
         let marks = &piece.marks;
         let mut font = window.text_style().font();
@@ -229,7 +264,11 @@ impl Shell {
         if look.mono || marks.code {
             font.family = theme.mono_font_family.clone();
         }
-        let color: Hsla = if marks.link.is_some() {
+        // A page link in the link colour; one to a page in the trash or gone, muted (E10-S04).
+        let live_link = marks.link.is_some() || link == Some(LinkState::Live);
+        let color: Hsla = if link.is_some_and(|state| state != LinkState::Live) {
+            theme.muted_foreground
+        } else if live_link {
             theme.link
         } else if look.done {
             theme.muted_foreground
@@ -255,7 +294,7 @@ impl Shell {
                 wavy: false,
             })
         } else {
-            marks.link.as_ref().map(|_| UnderlineStyle {
+            live_link.then(|| UnderlineStyle {
                 thickness: px(1.0),
                 color: Some(theme.link),
                 wavy: false,

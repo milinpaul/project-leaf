@@ -102,6 +102,29 @@ fn marks_are_left_out_of_the_text() {
 }
 
 #[test]
+fn page_links_are_left_out_of_the_text() {
+    let mut ws = Workspace::new();
+    let page = new_page(&mut ws, None, "Links");
+    let mut doc = PageDoc::new();
+    let block = add(&mut doc, None, BlockKind::Paragraph, "see  today");
+    let lone = add(&mut doc, None, BlockKind::Paragraph, "");
+    for (id, pos) in [(block, 4), (lone, 0)] {
+        doc.apply(PageCommand::InsertPageLink {
+            id,
+            pos,
+            page: PageId::new(),
+        })
+        .unwrap();
+    }
+    let text = page_text(&ws, page, &doc).unwrap().unwrap();
+    assert_eq!(
+        rows(&text.blocks),
+        [("paragraph", "see  today")],
+        "a lone link gives no row"
+    );
+}
+
+#[test]
 fn an_untitled_page_is_indexed_as_untitled() {
     let mut ws = Workspace::new();
     let blank = new_page(&mut ws, None, "");
