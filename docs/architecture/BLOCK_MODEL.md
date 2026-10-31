@@ -113,7 +113,7 @@ and rebuilds that index after undo, redo and import.
 `\n` in its one text, like a code block, and nothing nests inside. The `tone` is stored by name; a tone from a newer
 version reads as `CalloutTone::Other` and is written back unchanged.
 
-**Web bookmarks (E15, ADR-080, ADR-XXX-E15-S02).** A `web_bookmark` is a web address drawn as a card. The address must be `http` or
+**Web bookmarks (E15, ADR-080, ADR-083).** A `web_bookmark` is a web address drawn as a card. The address must be `http` or
 `https` with a host and no spaces or password (`check_web_address`). The preview arrives later through
 `SetWebBookmarkPreview`, only if fetching is allowed; a preview part that is missing or unreadable reads as absent and
 stays stored. Turned into a text kind, it becomes its address as linked text (plain in code); a block whose whole
