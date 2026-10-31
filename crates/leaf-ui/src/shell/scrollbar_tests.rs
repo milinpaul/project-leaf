@@ -55,8 +55,8 @@ fn dragging_the_thumb_scrolls_the_page(cx: &mut TestAppContext) {
         click_count: 1,
         first_mouse: false,
     });
-    for step in 1..=10 {
-        let y = grab.y + (to.y - grab.y) * (step as f32 / 10.0);
+    for step in 1..=10_u8 {
+        let y = grab.y + (to.y - grab.y) * (f32::from(step) / 10.0);
         cx.simulate_event(MouseMoveEvent {
             position: point(grab.x, y),
             pressed_button: Some(MouseButton::Left),

@@ -62,7 +62,8 @@ the block schema and reading text with formatting (E02-S01), inserting, deleting
 editing text and formatting (E02-S03), indent/outdent (E02-S06), and changing a
 block's kind and properties (E02-S04). The page is a **virtual list** (E07-S01, ADR-035): only the rows on screen are laid out,
 and each frame's rows are compared with the last to re-measure or splice just what changed, so a 10,000-block page
-scrolls smoothly. Blocks are drawn by a **rich text view** (E07-S02, ADR-038): GPUI `StyledText` runs carry the marks,
+scrolls smoothly. A slim scrollbar at its right edge (`leaf-ui/src/scrollbar.rs`, E07-S14) shows where you are; the
+sidebar's page tree uses the same one. Blocks are drawn by a **rich text view** (E07-S02, ADR-038): GPUI `StyledText` runs carry the marks,
 the selection is a run background, an overlay draws the blinking caret and records the painted layout, which answers
 the editor's `LineLayout` for Up/Down. The page **takes the keyboard itself** (E07-S03, ADR-040): keys are actions
 bound in the page's key context and call `PageEditor` (`shell/page_keys.rs`); typed text, input-method drafts and the
