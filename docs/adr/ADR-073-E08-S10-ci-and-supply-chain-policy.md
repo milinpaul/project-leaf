@@ -51,7 +51,8 @@ The repository is public and every pull request runs CI. A security review (2026
 by its commit, so every merge is tested on all three OSes and none is cancelled. Pull request runs still cancel the
 run they supersede. The cost is CI time on busy days (free for a public repository), and results can queue longer.
 
-## Update 2026-10-31 (E00-S12): one job may push
+## Update 2026-10-31 (E00-S12): still read-only
 
-The `ADR numbers` workflow's one job has `contents: write`, to commit the numbers of newly merged decision records
-to `main` ([ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md)). Every other job stays read-only.
+A workflow that pushed decision-record numbers to `main` was tried
+([ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md)); `main`'s ruleset refuses direct pushes, so it was removed and
+every job stays read-only.
