@@ -185,3 +185,24 @@ fn dates_are_set_and_cleared_and_unknown_types_are_read_only() {
     assert_eq!(e.database().cell(row, c[0]).unwrap(), None);
     assert!(e.toggle_option(row, c[1], leaf_core::OptionId::new()).is_err());
 }
+
+#[test]
+fn creating_an_option_and_picking_it_is_one_undo_step() {
+    let (mut e, row, c) = editor(&[PropertyType::Select]);
+    let option = e.create_option(row, c[0], "Doing").unwrap();
+    assert_eq!(
+        e.database().cell(row, c[0]).unwrap(),
+        Some(CellValue::Option(option))
+    );
+    assert!(e.undo().unwrap());
+    assert_eq!(e.database().cell(row, c[0]).unwrap(), None);
+    assert!(
+        e.database().column(c[0]).unwrap().options.is_empty(),
+        "the option went with its pick"
+    );
+    assert!(e.redo().unwrap());
+    assert_eq!(
+        e.database().cell(row, c[0]).unwrap(),
+        Some(CellValue::Option(option))
+    );
+}

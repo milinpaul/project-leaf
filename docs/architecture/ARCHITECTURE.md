@@ -235,6 +235,11 @@ the page opens and the rest on a timer. Editing a cell asks `DatabaseEditor` (`d
 cell opens (a text line, a checkbox, the option picker or a calendar), and hands what was typed, ticked, picked or
 chosen back to it as `DatabaseCommand`s. The sidebar's table button beside "+" adds a database page.
 
+Columns (E09-S06, ADR 0072): a header opens its column's menu and a "+" column at the end adds a column or shows a
+hidden one (`database_page/header.rs`, `column_menu.rs`, `columns.rs`). What each choice writes is decided in
+`leaf-editor` `database_view/columns.rs`. Each database command is its own undo step; `Database::group` makes an action
+of several commands one step. Cmd/Ctrl+Z on a database page undoes the database.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.

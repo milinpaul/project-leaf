@@ -11,10 +11,12 @@
 //! change record ([`Database::take_changes`]): only rows whose cells changed are read again, and rows that appear are
 //! read at once. Columns and the view are read fresh each time, since they are small.
 
+mod columns;
 mod display;
 mod edit;
 mod order;
 
+pub use columns::{COLUMN_TYPES, ColumnMenu, HiddenColumn, type_label};
 pub use display::{CellDisplay, Chip, date_label, display};
 pub use edit::{CellEditor, OPTION_COLORS, OptionChoice, OptionPicker, TextCommit};
 
@@ -82,7 +84,11 @@ pub struct DatabaseEditor {
 impl DatabaseEditor {
     /// Starts showing `db`, having read none of its cells yet.
     #[must_use]
-    pub fn new(db: Database) -> Self {
+    pub fn new(mut db: Database) -> Self {
+        // Each command is something the person did on purpose (a commit, a pick, a column change), so each is its
+        // own undo step; an action made of several commands groups them (`Database::group`). Merging by time is for
+        // typing, which a database doesn't do command by command.
+        db.set_undo_merge_interval(0);
         db.take_changes();
         let order = db.rows();
         Self {
