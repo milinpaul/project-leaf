@@ -130,6 +130,11 @@ with Turn into and the mark buttons. `PageEditor::format_bar` says what it offer
 through `toggle_mark`, the link popover and `BlockAction::TurnInto`, like the keyboard and the block menu. The Turn
 into list is drawn in the bar's overlay so the page keeps the keyboard and the selection.
 
+**Callouts (E21, ADR 0070).** `shell::callout` draws a callout row as a rounded box in its tone's soft colour
+(`theme::callout_colours`, contrast-tested in both appearances) with the tone's icon; the text inside is an
+ordinary rich-text row. Clicking the icon opens a tone picker drawn in the page's overlay; choosing a tone calls
+`PageEditor::set_callout_tone` (one undo step).
+
 **Sidebar page tree (E06-S03).** The sidebar lists the page tree (`WorkspaceEditor::sidebar` in `leaf-editor`):
 children show under expanded pages, and which pages are expanded is saved in the workspace folder's `view.json`
 (`leaf_store::ViewState`), not in a document. So is the open page, which opens again when the workspace

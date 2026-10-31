@@ -45,6 +45,7 @@ impl Shell {
         let busy = self.blocks.drag.is_some()
             || self.blocks.link.is_some()
             || self.blocks.language.is_some()
+            || self.blocks.tones.is_some()
             || cx.has_active_drag();
         if !has_keyboard || busy {
             return None;

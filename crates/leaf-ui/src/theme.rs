@@ -207,6 +207,35 @@ pub fn priority_colour(priority: leaf_model::Priority, dark: bool) -> gpui::Hsla
     gpui::rgb(value).into()
 }
 
+/// A callout's colours (E21-S02) as `#RRGGBB`: its soft background, and the colour of its icon. The
+/// text is the page's usual text colour. A tone from a newer version is drawn as a note.
+#[must_use]
+pub fn callout_hex(tone: &leaf_model::CalloutTone, dark: bool) -> (&'static str, &'static str) {
+    use leaf_model::CalloutTone;
+    match (tone, dark) {
+        (CalloutTone::Info, false) => ("#EAF2FB", "#2F6DC0"),
+        (CalloutTone::Info, true) => ("#1C2A3A", "#6EA8F0"),
+        (CalloutTone::Success, false) => ("#EAF6EE", "#23714A"),
+        (CalloutTone::Success, true) => ("#1B2E24", "#5CC08A"),
+        (CalloutTone::Warning, false) => ("#FDF4E3", "#9A6512"),
+        (CalloutTone::Warning, true) => ("#33291A", "#E3A94B"),
+        (CalloutTone::Error, false) => ("#FCECEB", "#B83A33"),
+        (CalloutTone::Error, true) => ("#3A1F1F", "#F07A72"),
+        (CalloutTone::Note | CalloutTone::Other(_), false) => ("#F1F0EC", "#5F5E59"),
+        (CalloutTone::Note | CalloutTone::Other(_), true) => ("#2A2A28", "#A8A8A2"),
+    }
+}
+
+/// [`callout_hex`] as colours to draw with.
+#[must_use]
+pub fn callout_colours(tone: &leaf_model::CalloutTone, dark: bool) -> (gpui::Hsla, gpui::Hsla) {
+    let (background, icon) = callout_hex(tone, dark);
+    let colour = |hex: &str| -> gpui::Hsla {
+        gpui::rgb(u32::from_str_radix(hex.trim_start_matches('#'), 16).unwrap_or(0)).into()
+    };
+    (colour(background), colour(icon))
+}
+
 /// gpui-component's theme for one appearance, built from Leaf's tokens. Roles gpui-component has but
 /// Leaf doesn't use yet (charts, tables, tabs, ...) keep its defaults.
 fn config(mode: ThemeMode, p: &Palette) -> ThemeConfig {

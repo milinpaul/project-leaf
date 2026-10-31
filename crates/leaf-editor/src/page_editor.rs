@@ -194,6 +194,23 @@ impl PageEditor {
         Ok(())
     }
 
+    /// Gives a callout another tone (E21-S02), one undo step. Other blocks are left alone, so a picker
+    /// still open after its callout changed kind does nothing.
+    pub fn set_callout_tone(
+        &mut self,
+        id: BlockId,
+        tone: leaf_model::CalloutTone,
+    ) -> Result<(), EditorError> {
+        if !matches!(self.doc.kind(id)?, BlockKind::Callout { .. }) {
+            return Ok(());
+        }
+        self.doc.apply(PageCommand::SetProp {
+            id,
+            prop: BlockProp::CalloutTone(tone),
+        })?;
+        Ok(())
+    }
+
     /// The block just above `id` in reading order, for the up arrow.
     pub fn previous(&mut self, id: BlockId) -> Result<Option<BlockId>, EditorError> {
         let order = self.order()?;
