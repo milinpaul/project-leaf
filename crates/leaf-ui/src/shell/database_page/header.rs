@@ -52,7 +52,7 @@ pub(super) fn type_icon(kind: &PropertyType) -> IconName {
 }
 
 /// A menu hung under its header cell, over everything else.
-fn under(panel: AnyElement) -> AnyElement {
+pub(super) fn under(panel: AnyElement) -> AnyElement {
     div()
         .absolute()
         .left_0()

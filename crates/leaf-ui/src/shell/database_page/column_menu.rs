@@ -32,7 +32,7 @@ pub(in crate::shell) enum ColumnAction {
 }
 
 /// A small grey heading inside a menu.
-fn heading(text: &'static str, cx: &App) -> AnyElement {
+pub(super) fn heading(text: &'static str, cx: &App) -> AnyElement {
     div()
         .px_1p5()
         .pt_1p5()
@@ -44,7 +44,7 @@ fn heading(text: &'static str, cx: &App) -> AnyElement {
 }
 
 /// One clickable menu entry.
-fn entry(
+pub(super) fn entry(
     id: String,
     icon: IconName,
     label: impl Into<SharedString>,
@@ -79,19 +79,19 @@ fn entry(
 
 /// Closes the menus when the pointer goes down anywhere else, or on Escape (bound in the cell editors' context,
 /// inside the table's, which takes Escape for itself while a cell is selected).
-fn closes_outside(panel: gpui::Div, shell: &WeakEntity<Shell>) -> gpui::Div {
+pub(super) fn closes_outside(panel: gpui::Div, shell: &WeakEntity<Shell>) -> gpui::Div {
     let outside = shell.clone();
     let escape = shell.clone();
     panel
         .key_context(super::CELL_CONTEXT)
         .on_action(move |_: &super::StopEditing, window, cx| {
             if let Some(shell) = escape.upgrade() {
-                shell.update(cx, |shell, cx| shell.close_column_menus(window, cx));
+                shell.update(cx, |shell, cx| shell.close_menus(window, cx));
             }
         })
         .on_mouse_down_out(move |_, window, cx| {
             if let Some(shell) = outside.upgrade() {
-                shell.update(cx, |shell, cx| shell.close_column_menus(window, cx));
+                shell.update(cx, |shell, cx| shell.close_menus(window, cx));
             }
         })
 }

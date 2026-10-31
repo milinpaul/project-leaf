@@ -6,6 +6,9 @@
 //!   date. `view_update` times that update on its own, and `view_rebuild` a full rebuild, to show
 //!   what the incremental update saves.
 //! - Saving a keystroke's change (`save`), which autosave does in the background.
+//! - A 10,000-row database sorted by a number and filtered to one status, as the table shows it
+//!   (`database_view`), and one character typed into a text filter on top (`database_filter_keystroke`). E09-S07
+//!   aims at one frame (16 ms); E09-S10 sets the database budgets in `PRODUCT_SPEC.md`.
 //!
 //! Benches that change the page take the change outside the timing (`with_inputs`) and use one
 //! iteration per sample, so each timed call sees exactly one new keystroke.
@@ -15,7 +18,10 @@
 use std::cell::RefCell;
 
 use divan::Bencher;
-use leaf_bench::{OPEN_PAGE_BLOCKS, SAVED_AT, SEED, SavedPage, ViewedPage, caret_mid_page, typing_editor};
+use leaf_bench::{
+    DATABASE_ROWS, OPEN_PAGE_BLOCKS, SAVED_AT, SEED, SavedPage, ViewedPage, caret_mid_page,
+    sorted_filtered_database, typing_editor,
+};
 use leaf_fixtures::BIG_PAGE_BLOCKS;
 use leaf_store::DocKey;
 
@@ -74,4 +80,27 @@ fn save(bencher: Bencher) {
                 .save(key, editor.borrow().doc(), SAVED_AT)
                 .unwrap()
         });
+}
+
+/// Build the table of a 10,000-row database, sorted by price and filtered to one status (every row already read).
+#[divan::bench(sample_count = 50)]
+fn database_view(bencher: Bencher) {
+    let (editor, _) = sorted_filtered_database(DATABASE_ROWS).unwrap();
+    let editor = RefCell::new(editor);
+    bencher.bench_local(|| editor.borrow_mut().view(|_| String::new(), 0).unwrap());
+}
+
+/// Type one character into a text filter on that database and build the table it then shows.
+#[divan::bench(sample_count = 50)]
+fn database_filter_keystroke(bencher: Bencher) {
+    let (editor, _) = sorted_filtered_database(DATABASE_ROWS).unwrap();
+    let editor = RefCell::new(editor);
+    let typed = RefCell::new(String::from("Item "));
+    bencher.bench_local(|| {
+        let mut typed = typed.borrow_mut();
+        typed.push('1');
+        let mut editor = editor.borrow_mut();
+        editor.type_filter_text(1, &typed).unwrap();
+        editor.view(|_| String::new(), 0).unwrap()
+    });
 }

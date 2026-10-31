@@ -10,19 +10,19 @@ use leaf_model::{
 use super::{CellDisplay, DatabaseEditor, TableView};
 
 /// 1 Jan 2026, 12:00 UTC.
-const NEW_YEAR: i64 = 1_767_268_800_000;
+pub(super) const NEW_YEAR: i64 = 1_767_268_800_000;
 
-struct Sample {
-    editor: DatabaseEditor,
-    name: ColumnId,
-    price: ColumnId,
-    status: ColumnId,
-    tags: ColumnId,
-    due: ColumnId,
-    done: ColumnId,
-    link: ColumnId,
-    rows: Vec<PageId>,
-    options: Vec<OptionId>,
+pub(super) struct Sample {
+    pub(super) editor: DatabaseEditor,
+    pub(super) name: ColumnId,
+    pub(super) price: ColumnId,
+    pub(super) status: ColumnId,
+    pub(super) tags: ColumnId,
+    pub(super) due: ColumnId,
+    pub(super) done: ColumnId,
+    pub(super) link: ColumnId,
+    pub(super) rows: Vec<PageId>,
+    pub(super) options: Vec<OptionId>,
 }
 
 fn column(db: &mut Database, name: &str, kind: PropertyType) -> ColumnId {
@@ -58,7 +58,7 @@ fn set(db: &mut DatabaseEditor, row: PageId, column: ColumnId, value: CellValue)
 }
 
 /// Three rows: a lamp, a desk and a chair, with every type filled in for some of them.
-fn sample() -> Sample {
+pub(super) fn sample() -> Sample {
     let mut db = Database::new();
     db.set_undo_merge_interval(0);
     let name = column(&mut db, "Name", PropertyType::Text);
@@ -119,7 +119,7 @@ fn sample() -> Sample {
     }
 }
 
-fn titles(rows: &[PageId]) -> impl Fn(PageId) -> String + '_ {
+pub(super) fn titles(rows: &[PageId]) -> impl Fn(PageId) -> String + '_ {
     move |row| match rows.iter().position(|&r| r == row) {
         Some(0) => "Lamp page".into(),
         Some(1) => String::new(),
@@ -128,7 +128,7 @@ fn titles(rows: &[PageId]) -> impl Fn(PageId) -> String + '_ {
     }
 }
 
-fn view(s: &mut Sample) -> TableView {
+pub(super) fn view(s: &mut Sample) -> TableView {
     s.editor.read_more(usize::MAX).unwrap();
     s.editor.view(titles(&s.rows), 0).unwrap()
 }

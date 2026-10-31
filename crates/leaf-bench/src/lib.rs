@@ -5,7 +5,7 @@
 //! They run with `just bench`; CI runs them on every push to `main` and keeps the results as the
 //! `bench-results` artifact. This library holds
 //! only their setup: a big page saved to a scratch workspace folder, and an editor with the caret
-//! in the middle of a big page. It is tested like any other code, so a bench never measures a
+//! in the middle of a big page, and a 10,000-row database for sorting and filtering (E09-S07). It is tested like any other code, so a bench never measures a
 //! setup that quietly went wrong (an empty page, a caret that never landed).
 //!
 //! Every bench drives the same public calls the app does (`Store::load`, `PageEditor`,
@@ -14,9 +14,11 @@
 //! **Boundaries:** test support only; apps never depend on it. Native only (it saves to a folder
 //! through `leaf-store`). No GPUI and no `leaf-ui`.
 
+mod database;
 mod scratch;
 mod setup;
 
+pub use database::{DATABASE_ROWS, sorted_filtered_database};
 pub use scratch::Scratch;
 pub use setup::{SavedPage, ViewedPage, caret_mid_page, typing_editor};
 
