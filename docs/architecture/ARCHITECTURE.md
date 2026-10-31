@@ -261,6 +261,10 @@ chip per sort and filter and opens their pop-ups. `leaf-editor` `database_view/q
 conditions and what each change writes. A filter's typed value is a draft the table shows at once and the database
 gets when the pop-up closes.
 
+A row opens as a page (E09-S08, ADR-XXX-E09-S08): the "Open" button on its title cell. Under the page's title,
+`database_page/row_page.rs` lists the row's properties from `DatabaseEditor::row_properties` (every column, in order)
+and edits them with the table cell's rules, with the row's page as the row.
+
 **Page cover (E06-S11).** A page can have a cover: a full-width band above the header, with the icon overlapping
 its bottom edge (`leaf_ui::shell::cover`). The page stores a name such as `builtin:dawn` next to its title and icon;
 `leaf_editor::PageCover` reads it as a built-in cover or an unknown one, which is kept and drawn as a plain band.
