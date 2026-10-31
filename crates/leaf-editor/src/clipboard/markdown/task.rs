@@ -1,4 +1,4 @@
-//! An action item in Markdown (E19-S04, ADR 0032): a task list line with its fields in a group at the
+//! An action item in Markdown (E19-S04, ADR-032): a task list line with its fields in a group at the
 //! end, readable in any app, e.g. `- [ ] Send invoice (due 2026-10-31 14:00, high)`. An item with no
 //! date or priority ends in `(action item)`, so it still reads back as one rather than as a to-do.
 //!

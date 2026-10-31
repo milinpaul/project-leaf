@@ -1,7 +1,7 @@
-//! Dragging blocks by their ⋮⋮ handle (E07-S05, ADR 0050): the preview under the pointer, the
+//! Dragging blocks by their ⋮⋮ handle (E07-S05, ADR-050): the preview under the pointer, the
 //! line where the blocks will land, and scrolling while the pointer is near the page's top or
 //! bottom edge. Where a drop lands, and the move itself, are `leaf_editor`'s
-//! (`PageEditor::drop_target` and `drop_blocks`, ADR 0049); this module reports where rows were
+//! (`PageEditor::drop_target` and `drop_blocks`, ADR-049); this module reports where rows were
 //! drawn and where the pointer is, and draws the answer.
 
 use std::cell::RefCell;

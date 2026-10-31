@@ -1,4 +1,4 @@
-//! Links to pages inside block text (ADR 0071): inserting them, listing them, and the rule that keeps them
+//! Links to pages inside block text (ADR-071): inserting them, listing them, and the rule that keeps them
 //! whole, a [`PAGE_LINK`] placeholder always carrying a `page` mark and the mark sitting only on
 //! placeholders (invariant 10).
 //!

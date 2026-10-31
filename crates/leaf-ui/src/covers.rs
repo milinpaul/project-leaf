@@ -2,7 +2,7 @@
 //!
 //! Covers are bundled image files drawn with GPUI's `img()`: SVG for the hand-built ones (scenes, colours and
 //! gradients), WebP for ones made with an image model (Travel), which `img()` decodes by the file extension
-//! (ADR 0045).
+//! (ADR-045).
 //! Which covers exist, and what a page's stored cover means, is `leaf_editor::BuiltinCover`'s business.
 
 use std::borrow::Cow;

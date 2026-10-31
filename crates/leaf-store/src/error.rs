@@ -51,7 +51,7 @@ pub enum StoreError {
 
     /// The workspace folder, or its `assets/` or `search/` folder, holds a link (symlink or
     /// junction) at this path. Leaf would write through it to wherever it points, so the workspace
-    /// is refused and left as it is (ADR 0074).
+    /// is refused and left as it is (ADR-074).
     #[error("{} is a link to another place; Leaf only opens workspaces without links", .0.display())]
     LinkInWorkspace(PathBuf),
 

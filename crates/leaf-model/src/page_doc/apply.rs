@@ -107,7 +107,7 @@ impl PageDoc {
         let meta = self.tree.get_meta(node)?;
         meta.insert(keys::ID, block.to_string())?;
         kind.write(&meta)?;
-        // Mergeable: two peers creating it concurrently get one shared container (ADR 0001).
+        // Mergeable: two peers creating it concurrently get one shared container (ADR-001).
         let text = if kind.has_text() {
             Some(meta.ensure_mergeable_text(keys::TEXT)?)
         } else {

@@ -1,5 +1,5 @@
 //! A block's text drawn with its formatting, the selection highlight and the editor's caret
-//! (E07-S02, ADR 0038).
+//! (E07-S02, ADR-038).
 //!
 //! The text is GPUI's `StyledText`, built from the block's runs: bold, italic, struck through,
 //! inline code in the monospace face on a tint, links in the link colour and underlined. The

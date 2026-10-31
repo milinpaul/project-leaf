@@ -138,7 +138,7 @@ fn the_kind_table_matches_block_model() {
             ("task", true, true, true),
         ]
     );
-    // Tables: only rows and cells inside, and only through the table commands (ADR 0061).
+    // Tables: only rows and cells inside, and only through the table commands (ADR-061).
     let tables: Vec<(&str, bool, bool, bool, bool)> = [
         BlockKind::Table { header_row: true },
         BlockKind::TableRow,
@@ -299,7 +299,7 @@ fn known_kinds_with_bad_data_are_errors_not_guesses() {
             if type_name != "type missing" {
                 meta.insert(keys::TYPE, type_name).unwrap();
             }
-            let props = &meta; // properties sit directly in the block's meta (ADR 0007)
+            let props = &meta; // properties sit directly in the block's meta (ADR-007)
             if type_name == "image" && field != "asset" {
                 props.insert(keys::ASSET, AssetId::of(b"x").to_string()).unwrap();
             }

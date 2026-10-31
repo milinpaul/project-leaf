@@ -18,7 +18,7 @@
 //!   workspace.sqlite   all documents (plus -wal/-shm files while open)
 //!   assets/            images, named by content hash ([`Workspace::import_asset`])
 //!   search/            the search index, rebuildable from the documents
-//!   leaf.lock          locked by the app that has the workspace open (ADR 0009)
+//!   leaf.lock          locked by the app that has the workspace open (ADR-009)
 //!   view.json          how the sidebar was left on this computer (expanded pages); not a document
 //! ```
 //!

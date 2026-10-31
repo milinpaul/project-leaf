@@ -38,7 +38,7 @@ Typing `# `, `- `, `1. `, `[] `, `> `, ``` and `---` converts the block.
 - `leaf-model`: `PageDoc::as_separate_step`, an undo step that never merges with neighbouring typing, so undo
   right after the conversion gives back the typed characters.
 - Tests: `shortcuts/tests.rs` (each shortcut, undo, only at block start, kept text, code/captions, IME) and a
-  model test for the separate step. ADR 0025.
+  model test for the separate step. ADR-025.
 
 ## Log
 
@@ -78,7 +78,7 @@ todo[x]: Tests added; «just check»[code] passes; docs updated if structure cha
 h2: Plan
 bulleted_list: New «leaf-editor/src/shortcuts.rs»[code]: after «insert_text»[code], if the text before the caret is exactly a shortcut («# »[code]..«### »[code], «- »[code]/«* »[code], «N. »[code], «[] »[code], «> »[code], «```»[code], «---»[code] on an empty block), delete it and set the kind; a divider gets a paragraph below for the caret. Not in code or captions; not into the same kind.
 bulleted_list: «leaf-model»[code]: «PageDoc::as_separate_step»[code], an undo step that never merges with neighbouring typing, so undo right after the conversion gives back the typed characters.
-bulleted_list: Tests: «shortcuts/tests.rs»[code] (each shortcut, undo, only at block start, kept text, code/captions, IME) and a model test for the separate step. ADR 0025.
+bulleted_list: Tests: «shortcuts/tests.rs»[code] (each shortcut, undo, only at block start, kept text, code/captions, IME) and a model test for the separate step. ADR-025.
 h2: Log
 bulleted_list: 2026-10-28: created
 bulleted_list: 2026-10-29: claimed by claude
@@ -134,7 +134,7 @@ Typing `# `, `- `, `1. `, `[] `, `> `, \`\`\` and `---` converts the block.
 
 - New `leaf-editor/src/shortcuts.rs`: after `insert_text`, if the text before the caret is exactly a shortcut (`# `..`### `, `- `/`* `, `N. `, `[] `, `> `, ```` ``` ````, `---` on an empty block), delete it and set the kind; a divider gets a paragraph below for the caret. Not in code or captions; not into the same kind.
 - `leaf-model`: `PageDoc::as_separate_step`, an undo step that never merges with neighbouring typing, so undo right after the conversion gives back the typed characters.
-- Tests: `shortcuts/tests.rs` (each shortcut, undo, only at block start, kept text, code/captions, IME) and a model test for the separate step. ADR 0025.
+- Tests: `shortcuts/tests.rs` (each shortcut, undo, only at block start, kept text, code/captions, IME) and a model test for the separate step. ADR-025.
 
 ## Log
 

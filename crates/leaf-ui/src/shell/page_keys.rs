@@ -316,7 +316,7 @@ impl Shell {
     }
 
     /// Copy puts Markdown on the clipboard for other apps, with Leaf's own fragment alongside so a
-    /// paste inside Leaf keeps everything (ADR 0030, ADR 0032).
+    /// paste inside Leaf keeps everything (ADR-030, ADR-032).
     fn on_copy(&mut self, _: &Copy, _: &mut Window, cx: &mut Context<Self>) {
         if let Some(Ok(Some(fragment))) = self.page().map(leaf_editor::PageEditor::copy) {
             cx.write_to_clipboard(self.clipboard_item(&fragment));

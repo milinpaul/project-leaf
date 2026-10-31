@@ -1,4 +1,4 @@
-//! The page-link menu's popover (E10-S05, ADR 0071): the pages `WorkspaceEditor::link_menu` lists for a
+//! The page-link menu's popover (E10-S05, ADR-071): the pages `WorkspaceEditor::link_menu` lists for a
 //! `[[` query, drawn under the `[[` (or above it near the window's bottom edge), each with its icon, title
 //! and where it lives, and "New page" last. The page keeps the keyboard, so typing goes on filtering and
 //! Up, Down, Enter and Escape drive it; the mouse highlights and picks entries. Nothing here decides

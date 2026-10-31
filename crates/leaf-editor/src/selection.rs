@@ -3,7 +3,7 @@
 //! A text selection is the caret plus a *tail*, the end that stays put while Shift+arrows move the
 //! caret. Both are model anchors, so the selection follows edits made by anything else. Whole-block
 //! selection is a separate mode: Cmd/Ctrl+A pressed twice, or a divider or image picked by Backspace or
-//! Delete. In that mode Backspace and Delete remove the blocks, and Tab nests them (ADR 0021).
+//! Delete. In that mode Backspace and Delete remove the blocks, and Tab nests them (ADR-021).
 
 use std::ops::Range;
 

@@ -2,7 +2,7 @@
 //! `leaf-model` wraps it.
 //!
 //! Throwaway quality on purpose, like `loro_spike.rs` and `database_spike/`: these tests drive Loro directly.
-//! Findings and the proposed model are in ADR 0071.
+//! Findings and the proposed model are in ADR-071.
 //!
 //! The model under test: a page link is **one placeholder character** (U+FFFC, the object replacement
 //! character) in the block's `text`, carrying a `page` mark whose value is the target's page ID. The mark

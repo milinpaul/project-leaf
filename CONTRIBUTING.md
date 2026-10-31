@@ -105,7 +105,7 @@ A bug report or idea that turns into planned work becomes a new story there.
 1. Fork the repository and make a branch from `main`.
 2. Keep the PR focused on one change. Small PRs get reviewed faster.
 3. Update the docs in the same PR when behaviour or structure changes: `ARCHITECTURE.md`, a crate's `//!`
-   docs, or a new decision record in [docs/adr/](docs/adr/) (copy `0000-template.md` and add it to the index).
+   docs, or a new decision record in [docs/adr/](docs/adr/) (copy `ADR-000-EXX-SYY-template.md` and add it to the index).
 4. For visible UI changes, attach before and after screenshots.
 5. Run `just check` and make sure it passes.
 6. Fill in the PR template: what changed, why, how you tested it, and a short plain-English summary.

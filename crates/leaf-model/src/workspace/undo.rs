@@ -11,7 +11,7 @@ use crate::ModelError;
 /// Commits closer together than this many milliseconds undo as one step (`BLOCK_MODEL.md`).
 pub const DEFAULT_UNDO_MERGE_MS: i64 = 500;
 
-/// Origin of the commits that record a page's edited time. Undo skips them (ADR 0059).
+/// Origin of the commits that record a page's edited time. Undo skips them (ADR-059).
 pub(super) const EDITED_ORIGIN: &str = "leaf:edited";
 
 /// Origin of commits made by [`Workspace::apply_unrecorded`]. Undo skips them.
@@ -45,7 +45,7 @@ impl Workspace {
         self.undo.set_merge_interval(ms);
     }
 
-    /// Undo and redo can re-create page nodes under new `TreeID`s (ADR 0006), so the index is
+    /// Undo and redo can re-create page nodes under new `TreeID`s (ADR-006), so the index is
     /// rebuilt from each page's permanent `id`.
     fn after_history_change(&mut self, changed: bool) -> Result<bool, ModelError> {
         if changed {

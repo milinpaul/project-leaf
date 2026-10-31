@@ -1,4 +1,4 @@
-//! Leaf's look in one place: colours, fonts, sizes and shapes for light and dark (ADR 0027).
+//! Leaf's look in one place: colours, fonts, sizes and shapes for light and dark (ADR-027).
 //!
 //! The direction came from the owner: warm and friendly, on warm "paper" neutrals, with the app icon's
 //! green used sparingly (selection, caret, links, focus, the main button) and a soft charcoal dark mode.
@@ -22,7 +22,7 @@ use crate::settings;
 /// same on every OS. One family keeps the page calm; hierarchy comes from size and weight.
 pub const UI_FONT: &str = "Inter";
 
-/// The monospace face for code blocks and inline code, bundled too (E08-S08, ADR 0076). Naming a
+/// The monospace face for code blocks and inline code, bundled too (E08-S08, ADR-XXX-E08-S08). Naming a
 /// bundled face also keeps gpui-component from listing every installed font at startup to check the
 /// platform's default, which cost about 220 ms of a 500 ms cold-start budget. The "NL" cut has no
 /// ligatures, so `->` stays two characters to move the caret through.
