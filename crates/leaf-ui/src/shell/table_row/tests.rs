@@ -383,6 +383,20 @@ fn a_tall_wide_tables_scrollbar_stays_in_the_window(cx: &mut TestAppContext) {
         bar.bottom() <= px(900.0) && bar.top() >= frame.top(),
         "reachable without scrolling: {bar:?}"
     );
-    let _ = shell;
+    // And it works there: dragging its thumb scrolls the table.
+    let first = cells(&shell, cx, table)[0][0];
+    let before = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    let start = point(bar.left() + px(20.0), bar.center().y);
+    cx.simulate_mouse_move(start, None, Modifiers::none());
+    cx.simulate_mouse_down(start, gpui::MouseButton::Left, Modifiers::none());
+    let end = point(start.x + px(200.0), start.y);
+    cx.simulate_mouse_move(end, Some(gpui::MouseButton::Left), Modifiers::none());
+    cx.simulate_mouse_up(end, gpui::MouseButton::Left, Modifiers::none());
+    draw(cx);
+    let after = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    assert!(
+        after.left() < before.left(),
+        "dragged sideways: {after:?} vs {before:?}"
+    );
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }

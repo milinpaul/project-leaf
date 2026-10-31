@@ -32,7 +32,9 @@ impl Shell {
         bar.child(
             Scrollbar::horizontal(scroll)
                 .id(SharedString::from(format!("table-scrollbar-{table}")))
-                .mode(ScrollbarMode::Always),
+                .mode(ScrollbarMode::Always)
+                // Drawn in this strip, not along the bottom of the whole box, which can be below the fold.
+                .viewport_from_layout(),
         )
     }
 
