@@ -12,6 +12,7 @@ use leaf_core::BlockId;
 use loro::{Container, LoroValue, TextDelta, TreeID, TreeParentId, ValueOrContainer};
 
 use super::PageDoc;
+use super::page_links::link_problem;
 use crate::BlockKind;
 use crate::block_kind::keys;
 use crate::page_meta::value;
@@ -38,7 +39,7 @@ impl fmt::Display for InvariantViolation {
 }
 
 impl PageDoc {
-    /// Every state invariant of the page (`BLOCK_MODEL.md` 1–6, 8 and 9), or the list of what is broken.
+    /// Every state invariant of the page (`BLOCK_MODEL.md` 1–6 and 8–10), or the list of what is broken.
     pub fn check_invariants(&self) -> Result<(), Vec<InvariantViolation>> {
         let mut broken = Vec::new();
         let mut report = |invariant: u8, node: TreeID, detail: String| {
@@ -91,6 +92,10 @@ impl PageDoc {
             if text.is_some() != kind.has_text() {
                 let has = if text.is_some() { "has" } else { "lacks" };
                 report(2, node, format!("{} {has} a text container", kind.type_name()));
+            }
+            // 10: a page link is one placeholder with its page mark; the mark is on nothing else.
+            if let Some(problem) = text.as_ref().and_then(link_problem) {
+                report(10, node, problem);
             }
             // 3 and 9: what a block may hold, and where rows and cells may sit.
             for (invariant, detail) in self.nesting_problems(node, &kind) {

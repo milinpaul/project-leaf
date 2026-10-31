@@ -12,6 +12,7 @@ use loro::{Container, TreeID, ValueOrContainer};
 
 use super::PageDoc;
 use super::kind_ops::strip_marks;
+use super::page_links::repair_links;
 use crate::block_kind::{KNOWN_PROP_KEYS, keys};
 use crate::{BlockKind, ModelError};
 
@@ -19,7 +20,7 @@ use crate::{BlockKind, ModelError};
 pub(super) const REPAIR_ORIGIN: &str = "leaf-repair";
 
 impl PageDoc {
-    /// Repairs every block that breaks invariant 2, 3, 4 or 5, as one commit outside the undo history.
+    /// Repairs every block that breaks invariant 2, 3, 4, 5 or 10, as one commit outside the undo history.
     /// Blocks of unknown kinds are left alone (their rules are a newer version's). Returns whether
     /// anything changed.
     pub(super) fn repair(&mut self) -> Result<bool, ModelError> {
@@ -97,7 +98,10 @@ impl PageDoc {
             }
             _ => {}
         }
-        // 5: code text carries no marks.
+        // 5: code text carries no marks, so no links either; 10: links stay whole elsewhere.
+        if let (Some(text), true) = (&text, kind.has_text()) {
+            changed |= repair_links(text, kind.allows_marks())?;
+        }
         if let (Some(text), true) = (&text, kind.has_text() && !kind.allows_marks()) {
             changed |= strip_marks(text)?;
         }

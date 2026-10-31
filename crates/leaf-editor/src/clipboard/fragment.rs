@@ -9,7 +9,7 @@
 //! A fragment is either a run of formatted text from inside one block (`"text"`), which pastes into
 //! the line where the caret is, or whole blocks with what is nested in them (`"blocks"`).
 
-use leaf_core::AssetId;
+use leaf_core::{AssetId, PageId};
 use leaf_model::{BlockKind, Marks, TextSpan};
 use serde::{Deserialize, Serialize};
 
@@ -100,6 +100,9 @@ struct WireSpan {
     code: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     link: Option<String>,
+    /// The page a page link points at (ADR 0071).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    page: Option<PageId>,
 }
 
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde's `skip_serializing_if` passes a reference
@@ -116,6 +119,7 @@ impl From<&TextSpan> for WireSpan {
             strike: span.marks.strike,
             code: span.marks.code,
             link: span.marks.link.clone(),
+            page: span.marks.page,
         }
     }
 }
@@ -130,6 +134,7 @@ impl From<WireSpan> for TextSpan {
                 strike: span.strike,
                 code: span.code,
                 link: span.link.filter(|l| !l.is_empty()),
+                page: span.page,
             },
         }
     }

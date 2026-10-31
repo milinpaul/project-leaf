@@ -24,7 +24,7 @@ pub use fragment::{FRAGMENT_VERSION, Fragment, FragmentBlock};
 use std::ops::Range;
 
 use leaf_core::BlockId;
-use leaf_model::{BlockKind, Caret, Mark, MarkKind, PageCommand, PageDoc, TextSpan};
+use leaf_model::{BlockKind, Caret, Mark, MarkKind, PAGE_LINK, PageCommand, PageDoc, TextSpan};
 
 use crate::page_editor::{insert_after, insert_block, insert_table};
 use crate::selection::delete_span;
@@ -470,12 +470,32 @@ pub(crate) fn insert_spans(
 ) -> Result<usize, EditorError> {
     let marks_allowed = doc.kind(block)?.allows_marks();
     for span in spans.iter().filter(|s| !s.text.is_empty()) {
-        let len = span.text.chars().count();
-        doc.apply(PageCommand::InsertText {
-            id: block,
-            pos,
-            text: span.text.clone(),
-        })?;
+        // A page link pastes as a link where marks are allowed; a placeholder without a page (or in code)
+        // is a link to nothing and is left out (ADR 0071).
+        let link = span.marks.page.filter(|_| marks_allowed);
+        let text: String = span.text.chars().filter(|&c| c != PAGE_LINK).collect();
+        let len = match link {
+            Some(page) => {
+                let count = span.text.chars().filter(|&c| c == PAGE_LINK).count();
+                for at in pos..pos + count {
+                    doc.apply(PageCommand::InsertPageLink {
+                        id: block,
+                        pos: at,
+                        page,
+                    })?;
+                }
+                count
+            }
+            None if text.is_empty() => continue,
+            None => {
+                doc.apply(PageCommand::InsertText {
+                    id: block,
+                    pos,
+                    text: text.clone(),
+                })?;
+                text.chars().count()
+            }
+        };
         if marks_allowed {
             let range = pos..pos + len;
             let flags = [

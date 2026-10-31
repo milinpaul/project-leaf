@@ -163,6 +163,18 @@ pub enum ModelError {
     #[error("a link needs an address")]
     EmptyLink,
 
+    /// Plain text can't hold the character page links occupy: a bare one would be a link to nothing.
+    #[error("text can't contain U+FFFC, the character a page link occupies")]
+    PageLinkCharInText,
+
+    /// The page-link mark only re-points existing page links; text can't become one.
+    #[error("only page links can point at a page")]
+    PageLinkOnText,
+
+    /// A page link can't lose its target and stay; it goes by deleting it.
+    #[error("a page link is removed by deleting it")]
+    PageLinkNotRemovable,
+
     /// A property was set on a kind of block it doesn't belong to (a checkbox on a heading).
     #[error("{kind} blocks have no {prop}")]
     PropNotForKind {

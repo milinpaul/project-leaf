@@ -317,6 +317,7 @@ pub use undo::{Caret, History, SavedSelection};
 
 mod kind_ops;
 mod nesting;
+mod page_links;
 mod repair;
 mod split_merge;
 mod table_ops;

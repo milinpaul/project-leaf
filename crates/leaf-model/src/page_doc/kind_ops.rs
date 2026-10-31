@@ -7,6 +7,7 @@ use leaf_core::BlockId;
 use loro::{LoroText, TextDelta, TreeID};
 
 use super::PageDoc;
+use super::page_links::repair_links;
 use crate::block_kind::{KNOWN_PROP_KEYS, keys};
 use crate::{BlockKind, ModelError, PageOutcome};
 
@@ -57,6 +58,8 @@ impl PageDoc {
             _ => {}
         }
         if let Some(text) = text.filter(|_| kind.has_text() && !kind.allows_marks()) {
+            // Code holds no links: they go (undo brings them back), never left as bare placeholders.
+            repair_links(&text, false)?;
             strip_marks(&text)?;
         }
         if !kind.allows_children() {

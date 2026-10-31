@@ -81,6 +81,17 @@ Measured with 5,000 pages × 20 blocks and 25,000 links, release build, Apple M1
 | Find the links in one page after an edit | 0.12 ms |
 | Look up one page's backlinks (in memory) | under 1 µs; a SQLite index lookup is well under a millisecond |
 
+## Notes from building it (E10-S02)
+
+- **Each placeholder is marked on its own.** Loro gives text typed *inside* a mark's span that mark, whatever its expand
+  rule; "never expands" only covers the span's ends. A copy or re-point that marked two neighbouring links in one op
+  made text typed between them part of the link (the page property test found it). Copies, duplicates, splits, merges
+  and re-pointing now mark placeholder by placeholder.
+- **Code drops links.** Turning a block into code, or merging a block into code, leaves its links out (code takes no
+  marks), and undo brings them back. The editor (E10-S03) can swap a link for its title first.
+- **Invariant 10** (`BLOCK_MODEL.md`): a placeholder always carries its page, and the page mark sits on nothing else.
+  Commands can't break it; the merge repair restores it after an older version's edits.
+
 ## Alternatives considered
 
 - **Today's `link` mark over the title's words, with a `leaf://page/…` address:**
