@@ -34,6 +34,8 @@ pub enum SlashAction {
     Image,
     /// Adds a 3 × 3 table with a header row, in place of an empty line or below the block (E16-S04).
     Table,
+    /// Types `[[` in place of the `/` and query and opens the page-link menu there (E10-S05).
+    LinkToPage,
 }
 
 /// A callout block of `tone`.
@@ -125,6 +127,11 @@ pub(crate) fn all_items() -> Vec<SlashItem> {
             label: "Table",
             keywords: &["grid", "rows", "|"],
             action: SlashAction::Table,
+        },
+        SlashItem {
+            label: "Link to page",
+            keywords: &["page", "mention", "[["],
+            action: SlashAction::LinkToPage,
         },
     ]
 }

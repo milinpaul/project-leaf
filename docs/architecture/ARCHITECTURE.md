@@ -89,7 +89,10 @@ selection, filled in when the selection is already one link, with Open and Remov
 system may open. A **page link** (E10, ADR 0071) is one character in the page but is drawn as the target's icon and
 title: `leaf_editor::LinkedText` builds the drawn runs from `WorkspaceEditor::link_target` (title, icon, live / in
 trash / deleted) and maps positions both ways, and the painted layout keeps that map so carets, selections and clicks
-stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. A **code block** shows its language at the top right on hover; a click opens a searchable list
+stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page. Typing `[[` opens the **page-link menu**
+(E10-S05, `shell/link_menu_popover.rs`): the page editor keeps where the `[[` is and the highlight (like the slash
+menu), and `WorkspaceEditor::link_menu` matches the query against the workspace's pages with the quick switcher's
+fuzzy matcher, adding "New page"; Enter or a click calls `link_menu_apply`, which links the page in one undo step. A **code block** shows its language at the top right on hover; a click opens a searchable list
 (E07-S09, ADR 0054, `shell/language_picker.rs` over `leaf_editor::code_block`), and Tab and Shift+Tab inside code indent
 and outdent lines by four spaces instead of nesting the block. The **slash menu** is drawn as a popover
 by the `/` (E07-S06, ADR 0043, `shell/slash_popover.rs`): below the line, or above it near the window's bottom edge.
@@ -312,6 +315,13 @@ Undo runs the same path backwards: the model reverses the last step and the edit
 bytes, and records its type (read from its first bytes, not its name) and size in the `assets` table. The file is
 written atomically before its row, and the same picture is stored once (ADR 0047). Image blocks refer to it by
 that hash (`AssetId`).
+
+**Staying inside the workspace folder (E08-S13).** Every file Leaf writes in a workspace has a fixed name
+(`workspace.sqlite`, `leaf.lock`, `view.json`, `search/index.sqlite`) or is named by an `AssetId`, a typed hash
+that can't hold `..` or a slash. Before taking the lock, `Workspace::open` refuses a folder whose top level,
+`assets/` or `search/` holds a symlink, since a write would follow it out of the folder
+(`StoreError::LinkInWorkspace`; nothing is changed). New workspace names can't hold path characters, start
+with a dot, or be a Windows device name such as `CON` (ADR 0074).
 
 **Search (E11).** The index is a separate, throwaway SQLite file (ADR 0019). `leaf-search` reads pages through a
 `PageSource` (the UI supplies one over a second `leaf-store` connection, `Workspace::reader`), so it never sees

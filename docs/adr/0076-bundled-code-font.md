@@ -1,4 +1,4 @@
-# 0074. A bundled code font, set before the UI library starts, for a fast cold start
+# 0076. A bundled code font, set before the UI library starts, for a fast cold start
 
 - **Status:** Accepted
 - **Type:** Architecture

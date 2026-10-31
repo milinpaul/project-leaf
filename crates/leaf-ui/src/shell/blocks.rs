@@ -191,6 +191,7 @@ impl Shell {
         self.blink_while(caret.is_some(), cx);
         // Placed by where the `/` was drawn last frame: this frame's layout is only known once painted.
         let slash = self.render_slash_popover(window, cx);
+        let link_menu = self.render_link_menu_popover(window, cx);
         let format_bar = self.render_format_bar(window, cx);
         self.blocks.painted.clear();
         self.blocks.drawn.clear();
@@ -253,6 +254,7 @@ impl Shell {
             .children(tones)
             .children(task_picker)
             .children(slash)
+            .children(link_menu)
             .children(format_bar);
         let page = Self::with_block_menu_action(page, cx);
         let page = Self::with_task_picker_actions(page, cx);
