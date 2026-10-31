@@ -175,6 +175,51 @@ fn two_devices_changing_different_fields_keep_both() {
     assert_eq!(b.kind(id).unwrap(), both);
 }
 
+/// E17-S11: one device clears the date (and with it the time) while another sets the time. Merged, the
+/// stored time has no date; it reads as no time, both devices agree, and the next change tidies it.
+#[test]
+fn a_time_set_while_another_device_clears_the_date_reads_as_no_time() {
+    let mut a = PageDoc::new();
+    let id = insert(&mut a, task(), "Renew passport");
+    set(&mut a, id, BlockProp::TaskDue(Some(date("2026-11-15")))).unwrap();
+    let mut b = PageDoc::from_bytes(&a.to_bytes().unwrap()).unwrap();
+    set(&mut a, id, BlockProp::TaskDue(None)).unwrap();
+    set(&mut b, id, BlockProp::TaskTime(Some(time("09:30")))).unwrap();
+    let (from_a, from_b) = (a.to_bytes().unwrap(), b.to_bytes().unwrap());
+    a.import_changes(&from_b).unwrap();
+    b.import_changes(&from_a).unwrap();
+    let merged = BlockKind::Task {
+        done: false,
+        due: None,
+        time: None,
+        priority: task_priority(),
+    };
+    assert_eq!(a.kind(id).unwrap(), merged);
+    assert_eq!(b.kind(id).unwrap(), merged);
+    // A new date doesn't bring the old time back: the change writes the item as it reads.
+    set(&mut a, id, BlockProp::TaskDue(Some(date("2026-11-20")))).unwrap();
+    assert!(matches!(
+        a.kind(id).unwrap(),
+        BlockKind::Task {
+            due: Some(_),
+            time: None,
+            ..
+        }
+    ));
+    let meta = a.tree.get_meta(a.node(id).unwrap()).unwrap();
+    assert!(
+        meta.get(keys::DUE_TIME).is_none(),
+        "the stray time is gone once the item changes"
+    );
+}
+
+fn task_priority() -> Option<Priority> {
+    match task() {
+        BlockKind::Task { priority, .. } => priority,
+        _ => None,
+    }
+}
+
 #[test]
 fn fields_from_a_newer_version_are_kept() {
     let id = BlockId::new();
