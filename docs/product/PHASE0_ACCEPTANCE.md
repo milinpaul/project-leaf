@@ -6,13 +6,13 @@ checked, how, and what came out. An item is ticked in the spec only when its evi
 
 | # | Item | Result |
 |---|---|---|
-| 1 | 3,000-word document without an editing bug | Automated pass done, no bug found; hand pass in the app still to do |
+| 1 | 3,000-word document without an editing bug | Automated pass done, no bug found; hand pass in the app still to do (E08-S09) |
 | 2 | Every "Editor behaviour" rule has a test | Done |
 | 3 | Undo/redo restores exact state for every command | Done |
-| 4 | Kill mid-typing loses nothing older than 1 s | Store-level test done; kill of the running app still to do |
+| 4 | Kill mid-typing loses nothing older than 1 s | Store-level test done; kill of the running app still to do (E08-S09) |
 | 5 | 500 pages, 6 levels deep, smooth | Done |
 | 6 | Search a 5,000-page workspace in < 50 ms | Done |
-| 7 | Performance budgets | Typing and opening pass; **cold start misses** (E08-S08) |
+| 7 | Performance budgets | Done: cold start passes since E08-S08 |
 | 8 | CI green on three OSes, ≥ 90% core coverage | Done |
 
 ## 1. A 3,000-word document
@@ -81,14 +81,15 @@ Opening a result at the matching block is `search/tests.rs::full_text_results_op
 |---|---|---|
 | Keystroke to paint on a 10,000-block page, < 16 ms | 8.3 ms median, 9.8 ms 95th percentile (one frame of about 200 took 36 ms) | Pass |
 | Open a 5,000-block page, < 100 ms | 52 ms median | Pass |
-| Cold start to editable, < 500 ms | 550–620 ms on repeat launches, 690–920 ms on the first after a build | **Fail** |
+| Cold start to editable, < 500 ms | 337, 455 and 318 ms on repeat launches of the release build (owner's Mac, after E08-S08); 550–620 ms before | Pass |
 
 Keystroke to paint comes from the screenshot tool's `bench` mode on a 10,000-block page (real frames, off screen);
 opening from `just bench`. Cold start comes from the app itself: `LEAF_STARTUP_TIMING=1 leaf-app <workspace>` prints
 the time from launch to the end of the first frame. It is the same with no workspace, a small one, the 5,000-page
 fixture or the 10,000-block page, so the time is in starting up, not in Leaf's pages. About 220 ms of it is
-gpui-component listing every installed font while it starts. Fixing that needs a change in that library, so it is
-its own story, E08-S08 "Cold start under 500 ms".
+gpui-component listing every installed font while it starts. E08-S08 "Cold start under 500 ms" bundles the code
+font and sets it before the library starts (ADR-077), so it no longer lists them: 337, 455 and 318 ms on repeat
+launches (owner, 2026-10-31).
 
 ## 8. CI
 

@@ -17,6 +17,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from backlog import CURRENT_PHASE
 from test_backlog import copy_backlog, run
 
 
@@ -54,13 +55,10 @@ class PhasesTest(unittest.TestCase):
         self.assertEqual(sum(p["done_count"] for p in data["phases"]),
                          sum(s["status"] == "done" for s in data["stories"]))
 
-    def test_the_current_phase_is_the_first_with_unfinished_stories(self) -> None:
+    def test_the_current_phase_is_the_one_the_owner_chose(self) -> None:
         phases = backlog_json(self.root)["phases"]
-        current = [p for p in phases if p["current"]]
-        self.assertEqual(len(current), 1)
-        for p in phases[: phases.index(current[0])]:
-            self.assertEqual(p["done_count"], p["story_count"], f"phase {p['id']} is unfinished")
-        self.assertLess(current[0]["done_count"], current[0]["story_count"])
+        current = [p["id"] for p in phases if p["current"]]
+        self.assertEqual(current, [CURRENT_PHASE], "exactly one, even with an earlier phase unfinished")
 
     def test_moving_an_epic_takes_its_stories_to_the_new_phase(self) -> None:
         before = backlog_json(self.root)

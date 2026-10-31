@@ -38,6 +38,9 @@ PHASES = {
     2: "More views, sync and the web viewer",
     3: "Web editor",
 }
+# The phase being worked on, chosen by the owner (Phase 1 from 2026-10-31, ADR-XXX-E00-S14). An earlier phase may
+# still have open stories: they are finished alongside, not first.
+CURRENT_PHASE = 1
 STATUSES = ["backlog", "todo", "planning", "in_progress", "review", "done", "blocked"]
 PRIORITIES = ["P0", "P1", "P2"]
 SIZES = ["S", "M", "L"]
@@ -183,18 +186,16 @@ def load() -> dict:
 
 
 def phase_summary(epics: list[dict]) -> list[dict]:
-    """Each phase with its epics and story progress. The current phase is the first with unfinished stories."""
+    """Each phase with its epics and story progress, the owner's current phase marked."""
     phases = []
     for number, name in sorted(PHASES.items()):
         own = [e for e in epics if e["phase"] == number]
         count, done = sum(e["story_count"] for e in own), sum(e["done_count"] for e in own)
         phases.append({
             "id": number, "name": name, "epics": [e["id"] for e in own], "story_count": count,
-            "done_count": done, "progress": round(done / count, 2) if count else 0.0, "current": False,
+            "done_count": done, "progress": round(done / count, 2) if count else 0.0,
+            "current": number == CURRENT_PHASE,
         })
-    current = next((p for p in phases if p["done_count"] < p["story_count"]), None)
-    if current:
-        current["current"] = True
     return phases
 
 
