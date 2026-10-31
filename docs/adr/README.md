@@ -8,10 +8,12 @@ Records cover two kinds of decision:
 
 ## How to add one
 
-1. Copy [ADR-000-EXX-SYY-template.md](ADR-000-EXX-SYY-template.md) to `ADR-NNN-EXX-SYY-short-title.md`: the next
-   number after the highest one on `main` (three digits, so the files list in the order decisions were taken), then the
-   story the decision belongs to (its epic, e.g. `E11`, if it spans one; nothing if it has no story). Refer to it as
-   `ADR-NNN`. If another branch merges the same number first, rename yours to the next free one.
+1. Copy [ADR-000-EXX-SYY-template.md](ADR-000-EXX-SYY-template.md) to `ADR-XXX-EXX-SYY-short-title.md`: `XXX` stays
+   as it is, then the story the decision belongs to (its epic, e.g. `E11`, if it spans one), then a short title. Head
+   it `# ADR-XXX. Title`, add it to the index below as `[ADR-XXX](ADR-XXX-EXX-SYY-short-title.md)`, and mention it
+   elsewhere as `ADR-XXX-EXX-SYY` (one new record per story). When the PR merges, the `ADR numbers` workflow
+   ([ADR-XXX-E00-S12](ADR-XXX-E00-S12-adr-numbers-at-merge.md)) gives it the next number, three digits so the files
+   list in the order decisions were taken, and updates every mention to `ADR-NNN`.
 2. Fill it in. Keep it to one screen.
 3. Add a row to the index below in the same PR as the change it describes.
 4. Never rewrite an accepted record. If a decision changes, write a new one and mark the old one `Superseded by ADR-NNN`.
@@ -95,3 +97,4 @@ Records cover two kinds of decision:
 | [ADR-073](ADR-073-E08-S10-ci-and-supply-chain-policy.md) | CI and supply chain: read-only CI, pinned actions, deny on new duplicates and git sources | Architecture | Accepted |
 | [ADR-074](ADR-074-E08-S13-workspace-files-stay-inside-the-folder.md) | Workspace files stay inside the folder: links refused on open, Windows device names refused | Architecture | Accepted |
 | [ADR-075](ADR-075-E22-S01-database-views-and-board.md) | Database views: saved views as tabs, and a board layout | Architecture | Accepted |
+| [ADR-XXX](ADR-XXX-E00-S12-adr-numbers-at-merge.md) | Decision records are numbered when they merge, by a workflow | Architecture | Accepted |

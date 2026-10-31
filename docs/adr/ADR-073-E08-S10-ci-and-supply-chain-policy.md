@@ -50,3 +50,8 @@ The repository is public and every pull request runs CI. A security review (2026
 (the newest finished `main` run) read "failing" with nothing broken. Each `main` push now gets its own group, keyed
 by its commit, so every merge is tested on all three OSes and none is cancelled. Pull request runs still cancel the
 run they supersede. The cost is CI time on busy days (free for a public repository), and results can queue longer.
+
+## Update 2026-10-31 (E00-S12): one job may push
+
+The `ADR numbers` workflow's one job has `contents: write`, to commit the numbers of newly merged decision records
+to `main` ([ADR-XXX-E00-S12](ADR-XXX-E00-S12-adr-numbers-at-merge.md)). Every other job stays read-only.

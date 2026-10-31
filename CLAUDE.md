@@ -55,8 +55,9 @@ just install    # macOS: build Leaf and put it in /Applications
 The owner does not write Rust and relies on these docs to understand the system. Keep them current in the same PR as the code:
 - `docs/architecture/ARCHITECTURE.md`: crates, data flow, how a keystroke becomes a saved change. Update when structure changes.
 - `docs/adr/ADR-NNN-EXX-SYY-title.md`: one short decision record per significant architecture or feature decision,
-  numbered in the order taken, with the story it belongs to. Copy `docs/adr/ADR-000-EXX-SYY-template.md`, take the next
-  number after the highest on `main`, and add it to the index in `docs/adr/README.md`. Refer to it as `ADR-NNN`.
+  numbered in the order taken, with the story it belongs to. On a branch, copy `docs/adr/ADR-000-EXX-SYY-template.md`
+  to `ADR-XXX-EXX-SYY-title.md`, mention it as `ADR-XXX-EXX-SYY`, and add it to the index in `docs/adr/README.md`;
+  never pick a number yourself. After merge the `ADR numbers` workflow numbers it and updates the mentions.
 - Each crate has a top-level `//!` doc explaining its role and boundaries.
 
 ## Definition of done
