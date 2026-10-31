@@ -253,3 +253,150 @@ fn a_control_edit_changes_the_table_through_the_editor(cx: &mut TestAppContext) 
     assert_eq!(grid(&shell, cx, table), [["r1c1"], ["r0c1"]]);
     let _ = std::fs::remove_dir_all(path.parent().unwrap());
 }
+
+/// The page's scroll position: the first item on screen and how far into it.
+fn page_scroll(shell: &gpui::Entity<Shell>, cx: &mut VisualTestContext) -> (usize, gpui::Pixels) {
+    shell.read_with(cx, |shell, _| {
+        let top = shell.blocks.list.state.logical_scroll_top();
+        (top.item_ix, top.offset_in_item)
+    })
+}
+
+#[gpui::test]
+fn clicking_a_cell_of_a_tall_table_leaves_the_page_where_it_is(cx: &mut TestAppContext) {
+    let path = temp_workspace("tall-click");
+    let (page, table) = save_page(&path, 60, 2);
+    let (shell, cx) = open(&path, page, cx);
+    let before = page_scroll(&shell, cx);
+    let cell = cells(&shell, cx, table)[3][1];
+    let at = cx.debug_bounds(selector("table-cell", cell)).unwrap();
+    assert!(at.bottom() < px(900.0), "on screen before the click");
+    cx.simulate_click(at.center(), Modifiers::none());
+    draw(cx);
+    draw(cx);
+    let caret = shell.update(cx, |shell, _| shell.page().unwrap().caret().unwrap().unwrap());
+    assert_eq!(caret.block, cell);
+    assert_eq!(page_scroll(&shell, cx), before, "the click doesn't move the page");
+    assert_eq!(
+        cx.debug_bounds(selector("table-cell", cell)).unwrap().top(),
+        at.top()
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[gpui::test]
+fn moving_down_a_tall_table_keeps_the_caret_cell_on_screen(cx: &mut TestAppContext) {
+    let path = temp_workspace("tall-down");
+    let (page, table) = save_page(&path, 60, 2);
+    let (shell, cx) = open(&path, page, cx);
+    let first = cells(&shell, cx, table)[1][0];
+    let at = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    cx.simulate_click(at.center(), Modifiers::none());
+    for _ in 0..40 {
+        cx.simulate_keystrokes("down");
+        draw(cx);
+    }
+    draw(cx);
+    let caret = shell.update(cx, |shell, _| shell.page().unwrap().caret().unwrap().unwrap());
+    assert_eq!(caret.block, cells(&shell, cx, table)[41][0], "forty rows down");
+    let shown = cx.debug_bounds(selector("table-cell", caret.block)).unwrap();
+    assert!(
+        shown.top() >= px(0.0) && shown.bottom() <= px(900.0),
+        "on screen: {shown:?}"
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[gpui::test]
+fn a_wide_table_has_a_scrollbar_that_scrolls_it(cx: &mut TestAppContext) {
+    let path = temp_workspace("wide-bar");
+    let (page, table) = save_page(&path, 2, 9);
+    let (shell, cx) = open(&path, page, cx);
+    let bar = cx
+        .debug_bounds(selector("table-scrollbar", table))
+        .expect("a horizontal scrollbar under the grid");
+    let frame = cx.debug_bounds(selector("table", table)).unwrap();
+    assert!(
+        bar.top() >= frame.top() && bar.bottom() <= frame.bottom() + px(1.0),
+        "{bar:?} in {frame:?}"
+    );
+    let first = cells(&shell, cx, table)[0][0];
+    let before = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    // Drag the thumb, which starts at the left end, to the right.
+    let start = point(bar.left() + px(20.0), bar.center().y);
+    cx.simulate_mouse_move(start, None, Modifiers::none());
+    cx.simulate_mouse_down(start, gpui::MouseButton::Left, Modifiers::none());
+    cx.simulate_mouse_move(
+        point(start.x + px(200.0), start.y),
+        Some(gpui::MouseButton::Left),
+        Modifiers::none(),
+    );
+    cx.simulate_mouse_up(
+        point(start.x + px(200.0), start.y),
+        gpui::MouseButton::Left,
+        Modifiers::none(),
+    );
+    draw(cx);
+    let after = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    assert!(
+        after.left() < before.left(),
+        "dragged sideways: {after:?} vs {before:?}"
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[gpui::test]
+fn tab_into_an_off_screen_column_scrolls_the_table_to_it(cx: &mut TestAppContext) {
+    let path = temp_workspace("wide-tab");
+    let (page, table) = save_page(&path, 2, 9);
+    let (shell, cx) = open(&path, page, cx);
+    let frame = cx.debug_bounds(selector("table", table)).unwrap();
+    let first = cells(&shell, cx, table)[0][0];
+    let at = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    cx.simulate_click(at.center(), Modifiers::none());
+    for _ in 0..8 {
+        cx.simulate_keystrokes("tab");
+        draw(cx);
+    }
+    draw(cx);
+    let last = cells(&shell, cx, table)[0][8];
+    let caret = shell.update(cx, |shell, _| shell.page().unwrap().caret().unwrap().unwrap());
+    assert_eq!(caret.block, last);
+    let shown = cx.debug_bounds(selector("table-cell", last)).unwrap();
+    assert!(
+        shown.left() >= frame.left() - px(1.0) && shown.right() <= frame.right() + px(1.0),
+        "the last column is scrolled into the box: {shown:?} in {frame:?}"
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[gpui::test]
+fn a_tall_wide_tables_scrollbar_stays_in_the_window(cx: &mut TestAppContext) {
+    let path = temp_workspace("tall-wide-bar");
+    let (page, table) = save_page(&path, 60, 9);
+    let (shell, cx) = open(&path, page, cx);
+    draw(cx);
+    let frame = cx.debug_bounds(selector("table", table)).unwrap();
+    assert!(frame.bottom() > px(900.0), "the table runs past the window");
+    let bar = cx.debug_bounds(selector("table-scrollbar", table)).unwrap();
+    assert!(
+        bar.bottom() <= px(900.0) && bar.top() >= frame.top(),
+        "reachable without scrolling: {bar:?}"
+    );
+    // And it works there: dragging its thumb scrolls the table.
+    let first = cells(&shell, cx, table)[0][0];
+    let before = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    let start = point(bar.left() + px(20.0), bar.center().y);
+    cx.simulate_mouse_move(start, None, Modifiers::none());
+    cx.simulate_mouse_down(start, gpui::MouseButton::Left, Modifiers::none());
+    let end = point(start.x + px(200.0), start.y);
+    cx.simulate_mouse_move(end, Some(gpui::MouseButton::Left), Modifiers::none());
+    cx.simulate_mouse_up(end, gpui::MouseButton::Left, Modifiers::none());
+    draw(cx);
+    let after = cx.debug_bounds(selector("table-cell", first)).unwrap();
+    assert!(
+        after.left() < before.left(),
+        "dragged sideways: {after:?} vs {before:?}"
+    );
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
