@@ -39,7 +39,7 @@ pub fn page_text(
             let kind = doc.kind(block)?.type_name().to_owned();
             blocks.push(BlockText { block, kind, text });
         }
-        links.extend(links_in(doc, block)?);
+        links.extend(links_in(workspace, doc, block)?);
         stack.extend(doc.children(block)?.into_iter().rev());
     }
     Ok(Some(PageText {
@@ -54,7 +54,7 @@ pub fn page_text(
 pub const LINK_CONTEXT: usize = 60;
 
 /// The links in `block`, one per target (its first), each with the words around it.
-fn links_in(doc: &PageDoc, block: BlockId) -> Result<Vec<LinkText>, SearchError> {
+fn links_in(workspace: &Workspace, doc: &PageDoc, block: BlockId) -> Result<Vec<LinkText>, SearchError> {
     let Some(spans) = doc.text(block)? else {
         return Ok(Vec::new());
     };
@@ -67,11 +67,15 @@ fn links_in(doc: &PageDoc, block: BlockId) -> Result<Vec<LinkText>, SearchError>
                 .map(|c| (c, span.marks.page.filter(|_| c == PAGE_LINK)))
         })
         .collect();
+    // Other links in the words around a link read as their pages' titles (as they are when indexed).
     let words = |range: &[(char, Option<PageId>)]| -> String {
         range
             .iter()
-            .filter(|(c, _)| *c != PAGE_LINK)
-            .map(|(c, _)| *c)
+            .map(|(c, page)| match page {
+                Some(page) => link_name(workspace, *page),
+                None if *c == PAGE_LINK => String::new(),
+                None => c.to_string(),
+            })
             .collect()
     };
     let mut links: Vec<LinkText> = Vec::new();
@@ -88,6 +92,15 @@ fn links_in(doc: &PageDoc, block: BlockId) -> Result<Vec<LinkText>, SearchError>
         });
     }
     Ok(links)
+}
+
+/// What a link to `page` reads as in a backlink's words: the page's title, "Untitled", or "Deleted page".
+fn link_name(workspace: &Workspace, page: PageId) -> String {
+    match workspace.page(page) {
+        Ok(meta) if meta.title.trim().is_empty() => UNTITLED.to_owned(),
+        Ok(meta) => meta.title,
+        Err(_) => "Deleted page".to_owned(),
+    }
 }
 
 /// The last [`LINK_CONTEXT`] characters of `text`, with "…" in front when it was cut.

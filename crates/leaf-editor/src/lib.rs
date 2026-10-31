@@ -79,7 +79,7 @@ pub use task_due::{add_days, due_label, is_overdue};
 pub use task_edit::{DatePicker, parse_time, priority_choices};
 pub use view::{BlockRow, BlockStyle, PageView};
 pub use workspace_editor::{
-    Crumb, DropPlace, EditorError, LinkChoice, LinkMenu, MAX_CRUMBS, MAX_LINK_CHOICES, MenuPlace, PageAction,
-    PageMenu, PageMenuEntry, PageMenuIcon, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED,
-    WorkspaceEditor, trashed_ago,
+    BacklinkRow, BacklinkSource, Crumb, DropPlace, EditorError, LinkChoice, LinkMenu, MAX_CRUMBS,
+    MAX_LINK_CHOICES, MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon, RECENT_LIMIT,
+    SidebarItem, TrashItem, TrashList, UNTITLED, WorkspaceEditor, backlinks_label, trashed_ago,
 };

@@ -51,7 +51,7 @@ pub struct LinkText {
     /// The page linked to.
     pub target: PageId,
     /// Up to [`crate::LINK_CONTEXT`] characters of the block's text just before the link ("…" first
-    /// where it was cut). Other links in it are left out.
+    /// where it was cut). Other links in it read as their pages' titles.
     pub before: String,
     /// The same just after the link ("…" last where it was cut).
     pub after: String,
