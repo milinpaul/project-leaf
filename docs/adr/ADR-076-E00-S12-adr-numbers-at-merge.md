@@ -1,4 +1,4 @@
-# ADR-XXX. Decision records are numbered when they merge, by a workflow
+# ADR-076. Decision records are numbered when they merge, by a workflow
 
 - **Status:** Accepted
 - **Type:** Architecture

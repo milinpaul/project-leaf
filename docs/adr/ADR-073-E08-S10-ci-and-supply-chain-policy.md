@@ -54,4 +54,4 @@ run they supersede. The cost is CI time on busy days (free for a public reposito
 ## Update 2026-10-31 (E00-S12): one job may push
 
 The `ADR numbers` workflow's one job has `contents: write`, to commit the numbers of newly merged decision records
-to `main` ([ADR-XXX-E00-S12](ADR-XXX-E00-S12-adr-numbers-at-merge.md)). Every other job stays read-only.
+to `main` ([ADR-076](ADR-076-E00-S12-adr-numbers-at-merge.md)). Every other job stays read-only.

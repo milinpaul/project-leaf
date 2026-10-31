@@ -1,4 +1,4 @@
-# ADR-XXX. A bundled code font, set before the UI library starts, for a fast cold start
+# ADR-077. A bundled code font, set before the UI library starts, for a fast cold start
 
 - **Status:** Accepted
 - **Type:** Architecture
