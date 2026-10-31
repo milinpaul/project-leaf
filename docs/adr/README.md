@@ -86,3 +86,4 @@ Records cover two kinds of decision:
 | [0067](0067-formatting-bar.md) | Formatting bar: a floating bar over selected text, drawn in the page's own overlay | Feature | Accepted |
 | [0068](0068-action-item-block.md) | Action items: a `task` block kind with its fields as props | Feature | Accepted |
 | [0069](0069-database-page-table.md) | Database page: gpui-component's data table, editing rules in leaf-editor | Feature | Accepted |
+| [0071](0071-page-links-and-backlinks.md) | Page links: one placeholder character with a `page` mark; backlinks in the search index | Architecture | Proposed |
