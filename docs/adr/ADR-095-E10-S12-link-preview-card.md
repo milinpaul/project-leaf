@@ -1,4 +1,4 @@
-# ADR-XXX-E10-S12. A preview card when the pointer rests on a page link
+# ADR-095. A preview card when the pointer rests on a page link
 
 - **Status:** Accepted (owner accepted the recommended behaviour, 2026-11-01)
 - **Type:** Feature

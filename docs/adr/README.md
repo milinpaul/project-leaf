@@ -117,3 +117,4 @@ Records cover two kinds of decision:
 | [ADR-092](ADR-092-E09-S11-editing-options.md) | Editing a column's options | Feature | Accepted |
 | [ADR-093](ADR-093-E09-S10-database-search-and-budgets.md) | Searching databases, and their speed budgets | Feature | Accepted |
 | [ADR-094](ADR-094-E10-S08-links-to-a-block.md) | Links to a block: a page link with a `block` mark | Architecture | Accepted (owner chose the recommended answers, 2026-11-01) |
+| [ADR-095](ADR-095-E10-S12-link-preview-card.md) | A preview card when the pointer rests on a page link | Feature | Accepted (owner accepted the recommended behaviour, 2026-11-01) |
