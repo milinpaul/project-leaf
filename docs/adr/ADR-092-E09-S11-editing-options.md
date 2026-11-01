@@ -1,4 +1,4 @@
-# ADR-XXX. Editing a column's options
+# ADR-092. Editing a column's options
 
 - **Status:** Accepted
 - **Type:** Feature
