@@ -18,6 +18,7 @@ use leaf_store::Appearance;
 
 use crate::settings;
 
+mod link_previews;
 mod privacy;
 use crate::theme::{self, DARK, LIGHT, Palette};
 
@@ -412,7 +413,11 @@ impl Render for SettingsPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let section = self.section;
         let body = match section {
-            Section::Appearance => Self::appearance(cx),
+            Section::Appearance => v_flex()
+                .gap_6()
+                .child(Self::appearance(cx))
+                .child(Self::link_previews(cx))
+                .into_any_element(),
             Section::Workspace => self.workspace(cx),
             Section::Privacy => Self::privacy(cx),
             Section::About => Self::about(cx),

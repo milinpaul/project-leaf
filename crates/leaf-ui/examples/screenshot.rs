@@ -24,6 +24,7 @@
 //! - `menu=B`: open block B's ⋮⋮ menu; `menu=B:kinds` also opens its "Turn into" list.
 //! - `drag=B:T[:L]`: drag block B by its handle onto the lower half of block T, L indents in (default
 //!   0), and keep holding: shows the drop line and the preview.
+//! - `hover=B`: rest the pointer on the first page link in block B until its preview card shows.
 //! - `bench`: time frames while scrolling and while typing, and print the results.
 #![allow(
     clippy::print_stdout,
@@ -88,13 +89,14 @@ mod mac {
         draft: Option<String>,
         menu: Option<String>,
         drag: Option<String>,
+        hover: Option<String>,
         link: bool,
         language: Option<String>,
     }
 
     fn options() -> Result<Options, Error> {
         let usage = "usage: screenshot <workspace folder> <out.png> [N] [dark] [nosidebar] [deep] [star] [wide] [cover=NAME] [pagemenu] [backlinks] [caret=B:C] [select=B:C-B:C] [link] [language=B] \
-                     [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [bench]";
+                     [type=TEXT] [draft=TEXT] [menu=B[:kinds]] [drag=B:T[:L]] [hover=B] [bench]";
         let mut args = std::env::args().skip(1);
         let folder = args.next().ok_or(usage)?;
         let out = args.next().ok_or(usage)?;
@@ -124,6 +126,7 @@ mod mac {
             draft: value("draft="),
             menu: value("menu="),
             drag: value("drag="),
+            hover: value("hover="),
         })
     }
 
@@ -289,6 +292,7 @@ mod mac {
         if let Some(spec) = &options.drag {
             drag(cx, window, shell, spec)?;
         }
+        hover(cx, window, shell, options.hover.as_deref())?;
         if options.pagemenu {
             click(cx, window, point(px(WIDTH - PAGE_MENU_FROM_RIGHT), px(22.0)))?;
         }
@@ -353,6 +357,28 @@ mod mac {
             draw(cx, window)?;
         }
         Ok(())
+    }
+
+    /// Rests the pointer on the first page link in block B until its preview card shows (`hover=B`, if given).
+    fn hover(
+        cx: &mut VisualTestAppContext,
+        window: AnyWindowHandle,
+        shell: &Entity<Shell>,
+        row: Option<&str>,
+    ) -> Result<(), Error> {
+        let Some(row) = row else { return Ok(()) };
+        draw(cx, window)?;
+        let row: usize = row.parse()?;
+        let at = cx
+            .update_window(window, |_, _, cx| {
+                shell.update(cx, |shell, _| shell.link_point(row))
+            })?
+            .ok_or("no page link in that block")?;
+        cx.simulate_mouse_move(window, at, None::<MouseButton>, Modifiers::none());
+        // The card waits for the pointer to rest; the off-screen window runs no timers, so end the pause.
+        draw(cx, window)?;
+        cx.update_window(window, |_, _, cx| shell.update(cx, Shell::show_link_preview_now))?;
+        draw(cx, window)
     }
 
     /// Where the top bar's `⋯` button sits, from the window's right edge.

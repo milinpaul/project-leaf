@@ -168,6 +168,38 @@ impl PaintedLayout {
         self.links(block)?.link_at(drawn).cloned()
     }
 
+    /// The page link under `position` in `block`, with where its label starts on the pointer's line and
+    /// that line's top and bottom: what a link's preview card hangs from (E10-S12). On a label that
+    /// wraps, the card goes under the part the pointer is on.
+    pub(in crate::shell) fn link_under(
+        &self,
+        block: BlockId,
+        position: gpui::Point<Pixels>,
+    ) -> Option<(DrawnLink, Pixels, Pixels, Pixels)> {
+        let link = self.link_at(block, position)?;
+        let bounds = self.boundaries(block)?;
+        let top = *bounds.tops.iter().rev().find(|top| **top <= position.y)?;
+        let x = bounds
+            .points
+            .iter()
+            .filter(|(offset, p)| (p.y - top).abs() < px(0.5) && *offset >= link.range.start)
+            .map(|(_, p)| p.x)
+            .next()
+            .unwrap_or(position.x);
+        let height = self.0.borrow().get(&block)?.layout.line_height();
+        Some((link, x, top, top + height))
+    }
+
+    /// The middle of the first page link drawn in `block`, if it has one on screen: where the screenshot
+    /// tool rests the pointer to show a link's preview.
+    pub(in crate::shell) fn first_link_middle(&self, block: BlockId) -> Option<gpui::Point<Pixels>> {
+        let range = self.links(block)?.links().first()?.range.clone();
+        let bounds = self.boundaries(block)?;
+        let (start, end) = (bounds.position(range.start)?, bounds.position(range.end)?);
+        let height = self.0.borrow().get(&block)?.layout.line_height();
+        Some(gpui::point((start.x + end.x) / 2.0, start.y + height / 2.0))
+    }
+
     /// Whether `position` (window coordinates) is over a link in `block` that can be clicked through: a
     /// page link to a page still there, or a web link (E10-S11, for the pointing-hand cursor).
     pub(in crate::shell) fn over_link(&self, block: BlockId, position: gpui::Point<Pixels>) -> bool {

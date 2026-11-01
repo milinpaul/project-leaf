@@ -93,6 +93,8 @@ impl Shell {
             Self::track_window(window, cx),
             // Previews just allowed: the open page's bookmarks get theirs (E15-S06).
             crate::settings::observe(cx, |shell: &mut Self, cx| shell.fetch_missing_previews(cx)),
+            // Any key closes a link's preview card first (E10-S12).
+            Self::close_preview_on_keys(cx),
         ];
         Self::start_edited_clock(cx);
         let focus = cx.focus_handle();
@@ -288,6 +290,7 @@ mod ime;
 mod language_picker;
 mod link_menu_popover;
 mod link_popover;
+mod link_preview;
 #[cfg(test)]
 mod long_document_tests;
 mod markers;

@@ -240,7 +240,7 @@ impl Shell {
     }
 
     /// Brings `page`'s saved blocks into the editor, unless it is there already.
-    fn load_page_into_editor(&mut self, page: PageId) {
+    pub(super) fn load_page_into_editor(&mut self, page: PageId) {
         let Some(storage) = &self.storage else {
             return;
         };
