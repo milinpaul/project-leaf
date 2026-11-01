@@ -20,6 +20,7 @@ fn a_link_shows_the_page_as_it_is_now() {
             title: "Trip to Japan".into(),
             icon: Some("🗾".into()),
             state: LinkState::Live,
+            block: None,
         }
     );
     editor.rename(page, "Japan").unwrap();

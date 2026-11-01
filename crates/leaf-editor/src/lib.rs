@@ -14,6 +14,7 @@
 #![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
 
 mod block_actions;
+mod block_link;
 mod block_menu;
 mod bookmark_card;
 mod caret;
@@ -76,7 +77,7 @@ pub use input::Preedit;
 pub use keys::{Key, KeyOutcome};
 pub use link::openable_url;
 pub use page_editor::{Backspace, Caret, PageEditor};
-pub use page_link::{DrawnLink, LinkState, LinkTarget, LinkedText};
+pub use page_link::{BLOCK_WORDS, DrawnLink, LinkState, LinkTarget, LinkedBlock, LinkedText};
 pub use search_bar::{
     BlockMatch, Destination, ExcerptRow, Marked, PageRow, SEARCH_DELAY_MS, SearchBar, SearchHit, SearchKey,
     SearchOutcome, SearchRequest, SearchRow, Shortcut, ShortcutAction, shortcut_action,

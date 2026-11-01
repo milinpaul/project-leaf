@@ -29,6 +29,7 @@ fn the_menu_lists_the_actions_and_greys_out_moves_that_cannot_happen() {
             ("Move up", false),
             ("Move down", true),
             ("Delete", true),
+            ("Copy link to block", true),
         ]
     );
     editor.open_block_menu(ids[1]).unwrap();
@@ -44,8 +45,9 @@ fn keys_move_the_highlight_skipping_greyed_out_entries() {
     assert_eq!(selected(&mut editor, MenuKey::Down), 1);
     assert_eq!(selected(&mut editor, MenuKey::Down), 3, "Move up is skipped");
     assert_eq!(selected(&mut editor, MenuKey::Down), 4);
+    assert_eq!(selected(&mut editor, MenuKey::Down), 5);
     assert_eq!(selected(&mut editor, MenuKey::Down), 0, "wraps around");
-    assert_eq!(selected(&mut editor, MenuKey::Up), 4);
+    assert_eq!(selected(&mut editor, MenuKey::Up), 5);
     assert_eq!(editor.block_menu_key(MenuKey::Escape).unwrap(), None);
     assert_eq!(editor.block_menu().unwrap(), None, "Escape closes it");
 }

@@ -5,6 +5,9 @@
 //! Commands keep the rule by construction: plain text can't bring the placeholder in, replacing text never
 //! carries the mark onto new characters, and the mark only re-points existing links. Only a merge with an
 //! older version of Leaf, which doesn't know the mark, can break it; [`repair_links`] puts it back.
+//!
+//! A link to a block (E10-S08) is a page link whose placeholder also carries a `block` mark with the
+//! block's ID. The same rule holds for it: the block mark only sits on a page link.
 
 use leaf_core::{BlockId, PageId};
 use loro::{LoroText, LoroValue, TextDelta};
@@ -20,6 +23,7 @@ impl PageDoc {
         id: BlockId,
         pos: usize,
         page: PageId,
+        block: Option<BlockId>,
     ) -> Result<PageOutcome, ModelError> {
         let container = self.editable_text(id)?;
         let kind = self.kind(id)?;
@@ -31,6 +35,9 @@ impl PageDoc {
         check_range(&container, pos..pos)?;
         container.insert(pos, &PAGE_LINK.to_string())?;
         container.mark(pos..pos.saturating_add(1), marks::PAGE, page.to_string())?;
+        if let Some(block) = block {
+            container.mark(pos..pos.saturating_add(1), marks::BLOCK, block.to_string())?;
+        }
         Ok(PageOutcome::Changed)
     }
 
@@ -43,6 +50,28 @@ impl PageDoc {
         while let Some(block) = stack.pop() {
             if let Ok(Some(text)) = self.text_container(block) {
                 out.extend(link_targets(&text).into_iter().map(|page| (block, page)));
+            }
+            stack.extend(self.children(block).unwrap_or_default().into_iter().rev());
+        }
+        out
+    }
+}
+
+impl PageDoc {
+    /// Every link to a block on this page, as (block holding it, target page, target block), in reading
+    /// order: the UI loads those pages so each link can show its block's words.
+    #[must_use]
+    pub fn block_links(&self) -> Vec<(BlockId, PageId, BlockId)> {
+        let mut out = Vec::new();
+        let mut stack: Vec<BlockId> = self.root_blocks().into_iter().rev().collect();
+        while let Some(block) = stack.pop() {
+            if let Ok(Some(spans)) = self.text(block) {
+                for span in spans {
+                    if let (Some(page), Some(target)) = (span.marks.page, span.marks.block) {
+                        let count = span.text.chars().filter(|&c| c == PAGE_LINK).count();
+                        out.extend(std::iter::repeat_n((block, page, target), count));
+                    }
+                }
             }
             stack.extend(self.children(block).unwrap_or_default().into_iter().rev());
         }
@@ -79,8 +108,20 @@ pub(super) fn check_plain(text: &str) -> Result<(), ModelError> {
     Ok(())
 }
 
-/// Each run of `text` as (start, length in characters, page mark value), in order.
-fn runs(text: &LoroText) -> Vec<(usize, String, Option<LoroValue>)> {
+/// One run of a block's text, as invariant 10 sees it.
+struct Run {
+    /// Where it starts, in characters.
+    start: usize,
+    /// Its characters.
+    insert: String,
+    /// Whether it carries a page mark.
+    page: bool,
+    /// Whether it carries a block mark.
+    block: bool,
+}
+
+/// Each run of `text`, in order.
+fn runs(text: &LoroText) -> Vec<Run> {
     let mut at = 0_usize;
     text.to_delta()
         .into_iter()
@@ -88,10 +129,19 @@ fn runs(text: &LoroText) -> Vec<(usize, String, Option<LoroValue>)> {
             TextDelta::Insert { insert, attributes } => {
                 let start = at;
                 at = at.saturating_add(insert.chars().count());
-                let page = attributes
-                    .and_then(|mut attrs| attrs.remove(marks::PAGE))
-                    .filter(|value| !matches!(value, LoroValue::Null));
-                Some((start, insert, page))
+                let set = |key: &str| {
+                    attributes
+                        .as_ref()
+                        .and_then(|attrs| attrs.get(key))
+                        .is_some_and(|value| !matches!(value, LoroValue::Null))
+                };
+                let (page, block) = (set(marks::PAGE), set(marks::BLOCK));
+                Some(Run {
+                    start,
+                    insert,
+                    page,
+                    block,
+                })
             }
             _ => None,
         })
@@ -100,10 +150,17 @@ fn runs(text: &LoroText) -> Vec<(usize, String, Option<LoroValue>)> {
 
 /// What breaks invariant 10 in `text`, if anything.
 pub(super) fn link_problem(text: &LoroText) -> Option<String> {
-    runs(text).into_iter().find_map(|(start, insert, page)| {
-        match (page.is_some(), insert.chars().all(|c| c == PAGE_LINK)) {
+    runs(text).into_iter().find_map(|run| {
+        let Run {
+            start,
+            insert,
+            page,
+            block,
+        } = run;
+        match (page, insert.chars().all(|c| c == PAGE_LINK)) {
             (true, false) => Some(format!("page mark on text at {start}")),
             (false, _) if insert.contains(PAGE_LINK) => Some(format!("page link without a page at {start}")),
+            (false, _) if block => Some(format!("block mark off a page link at {start}")),
             _ => None,
         }
     })
@@ -118,7 +175,7 @@ pub(super) fn mark_run(
     key: &str,
     value: LoroValue,
 ) -> Result<(), ModelError> {
-    if key == marks::PAGE {
+    if key == marks::PAGE || key == marks::BLOCK {
         for at in range {
             text.mark(at..at.saturating_add(1), key, value.clone())?;
         }
@@ -137,29 +194,36 @@ pub(super) fn all_placeholders(text: &LoroText, range: std::ops::Range<usize>) -
         .all(|c| c == PAGE_LINK)
 }
 
-/// Puts invariant 10 back after a merge: the page mark comes off text that isn't a placeholder, and
-/// placeholders without a target go (they'd be links to nothing). With `keep_links` false (code text, which
+/// Puts invariant 10 back after a merge: the page and block marks come off text that isn't a placeholder,
+/// the block mark off anything that isn't a page link, and placeholders without a target go (they'd be links to nothing). With `keep_links` false (code text, which
 /// takes no marks) every placeholder goes. Returns whether anything changed.
 pub(super) fn repair_links(text: &LoroText, keep_links: bool) -> Result<bool, ModelError> {
     let mut changed = false;
     // Back to front, so deleting a placeholder doesn't move the runs still to visit.
-    for (start, insert, page) in runs(text).into_iter().rev() {
-        let chars: Vec<char> = insert.chars().collect();
+    for run in runs(text).into_iter().rev() {
+        let chars: Vec<char> = run.insert.chars().collect();
         for (offset, &c) in chars.iter().enumerate().rev() {
-            let at = start.saturating_add(offset);
+            let at = run.start.saturating_add(offset);
+            let here = at..at.saturating_add(1);
             if c == PAGE_LINK {
-                if !keep_links || page.is_none() {
+                if !keep_links || !run.page {
                     text.delete(at, 1)?;
                     changed = true;
                 }
-            } else if page.is_some() {
-                text.unmark(at..at.saturating_add(1), marks::PAGE)?;
-                changed = true;
+            } else {
+                for (on, key) in [(run.page, marks::PAGE), (run.block, marks::BLOCK)] {
+                    if on {
+                        text.unmark(here.clone(), key)?;
+                        changed = true;
+                    }
+                }
             }
         }
     }
     Ok(changed)
 }
 
+#[cfg(test)]
+mod block_tests;
 #[cfg(test)]
 mod tests;

@@ -9,7 +9,7 @@
 //! A fragment is either a run of formatted text from inside one block (`"text"`), which pastes into
 //! the line where the caret is, or whole blocks with what is nested in them (`"blocks"`).
 
-use leaf_core::{AssetId, PageId};
+use leaf_core::{AssetId, BlockId, PageId};
 use leaf_model::{BlockKind, Marks, TextSpan};
 use serde::{Deserialize, Serialize};
 
@@ -124,6 +124,9 @@ struct WireSpan {
     /// The page a page link points at (ADR-071).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     page: Option<PageId>,
+    /// The block a link to a block points at (E10-S08).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    block: Option<BlockId>,
 }
 
 #[expect(
@@ -144,6 +147,7 @@ impl From<&TextSpan> for WireSpan {
             code: span.marks.code,
             link: span.marks.link.clone(),
             page: span.marks.page,
+            block: span.marks.block,
         }
     }
 }
@@ -159,6 +163,7 @@ impl From<WireSpan> for TextSpan {
                 code: span.code,
                 link: span.link.filter(|l| !l.is_empty()),
                 page: span.page,
+                block: span.block,
             },
         }
     }

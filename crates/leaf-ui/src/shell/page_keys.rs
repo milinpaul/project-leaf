@@ -385,8 +385,8 @@ impl Shell {
 impl Shell {
     /// What copying `fragment` puts on the clipboard: Markdown as text (page links named `[[Title]]`), the
     /// fragment itself as metadata.
-    fn clipboard_item(&self, fragment: &Fragment) -> ClipboardItem {
-        let named = fragment.with_link_names(|page| self.editor().link_target(page).name());
+    pub(super) fn clipboard_item(&self, fragment: &Fragment) -> ClipboardItem {
+        let named = fragment.with_link_names(|page, block| self.editor().link_to(page, block).name());
         ClipboardItem::new_string_with_metadata(named.to_markdown(), fragment.to_json())
     }
 }

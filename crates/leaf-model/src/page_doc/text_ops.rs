@@ -59,6 +59,7 @@ impl PageDoc {
         let mut wanted = attributes_at(&container, range.start)?;
         // Replacing a link with words: the words aren't a link (invariant 10).
         wanted.remove(marks::PAGE);
+        wanted.remove(marks::BLOCK);
         container.delete(range.start, range.len())?;
         if text.is_empty() {
             return Ok(PageOutcome::Changed);
@@ -107,6 +108,10 @@ impl PageDoc {
                 .all(|v| v.as_ref() == Some(&value))
         {
             return Ok(PageOutcome::Unchanged);
+        }
+        // Pointing a link at another page leaves the old page's block behind.
+        if matches!(mark, Mark::PageLink(_)) {
+            container.unmark(range.clone(), marks::BLOCK)?;
         }
         mark_run(&container, range, key, value)?;
         Ok(PageOutcome::Changed)

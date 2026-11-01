@@ -82,6 +82,18 @@ pub enum PageCommand {
         /// is shown as such, never removed.
         page: PageId,
     },
+    /// Inserts a link to one block of a page at `pos` (E10-S08): a page link whose placeholder also
+    /// carries a `block` mark. Versions without block links keep the mark and open the page.
+    InsertBlockLink {
+        /// Block whose text gets the link; its kind must take marks.
+        id: BlockId,
+        /// Position in Unicode scalar values, at most the text length.
+        pos: usize,
+        /// The page holding the block linked to.
+        page: PageId,
+        /// The block linked to. Like the page, any ID is accepted: a block that is gone is shown as such.
+        block: BlockId,
+    },
     /// Applies a mark to the characters in `range`. Code blocks take no marks.
     SetMark {
         /// Block whose text to format.

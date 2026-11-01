@@ -5,10 +5,14 @@
 //! caret, the selection and clicks speak in the page's positions, the text layout in drawn ones. A drawn
 //! position inside a link's label snaps to the nearer end of the link, so the caret can never land inside
 //! it.
+//!
+//! A link to a block inside a page (E10-S08) reads "🏨 Bookings › Book the ryokan…": the page as above,
+//! then the block's first words, or "deleted block" once the block is gone (greyed, but it still opens
+//! the page).
 
 use std::ops::Range;
 
-use leaf_core::PageId;
+use leaf_core::{BlockId, PageId};
 use leaf_model::{PAGE_LINK, TextSpan};
 
 use crate::UNTITLED;
@@ -22,6 +26,22 @@ pub enum LinkState {
     Trashed,
     /// No such page: it was deleted for good, or never existed in this workspace.
     Missing,
+    /// A link to a block of a live page that no longer has that block: drawn greyed, opens the page.
+    BlockGone,
+}
+
+/// How many characters of a linked block's words its label shows before "…".
+pub const BLOCK_WORDS: usize = 30;
+
+/// What a link to a block knows of that block, beyond its page.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LinkedBlock {
+    /// The block's words now, as plain text (other links left out).
+    Words(String),
+    /// The page is loaded and the block isn't in it.
+    Gone,
+    /// The page isn't loaded yet: the label shows the page alone until it is.
+    Unknown,
 }
 
 /// What a link to one page shows.
@@ -33,6 +53,8 @@ pub struct LinkTarget {
     pub icon: Option<String>,
     /// Whether it can be opened.
     pub state: LinkState,
+    /// For a link to a block, what is known of the block; `None` for a link to the page.
+    pub block: Option<LinkedBlock>,
 }
 
 impl LinkTarget {
@@ -43,16 +65,50 @@ impl LinkTarget {
             title: String::new(),
             icon: None,
             state: LinkState::Missing,
+            block: None,
         }
     }
 
-    /// The name a copied link is written as: the title (or "Untitled"), or "Deleted page".
+    /// The block's words as the label shows them: at most [`BLOCK_WORDS`] characters, cut at a word
+    /// break with "…".
+    /// `None` when there are none to show (a link to the page, an empty block, a page not loaded).
+    fn block_words(&self) -> Option<String> {
+        match (&self.state, &self.block) {
+            (LinkState::BlockGone, _) => Some("deleted block".to_owned()),
+            (LinkState::Live, Some(LinkedBlock::Words(words))) => {
+                let words = words.split_whitespace().collect::<Vec<_>>().join(" ");
+                if words.is_empty() {
+                    return None;
+                }
+                if words.chars().count() <= BLOCK_WORDS {
+                    return Some(words);
+                }
+                // Cut at the last word break that fits, or mid-word for one long word.
+                let cut: String = words.chars().take(BLOCK_WORDS.saturating_add(1)).collect();
+                let cut = match cut.rfind(' ') {
+                    Some(space) => cut.get(..space).unwrap_or(&cut),
+                    None => cut
+                        .get(..cut.char_indices().last().map_or(0, |(at, _)| at))
+                        .unwrap_or(&cut),
+                };
+                Some(format!("{}…", cut.trim_end()))
+            }
+            _ => None,
+        }
+    }
+
+    /// The name a copied link is written as: the title (or "Untitled"), or "Deleted page". A link to a
+    /// block adds its words, "Title › words"; one whose block is gone is named after its page.
     #[must_use]
     pub fn name(&self) -> String {
-        match self.state {
-            LinkState::Missing => "Deleted page".to_owned(),
-            LinkState::Live | LinkState::Trashed if self.title.trim().is_empty() => UNTITLED.to_owned(),
-            LinkState::Live | LinkState::Trashed => self.title.clone(),
+        let title = match self.state {
+            LinkState::Missing => return "Deleted page".to_owned(),
+            _ if self.title.trim().is_empty() => UNTITLED.to_owned(),
+            _ => self.title.clone(),
+        };
+        match self.block_words().filter(|_| self.state == LinkState::Live) {
+            Some(words) => format!("{title} › {words}"),
+            None => title,
         }
     }
 
@@ -65,13 +121,17 @@ impl LinkTarget {
         } else {
             self.title.as_str()
         };
-        match self.state {
-            LinkState::Missing => "Deleted page".to_owned(),
-            LinkState::Trashed => format!("{title} (in trash)"),
-            LinkState::Live => match &self.icon {
+        let page = match self.state {
+            LinkState::Missing => return "Deleted page".to_owned(),
+            LinkState::Trashed => return format!("{title} (in trash)"),
+            LinkState::Live | LinkState::BlockGone => match &self.icon {
                 Some(icon) => format!("{icon} {title}"),
                 None => title.to_owned(),
             },
+        };
+        match self.block_words() {
+            Some(words) => format!("{page} › {words}"),
+            None => page,
         }
     }
 }
@@ -83,6 +143,8 @@ pub struct DrawnLink {
     pub range: Range<usize>,
     /// The page it points at.
     pub page: PageId,
+    /// The block inside that page it points at, for a link to a block.
+    pub block: Option<BlockId>,
     /// Whether that page can be opened.
     pub state: LinkState,
 }
@@ -101,8 +163,9 @@ pub struct LinkedText {
 }
 
 impl LinkedText {
-    /// Draws `spans`, asking `target` what each linked page shows. Text without links comes back as it is.
-    pub fn new(spans: &[TextSpan], target: impl Fn(PageId) -> LinkTarget) -> Self {
+    /// Draws `spans`, asking `target` what each linked page (and block, for a link to one) shows. Text
+    /// without links comes back as it is.
+    pub fn new(spans: &[TextSpan], target: impl Fn(PageId, Option<BlockId>) -> LinkTarget) -> Self {
         let mut out = Vec::new();
         let mut starts = vec![0];
         let mut links = Vec::new();
@@ -124,7 +187,7 @@ impl LinkedText {
             for c in span.text.chars() {
                 // Only placeholders carry the page mark; anything else is drawn as it is.
                 let (text, state) = if c == PAGE_LINK {
-                    let target = target(page);
+                    let target = target(page, span.marks.block);
                     (target.label(), Some(target.state))
                 } else {
                     (c.to_string(), None)
@@ -134,6 +197,7 @@ impl LinkedText {
                     links.push(DrawnLink {
                         range: drawn..drawn.saturating_add(len),
                         page,
+                        block: span.marks.block,
                         state,
                     });
                 }

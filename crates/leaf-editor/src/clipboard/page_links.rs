@@ -2,7 +2,7 @@
 //! other apps get names it, `[[Title]]` in Markdown and the title in plain text. Text pasted from elsewhere
 //! turns `[[Title]]` back into a link when exactly one page has that title.
 
-use leaf_core::PageId;
+use leaf_core::{BlockId, PageId};
 use leaf_model::{Marks, PAGE_LINK, TextSpan};
 
 use super::{Fragment, FragmentBlock};
@@ -12,10 +12,10 @@ use crate::{EditorError, PageEditor};
 pub(crate) type FindPage<'a> = &'a dyn Fn(&str) -> Option<PageId>;
 
 impl Fragment {
-    /// This fragment with each page link's placeholder replaced by `name(page)`, for writing out as
+    /// This fragment with each page link's placeholder replaced by `name(page, block)`, for writing out as
     /// Markdown or plain text. The named words keep the link's marks, so Markdown writes them `[[…]]`.
     #[must_use]
-    pub fn with_link_names(&self, name: impl Fn(PageId) -> String) -> Self {
+    pub fn with_link_names(&self, name: impl Fn(PageId, Option<BlockId>) -> String) -> Self {
         self.map_spans(&|spans| {
             spans
                 .iter()
@@ -24,7 +24,11 @@ impl Fragment {
                         .text
                         .chars()
                         .map(|c| TextSpan {
-                            text: if c == PAGE_LINK { name(page) } else { c.to_string() },
+                            text: if c == PAGE_LINK {
+                                name(page, span.marks.block)
+                            } else {
+                                c.to_string()
+                            },
                             marks: span.marks.clone(),
                         })
                         .collect(),

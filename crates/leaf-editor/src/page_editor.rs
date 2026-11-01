@@ -60,6 +60,8 @@ pub struct PageEditor {
     pub(crate) inline_seen: Option<std::collections::HashSet<leaf_core::PageId>>,
     /// Web bookmarks waiting for their preview to be fetched, and whether fetching is allowed (E15-S05).
     pub(crate) previews: crate::preview_requests::PreviewRequests,
+    /// The block whose link "Copy link to block" asked for, until the UI copies it (E10-S08).
+    pub(crate) link_to_copy: Option<BlockId>,
 }
 
 impl PageEditor {
@@ -82,6 +84,7 @@ impl PageEditor {
             database_request: None,
             inline_seen: None,
             previews: crate::preview_requests::PreviewRequests::default(),
+            link_to_copy: None,
         }
     }
 
