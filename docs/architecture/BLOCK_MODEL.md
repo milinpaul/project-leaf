@@ -58,7 +58,8 @@ LoroDoc (database, keyed by DatabaseId)
 │     "type":    String         text | number | select | multi_select | date | checkbox | url; others kept, read-only
 │     "hidden":  bool?
 │     "width":   f64?
-│     "options": LoroMovableList of LoroMap { "id": OptionId, "name", "color" }   # made with the column
+│     "options": LoroMovableList of LoroMap { "id": OptionId, "name", "color" }   # made with the column; in order
+│                (AddOption, RenameOption, SetOptionColor, MoveOption, DeleteOption; E09-S11)
 │     ...unknown keys kept
 ├── "rows":    LoroTree (flat)  row order; node meta "id" = the row's PageId, "deleted": true once deleted
 ├── "cells":   LoroMap          PageId -> mergeable LoroMap: ColumnId -> value

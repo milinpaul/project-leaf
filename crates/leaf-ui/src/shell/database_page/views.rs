@@ -50,6 +50,7 @@ impl Shell {
         let query = cx.new(|cx| InputState::new(window, cx).placeholder("Search or create an option"));
         let calendar = cx.new(|cx| CalendarState::new(window, cx));
         let column_name = cx.new(|cx| InputState::new(window, cx).placeholder("Column name"));
+        let option_name = super::option_menu::name_input(window, cx);
         let (filter_text, filter_calendar) = query::inputs(window, cx);
         let delegate = DatabaseTable {
             view: leaf_editor::TableView {
@@ -66,6 +67,8 @@ impl Shell {
             column_menu: None,
             add_menu: None,
             column_name: column_name.clone(),
+            option_menu: None,
+            option_name: option_name.clone(),
             shell,
         };
         let table = cx.new(|cx| {
@@ -92,6 +95,10 @@ impl Shell {
             sub!(&query, Self::on_option_query_event),
             sub!(&calendar, Self::on_calendar_event),
             sub!(&column_name, Self::on_column_name_event),
+            cx.subscribe_in(&option_name, window, move |shell, _, event, window, cx| {
+                shell.activate_database(page);
+                shell.on_option_name_event(super::cells::PickerFor::Table, event, window, cx);
+            }),
             sub!(&filter_text, Self::on_filter_text_event),
             sub!(&filter_calendar, Self::on_filter_calendar_event),
         ];

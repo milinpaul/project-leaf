@@ -138,6 +138,7 @@ impl Shell {
             delegate.editing = editing;
             if editing.is_none_or(|e| e.kind != EditKind::Options) {
                 delegate.picker = None;
+                delegate.option_menu = None;
             }
             cx.notify();
         });

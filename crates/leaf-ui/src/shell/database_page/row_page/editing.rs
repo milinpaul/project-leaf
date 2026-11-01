@@ -25,6 +25,7 @@ impl Shell {
             row.editing = editing;
             if !matches!(editing, Some((_, EditKind::Options))) {
                 row.picker = None;
+                row.option_menu = None;
             }
         }
         self.row_changed(cx);
@@ -140,11 +141,11 @@ impl Shell {
         }
     }
 
-    pub(super) fn editing_column(&self) -> Option<ColumnId> {
+    pub(in crate::shell::database_page) fn editing_column(&self) -> Option<ColumnId> {
         self.row_page.as_ref()?.editing.map(|(column, _)| column)
     }
 
-    pub(super) fn refresh_row_picker(&mut self, cx: &mut Context<Self>) {
+    pub(in crate::shell::database_page) fn refresh_row_picker(&mut self, cx: &mut Context<Self>) {
         let Some(column) = self.editing_column() else {
             return;
         };

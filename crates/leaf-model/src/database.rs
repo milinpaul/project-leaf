@@ -30,6 +30,7 @@ mod changes;
 mod command;
 mod index;
 mod invariants;
+mod options;
 mod property;
 mod view;
 

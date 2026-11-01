@@ -94,6 +94,16 @@ pub enum DatabaseCommand {
         /// The option.
         option: OptionId,
     },
+    /// Moves an option to position `index` in its column's list (E09-S11). Moving it where it is reports
+    /// [`DatabaseOutcome::Unchanged`].
+    MoveOption {
+        /// The column.
+        column: ColumnId,
+        /// The option.
+        option: OptionId,
+        /// Its new position among the column's options.
+        index: usize,
+    },
     /// Adds a row at position `index`. The row is the page `row`, created by the caller (E09-S03).
     AddRow {
         /// The row's page.

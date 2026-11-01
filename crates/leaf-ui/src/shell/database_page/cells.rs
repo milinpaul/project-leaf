@@ -3,16 +3,17 @@
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::{
-    AnyElement, App, Entity, InteractiveElement as _, IntoElement, ParentElement, SharedString,
-    StatefulInteractiveElement as _, Styled, WeakEntity, Window, div, px,
+    AnyElement, App, AppContext as _, Entity, InteractiveElement as _, IntoElement, ParentElement,
+    SharedString, StatefulInteractiveElement as _, Styled, WeakEntity, Window, div, px,
 };
 use gpui_component::calendar::{Calendar, CalendarState};
 use gpui_component::input::{Input, InputState};
 use gpui_component::{ActiveTheme as _, Icon, Sizable as _, h_flex, v_flex};
 use gpui_kit_assets::IconName;
-use leaf_editor::{Chip, OptionPicker};
+use leaf_editor::{Chip, OptionChoice, OptionMenu, OptionPicker};
 
 use super::super::Shell;
+use super::option_menu::OptionDrag;
 
 /// Width of the pop-up editors.
 const PANEL_WIDTH: f32 = 260.0;
@@ -43,51 +44,30 @@ pub(super) enum PickerFor {
 
 /// The option picker: a search field, the matching options (ticked when the cell has them), and "Create …" for
 /// a name that isn't there.
+///
+/// With an option's menu open (E09-S11), the menu shows instead of the list. With nothing typed, the options drag to
+/// a new place in the list.
 pub(super) fn render_picker(
     picker: &OptionPicker,
     query: &Entity<InputState>,
+    menu: Option<(&OptionMenu, &Entity<InputState>)>,
     shell: &WeakEntity<Shell>,
     picking_for: PickerFor,
     cx: &App,
-) -> impl IntoElement {
+) -> AnyElement {
+    if let Some((menu, name)) = menu {
+        return super::option_menu::render_option_menu(menu, name, shell, picking_for, cx);
+    }
     let theme = cx.theme();
     let muted = theme.muted_foreground;
     let hover = theme.muted;
+    // Dragging reorders the whole list, so only while it shows every option in order.
+    let draggable = query.read(cx).value().trim().is_empty();
     let mut list = panel(cx)
         .debug_selector(|| "database-picker".into())
         .child(Input::new(query).small());
     for (ix, choice) in picker.choices.iter().enumerate() {
-        let shell = shell.clone();
-        let option = choice.option;
-        let chip = Chip {
-            option: choice.option,
-            name: choice.name.clone(),
-            color: choice.color.clone(),
-        };
-        list = list.child(
-            h_flex()
-                .id(SharedString::from(format!("database-option-{ix}")))
-                .debug_selector(move || format!("database-option-{ix}"))
-                .px_1p5()
-                .py_1()
-                .gap_2()
-                .rounded_sm()
-                .cursor_pointer()
-                .hover(move |s| s.bg(hover))
-                .child(super::table::render_chip(&chip, cx))
-                .child(div().flex_1())
-                .when(choice.picked, |row| {
-                    row.child(Icon::new(IconName::Check).xsmall().text_color(muted))
-                })
-                .on_click(move |_, window, cx| {
-                    if let Some(shell) = shell.upgrade() {
-                        shell.update(cx, |shell, cx| match picking_for {
-                            PickerFor::Table => shell.pick_database_option(option, window, cx),
-                            PickerFor::RowPage => shell.pick_row_option(option, window, cx),
-                        });
-                    }
-                }),
-        );
+        list = list.child(option_row(ix, choice, draggable, shell, picking_for, cx));
     }
     if let Some(name) = &picker.create {
         let shell = shell.clone();
@@ -124,7 +104,83 @@ pub(super) fn render_picker(
                 .child("Type to add an option"),
         );
     }
-    list
+    list.into_any_element()
+}
+
+/// One option in the picker: its chip, a tick when the cell has it, and the "⋯" that opens its menu. A click picks it;
+/// when `draggable`, it drags onto another option to take its place.
+fn option_row(
+    ix: usize,
+    choice: &OptionChoice,
+    draggable: bool,
+    shell: &WeakEntity<Shell>,
+    picking_for: PickerFor,
+    cx: &App,
+) -> impl IntoElement {
+    let theme = cx.theme();
+    let (muted, hover, accent) = (theme.muted_foreground, theme.muted, theme.primary);
+    let option = choice.option;
+    let chip = Chip {
+        option,
+        name: choice.name.clone(),
+        color: choice.color.clone(),
+    };
+    let (picked, open_menu, dropped) = (shell.clone(), shell.clone(), shell.clone());
+    let more = div()
+        .id(SharedString::from(format!("database-option-more-{ix}")))
+        .debug_selector(move || format!("database-option-more-{ix}"))
+        .px_1()
+        .rounded_sm()
+        .invisible()
+        .group_hover("database-option", Styled::visible)
+        .hover(move |s| s.bg(muted.opacity(0.2)))
+        .child(Icon::new(IconName::Ellipsis).xsmall().text_color(muted))
+        .on_click(move |_, window, cx| {
+            // Not also a pick of the option.
+            cx.stop_propagation();
+            if let Some(shell) = open_menu.upgrade() {
+                shell.update(cx, |shell, cx| {
+                    shell.open_option_menu(option, picking_for, window, cx);
+                });
+            }
+        });
+    h_flex()
+        .id(SharedString::from(format!("database-option-{ix}")))
+        .debug_selector(move || format!("database-option-{ix}"))
+        .group("database-option")
+        .px_1p5()
+        .py_1()
+        .gap_2()
+        .rounded_sm()
+        .cursor_pointer()
+        .hover(move |s| s.bg(hover))
+        .when(draggable, |row| {
+            row.on_drag(OptionDrag::new(chip.clone()), |drag, _, _, cx| {
+                cx.new(|_| drag.clone())
+            })
+            .drag_over::<OptionDrag>(move |s, _, _, _| s.border_t_2().border_color(accent))
+            .on_drop(move |drag: &OptionDrag, _, cx| {
+                if let Some(shell) = dropped.upgrade() {
+                    shell.update(cx, |shell, cx| {
+                        shell.drop_option(drag.option, ix, picking_for, cx);
+                    });
+                }
+            })
+        })
+        .child(super::table::render_chip(&chip, cx))
+        .child(div().flex_1())
+        .when(choice.picked, |row| {
+            row.child(Icon::new(IconName::Check).xsmall().text_color(muted))
+        })
+        .child(more)
+        .on_click(move |_, window, cx| {
+            if let Some(shell) = picked.upgrade() {
+                shell.update(cx, |shell, cx| match picking_for {
+                    PickerFor::Table => shell.pick_database_option(option, window, cx),
+                    PickerFor::RowPage => shell.pick_row_option(option, window, cx),
+                });
+            }
+        })
 }
 
 /// The date calendar, with a "Clear" entry.

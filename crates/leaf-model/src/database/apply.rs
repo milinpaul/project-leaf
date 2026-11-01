@@ -1,6 +1,6 @@
 //! Applying database commands: check everything that could fail, write, then commit once.
 
-use leaf_core::{ColumnId, OptionId, PageId};
+use leaf_core::{ColumnId, PageId};
 use loro::{
     Container, LoroMap, LoroMovableList, LoroTree, LoroValue, TreeID, TreeParentId, ValueOrContainer,
 };
@@ -41,6 +41,11 @@ impl Database {
                 color,
             } => self.set_option(column, option, keys::COLOR, &color)?,
             DatabaseCommand::DeleteOption { column, option } => self.delete_option(column, option)?,
+            DatabaseCommand::MoveOption {
+                column,
+                option,
+                index,
+            } => self.move_option(column, option, index)?,
             DatabaseCommand::AddRow { row, index } => self.add_row(row, index)?,
             DatabaseCommand::MoveRow { row, index } => {
                 let node = self.row_node(row)?;
@@ -170,78 +175,6 @@ impl Database {
     fn delete_column(&mut self, column: ColumnId) -> Result<DatabaseOutcome, ModelError> {
         self.column_node(column)?;
         self.schema().delete(&column.to_string())?;
-        Ok(DatabaseOutcome::Done)
-    }
-
-    /// The column's options list (made with the column).
-    fn options_of(&self, column: ColumnId) -> Result<LoroMovableList, ModelError> {
-        let current = self.column(column)?;
-        if !current.kind.has_options() {
-            return Err(ModelError::NotASelectColumn(column));
-        }
-        let schema = self.schema_of(column).ok_or(ModelError::ColumnNotFound(column))?;
-        Ok(match schema.get(keys::OPTIONS) {
-            Some(ValueOrContainer::Container(Container::MovableList(list))) => list,
-            _ => schema.insert_container(keys::OPTIONS, LoroMovableList::new())?,
-        })
-    }
-
-    fn add_option(
-        &mut self,
-        column: ColumnId,
-        name: &str,
-        color: &str,
-    ) -> Result<DatabaseOutcome, ModelError> {
-        let list = self.options_of(column)?;
-        let option = OptionId::new();
-        let map = list.push_container(LoroMap::new())?;
-        map.insert(keys::ID, option.to_string())?;
-        map.insert(keys::NAME, name)?;
-        map.insert(keys::COLOR, color)?;
-        Ok(DatabaseOutcome::OptionCreated(option))
-    }
-
-    /// Positions in the options list holding `option` (more than one only after two lists merged).
-    fn option_maps(&self, column: ColumnId, option: OptionId) -> Result<Vec<(usize, LoroMap)>, ModelError> {
-        let list = self.options_of(column)?;
-        let id = option.to_string();
-        let found: Vec<(usize, LoroMap)> = (0..list.len())
-            .filter_map(|i| match list.get(i) {
-                Some(ValueOrContainer::Container(Container::Map(map)))
-                    if value(&map, keys::ID) == Some(LoroValue::from(id.as_str())) =>
-                {
-                    Some((i, map))
-                }
-                _ => None,
-            })
-            .collect();
-        if found.is_empty() {
-            return Err(ModelError::OptionNotFound { column, option });
-        }
-        Ok(found)
-    }
-
-    fn set_option(
-        &mut self,
-        column: ColumnId,
-        option: OptionId,
-        key: &str,
-        text: &str,
-    ) -> Result<DatabaseOutcome, ModelError> {
-        for (_, map) in self.option_maps(column, option)? {
-            if value(&map, key) != Some(LoroValue::from(text)) {
-                map.insert(key, text)?;
-            }
-        }
-        Ok(DatabaseOutcome::Done)
-    }
-
-    fn delete_option(&mut self, column: ColumnId, option: OptionId) -> Result<DatabaseOutcome, ModelError> {
-        let list = self.options_of(column)?;
-        // Last first, so earlier positions stay right.
-        for (at, _) in self.option_maps(column, option)?.into_iter().rev() {
-            list.delete(at, 1)?;
-        }
         Ok(DatabaseOutcome::Done)
     }
 
