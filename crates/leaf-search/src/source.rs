@@ -5,8 +5,8 @@
 
 use std::collections::HashMap;
 
-use leaf_core::PageId;
-use leaf_model::{PageDoc, Workspace};
+use leaf_core::{DatabaseId, PageId};
+use leaf_model::{Database, PageDoc, Workspace};
 
 use crate::PageVersion;
 
@@ -20,6 +20,8 @@ pub struct SavedVersions {
     pub workspace: Option<PageVersion>,
     /// Each page whose blocks were ever saved.
     pub pages: HashMap<PageId, PageVersion>,
+    /// Each database ever saved (E09-S10), whose text cells are indexed under their rows.
+    pub databases: HashMap<DatabaseId, PageVersion>,
 }
 
 /// Read access to the saved documents of one workspace.
@@ -34,4 +36,10 @@ pub trait PageSource: Send {
     fn workspace(&mut self) -> Result<Workspace, SourceError>;
     /// The saved blocks of `page`, or `None` if they were never saved (a new, empty page).
     fn page(&mut self, page: PageId) -> Result<Option<PageDoc>, SourceError>;
+    /// The saved database `id`, or `None` if it was never saved. A source that holds no databases keeps this
+    /// default, and search then finds no cells.
+    fn database(&mut self, id: DatabaseId) -> Result<Option<Database>, SourceError> {
+        let _ = id;
+        Ok(None)
+    }
 }

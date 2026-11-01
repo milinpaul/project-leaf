@@ -7,7 +7,7 @@
 
 /// Version of the layout below. Bump it on any change: an index with another version is deleted
 /// and rebuilt, which is always safe because it holds nothing that isn't in the documents.
-pub const INDEX_VERSION: u32 = 5;
+pub const INDEX_VERSION: u32 = 6;
 
 /// `meta` key holding [`INDEX_VERSION`].
 pub(crate) const VERSION_KEY: &str = "index_version";
@@ -51,6 +51,14 @@ CREATE TABLE links (
   position  INTEGER NOT NULL
 );
 CREATE INDEX links_by_target ON links(target_id);
+
+-- Version 6 (E09-S10): which save of each database its cells were read from. The cells themselves are `blocks` rows of
+-- kind 'property' under their row's page, with `block_id` '<database>/<column>'.
+CREATE TABLE databases (
+  database_id TEXT PRIMARY KEY,
+  saved_at    INTEGER NOT NULL,
+  saved_seq   INTEGER NOT NULL
+);
 CREATE INDEX links_by_page ON links(page_id);
 
 CREATE VIRTUAL TABLE pages_fts USING fts5(

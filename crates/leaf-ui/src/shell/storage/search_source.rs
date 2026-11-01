@@ -1,8 +1,8 @@
 //! The search indexer's view of the saved workspace: `leaf-store` on one side, the
 //! `leaf_search::PageSource` trait on the other. Pure translation, no decisions.
 
-use leaf_core::PageId;
-use leaf_model::{PageDoc, Workspace};
+use leaf_core::{DatabaseId, PageId};
+use leaf_model::{Database, PageDoc, Workspace};
 use leaf_search::{PageSource, PageVersion, SavedVersions, SourceError};
 use leaf_store::{DocKey, SavedVersion, Store};
 
@@ -25,8 +25,9 @@ impl PageSource for StoreSource {
                 DocKey::Page(page) => {
                     versions.pages.insert(page, version(saved));
                 }
-                // A database's cells aren't indexed yet (E09-S10); its rows are pages and are.
-                DocKey::Database(_) => {}
+                DocKey::Database(id) => {
+                    versions.databases.insert(id, version(saved));
+                }
             }
         }
         Ok(versions)
@@ -38,5 +39,9 @@ impl PageSource for StoreSource {
 
     fn page(&mut self, page: PageId) -> Result<Option<PageDoc>, SourceError> {
         Ok(self.0.load(DocKey::Page(page))?)
+    }
+
+    fn database(&mut self, id: DatabaseId) -> Result<Option<Database>, SourceError> {
+        Ok(self.0.load(DocKey::Database(id))?)
     }
 }

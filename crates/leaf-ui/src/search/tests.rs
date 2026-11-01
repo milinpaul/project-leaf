@@ -199,7 +199,7 @@ fn full_text_results_open_the_page_at_the_matching_block(cx: &mut TestAppContext
     match rows.as_slice() {
         [SearchRow::Page(page), SearchRow::Excerpt(excerpt)] => {
             assert_eq!(page.page, garden);
-            assert_eq!(excerpt.block, blocks[1]);
+            assert_eq!(excerpt.block, Some(blocks[1]));
             assert_eq!(&excerpt.text[excerpt.highlights[0].clone()], "basil");
         }
         other => panic!("expected the page and its matching line, got {other:?}"),

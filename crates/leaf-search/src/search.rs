@@ -54,8 +54,9 @@ pub struct Highlighted {
 /// One block that matched, shown under its page.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockHit {
-    /// The block, so choosing the result can scroll to it.
-    pub block: BlockId,
+    /// The block, so choosing the result can scroll to it; `None` for a database cell (E09-S10), whose row's page
+    /// opens at the top, where its properties are.
+    pub block: Option<BlockId>,
     /// The block's kind name (`paragraph`, `code`, ...).
     pub kind: String,
     /// A short part of the block's text around the match ("…" where it was cut).
@@ -235,8 +236,16 @@ fn add_block_matches(
     })?;
     for row in rows {
         let (page_id, block_id, kind, excerpt, score, title, saved_at) = row?;
-        let (Ok(page), Ok(block)) = (PageId::from_str(&page_id), BlockId::from_str(&block_id)) else {
+        let Ok(page) = PageId::from_str(&page_id) else {
             continue;
+        };
+        let block = if kind == crate::PROPERTY_KIND {
+            None
+        } else {
+            let Ok(block) = BlockId::from_str(&block_id) else {
+                continue;
+            };
+            Some(block)
         };
         // Rows arrive best first, so the first block of a page sets a body-only page's score.
         let group = groups.entry(page).or_insert_with(|| Group {

@@ -93,6 +93,7 @@ impl PageSource for Saved {
                 .iter()
                 .map(|(page, (_, version))| (*page, *version))
                 .collect(),
+            databases: std::collections::HashMap::new(),
         })
     }
 

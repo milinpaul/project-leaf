@@ -37,8 +37,9 @@ pub struct Marked {
 /// One matching block under a page in the full-text results.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockMatch {
-    /// The block, so choosing it can scroll there.
-    pub block: BlockId,
+    /// The block, so choosing it can scroll there; `None` for a database cell (E09-S10), whose row opens at the
+    /// top, where its properties are.
+    pub block: Option<BlockId>,
     /// A short part of the block's text around the match.
     pub excerpt: Marked,
 }

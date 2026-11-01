@@ -36,8 +36,8 @@ pub struct PageRow {
 pub struct ExcerptRow {
     /// The page the block is in.
     pub page: PageId,
-    /// The block.
-    pub block: BlockId,
+    /// The block; `None` for a database cell.
+    pub block: Option<BlockId>,
     /// A short part of its text around the match ("…" where it was cut).
     pub text: String,
     /// The parts of `text` that matched, as byte ranges, for highlighted text.
@@ -64,7 +64,7 @@ impl SearchRow {
             },
             Self::Excerpt(row) => Destination {
                 page: row.page,
-                block: Some(row.block),
+                block: row.block,
             },
         }
     }
@@ -126,7 +126,7 @@ pub(super) fn results<'a>(titles: &QuickSwitcher, hits: Option<&'a [SearchHit]>)
         let opens_at = if title_matched {
             None
         } else {
-            hit.blocks.first().map(|block| block.block)
+            hit.blocks.first().and_then(|block| block.block)
         };
         rows.push(page_row(result, opens_at));
         rows.extend(hit.blocks.iter().map(|block| {

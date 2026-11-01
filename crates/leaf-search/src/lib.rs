@@ -23,6 +23,7 @@
 #![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
 
 mod backlinks;
+mod cells;
 mod error;
 mod extract;
 mod index;
@@ -35,6 +36,7 @@ mod sync;
 mod worker;
 
 pub use backlinks::Backlink;
+pub use cells::{CellText, PROPERTY_KIND, database_text};
 pub use error::SearchError;
 pub use extract::{LINK_CONTEXT, UNTITLED, page_text};
 pub use index::{INDEX_FILE, IndexState, IndexedPage, SEARCH_DIR, SearchIndex};

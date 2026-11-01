@@ -11,7 +11,9 @@ use leaf_core::PageId;
 use leaf_model::Workspace;
 
 use crate::extract::title;
-use crate::{PageSource, PageText, PageVersion, SearchError, SearchIndex, page_text};
+use crate::{
+    PageSource, PageText, PageVersion, SavedVersions, SearchError, SearchIndex, database_text, page_text,
+};
 
 /// How a reconcile or rebuild ended.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -95,6 +97,42 @@ impl<S: PageSource> Syncer<S> {
         }
         for page in indexed.keys().filter(|page| !wanted.contains_key(page)) {
             self.index.remove_page(*page)?;
+        }
+        self.reconcile_databases(&versions, stop)
+    }
+
+    /// Brings the indexed cells of every database in line with its saved version (E09-S10): a database whose save
+    /// changed is read and its changed cells rewritten; one whose page is gone is forgotten.
+    fn reconcile_databases(
+        &mut self,
+        versions: &SavedVersions,
+        stop: &dyn Fn() -> bool,
+    ) -> Result<Finished, SearchError> {
+        let Some((_, workspace, wanted)) = &self.workspace else {
+            return Ok(Finished::Done);
+        };
+        let mut databases = HashMap::new();
+        for &page in wanted.keys() {
+            if let Some(id) = workspace.page(page)?.database {
+                databases.insert(id, versions.databases.get(&id).copied().unwrap_or_default());
+            }
+        }
+        let indexed = self.index.indexed_databases()?;
+        for (&id, &version) in &databases {
+            if indexed.get(&id) == Some(&version) {
+                continue;
+            }
+            if stop() {
+                return Ok(Finished::Stopped);
+            }
+            let cells = match self.source.database(id).map_err(SearchError::Source)? {
+                Some(database) => database_text(&database, &|page| wanted.contains_key(&page))?,
+                None => Vec::new(),
+            };
+            self.index.index_database(id, version, &cells)?;
+        }
+        for id in indexed.keys().filter(|id| !databases.contains_key(id)) {
+            self.index.remove_database(*id)?;
         }
         Ok(Finished::Done)
     }
