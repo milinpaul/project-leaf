@@ -102,7 +102,7 @@ opening a page also loads the pages its block links point at (`block_link_pages_
 words are live. A click goes through `Shell::open_at`, like a search result: scrolled to, caret at its start, flashed.
 "Copy link to block" in the block menu asks the shell to copy `Fragment::block_link`. A plain click on a page link opens the page,
 and the pointer is a hand over page and web links (`PaintedLayout::over_link`, E10-S11). Resting on a page link shows a
-**preview card** (E10-S12, ADR-XXX-E10-S12): `shell::link_preview` times the pause and places the card from the line
+**preview card** (E10-S12, ADR-095): `shell::link_preview` times the pause and places the card from the line
 under the pointer (`PaintedLayout::link_under`); `WorkspaceEditor::page_preview` says what it shows (path, icon, title,
 the first lines or the lines around a linked block), loading the target page from disk first if needed. A keystroke
 interceptor closes it before any key acts; `AppSettings::link_previews` turns it off. Typing `[[` opens the **page-link menu**
