@@ -504,10 +504,18 @@ pub(crate) fn insert_spans(
             Some(page) => {
                 let count = span.text.chars().filter(|&c| c == PAGE_LINK).count();
                 for at in pos..pos.saturating_add(count) {
-                    doc.apply(PageCommand::InsertPageLink {
-                        id: block,
-                        pos: at,
-                        page,
+                    doc.apply(match span.marks.block {
+                        Some(target) => PageCommand::InsertBlockLink {
+                            id: block,
+                            pos: at,
+                            page,
+                            block: target,
+                        },
+                        None => PageCommand::InsertPageLink {
+                            id: block,
+                            pos: at,
+                            page,
+                        },
                     })?;
                 }
                 count

@@ -10,6 +10,8 @@
 //! word and a triple click the block's text. An input method's draft is drawn underlined in place.
 
 #[cfg(test)]
+mod block_link_window_tests;
+#[cfg(test)]
 mod link_window_tests;
 mod painted_layout;
 mod pieces;
@@ -83,7 +85,7 @@ impl Shell {
         let page_len: usize = spans.iter().map(|s| s.text.chars().count()).sum();
         // Page links draw as their target's icon and title (E10-S04); everything below speaks in drawn
         // positions, and the painted layout maps clicks and carets back.
-        let linked = LinkedText::new(&spans, |page| self.editor().link_target(page));
+        let linked = LinkedText::new(&spans, |page, block| self.editor().link_to(page, block));
         // Kept for rows with links: page links map positions, and either kind turns the cursor to a hand.
         let links = (linked.has_links() || linked.has_web_links()).then(|| Rc::new(linked.clone()));
         let text = linked.text();
@@ -184,6 +186,7 @@ impl Shell {
         let here = Caret { block, at };
         // A plain click on a page link opens the page (E10-S04): it never leaves Leaf, so unlike a web
         // link it needs no Cmd/Ctrl. A link to a deleted page has nothing to open; the caret goes there.
+        // A link to a block scrolls to it and flashes it; if the block is gone the page opens at the top.
         if event.click_count == 1
             && !event.modifiers.shift
             && !event.modifiers.secondary(cx)
@@ -191,7 +194,11 @@ impl Shell {
             && link.state != LinkState::Missing
         {
             self.blocks.drag = None;
-            self.open(link.page, window, cx);
+            let destination = leaf_editor::Destination {
+                page: link.page,
+                block: link.block,
+            };
+            self.open_at(destination, window, cx);
             return;
         }
         let Some(page) = self.page() else { return };

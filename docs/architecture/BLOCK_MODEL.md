@@ -83,7 +83,7 @@ back as itself, and the editor converts it for display (ADR-066 answer 3).
 |---|---|---|
 | Page | `PageId(Uuid)` v7 | Global, never changes. |
 | Block | `BlockId(Uuid)` v7, stored in the block's meta `id` | Never changes: survives moves, merges, undo and redo. Unique within a page; paste and duplicate mint new ones. |
-| Block reference (Phase 1 links) | `(PageId, BlockId)` | |
+| Block reference (links to a block, E10-S08) | `(PageId, BlockId)` | A page link's `page` mark plus a `block` mark. |
 | Asset | `AssetId` = blake3 hash of bytes | Content-addressed, deduplicated. |
 
 Loro's `TreeID` is **not** an ID: undo and redo re-create nodes under new `TreeID`s
@@ -174,11 +174,17 @@ Unknown `type` values (from a newer app version) are preserved and rendered as a
 | `code` | `true` | none |
 | `link` | `href: String` | none |
 | `page` | the target's `PageId` as text | none |
+| `block` | the target block's `BlockId` as text, beside `page` | none |
 
 **Page links (E10, ADR-071).** A link to a page is one `U+FFFC` placeholder character (`PAGE_LINK`) carrying a
 `page` mark, made with `InsertPageLink`. The title isn't stored: it is looked up when drawing, so renaming a page updates
 every link to it. Each placeholder gets its own mark op, because Loro gives text typed *inside* a mark's span that mark
 whatever its expand rule, and two neighbouring links marked at once would take in text typed between them.
+
+**Links to a block (E10-S08, ADR-XXX-E10-S08).** The same placeholder and `page` mark, plus a `block` mark holding the
+block's `BlockId`, made with `InsertBlockLink`. A version of Leaf without block links keeps the `block` mark (unknown
+marks never expand and are never dropped) and treats it as a link to the page. Like `page`, `block` is marked placeholder
+by placeholder, so copies, splits, merges and duplicates keep it.
 
 Configure once per doc with `config_text_style` before any edit (on create and on every load). Marks this version
 doesn't know (from a newer version) get a default style that doesn't expand, so their text stays editable.
@@ -246,6 +252,10 @@ validate, write, commit once; `Unchanged` when nothing would change)
   never carries `page` onto its new text. `SetMark(PageLink)` only re-points ranges made entirely of placeholders, and
   `RemoveMark(PageLink)` is refused: a link goes by deleting it. Turning a block into code, or merging it into code,
   drops its links (undo brings them back). `PageDoc::page_links()` lists every (block, target) in reading order.
+- `InsertBlockLink { id, pos, page, block }`: the same, with a `block` mark too (E10-S08). `ReplaceText` never carries
+  `block` onto new text, and re-pointing with `SetMark(PageLink)` drops it (the block belonged to the old page).
+  `PageDoc::block_links()` lists every (block holding it, target page, target block). A block link is still a link to
+  the page, so `page_links()` and backlinks count it.
 - `SetMark { id, range, mark: Mark }`, `RemoveMark { id, range, kind: MarkKind }`: `Mark` is bold, italic, strike,
   code, `Link(href)` (href must not be empty) or `PageLink(page)` (above); code blocks take no marks; expand behaviour follows the table above;
   setting a mark the whole range already has, or removing one it doesn't have, is `Unchanged` and writes nothing
@@ -322,7 +332,8 @@ holding (`crates/leaf-model/tests/page_convergence.rs`, E02-S09); merges that br
    the page property test checks that, but merges may leave rows uneven, so it is not a state invariant.)
 10. Every `U+FFFC` in block text carries a `page` mark, and a `page` mark sits only on `U+FFFC` (so `code` text holds
     none). Only a merge with an older version, which doesn't know the mark, can break it; the merge repair takes the
-    mark off other text and drops placeholders left without one.
+    mark off other text and drops placeholders left without one. A `block` mark sits only on a placeholder that has a
+    `page` mark; the repair takes it off anything else (E10-S08).
 
 Database documents have their own, checked by `Database::check_invariants()` after every command in
 `crates/leaf-model/tests/database/` (random commands, two-peer convergence, undo and redo round-trips):

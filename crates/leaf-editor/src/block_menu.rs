@@ -1,6 +1,6 @@
 //! The block menu: what the ⋮⋮ handle beside a block (or `Cmd/Ctrl+/`) opens. It offers the block
 //! actions (Turn into, Duplicate, Move up, Move down, Delete) for that block, or for the selection
-//! when the block is part of it (ADR-028).
+//! when the block is part of it (ADR-028), and "Copy link to block" for the block itself (E10-S08).
 //!
 //! Like the slash menu, the editor keeps only what can't be read from the page: which block the menu
 //! is for and which entry is highlighted. Which entries are available is worked out each time, so the
@@ -63,6 +63,8 @@ pub enum MenuEntry {
     ToWebBookmark(String),
     /// On a web bookmark, when previews are allowed: fetch its preview again (E15-S05).
     RefreshPreview,
+    /// Put a link to the menu's block on the clipboard, to paste into any page (E10-S08).
+    CopyLink,
 }
 
 impl MenuEntry {
@@ -79,6 +81,7 @@ impl MenuEntry {
             Self::ToLink => "Turn into link",
             Self::ToWebBookmark(_) => "Turn into web bookmark",
             Self::RefreshPreview => "Refresh preview",
+            Self::CopyLink => "Copy link to block",
         }
     }
 }
@@ -238,6 +241,7 @@ impl PageEditor {
             item(MenuEntry::MoveUp, self.can_move(open.block, true)?),
             item(MenuEntry::MoveDown, self.can_move(open.block, false)?),
             item(MenuEntry::Delete, true),
+            item(MenuEntry::CopyLink, true),
         ]);
         let kinds = open.kind.map(|selected| {
             let list = turn_into_kinds()
@@ -405,6 +409,11 @@ impl PageEditor {
                 if let BlockKind::WebBookmark { url, .. } = self.doc.kind(menu.block)? {
                     self.want_preview(menu.block, &url);
                 }
+                return Ok(None);
+            }
+            MenuEntry::CopyLink => {
+                self.menu = None;
+                self.link_to_copy = Some(menu.block);
                 return Ok(None);
             }
             MenuEntry::ToWebBookmark(url) => BlockAction::TurnInto(BlockKind::WebBookmark {

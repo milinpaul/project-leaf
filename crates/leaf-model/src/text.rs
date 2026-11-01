@@ -4,7 +4,7 @@
 //! behaviour configured on every document before any edit, on creation and again after loading,
 //! because the setting is not stored in the document.
 
-use leaf_core::PageId;
+use leaf_core::{BlockId, PageId};
 use loro::{ExpandType, LoroDoc, LoroText, LoroValue, StyleConfig, StyleConfigMap, TextDelta};
 
 /// Mark names as stored in Loro.
@@ -15,6 +15,7 @@ pub(crate) mod marks {
     pub const CODE: &str = "code";
     pub const LINK: &str = "link";
     pub const PAGE: &str = "page";
+    pub const BLOCK: &str = "block";
 }
 
 /// The character a link to a page occupies in block text (U+FFFC, the object replacement character): one
@@ -33,6 +34,7 @@ pub(crate) fn configure_marks(doc: &LoroDoc) {
         (marks::CODE, ExpandType::None),
         (marks::LINK, ExpandType::None),
         (marks::PAGE, ExpandType::None),
+        (marks::BLOCK, ExpandType::None),
     ] {
         styles.insert(key.into(), StyleConfig { expand });
     }
@@ -64,6 +66,8 @@ pub struct Marks {
     pub link: Option<String>,
     /// The page a page link points at; only ever on a [`PAGE_LINK`] placeholder.
     pub page: Option<PageId>,
+    /// The block a link to a block points at, inside [`Marks::page`] (E10-S08); only ever on a page link.
+    pub block: Option<BlockId>,
 }
 
 /// A run of text whose characters all share the same marks.
@@ -98,6 +102,11 @@ pub(crate) fn spans(text: &LoroText) -> Vec<TextSpan> {
                         marks::PAGE => {
                             if let LoroValue::String(page) = value {
                                 marks.page = page.parse().ok();
+                            }
+                        }
+                        marks::BLOCK => {
+                            if let LoroValue::String(block) = value {
+                                marks.block = block.parse().ok();
                             }
                         }
                         _ => {}

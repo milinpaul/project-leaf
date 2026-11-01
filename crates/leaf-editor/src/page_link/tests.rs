@@ -1,9 +1,9 @@
 //! Tests for drawing page links: labels, and the way between page and drawn positions.
 
-use leaf_core::PageId;
+use leaf_core::{BlockId, PageId};
 use leaf_model::{Marks, PAGE_LINK, TextSpan};
 
-use super::{LinkState, LinkTarget, LinkedText};
+use super::{LinkState, LinkTarget, LinkedBlock, LinkedText};
 
 fn plain(text: &str) -> TextSpan {
     TextSpan {
@@ -22,26 +22,28 @@ fn link(page: PageId) -> TextSpan {
     }
 }
 
-fn japan(_: PageId) -> LinkTarget {
+fn japan(_: PageId, _: Option<BlockId>) -> LinkTarget {
     LinkTarget {
         title: "Japan".into(),
         icon: Some("🗾".into()),
         state: LinkState::Live,
+        block: None,
     }
 }
 
 #[test]
 fn labels_show_the_icon_and_title_or_where_the_page_went() {
-    assert_eq!(japan(PageId::new()).label(), "🗾 Japan");
+    assert_eq!(japan(PageId::new(), None).label(), "🗾 Japan");
     let untitled = LinkTarget {
         title: " ".into(),
         icon: None,
         state: LinkState::Live,
+        block: None,
     };
     assert_eq!(untitled.label(), "Untitled");
     let trashed = LinkTarget {
         state: LinkState::Trashed,
-        ..japan(PageId::new())
+        ..japan(PageId::new(), None)
     };
     assert_eq!(trashed.label(), "Japan (in trash)");
     assert_eq!(trashed.name(), "Japan");
@@ -92,10 +94,11 @@ fn neighbouring_links_and_marks_keep_their_own_runs() {
     let (first, second) = (PageId::new(), PageId::new());
     let mut bold = link(first);
     bold.marks.bold = true;
-    let drawn = LinkedText::new(&[bold, link(second)], |page| LinkTarget {
+    let drawn = LinkedText::new(&[bold, link(second)], |page, _| LinkTarget {
         title: if page == first { "A".into() } else { "B".into() },
         icon: None,
         state: LinkState::Live,
+        block: None,
     });
     assert_eq!(drawn.text(), "AB");
     assert!(drawn.spans[0].marks.bold);
@@ -111,13 +114,16 @@ fn page_links_still_there_and_web_links_can_be_clicked() {
     let (live, gone) = (PageId::new(), PageId::new());
     let mut web = plain("site");
     web.marks.link = Some("https://example.com".into());
-    let drawn = LinkedText::new(&[link(live), plain(" "), web, plain(" "), link(gone)], |page| {
-        if page == live {
-            japan(page)
-        } else {
-            LinkTarget::missing()
-        }
-    });
+    let drawn = LinkedText::new(
+        &[link(live), plain(" "), web, plain(" "), link(gone)],
+        |page, _| {
+            if page == live {
+                japan(page, None)
+            } else {
+                LinkTarget::missing()
+            }
+        },
+    );
     // "🗾 Japan site Deleted page": the label 0..7, a space, "site" 8..12, a space, the gone page 13..
     assert!(drawn.has_web_links());
     assert!(drawn.clickable_at(0) && drawn.clickable_at(6));
@@ -126,4 +132,72 @@ fn page_links_still_there_and_web_links_can_be_clicked() {
     assert!(!drawn.clickable_at(12));
     assert!(!drawn.clickable_at(14), "a deleted page has nothing to open");
     assert!(!LinkedText::new(&[plain("words")], japan).has_web_links());
+}
+
+fn block_link(page: PageId, block: BlockId) -> TextSpan {
+    let mut span = link(page);
+    span.marks.block = Some(block);
+    span
+}
+
+fn japan_block(block: LinkedBlock, state: LinkState) -> LinkTarget {
+    LinkTarget {
+        block: Some(block),
+        state,
+        ..japan(PageId::new(), None)
+    }
+}
+
+#[test]
+fn a_block_link_shows_the_page_then_the_blocks_first_words() {
+    let words = |text: &str| japan_block(LinkedBlock::Words(text.into()), LinkState::Live);
+    assert_eq!(words("Book the  ryokan").label(), "🗾 Japan › Book the ryokan");
+    assert_eq!(words("Book the  ryokan").name(), "Japan › Book the ryokan");
+    // Cut at the last word break within 30 characters.
+    assert_eq!(
+        words("Book the ryokan in Kyoto before Friday").label(),
+        "🗾 Japan › Book the ryokan in Kyoto…"
+    );
+    assert_eq!(
+        words(&"x".repeat(40)).label(),
+        format!("🗾 Japan › {}…", "x".repeat(30))
+    );
+    assert_eq!(
+        words(&"é".repeat(30)).label(),
+        format!("🗾 Japan › {}", "é".repeat(30))
+    );
+    assert_eq!(words("").label(), "🗾 Japan", "an empty block shows the page");
+    let unknown = japan_block(LinkedBlock::Unknown, LinkState::Live);
+    assert_eq!(
+        unknown.label(),
+        "🗾 Japan",
+        "a page not loaded yet shows the page"
+    );
+}
+
+#[test]
+fn a_block_link_whose_block_or_page_is_gone_says_so() {
+    let gone = japan_block(LinkedBlock::Gone, LinkState::BlockGone);
+    assert_eq!(gone.label(), "🗾 Japan › deleted block");
+    assert_eq!(gone.name(), "Japan");
+    let trashed = japan_block(LinkedBlock::Words("Book".into()), LinkState::Trashed);
+    assert_eq!(trashed.label(), "Japan (in trash)");
+    let missing = LinkTarget {
+        block: Some(LinkedBlock::Unknown),
+        ..LinkTarget::missing()
+    };
+    assert_eq!(missing.label(), "Deleted page");
+}
+
+#[test]
+fn a_block_link_is_drawn_with_its_block_and_still_opens_when_the_block_is_gone() {
+    let (page, block) = (PageId::new(), BlockId::new());
+    let drawn = LinkedText::new(&[plain("a"), block_link(page, block)], |_, asked| {
+        assert_eq!(asked, Some(block));
+        japan_block(LinkedBlock::Gone, LinkState::BlockGone)
+    });
+    assert_eq!(drawn.text(), "a🗾 Japan › deleted block");
+    let link = drawn.link_at(1).unwrap();
+    assert_eq!((link.page, link.block), (page, Some(block)));
+    assert!(drawn.clickable_at(1), "it opens the page");
 }

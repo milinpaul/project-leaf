@@ -228,9 +228,20 @@ impl Shell {
         }
     }
 
-    /// Brings the selected page's saved blocks into the editor the first time it is opened.
+    /// Brings the selected page's saved blocks into the editor the first time it is opened, and the
+    /// pages its links to blocks point at, so those links can show their blocks' words (E10-S08).
     pub(super) fn load_selected_page(&mut self) {
-        let (Some(storage), Some(page)) = (&self.storage, self.editor.selected()) else {
+        if let Some(page) = self.editor.selected() {
+            self.load_page_into_editor(page);
+        }
+        for page in self.editor.block_link_pages_to_load() {
+            self.load_page_into_editor(page);
+        }
+    }
+
+    /// Brings `page`'s saved blocks into the editor, unless it is there already.
+    fn load_page_into_editor(&mut self, page: PageId) {
+        let Some(storage) = &self.storage else {
             return;
         };
         if self.editor.page_editor(page).is_some() {

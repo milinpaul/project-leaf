@@ -359,6 +359,7 @@ fn markdown_written_on_copy_reads_back_as_the_same_blocks() {
         code: false,
         link: Some("https://leaf.app".into()),
         page: None,
+        block: None,
     };
     let blocks = vec![
         block(

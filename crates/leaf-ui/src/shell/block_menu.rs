@@ -96,7 +96,7 @@ pub(super) fn icon_of(entry: &MenuEntry) -> IconName {
         MenuEntry::MoveDown => IconName::ArrowDown,
         MenuEntry::Delete => IconName::Trash,
         MenuEntry::Kind(kind) => kind_icon(kind),
-        MenuEntry::ToLink => IconName::Link,
+        MenuEntry::ToLink | MenuEntry::CopyLink => IconName::Link,
         MenuEntry::ToWebBookmark(_) => IconName::Bookmark,
         MenuEntry::RefreshPreview => IconName::RotateCcw,
     }
@@ -211,6 +211,14 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        // "Copy link to block" (E10-S08): the clipboard gets the link, named for other apps.
+        if let (Some(page), Some(block)) = (
+            self.editor.selected(),
+            self.page().and_then(leaf_editor::PageEditor::take_link_to_copy),
+        ) {
+            let item = self.clipboard_item(&leaf_editor::Fragment::block_link(page, block));
+            cx.write_to_clipboard(item);
+        }
         match after {
             Some(Ok(Some(_))) => cx.notify(),
             Some(Err(err)) => {

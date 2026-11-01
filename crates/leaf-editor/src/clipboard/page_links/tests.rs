@@ -100,8 +100,8 @@ fn copied_text_names_links_by_title() {
     let (mut editor, id) = page_with_link(target);
     editor.select(id, 0..3).unwrap();
     let copied = editor.copy().unwrap().unwrap();
-    let named = copied.with_link_names(|page| {
-        assert_eq!(page, target);
+    let named = copied.with_link_names(|page, block| {
+        assert_eq!((page, block), (target, None));
         "Trip to Japan".into()
     });
     assert_eq!(named.to_plain_text(), "aTrip to Japanb");

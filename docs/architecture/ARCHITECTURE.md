@@ -96,7 +96,11 @@ selection, filled in when the selection is already one link, with Open and Remov
 system may open. A **page link** (E10, ADR-071) is one character in the page but is drawn as the target's icon and
 title: `leaf_editor::LinkedText` builds the drawn runs from `WorkspaceEditor::link_target` (title, icon, live / in
 trash / deleted) and maps positions both ways, and the painted layout keeps that map so carets, selections and clicks
-stay in page positions while the text layout works in drawn ones. A plain click on a page link opens the page,
+stay in page positions while the text layout works in drawn ones. A **link to a block** (E10-S08) is a page link with a
+`block` mark too: `WorkspaceEditor::link_to` adds the block's first words from the target page, or "deleted block", and
+opening a page also loads the pages its block links point at (`block_link_pages_to_load`, `shell/storage.rs`) so the
+words are live. A click goes through `Shell::open_at`, like a search result: scrolled to, caret at its start, flashed.
+"Copy link to block" in the block menu asks the shell to copy `Fragment::block_link`. A plain click on a page link opens the page,
 and the pointer is a hand over page and web links (`PaintedLayout::over_link`, E10-S11). Typing `[[` opens the **page-link menu**
 (E10-S05, `shell/link_menu_popover.rs`): the page editor keeps where the `[[` is and the highlight (like the slash
 menu), and `WorkspaceEditor::link_menu` matches the query against the workspace's pages with the quick switcher's

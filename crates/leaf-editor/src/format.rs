@@ -171,6 +171,7 @@ impl PageEditor {
                         code: s.code && marks.code,
                         link: s.link.filter(|l| marks.link.as_ref() == Some(l)),
                         page: s.page.filter(|p| marks.page.as_ref() == Some(p)),
+                        block: s.block.filter(|b| marks.block.as_ref() == Some(b)),
                     },
                 });
             }
@@ -200,6 +201,7 @@ impl PageEditor {
             link: before.link.filter(|l| after.link.as_ref() == Some(l)),
             // Typed text never becomes a page link (ADR-071).
             page: None,
+            block: None,
         };
         for (kind, on) in self.pending_at(caret).unwrap_or_default() {
             match kind {

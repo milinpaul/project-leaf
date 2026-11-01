@@ -75,6 +75,13 @@ pub(crate) fn fetched() -> WebPreview {
 }
 
 /// Pages that links point at: fixed, so a shrunk failing case reads the same every time.
+/// The block that block links in generated steps point at.
+pub(crate) fn linked_block() -> BlockId {
+    "01a18f8c-179f-7705-9e09-69f9f450c2f4"
+        .parse()
+        .unwrap_or_else(|_| BlockId::new())
+}
+
 pub(crate) fn link_targets() -> [PageId; 2] {
     [
         "01a18f8c-179f-7705-9e09-69f9f450c2f2",
@@ -508,10 +515,21 @@ pub(crate) fn text_command(step: Step, p: &Picker<'_>) -> Option<PageCommand> {
         }
         Step::Link { block, pos, page } => {
             let id = p.block(block)?;
-            PageCommand::InsertPageLink {
-                id,
-                pos: p.pos(id, pos),
-                page: link_targets()[page % 2],
+            let (pos, target) = (p.pos(id, pos), link_targets()[page % 2]);
+            // Every other link points at a block inside the page (E10-S08).
+            if page % 4 >= 2 {
+                PageCommand::InsertBlockLink {
+                    id,
+                    pos,
+                    page: target,
+                    block: linked_block(),
+                }
+            } else {
+                PageCommand::InsertPageLink {
+                    id,
+                    pos,
+                    page: target,
+                }
             }
         }
         Step::SetMark {
