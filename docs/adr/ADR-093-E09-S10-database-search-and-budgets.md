@@ -1,4 +1,4 @@
-# ADR-XXX. Searching databases, and their speed budgets
+# ADR-093. Searching databases, and their speed budgets
 
 - **Status:** Accepted
 - **Type:** Feature
