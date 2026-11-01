@@ -102,6 +102,10 @@ pub struct AppSettings {
     /// asked, then their answer. Off unless they said yes.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     web_previews: Option<bool>,
+    /// Whether the owner turned off the card that previews a page when the pointer rests on a link to it
+    /// (E10-S12). On unless turned off, so only "off" is written.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    link_previews_off: bool,
     /// Fields from a newer Leaf, kept as they were.
     #[serde(flatten)]
     other: Map<String, Value>,
@@ -188,6 +192,18 @@ impl AppSettings {
     /// Records the owner's answer: whether Leaf may fetch web bookmark previews.
     pub fn set_web_previews(&mut self, allowed: bool) {
         self.web_previews = Some(allowed);
+    }
+
+    /// Whether resting the pointer on a link to a page shows a preview of it (E10-S12): on unless the
+    /// owner turned it off, since some find a card popping up over a page full of links distracting.
+    #[must_use]
+    pub fn link_previews(&self) -> bool {
+        !self.link_previews_off
+    }
+
+    /// Turns link previews on or off.
+    pub fn set_link_previews(&mut self, on: bool) {
+        self.link_previews_off = !on;
     }
 }
 

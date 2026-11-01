@@ -92,6 +92,7 @@ pub use view::{BlockRow, BlockStyle, PageView};
 pub use web_bookmark::{BOOKMARK_OFFER_CHOICES, BookmarkOffer};
 pub use workspace_editor::{
     BacklinkRow, BacklinkSource, Crumb, DropPlace, EditorError, LinkChoice, LinkMenu, MAX_CRUMBS,
-    MAX_LINK_CHOICES, MenuPlace, PageAction, PageMenu, PageMenuEntry, PageMenuIcon, RECENT_LIMIT,
-    SidebarItem, TrashItem, TrashList, UNTITLED, WorkspaceEditor, backlinks_label, trashed_ago,
+    MAX_LINK_CHOICES, MenuPlace, PREVIEW_LINES, PageAction, PageMenu, PageMenuEntry, PageMenuIcon,
+    PagePreview, PreviewKind, PreviewLine, RECENT_LIMIT, SidebarItem, TrashItem, TrashList, UNTITLED,
+    WorkspaceEditor, backlinks_label, trashed_ago,
 };

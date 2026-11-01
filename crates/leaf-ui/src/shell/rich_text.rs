@@ -160,6 +160,9 @@ impl Shell {
             )
             .on_mouse_move(cx.listener(move |shell, event: &MouseMoveEvent, window, cx| {
                 shell.on_text_drag(id, event, window, cx);
+            }))
+            .on_mouse_exit(cx.listener(move |shell, _: &gpui::MouseExitEvent, _, cx| {
+                shell.link_preview_left(id, cx);
             }));
         let block = match look.size {
             Some(size) => block.text_size(size),
@@ -178,6 +181,8 @@ impl Shell {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        // A click closes a link's preview card (E10-S12).
+        self.hide_link_preview(cx);
         let at = self
             .blocks
             .painted
@@ -252,6 +257,8 @@ impl Shell {
             self.blocks.link_hover = hover;
             cx.notify();
         }
+        // And the page it points at, previewed after a pause (E10-S12).
+        self.link_preview_moved(block, event.position, event.pressed_button.is_some(), cx);
         if event.pressed_button != Some(MouseButton::Left) {
             return;
         }

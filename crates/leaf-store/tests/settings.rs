@@ -359,3 +359,23 @@ fn web_previews_are_off_until_the_owner_says_yes() {
             .contains("\"web_previews\": true")
     );
 }
+
+/// E10-S12: link previews are on until the owner turns them off, and only "off" is written.
+#[test]
+fn link_previews_are_on_until_turned_off() {
+    let dir = TempDir::new();
+    let path = dir.0.join("settings.json");
+    let mut settings = AppSettings::default();
+    assert!(settings.link_previews());
+    settings.save(&path).unwrap();
+    assert!(!fs::read_to_string(&path).unwrap().contains("link_previews"));
+
+    settings.set_link_previews(false);
+    settings.save(&path).unwrap();
+    let reopened = AppSettings::load(&path);
+    assert!(!reopened.link_previews(), "turned off, and kept");
+
+    let mut on = reopened;
+    on.set_link_previews(true);
+    assert_eq!(on, AppSettings::default());
+}

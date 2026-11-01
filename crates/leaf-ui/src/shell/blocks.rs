@@ -47,6 +47,8 @@ pub(super) struct PageState {
     pub(super) backlinks: super::backlinks::BacklinksState,
     /// The row whose link the pointer is over, drawn with a pointing-hand cursor (E10-S11).
     pub(super) link_hover: Option<BlockId>,
+    /// The card previewing the page a link under the pointer points at (E10-S12).
+    pub(super) preview: super::link_preview::LinkPreviewState,
     /// What the block menu hangs from, set when it opens: the left edge and the top and bottom of the
     /// handle (or of the line, from the keyboard). The menu goes below it, or above when there's no room.
     pub(super) menu_at: Point<Pixels>,
@@ -254,6 +256,7 @@ impl Shell {
         let full_width = self.full_width();
         let menu = self.render_block_menu(window, cx);
         let link = self.render_link_popover(cx);
+        let link_preview = self.render_link_preview(window, cx);
         let language = self.render_language_picker(cx);
         let tones = self.render_tone_picker(cx);
         let task_picker = self.render_task_picker(cx);
@@ -293,6 +296,7 @@ impl Shell {
             // Outside the page's key context, so keys reach the menu and not the page while it is open.
             .child(menu)
             .children(link)
+            .children(link_preview)
             .children(language)
             .children(tones)
             .children(task_picker)
