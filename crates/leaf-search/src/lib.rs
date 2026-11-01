@@ -12,6 +12,8 @@
 //! - [`SearchWorker`] keeps the index current on its own thread: after each save it compares what is
 //!   saved with what it indexed ([`Syncer`], ADR-024) and re-reads only what changed, through a
 //!   [`PageSource`] the app supplies.
+//! - A database's text and URL cells are indexed under their rows' pages ([`database_text`], E09-S10), so a search
+//!   finds a row by them and opens it.
 //! - [`Searcher`] searches it, on a separate read-only connection: every typed word as a prefix,
 //!   ignoring case and accents, title matches first, with highlighted excerpts ([`PageHit`]).
 //!
@@ -23,6 +25,7 @@
 #![cfg_attr(not(test), warn(clippy::indexing_slicing, clippy::arithmetic_side_effects))]
 
 mod backlinks;
+mod cells;
 mod error;
 mod extract;
 mod index;
@@ -35,6 +38,7 @@ mod sync;
 mod worker;
 
 pub use backlinks::Backlink;
+pub use cells::{CellText, PROPERTY_KIND, database_text};
 pub use error::SearchError;
 pub use extract::{LINK_CONTEXT, UNTITLED, page_text};
 pub use index::{INDEX_FILE, IndexState, IndexedPage, SEARCH_DIR, SearchIndex};

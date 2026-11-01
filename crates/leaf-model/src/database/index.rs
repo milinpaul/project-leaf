@@ -51,11 +51,14 @@ impl<K: Copy + Eq + Hash + FromStr> IdMap<K> {
     fn build(tree: &LoroTree, part: &'static str) -> Result<Self, ModelError> {
         let mut map = Self::default();
         let roots = tree.roots();
+        // A set, not the list: a database's rows are all roots, and checking each against a 10,000-long list was
+        // a quadratic scan that took most of opening one (E09-S10).
+        let root_set: HashSet<TreeID> = roots.iter().copied().collect();
         let rest = tree
             .get_nodes(false)
             .into_iter()
             .map(|n| n.id)
-            .filter(|id| !roots.contains(id));
+            .filter(|id| !root_set.contains(id));
         for node in roots.iter().copied().chain(rest) {
             let invalid = |reason: &str| ModelError::InvalidDatabaseNode {
                 part,

@@ -8,8 +8,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
-use leaf_core::{BlockId, PageId};
-use leaf_model::{BlockKind, Outcome, PageCommand, PageDoc, PageOutcome, Workspace, WorkspaceCommand};
+use leaf_core::{BlockId, DatabaseId, PageId};
+use leaf_model::{
+    BlockKind, Database, Outcome, PageCommand, PageDoc, PageOutcome, Workspace, WorkspaceCommand,
+};
 use leaf_search::{INDEX_FILE, PageSource, PageVersion, SEARCH_DIR, SavedVersions, SourceError};
 
 /// A fresh, empty directory for one test, removed when dropped. Saves a `tempfile` dependency.
@@ -82,6 +84,7 @@ pub fn paragraph(doc: &mut PageDoc, text: &str) -> BlockId {
 struct State {
     workspace: Option<(Vec<u8>, PageVersion)>,
     pages: HashMap<PageId, (Vec<u8>, PageVersion)>,
+    databases: HashMap<DatabaseId, (Vec<u8>, PageVersion)>,
     seq: i64,
     failing: bool,
     page_loads: usize,
@@ -118,6 +121,12 @@ impl Saved {
         state.pages.insert(page, (ok(doc.to_bytes()), version));
     }
 
+    pub fn save_database(&self, id: DatabaseId, db: &Database, saved_at: i64) {
+        let mut state = self.state();
+        let version = Self::next(&mut state, saved_at);
+        state.databases.insert(id, (ok(db.to_bytes()), version));
+    }
+
     pub fn forget_page(&self, page: PageId) {
         self.state().pages.remove(&page);
     }
@@ -152,6 +161,11 @@ impl PageSource for Saved {
                 .iter()
                 .map(|(page, (_, version))| (*page, *version))
                 .collect(),
+            databases: state
+                .databases
+                .iter()
+                .map(|(id, (_, version))| (*id, *version))
+                .collect(),
         })
     }
 
@@ -170,6 +184,15 @@ impl PageSource for Saved {
         state.page_loads += 1;
         match state.pages.get(&page) {
             Some((bytes, _)) => Ok(Some(PageDoc::from_bytes(bytes)?)),
+            None => Ok(None),
+        }
+    }
+
+    fn database(&mut self, id: DatabaseId) -> Result<Option<Database>, SourceError> {
+        let state = self.state();
+        Self::check(&state)?;
+        match state.databases.get(&id) {
+            Some((bytes, _)) => Ok(Some(Database::from_bytes(bytes)?)),
             None => Ok(None),
         }
     }

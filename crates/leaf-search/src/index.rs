@@ -14,6 +14,8 @@ use crate::schema::{COMPLETE_KEY, CREATE, INDEX_VERSION, VERSION_KEY};
 use crate::search::{PageHit, search};
 use crate::{PageText, PageVersion, SearchError};
 
+mod databases;
+
 /// Folder inside the workspace that holds the index. Matches `leaf_store::SEARCH`, which creates
 /// it; repeated here because this crate must not depend on the store.
 pub const SEARCH_DIR: &str = "search";
@@ -77,7 +79,13 @@ impl SearchIndex {
     pub fn index_page(&mut self, text: &PageText, version: PageVersion) -> Result<(), SearchError> {
         let tx = self.conn.transaction()?;
         let page_id = text.page.to_string();
-        delete_page(&tx, &page_id)?;
+        // A row's cells come from its database, not its page: they stay (E09-S10).
+        tx.execute(
+            "DELETE FROM blocks WHERE page_id = ?1 AND kind <> ?2",
+            params![page_id, crate::PROPERTY_KIND],
+        )?;
+        tx.execute("DELETE FROM links WHERE page_id = ?1", [&page_id])?;
+        tx.execute("DELETE FROM pages WHERE page_id = ?1", [&page_id])?;
         tx.execute(
             "INSERT INTO pages (page_id, title, saved_at, saved_seq) VALUES (?1, ?2, ?3, ?4)",
             params![page_id, text.title, version.saved_at, version.seq],
@@ -122,6 +130,7 @@ impl SearchIndex {
         tx.execute("DELETE FROM blocks", [])?;
         tx.execute("DELETE FROM links", [])?;
         tx.execute("DELETE FROM pages", [])?;
+        tx.execute("DELETE FROM databases", [])?;
         set_meta(&tx, COMPLETE_KEY, "0")?;
         tx.commit()?;
         Ok(())

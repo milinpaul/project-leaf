@@ -73,7 +73,7 @@ fn hit(page: PageId, title: Marked, title_matched: bool, blocks: &[(BlockId, Mar
         blocks: blocks
             .iter()
             .map(|(block, excerpt)| BlockMatch {
-                block: *block,
+                block: Some(*block),
                 excerpt: excerpt.clone(),
             })
             .collect(),
@@ -236,6 +236,34 @@ fn full_text_hits_are_grouped_by_page_title_matches_first() {
                 block: Some(soup)
             },
         ]
+    );
+}
+
+#[test]
+fn a_database_cell_hit_opens_its_row_at_the_top() {
+    let (editor, pages) = sample();
+    let mut bar = SearchBar::open(editor.workspace(), &[]).unwrap();
+    let request = type_and_wait(&mut bar, "shade", NOW);
+    // A row of a database matched in a text cell: the index gives no block for it (E09-S10).
+    let cell = SearchHit {
+        page: pages.journal,
+        title: marked("Journal", &[]),
+        title_matched: false,
+        blocks: vec![BlockMatch {
+            block: None,
+            excerpt: marked("keep in the shade", &[12..17]),
+        }],
+    };
+    assert!(bar.deliver(request.id, vec![cell]));
+    let destinations: Vec<Destination> = bar.rows().iter().map(SearchRow::destination).collect();
+    let top = Destination {
+        page: pages.journal,
+        block: None,
+    };
+    assert_eq!(
+        destinations,
+        vec![top, top],
+        "the page row and the cell's excerpt both open the row at the top"
     );
 }
 

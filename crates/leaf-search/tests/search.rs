@@ -170,7 +170,7 @@ fn results_are_grouped_by_page_and_capped() {
     let only = index.search("apple three").unwrap();
     assert_eq!(pages(&only), [many.page]);
     assert_eq!(only[0].blocks.len(), 1);
-    assert_eq!(only[0].blocks[0].block, many.blocks[2].block);
+    assert_eq!(only[0].blocks[0].block, Some(many.blocks[2].block));
     assert_eq!(only[0].blocks[0].kind, "paragraph");
 }
 
