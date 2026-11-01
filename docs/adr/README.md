@@ -116,3 +116,4 @@ Records cover two kinds of decision:
 | [ADR-091](ADR-091-E09-S09-inline-database-block.md) | The inline database block follows its database | Feature | Accepted |
 | [ADR-092](ADR-092-E09-S11-editing-options.md) | Editing a column's options | Feature | Accepted |
 | [ADR-093](ADR-093-E09-S10-database-search-and-budgets.md) | Searching databases, and their speed budgets | Feature | Accepted |
+| [ADR-094](ADR-094-E10-S08-links-to-a-block.md) | Links to a block: a page link with a `block` mark | Architecture | Accepted (owner chose the recommended answers, 2026-11-01) |

@@ -1,4 +1,4 @@
-# ADR-XXX. Links to a block: a page link with a `block` mark
+# ADR-094. Links to a block: a page link with a `block` mark
 
 - **Status:** Accepted (owner chose the recommended answers, 2026-11-01)
 - **Type:** Architecture
