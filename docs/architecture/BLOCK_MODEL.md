@@ -181,7 +181,7 @@ Unknown `type` values (from a newer app version) are preserved and rendered as a
 every link to it. Each placeholder gets its own mark op, because Loro gives text typed *inside* a mark's span that mark
 whatever its expand rule, and two neighbouring links marked at once would take in text typed between them.
 
-**Links to a block (E10-S08, ADR-XXX-E10-S08).** The same placeholder and `page` mark, plus a `block` mark holding the
+**Links to a block (E10-S08, ADR-094).** The same placeholder and `page` mark, plus a `block` mark holding the
 block's `BlockId`, made with `InsertBlockLink`. A version of Leaf without block links keeps the `block` mark (unknown
 marks never expand and are never dropped) and treats it as a link to the page. Like `page`, `block` is marked placeholder
 by placeholder, so copies, splits, merges and duplicates keep it.

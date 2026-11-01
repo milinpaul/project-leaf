@@ -1,4 +1,4 @@
-//! Making a link to a block (E10-S08, ADR-XXX-E10-S08): "Copy link to block" in the block menu asks for
+//! Making a link to a block (E10-S08, ADR-094): "Copy link to block" in the block menu asks for
 //! one, and the clipboard carries it as a fragment holding the link, which pastes into any page. Like any
 //! page link, the copy names it for other apps: "Title › words" as plain text, `[[Title › words]]` in
 //! Markdown.
