@@ -115,3 +115,4 @@ Records cover two kinds of decision:
 | [ADR-090](ADR-090-E08-S15-panic-lints.md) | Lints against hidden panics: no panic macros, checked indexing and arithmetic in core crates | Architecture | Accepted |
 | [ADR-091](ADR-091-E09-S09-inline-database-block.md) | The inline database block follows its database | Feature | Accepted |
 | [ADR-092](ADR-092-E09-S11-editing-options.md) | Editing a column's options | Feature | Accepted |
+| [ADR-093](ADR-093-E09-S10-database-search-and-budgets.md) | Searching databases, and their speed budgets | Feature | Accepted |
