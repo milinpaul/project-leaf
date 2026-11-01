@@ -18,7 +18,7 @@ mod database;
 mod scratch;
 mod setup;
 
-pub use database::{DATABASE_ROWS, sorted_filtered_database};
+pub use database::{DATABASE_ROWS, SavedDatabase, saved_database, sorted_filtered_database};
 pub use scratch::Scratch;
 pub use setup::{SavedPage, ViewedPage, caret_mid_page, typing_editor};
 

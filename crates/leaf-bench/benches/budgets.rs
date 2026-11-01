@@ -6,9 +6,14 @@
 //!   date. `view_update` times that update on its own, and `view_rebuild` a full rebuild, to show
 //!   what the incremental update saves.
 //! - Saving a keystroke's change (`save`), which autosave does in the background.
-//! - A 10,000-row database sorted by a number and filtered to one status, as the table shows it
-//!   (`database_view`), and one character typed into a text filter on top (`database_filter_keystroke`). E09-S07
-//!   aims at one frame (16 ms); E09-S10 sets the database budgets in `PRODUCT_SPEC.md`.
+//! - A 10,000-row database (E09-S10, budgets in `PRODUCT_SPEC.md`):
+//!   - opening it to its first screen: its saved document loaded, the first rows read and the table built, < 100 ms
+//!     (`database_open`);
+//!   - reading every row after that, which the app does in the background, < 1 s (`database_read_all`);
+//!   - changing the sort, or the filter, and building the table again, < 50 ms (`database_sort`, `database_filter`);
+//!   - editing one cell and building the table again, < 16 ms (`database_edit_cell`);
+//!   - and, from E09-S07, the sorted and filtered table built (`database_view`) and one character typed into a text
+//!     filter (`database_filter_keystroke`).
 //!
 //! Benches that change the page take the change outside the timing (`with_inputs`) and use one
 //! iteration per sample, so each timed call sees exactly one new keystroke.
@@ -19,10 +24,11 @@ use std::cell::RefCell;
 
 use divan::Bencher;
 use leaf_bench::{
-    DATABASE_ROWS, OPEN_PAGE_BLOCKS, SAVED_AT, SEED, SavedPage, ViewedPage, caret_mid_page,
+    DATABASE_ROWS, OPEN_PAGE_BLOCKS, SAVED_AT, SEED, SavedPage, ViewedPage, caret_mid_page, saved_database,
     sorted_filtered_database, typing_editor,
 };
 use leaf_fixtures::BIG_PAGE_BLOCKS;
+use leaf_model::CellValue;
 use leaf_store::DocKey;
 
 fn main() {
@@ -101,6 +107,75 @@ fn database_filter_keystroke(bencher: Bencher) {
         typed.push('1');
         let mut editor = editor.borrow_mut();
         editor.type_filter_text(1, &typed).unwrap();
+        editor.view(|_| String::new(), 0).unwrap()
+    });
+}
+
+/// Open a saved 10,000-row database as the app does: load the document, read the first screen of rows, build the table.
+#[divan::bench(sample_count = 30)]
+fn database_open(bencher: Bencher) {
+    let saved = saved_database(DATABASE_ROWS).unwrap();
+    bencher.bench_local(|| {
+        let mut editor = saved.open().unwrap();
+        editor.view(|_| String::new(), 0).unwrap()
+    });
+}
+
+/// Read every row of that database once its first screen is shown (opened outside the timing).
+#[divan::bench(sample_count = 10, sample_size = 1)]
+fn database_read_all(bencher: Bencher) {
+    let saved = saved_database(DATABASE_ROWS).unwrap();
+    bencher
+        .with_inputs(|| saved.open().unwrap())
+        .bench_local_values(|mut editor| editor.read_more(usize::MAX).unwrap());
+}
+
+/// Turn the sort on the sorted, filtered database around and build the table it then shows.
+#[divan::bench(sample_count = 50)]
+fn database_sort(bencher: Bencher) {
+    let saved = saved_database(DATABASE_ROWS).unwrap();
+    let editor = RefCell::new(saved.sorted_filtered().unwrap());
+    let descending = RefCell::new(false);
+    bencher.bench_local(|| {
+        let mut descending = descending.borrow_mut();
+        *descending = !*descending;
+        let mut editor = editor.borrow_mut();
+        editor.set_sort_descending(0, *descending).unwrap();
+        editor.view(|_| String::new(), 0).unwrap()
+    });
+}
+
+/// Pick another status in the filter of that database and build the table it then shows.
+#[divan::bench(sample_count = 50)]
+fn database_filter(bencher: Bencher) {
+    let saved = saved_database(DATABASE_ROWS).unwrap();
+    let editor = RefCell::new(saved.sorted_filtered().unwrap());
+    let next = RefCell::new(0_usize);
+    bencher.bench_local(|| {
+        let mut next = next.borrow_mut();
+        *next = (*next + 1) % saved.options.len();
+        let mut editor = editor.borrow_mut();
+        editor
+            .set_filter_value(0, Some(CellValue::Option(saved.options[*next])))
+            .unwrap();
+        editor.view(|_| String::new(), 0).unwrap()
+    });
+}
+
+/// Type a new name into one cell of that database and build the table it then shows.
+#[divan::bench(sample_count = 100)]
+fn database_edit_cell(bencher: Bencher) {
+    let saved = saved_database(DATABASE_ROWS).unwrap();
+    let editor = RefCell::new(saved.sorted_filtered().unwrap());
+    let count = RefCell::new(0_usize);
+    bencher.bench_local(|| {
+        let mut count = count.borrow_mut();
+        *count += 1;
+        let row = saved.rows[*count % saved.rows.len()];
+        let mut editor = editor.borrow_mut();
+        editor
+            .commit_text(row, saved.name, &format!("Renamed {count}"))
+            .unwrap();
         editor.view(|_| String::new(), 0).unwrap()
     });
 }

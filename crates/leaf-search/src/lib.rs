@@ -12,6 +12,8 @@
 //! - [`SearchWorker`] keeps the index current on its own thread: after each save it compares what is
 //!   saved with what it indexed ([`Syncer`], ADR-024) and re-reads only what changed, through a
 //!   [`PageSource`] the app supplies.
+//! - A database's text and URL cells are indexed under their rows' pages ([`database_text`], E09-S10), so a search
+//!   finds a row by them and opens it.
 //! - [`Searcher`] searches it, on a separate read-only connection: every typed word as a prefix,
 //!   ignoring case and accents, title matches first, with highlighted excerpts ([`PageHit`]).
 //!

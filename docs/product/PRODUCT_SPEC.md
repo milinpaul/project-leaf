@@ -161,6 +161,8 @@ Numbered list numbers are computed when rendering, never stored.
   - Keystroke to paint: < 16 ms on a 10,000-block page.
   - Open a 5,000-block page: < 100 ms.
   - Cold start to editable: < 500 ms.
+  - A 10,000-row database (E09-S10): open to its first screen < 100 ms; every row read, in the background, < 1 s;
+    a sort or filter change < 50 ms; editing one cell < 16 ms.
 - **Reliability:** every edit is durable within 1 s; crash recovery loses nothing older than that.
 - **Privacy:** no telemetry without explicit opt-in. No network calls in Phase 0. From Phase 1 the only network
   access is fetching web bookmark previews, and only after the owner allows it (ADR-080).

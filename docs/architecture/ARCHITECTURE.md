@@ -44,7 +44,7 @@ the screen stays thin.
 | `leaf-search` | Full-text search index: a disposable SQLite FTS5 file kept in step with saved pages (ADR-019). | Hold data that exists nowhere else. |
 | `leaf-fetch` | Fetches web bookmark previews (E15-S05): the page's `<head>`, its preview picture and icon, within ADR-080's limits (public internet only, checked in the DNS lookup; size and time caps; no scripts, cookies or proxy). The only crate that goes online, and only once the owner allows previews. Native, never wasm. | Touch documents or files, or run on the UI thread. |
 | `leaf-fixtures` | Big, repeatable test documents (a 10,000-block page, a 5,000-page workspace) for tests and benchmarks, fixed by a seed (ADR-055). Test support only. | Be used by the app. |
-| `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save, search), run by `just bench` and on every `main` push in CI (ADR-056, ADR-058). Test support only. | Be used by the app. |
+| `leaf-bench` | Benchmarks for the performance budgets (open a page, type, update the view, save, search, a 10,000-row database), run by `just bench` and on every `main` push in CI (ADR-056, ADR-058). Test support only. | Be used by the app. |
 | `leaf-ui` | Draws view models with GPUI and passes input back. Wraps every gpui-component widget. Holds Leaf's look (colours, bundled fonts, sizes) in one `theme` module (ADR-027). | Contain editing logic. |
 | `leaf-app` | The program itself: starts up, opens windows, connects the crates. | Contain logic that a testable crate could hold. |
 
@@ -243,7 +243,8 @@ doc".
 
 Databases are saved like pages, under `database:<id>` (`DocKey::Database`, E09-S03). A database page's meta names its
 database, and each row page's meta names the database it belongs to. Row pages sit under the database page and the
-sidebar leaves them out, but search finds them like any page. `WorkspaceEditor` (`workspace_editor/databases.rs`) adds
+sidebar leaves them out, but search finds them like any page, and by their text and URL cells too (E09-S10,
+ADR-XXX-E09-S10: indexed as `property` entries under the row's page). `WorkspaceEditor` (`workspace_editor/databases.rs`) adds
 and deletes rows. The database document decides which rows exist, and each row page's trash state follows it:
 - the row pages' part is written outside the workspace's undo (`Workspace::apply_unrecorded`), so adding or deleting a
   row is one undo step, the database's;
@@ -352,7 +353,8 @@ itself (ADR-018).
 6. **Search catches up.** When autosave wrote something, the window pokes the search indexer (`SearchWorker`
    in `leaf-search`), which runs on its own thread so typing never waits for it. It asks the store which
    version of each document is saved (`Store::saved_versions`), compares that and the page titles and trash with
-   what it indexed, and re-reads only the pages that changed into `search/index.sqlite`. An edit is searchable
+   what it indexed, and re-reads only the pages that changed into `search/index.sqlite`. A database whose version
+   changed is read too, and only its cells whose text changed are rewritten (E09-S10). An edit is searchable
    well within a second (ADR-024). The same pass records each page's links to other pages in the index's `links`
    table, which `Searcher::backlinks` reads to list the blocks linking to a page (E10-S06, ADR-071). Under the page
    title, `shell::backlinks` asks it when a page opens and at most once a second after that, and
