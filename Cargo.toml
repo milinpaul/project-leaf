@@ -57,7 +57,7 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 # Mozilla's root certificates; pinned exactly because the resolver hook that refuses local-network addresses is in its
 # semver-exempt `unversioned` module. html5ever: the HTML tokenizer gpui-component already brings, same version.
 # url and encoding_rs are already in the tree through GPUI.
-ureq = { version = "=3.5.0", default-features = false, features = ["rustls", "gzip"] }
+ureq = { version = "=3.5.1", default-features = false, features = ["rustls", "gzip"] }
 html5ever = "=0.27.0"
 url = "2.5"
 encoding_rs = "0.8"
